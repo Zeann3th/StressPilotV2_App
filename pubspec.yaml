@@ -1,0 +1,79 @@
+name: stress_pilot
+description: "Load testing software"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons:
+
+  # State Management
+  flutter_riverpod:
+  get_it:
+
+  # UI Components
+  fluent_ui:
+  split_view:
+  bitsdojo_window:
+  google_fonts:
+
+  # Drag & Drop
+  desktop_drop:
+
+  # Flow Chart
+  graphview:
+  flutter_flow_chart:
+
+  # HTTP
+  dio:
+  dio_cookie_manager:
+  cookie_jar:
+  web_socket_channel:
+
+  # File Handling
+  file_picker:
+  path_provider:
+  path:
+
+  # Utilities
+  uuid:
+  intl:
+  json_annotation:
+
+  # Storage
+  shared_preferences:
+  hive:
+  hive_flutter:
+
+  # Process Management
+  process_run:
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+  flutter_lints: ^6.0.0
+
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images
+    - assets/icons
+    - assets/core
+
+  fonts:
+    - family: JetBrains Mono
+      fonts:
+        - asset: fonts/JetBrainsMono-Regular.ttf
+        - asset: fonts/JetBrainsMono-Bold.ttf
+          weight: 700
