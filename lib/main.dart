@@ -1,7 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/core/system/process_manager.dart';
+import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
+import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  setupDependencies();
+
+  final processManager = getIt<CoreProcessManager>();
+  await processManager.start();
+
+  final projectProvider = getIt<ProjectProvider>();
+  await projectProvider.initialize();
+
+  runApp(
+    ChangeNotifierProvider<ProjectProvider>.value(
+      value: projectProvider,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -9,57 +30,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
+    final provider = context.watch<ProjectProvider>();
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+    final Widget home = provider.hasSelectedProject
+        ? const ProjectWorkspacePage()
+        : const ProjectsPage();
 
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
-    );
+    return MaterialApp(debugShowCheckedModeBanner: false, home: home);
   }
 }

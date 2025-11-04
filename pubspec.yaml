@@ -14,11 +14,12 @@ dependencies:
   cupertino_icons:
 
   # State Management
-  flutter_riverpod:
+  provider:
   get_it:
 
   # UI Components
   fluent_ui:
+  flutter_mix:
   split_view:
   bitsdojo_window:
   google_fonts:
@@ -59,7 +60,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-
   flutter_lints: ^6.0.0
 
 
@@ -67,13 +67,14 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images
-    - assets/icons
-    - assets/core
+    - assets/images/
+    - assets/icons/
+    - assets/core/
+    - assets/fonts/
 
   fonts:
     - family: JetBrains Mono
       fonts:
-        - asset: fonts/JetBrainsMono-Regular.ttf
-        - asset: fonts/JetBrainsMono-Bold.ttf
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+        - asset: assets/fonts/JetBrainsMono-Bold.ttf
           weight: 700
