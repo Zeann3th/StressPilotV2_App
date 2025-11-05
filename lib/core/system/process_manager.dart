@@ -5,7 +5,7 @@ import 'package:path/path.dart' as path;
 class CoreProcessManager {
   Process? _process;
 
-  Future<void> start() async {
+  Future<void> initialize() async {
     if (_process != null) {
       developer.log('Backend already running', name: 'CoreProcess');
       return;
