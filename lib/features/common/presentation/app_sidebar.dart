@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
+import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 
 class AppSidebar extends StatelessWidget {
   const AppSidebar({super.key});
@@ -17,7 +18,11 @@ class AppSidebar extends StatelessWidget {
         children: [
           const SizedBox(height: 16),
 
-          _icon(Icons.settings_outlined, 'Settings', () {}),
+          _icon(Icons.settings_outlined, 'Settings', () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            );
+          }),
 
           const SizedBox(height: 8),
           _icon(Icons.notifications_outlined, 'Notifications', () {}),

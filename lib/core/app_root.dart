@@ -7,6 +7,7 @@ import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
+import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 
 class AppRoot extends StatefulWidget {
   const AppRoot({super.key});
@@ -38,8 +39,15 @@ class _AppRootState extends State<AppRoot> {
       );
     }
 
-    return ChangeNotifierProvider<ProjectProvider>.value(
-      value: getIt<ProjectProvider>(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ProjectProvider>.value(
+          value: getIt<ProjectProvider>(),
+        ),
+        ChangeNotifierProvider<SettingProvider>.value(
+          value: getIt<SettingProvider>(),
+        ),
+      ],
       child: const _AppWithTheme(),
     );
   }
