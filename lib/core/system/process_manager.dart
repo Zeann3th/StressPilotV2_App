@@ -1,13 +1,14 @@
 import 'dart:io';
-import 'dart:developer' as developer;
 import 'package:path/path.dart' as path;
+import 'package:stress_pilot/core/system/logger.dart';
 
 class CoreProcessManager {
+  static const _logName = 'CoreProcess';
   Process? _process;
 
   Future<void> initialize() async {
     if (_process != null) {
-      developer.log('Backend already running', name: 'CoreProcess');
+      AppLogger.warning('Backend already running', name: _logName);
       return;
     }
 
@@ -18,7 +19,7 @@ class CoreProcessManager {
       'app.jar',
     );
 
-    developer.log('Starting backend JAR...', name: 'CoreProcess', error: jarPath);
+    AppLogger.info('Starting backend JAR at: $jarPath', name: _logName);
 
     try {
       _process = await Process.start(
@@ -30,46 +31,51 @@ class CoreProcessManager {
 
       _process!.stdout
           .transform(SystemEncoding().decoder)
-          .listen((data) => developer.log(
+          .listen((data) => AppLogger.info(
         data.trim(),
-        name: 'CoreProcess.stdout',
+        name: '$_logName.stdout',
       ));
 
       _process!.stderr
           .transform(SystemEncoding().decoder)
-          .listen((data) => developer.log(
+          .listen((data) => AppLogger.error(
         data.trim(),
-        name: 'CoreProcess.stderr',
-        level: 900,
+        name: '$_logName.stderr',
       ));
 
-      developer.log(
+      AppLogger.info(
         'Backend started successfully (pid=${_process!.pid})',
-        name: 'CoreProcess',
+        name: _logName,
       );
     } catch (e, st) {
-      developer.log(
+      AppLogger.critical(
         'Failed to start backend process',
-        name: 'CoreProcess',
+        name: _logName,
         error: e,
         stackTrace: st,
       );
+      rethrow;
     }
   }
 
   Future<void> stop() async {
     if (_process != null) {
       try {
-        developer.log('Stopping backend (pid=${_process!.pid})', name: 'CoreProcess');
+        AppLogger.info('Stopping backend (pid=${_process!.pid})', name: _logName);
         _process!.kill();
-        developer.log('Backend stopped', name: 'CoreProcess');
+        AppLogger.info('Backend stopped', name: _logName);
       } catch (e, st) {
-        developer.log('Error stopping backend', name: 'CoreProcess', error: e, stackTrace: st);
+        AppLogger.error(
+          'Error stopping backend',
+          name: _logName,
+          error: e,
+          stackTrace: st,
+        );
       } finally {
         _process = null;
       }
     } else {
-      developer.log('No backend process running', name: 'CoreProcess');
+      AppLogger.debug('No backend process running', name: _logName);
     }
   }
 }
