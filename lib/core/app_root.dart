@@ -5,9 +5,11 @@ import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
+import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 
 class AppRoot extends StatefulWidget {
@@ -35,7 +37,7 @@ class _AppRootState extends State<AppRoot> {
       setState(() => _status = 'Starting backend process...');
       await AppLogger.measure(
         'Backend startup',
-            () => getIt<CoreProcessManager>().initialize(),
+        () => getIt<CoreProcessManager>().initialize(),
         name: 'AppRoot',
       );
 
@@ -49,7 +51,8 @@ class _AppRootState extends State<AppRoot> {
 
       if (!isHealthy) {
         setState(() {
-          _error = 'Backend failed to start within timeout.\n\n'
+          _error =
+              'Backend failed to start within timeout.\n\n'
               'Check the console logs for backend errors.\n'
               'The backend process may need more time to start.';
           _status = 'Failed';
@@ -64,7 +67,7 @@ class _AppRootState extends State<AppRoot> {
       setState(() => _status = 'Loading projects...');
       await AppLogger.measure(
         'Project provider initialization',
-            () => getIt<ProjectProvider>().initialize(),
+        () => getIt<ProjectProvider>().initialize(),
         name: 'AppRoot',
       );
 
@@ -97,18 +100,11 @@ class _AppRootState extends State<AppRoot> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.red,
-                ),
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
                 const SizedBox(height: 16),
                 const Text(
                   'Initialization Error',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Padding(
@@ -148,10 +144,7 @@ class _AppRootState extends State<AppRoot> {
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
-                Text(
-                  _status,
-                  style: const TextStyle(fontSize: 16),
-                ),
+                Text(_status, style: const TextStyle(fontSize: 16)),
               ],
             ),
           ),
@@ -166,6 +159,9 @@ class _AppRootState extends State<AppRoot> {
         ),
         ChangeNotifierProvider<SettingProvider>.value(
           value: getIt<SettingProvider>(),
+        ),
+        ChangeNotifierProvider<FlowProvider>.value(
+          value: getIt<FlowProvider>(),
         ),
       ],
       child: const _AppWithTheme(),
@@ -186,10 +182,6 @@ class _AppWithTheme extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeManager = getIt<ThemeManager>();
     final provider = context.watch<ProjectProvider>();
-
-    final home = provider.hasSelectedProject
-        ? const ProjectWorkspacePage()
-        : const ProjectsPage();
 
     return AnimatedBuilder(
       animation: themeManager,
@@ -212,7 +204,14 @@ class _AppWithTheme extends StatelessWidget {
             ),
           ),
           themeMode: themeManager.themeMode,
-          home: home,
+          initialRoute: provider.hasSelectedProject
+              ? '/workspace'
+              : '/projects',
+          routes: {
+            '/projects': (context) => const ProjectsPage(),
+            '/workspace': (context) => const ProjectWorkspacePage(),
+            '/settings': (context) => const SettingsPage(),
+          },
         );
       },
     );

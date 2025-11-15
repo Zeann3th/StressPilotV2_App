@@ -7,7 +7,6 @@ import '../../domain/project.dart';
 import '../provider/project_provider.dart';
 import '../widgets/project_table.dart';
 import '../widgets/project_empty_states.dart';
-import 'project_workspace_page.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
@@ -140,10 +139,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Future<void> _handleProjectTap(Project project) async {
     await context.read<ProjectProvider>().selectProject(project);
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const ProjectWorkspacePage()),
-      );
-    }
+
+    if (!mounted) return;
+
+    Navigator.pushReplacementNamed(context, '/workspace');
   }
 }

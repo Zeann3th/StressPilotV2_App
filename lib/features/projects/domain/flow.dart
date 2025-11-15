@@ -3,7 +3,11 @@ class CreateFlowRequest {
   final String name;
   final String? description;
 
-  CreateFlowRequest({required this.projectId, required this.name, this.description});
+  CreateFlowRequest({
+    required this.projectId,
+    required this.name,
+    this.description,
+  });
 
   Map<String, dynamic> toJson() => {
     'projectId': projectId,
@@ -53,11 +57,36 @@ class Flow {
     projectId: json['projectId'],
     name: json['name'],
     description: json['description'],
-    steps: (json['steps'] as List<dynamic>?)
-        ?.map((e) => FlowStep.fromJson(e as Map<String, dynamic>))
-        .toList() ??
+    steps:
+        (json['steps'] as List<dynamic>?)
+            ?.map((e) => FlowStep.fromJson(e as Map<String, dynamic>))
+            .toList() ??
         [],
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'projectId': projectId,
+    'name': name,
+    if (description != null) 'description': description,
+    'steps': steps.map((s) => s.toJson()).toList(),
+  };
+
+  Flow copyWith({
+    int? id,
+    int? projectId,
+    String? name,
+    String? description,
+    List<FlowStep>? steps,
+  }) {
+    return Flow(
+      id: id ?? this.id,
+      projectId: projectId ?? this.projectId,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      steps: steps ?? this.steps,
+    );
+  }
 }
 
 class FlowStep {

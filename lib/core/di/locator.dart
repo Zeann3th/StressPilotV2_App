@@ -3,7 +3,9 @@ import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
+import 'package:stress_pilot/features/projects/data/flow_service.dart';
 import 'package:stress_pilot/features/projects/data/project_service.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/settings/data/setting_service.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
@@ -20,6 +22,10 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => ProjectService());
   getIt.registerLazySingleton(() => ProjectProvider());
+  
+  getIt.registerLazySingleton(() => FlowService());
+  getIt.registerLazySingleton(() => FlowProvider());
+
   getIt.registerLazySingleton(() => SettingService());
   getIt.registerLazySingleton(() => SettingProvider());
 }
