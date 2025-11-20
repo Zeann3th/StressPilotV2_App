@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
 
 class AppSidebar extends StatelessWidget {
@@ -18,7 +19,7 @@ class AppSidebar extends StatelessWidget {
           const SizedBox(height: 16),
 
           _icon(Icons.settings_outlined, 'Settings', () {
-            Navigator.pushReplacementNamed(context, '/settings');
+            AppNavigator.pushNamed(AppRouter.settingsRoute);
           }),
 
           const SizedBox(height: 8),

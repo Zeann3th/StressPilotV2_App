@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
-import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
-import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/endpoint_provider.dart';
 
 class AppRoot extends StatefulWidget {
   const AppRoot({super.key});
@@ -163,6 +162,9 @@ class _AppRootState extends State<AppRoot> {
         ChangeNotifierProvider<FlowProvider>.value(
           value: getIt<FlowProvider>(),
         ),
+        ChangeNotifierProvider<EndpointProvider>.value(
+          value: getIt<EndpointProvider>(),
+        ),
       ],
       child: const _AppWithTheme(),
     );
@@ -181,7 +183,6 @@ class _AppWithTheme extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeManager = getIt<ThemeManager>();
-    final provider = context.watch<ProjectProvider>();
 
     return AnimatedBuilder(
       animation: themeManager,
@@ -189,6 +190,7 @@ class _AppWithTheme extends StatelessWidget {
         return MaterialApp(
           title: 'Stress Pilot',
           debugShowCheckedModeBanner: false,
+          navigatorKey: AppNavigator.navigatorKey,
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(
@@ -204,14 +206,8 @@ class _AppWithTheme extends StatelessWidget {
             ),
           ),
           themeMode: themeManager.themeMode,
-          initialRoute: provider.hasSelectedProject
-              ? '/workspace'
-              : '/projects',
-          routes: {
-            '/projects': (context) => const ProjectsPage(),
-            '/workspace': (context) => const ProjectWorkspacePage(),
-            '/settings': (context) => const SettingsPage(),
-          },
+          onGenerateRoute: AppRouter.generateRoute,
+          initialRoute: AppRouter.projectsRoute,
         );
       },
     );

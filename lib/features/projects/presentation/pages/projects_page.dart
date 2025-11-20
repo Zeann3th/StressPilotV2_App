@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/common/presentation/app_sidebar.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/project_dialog.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/project_topbar.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/project/project_topbar.dart';
 import '../../domain/project.dart';
 import '../provider/project_provider.dart';
-import '../widgets/project_table.dart';
-import '../widgets/project_empty_states.dart';
+import '../widgets/project/project_table.dart';
+import '../widgets/project/project_empty_states.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
@@ -139,9 +140,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Future<void> _handleProjectTap(Project project) async {
     await context.read<ProjectProvider>().selectProject(project);
-
-    if (!mounted) return;
-
-    Navigator.pushReplacementNamed(context, '/workspace');
+    AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 
 class WorkspaceTopBar extends StatelessWidget {
@@ -177,5 +179,12 @@ class WorkspaceTopBar extends StatelessWidget {
     final projectId = int.parse(value.substring(8));
     final selectedProj = provider.projects.firstWhere((p) => p.id == projectId);
     provider.selectProject(selectedProj);
+
+    // Refetch flows and endpoints
+    final flowProvider = context.read<FlowProvider>();
+    final endpointProvider = context.read<EndpointProvider>();
+
+    flowProvider.loadFlows(projectId: projectId);
+    endpointProvider.loadEndpoints(projectId: projectId);
   }
 }

@@ -5,6 +5,7 @@ import 'package:stress_pilot/core/system/session_manager.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/features/projects/data/flow_service.dart';
 import 'package:stress_pilot/features/projects/data/project_service.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/settings/data/setting_service.dart';
@@ -28,4 +29,6 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => SettingService());
   getIt.registerLazySingleton(() => SettingProvider());
+
+  getIt.registerLazySingleton(() => EndpointProvider());
 }

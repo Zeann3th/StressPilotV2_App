@@ -1,0 +1,84 @@
+import 'package:dio/dio.dart';
+import 'package:stress_pilot/core/network/http_client.dart';
+import '../domain/endpoint.dart';
+
+class EndpointService {
+  final Dio _dio = HttpClient.getInstance();
+
+  Future<List<Endpoint>> fetchEndpoints({required int projectId}) async {
+    final response = await _dio.get(
+      '/api/v1/endpoints',
+      queryParameters: {'projectId': projectId},
+    );
+    if (response.statusCode == 200) {
+      final data = response.data;
+      final List endpointsJson = data['content'] ?? [];
+      return endpointsJson.map((e) => Endpoint.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load endpoints');
+    }
+  }
+
+  Future<Endpoint> getEndpointDetail(int endpointId) async {
+    final response = await _dio.get('/api/v1/endpoints/$endpointId');
+    if (response.statusCode == 200) {
+      return Endpoint.fromJson(response.data);
+    } else {
+      throw Exception('Failed to load endpoint detail');
+    }
+  }
+
+  Future<Endpoint> createEndpoint(Map<String, dynamic> endpointData) async {
+    final response = await _dio.post(
+      '/api/v1/endpoints',
+      data: endpointData,
+    );
+    if (response.statusCode == 200) {
+      return Endpoint.fromJson(response.data);
+    } else {
+      throw Exception('Failed to create endpoint');
+    }
+  }
+
+  Future<Endpoint> updateEndpoint(int endpointId, Map<String, dynamic> endpointData) async {
+    final response = await _dio.patch(
+      '/api/v1/endpoints/$endpointId',
+      data: endpointData,
+    );
+    if (response.statusCode == 200) {
+      return Endpoint.fromJson(response.data);
+    } else {
+      throw Exception('Failed to update endpoint');
+    }
+  }
+
+  Future<void> deleteEndpoint(int endpointId) async {
+    final response = await _dio.delete('/api/v1/endpoints/$endpointId');
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete endpoint');
+    }
+  }
+
+  Future<void> uploadEndpoints({required String filePath, required int projectId}) async {
+    final formData = FormData.fromMap({
+      'projectId': projectId.toString(),
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final response = await _dio.post('/api/v1/endpoints/upload', data: formData);
+    if (response.statusCode != 204) {
+      throw Exception('Failed to upload endpoints');
+    }
+  }
+
+  Future<Map<String, dynamic>> executeEndpoint(int endpointId, Map<String, dynamic> requestBody) async {
+    final response = await _dio.post(
+      '/api/v1/endpoints/$endpointId/execute',
+      data: requestBody,
+    );
+    if (response.statusCode == 200) {
+      return response.data as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to execute endpoint');
+    }
+  }
+}

@@ -111,4 +111,28 @@ class HttpClient {
   static void clearCookies() {
     _cookieJar?.deleteAll();
   }
+
+  Future<Response> get(Uri uri) async {
+    return await getInstance().get(uri.toString());
+  }
+
+  Future<Response> post(Uri uri, {dynamic data}) async {
+    return await getInstance().post(uri.toString(), data: data);
+  }
+
+  Future<Response> patch(Uri uri, {dynamic data}) async {
+    return await getInstance().patch(uri.toString(), data: data);
+  }
+
+  Future<Response> delete(Uri uri) async {
+    return await getInstance().delete(uri.toString());
+  }
+
+  Future<Response> upload(Uri uri, {required Map<String, String> fields, required String filePath}) async {
+    final formData = FormData.fromMap({
+      ...fields,
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    return await getInstance().post(uri.toString(), data: formData);
+  }
 }
