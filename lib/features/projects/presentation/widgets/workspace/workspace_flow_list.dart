@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
+import '../flow_dialog.dart';
 
 enum SidebarTab { flows, endpoints }
 
@@ -39,8 +40,17 @@ class WorkspaceFlowList extends StatelessWidget {
                 icon: const Icon(Icons.add, size: 18),
                 tooltip: 'Create Flow',
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Create flow coming soon')),
+                  FlowDialog.showCreateDialog(
+                    context,
+                    onCreate: (name, description, projectId) async {
+                      await flowProvider.createFlow(
+                        flow.CreateFlowRequest(
+                          projectId: projectId,
+                          name: name,
+                          description: description,
+                        ),
+                      );
+                    },
                   );
                 },
                 visualDensity: VisualDensity.compact,
@@ -79,8 +89,8 @@ class WorkspaceFlowList extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       itemCount: flowProvider.flows.length,
                       itemBuilder: (context, index) {
-                        final flow = flowProvider.flows[index];
-                        final isSelected = selectedFlow?.id == flow.id;
+                        final flowItem = flowProvider.flows[index];
+                        final isSelected = selectedFlow?.id == flowItem.id;
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 4),
                           child: Material(
@@ -90,8 +100,8 @@ class WorkspaceFlowList extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                             child: InkWell(
                               onTap: () {
-                                onFlowSelected(flow);
-                                flowProvider.selectFlow(flow);
+                                onFlowSelected(flowItem);
+                                flowProvider.selectFlow(flowItem);
                               },
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
@@ -115,7 +125,7 @@ class WorkspaceFlowList extends StatelessWidget {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            flow.name,
+                                            flowItem.name,
                                             style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: isSelected
@@ -128,10 +138,10 @@ class WorkspaceFlowList extends StatelessWidget {
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                          if (flow.description != null) ...[
+                                          if (flowItem.description != null) ...[
                                             const SizedBox(height: 2),
                                             Text(
-                                              flow.description!,
+                                              flowItem.description!,
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: isSelected
@@ -185,12 +195,37 @@ class WorkspaceFlowList extends StatelessWidget {
                                           ),
                                         ),
                                       ],
-                                      onSelected: (value) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('$value coming soon'),
-                                          ),
-                                        );
+                                      onSelected: (value) async {
+                                        if (value == 'edit') {
+                                          FlowDialog.showEditDialog(
+                                            context,
+                                            flow: flowItem,
+                                            onUpdate: (id, name, description) async {
+                                              await flowProvider.updateFlow(
+                                                flowId: id,
+                                                name: name,
+                                                description: description,
+                                              );
+                                            },
+                                          );
+                                        } else if (value == 'duplicate') {
+                                           // Create a copy with "Copy" suffix
+                                          await flowProvider.createFlow(
+                                            flow.CreateFlowRequest(
+                                              projectId: flowItem.projectId,
+                                              name: '${flowItem.name} Copy',
+                                              description: flowItem.description,
+                                            ),
+                                          );
+                                        } else if (value == 'delete') {
+                                          FlowDialog.showDeleteDialog(
+                                            context,
+                                            flow: flowItem,
+                                            onDelete: (id) async {
+                                              await flowProvider.deleteFlow(id);
+                                            },
+                                          );
+                                        }
                                       },
                                     ),
                                   ],
