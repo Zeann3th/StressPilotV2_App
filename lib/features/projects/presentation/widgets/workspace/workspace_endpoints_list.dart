@@ -2,10 +2,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
-import 'package:stress_pilot/features/projects/domain/endpoint.dart'
+import 'package:stress_pilot/features/common/domain/endpoint.dart'
     as domain_endpoint;
 import '../../../domain/canvas.dart';
-import '../../provider/endpoint_provider.dart';
+import '../../../../common/presentation/provider/endpoint_provider.dart';
 
 class WorkspaceEndpointsList extends StatelessWidget {
   final flow.Flow? selectedFlow;

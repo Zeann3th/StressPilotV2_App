@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
@@ -33,7 +34,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
     final flowProvider = context.watch<FlowProvider>();
     // Get the current project ID from ProjectProvider
     final projectProvider = context.watch<ProjectProvider>();
-    final projectId = projectProvider.selectedProject?.id ?? 0; // Default to 0 or handle null appropriately
+    final projectId = projectProvider.selectedProject?.id ?? 0;
 
     return Container(
       width: 280,
@@ -66,7 +67,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _buildTabButton(
-                    label: 'Nodes', // Đổi tên thành Nodes để bao gồm cả Logic Nodes
+                    label: 'Nodes',
                     icon: Icons.dns_outlined,
                     isActive: widget.sidebarTab == SidebarTab.endpoints,
                     onTap: () => widget.onTabChanged(SidebarTab.endpoints),
@@ -79,24 +80,42 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
           Expanded(
             child: widget.sidebarTab == SidebarTab.flows
                 ? WorkspaceFlowList(
-              flowProvider: flowProvider,
-              selectedFlow: widget.selectedFlow,
-              onFlowSelected: widget.onFlowSelected,
-            )
-                : Column(
-              children: [
-                // Logic Nodes Section (Start, Branch)
-                _buildLogicNodesSection(context),
-                const Divider(height: 1),
-                // Endpoints List
-                Expanded(
-                  child: WorkspaceEndpointsList(
+                    flowProvider: flowProvider,
                     selectedFlow: widget.selectedFlow,
-                    projectId: projectId, // Pass the projectId here
+                    onFlowSelected: widget.onFlowSelected,
+                  )
+                : Column(
+                    children: [
+                      // "Manage All" button for Endpoints
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            AppNavigator.pushNamed(
+                              AppRouter.projectEndpointsRoute,
+                              arguments: {'projectId': projectId},
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 36),
+                            side: BorderSide(color: colors.outline),
+                          ),
+                          child: const Text("Manage Endpoints (Full Page)"),
+                        ),
+                      ),
+
+                      // Logic Nodes Section (Start, Branch)
+                      _buildLogicNodesSection(context),
+                      const Divider(height: 1),
+                      // Endpoints List
+                      Expanded(
+                        child: WorkspaceEndpointsList(
+                          selectedFlow: widget.selectedFlow,
+                          projectId: projectId,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -122,7 +141,6 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
           const SizedBox(height: 8),
           Row(
             children: [
-              // Bọc Draggable bằng Expanded
               Expanded(
                 child: _buildDraggableLogicNode(
                   context,
@@ -150,16 +168,15 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
   }
 
   Widget _buildDraggableLogicNode(
-      BuildContext context,
-      FlowNodeType type,
-      String label,
-      IconData icon,
-      Color color,
-      ) {
+    BuildContext context,
+    FlowNodeType type,
+    String label,
+    IconData icon,
+    Color color,
+  ) {
     final colors = Theme.of(context).colorScheme;
     final dragData = DragData(type: type, payload: {'name': label});
 
-    // Loại bỏ Expanded khỏi đây
     return Draggable<DragData>(
       data: dragData,
       feedback: Material(
@@ -182,7 +199,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
           ),
         ),
       ),
-      child: Container( // Thay thế Expanded bằng Container
+      child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         decoration: BoxDecoration(
           color: colors.surface,

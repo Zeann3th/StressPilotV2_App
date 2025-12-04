@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/common/presentation/app_sidebar.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/common/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_topbar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_sidebar.dart';

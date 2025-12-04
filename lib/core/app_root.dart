@@ -9,7 +9,7 @@ import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/common/presentation/provider/endpoint_provider.dart';
 
 import '../features/projects/presentation/provider/canvas_provider.dart';
 
