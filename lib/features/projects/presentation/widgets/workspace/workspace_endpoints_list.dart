@@ -1,13 +1,62 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
-import 'package:stress_pilot/features/projects/domain/endpoint.dart' as domain_endpoint;
+import 'package:stress_pilot/features/projects/domain/endpoint.dart'
+    as domain_endpoint;
+import '../../../domain/canvas.dart';
 import '../../provider/endpoint_provider.dart';
 
 class WorkspaceEndpointsList extends StatelessWidget {
   final flow.Flow? selectedFlow;
+  final int projectId;
 
-  const WorkspaceEndpointsList({super.key, required this.selectedFlow});
+  const WorkspaceEndpointsList({
+    super.key,
+    required this.selectedFlow,
+    required this.projectId,
+  });
+
+  Future<void> _handleUpload(BuildContext context) async {
+    try {
+      // 1. Pick the file
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json', 'yaml', 'yml'], // Allowed extensions
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final filePath = result.files.single.path!;
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Uploading endpoints...')),
+          );
+        }
+
+        // 3. Call the provider
+        await context.read<EndpointProvider>().uploadEndpointsFile(
+          filePath: filePath,
+          projectId: projectId,
+        );
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Endpoints uploaded successfully')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Upload failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,16 +67,12 @@ class WorkspaceEndpointsList extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (endpointProvider.error != null) {
-      return Center(child: Text('Error: ${endpointProvider.error}'));
-    }
-
     final endpoints = endpointProvider.endpoints;
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
               Text(
@@ -41,81 +86,38 @@ class WorkspaceEndpointsList extends StatelessWidget {
               ),
               const Spacer(),
               IconButton(
+                icon: const Icon(Icons.upload_file, size: 18),
+                tooltip: 'Import Endpoints', // Changed to general import text
+                onPressed: () => _handleUpload(context),
+                visualDensity: VisualDensity.compact,
+              ),
+              IconButton(
                 icon: const Icon(Icons.add, size: 18),
                 tooltip: 'Add Endpoint',
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Add endpoint coming soon')),
-                  );
+                  // Logic for manually adding an endpoint
                 },
                 visualDensity: VisualDensity.compact,
               ),
             ],
           ),
         ),
-        if (selectedFlow != null)
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: colors.primaryContainer.withAlpha(100),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: colors.primary.withAlpha(50), width: 1),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: colors.onPrimaryContainer,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Drag endpoints to canvas',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.onPrimaryContainer,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
+
+        if (endpointProvider.error != null)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Error: ${endpointProvider.error}',
+              style: const TextStyle(color: Colors.red),
             ),
           ),
-        const SizedBox(height: 8),
+
         Expanded(
           child: endpoints.isEmpty
               ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.dns_outlined,
-                          size: 48,
-                          color: colors.onSurfaceVariant.withAlpha(100),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No endpoints yet',
-                          style: TextStyle(
-                            color: colors.onSurfaceVariant,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Add endpoints to use\nin your flows',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: colors.onSurfaceVariant.withAlpha(180),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: Text(
+                    'No endpoints',
+                    style: TextStyle(color: colors.onSurfaceVariant),
                   ),
                 )
               : ListView.builder(
@@ -123,10 +125,19 @@ class WorkspaceEndpointsList extends StatelessWidget {
                   itemCount: endpoints.length,
                   itemBuilder: (context, index) {
                     final endpoint = endpoints[index];
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 4),
-                      child: Draggable<domain_endpoint.Endpoint>(
-                        data: endpoint,
+                      child: Draggable<DragData>(
+                        data: DragData(
+                          type: FlowNodeType.endpoint,
+                          payload: {
+                            'id': endpoint.id,
+                            'name': endpoint.name,
+                            'method': endpoint.httpMethod,
+                            'url': endpoint.url,
+                          },
+                        ),
                         feedback: Material(
                           elevation: 8,
                           borderRadius: BorderRadius.circular(8),
@@ -158,17 +169,16 @@ class WorkspaceEndpointsList extends StatelessWidget {
     );
   }
 
-  Widget _buildEndpointCard(BuildContext context, domain_endpoint.Endpoint endpoint) {
+  Widget _buildEndpointCard(
+    BuildContext context,
+    domain_endpoint.Endpoint endpoint,
+  ) {
     final colors = Theme.of(context).colorScheme;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('View ${endpoint.name} details')),
-          );
-        },
+        onTap: () {},
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -182,7 +192,11 @@ class WorkspaceEndpointsList extends StatelessWidget {
     );
   }
 
-  Widget _buildEndpointItem(BuildContext context, domain_endpoint.Endpoint endpoint, bool isDragging) {
+  Widget _buildEndpointItem(
+    BuildContext context,
+    domain_endpoint.Endpoint endpoint,
+    bool isDragging,
+  ) {
     final colors = Theme.of(context).colorScheme;
     Color methodColor;
     switch (endpoint.httpMethod) {

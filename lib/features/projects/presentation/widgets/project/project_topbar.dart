@@ -26,43 +26,42 @@ class ProjectTopBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: colors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border(bottom: BorderSide(color: colors.outline, width: 1)),
       ),
       child: Row(
         children: [
+          // Refresh Icon (Subtle)
           IconButton(
-            icon: Icon(Icons.refresh, color: colors.onSurface),
+            icon: Icon(Icons.refresh, color: colors.onSurfaceVariant, size: 20),
             onPressed: onRefresh,
             tooltip: 'Refresh',
+            splashRadius: 20,
           ),
           const SizedBox(width: 16),
+
+          // Search Input (Clean & Minimal)
           Expanded(
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 600),
-              height: 40,
+              constraints: const BoxConstraints(maxWidth: 400),
+              height: 36,
               child: TextField(
                 controller: searchController,
                 decoration: InputDecoration(
                   hintText: 'Search projects...',
                   hintStyle: text.bodyMedium?.copyWith(
-                    color: colors.onSurfaceVariant,
+                    color: colors.onSurfaceVariant.withAlpha(150),
+                    fontSize: 13,
                   ),
                   prefixIcon: Icon(
                     Icons.search,
-                    size: 20,
+                    size: 18,
                     color: colors.onSurfaceVariant,
                   ),
                   suffixIcon: searchController.text.isNotEmpty
                       ? IconButton(
                           icon: Icon(
-                            Icons.clear,
-                            size: 18,
+                            Icons.close,
+                            size: 16,
                             color: colors.onSurfaceVariant,
                           ),
                           onPressed: () {
@@ -70,32 +69,55 @@ class ProjectTopBar extends StatelessWidget {
                             onRefresh();
                             onSearchChanged();
                           },
+                          splashRadius: 16,
                         )
                       : null,
                   filled: true,
-                  fillColor: colors.surfaceContainerHighest.withValues(
-                    alpha: 0.5,
-                  ),
+                  fillColor: colors.surfaceContainerLow,
+                  // Minimal background
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide
+                        .none, // No border for cleaner look inside toolbar
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
                     borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide(
+                      color: colors.primary.withAlpha(100),
+                      width: 1,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 8,
+                    vertical: 0, // Centered vertically
                   ),
                 ),
-                style: text.bodyMedium?.copyWith(color: colors.onSurface),
+                style: text.bodyMedium?.copyWith(
+                  color: colors.onSurface,
+                  fontSize: 13,
+                ),
                 onChanged: (_) => onSearchChanged(),
                 onSubmitted: onSearchSubmitted,
               ),
             ),
           ),
           const SizedBox(width: 16),
-          IconButton(
-            icon: Icon(Icons.add, color: colors.onSurface),
+
+          // Create Button (Primary Action)
+          FilledButton.icon(
             onPressed: onAdd,
-            tooltip: 'Create Project',
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text("New Project"),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
           ),
         ],
       ),

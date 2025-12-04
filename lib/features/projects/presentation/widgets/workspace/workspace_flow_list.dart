@@ -23,16 +23,16 @@ class WorkspaceFlowList extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Text(
                 'FLOWS',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
                   color: colors.onSurfaceVariant,
-                  letterSpacing: 0.5,
+                  letterSpacing: 1.0,
                 ),
               ),
               const Spacer(),
@@ -53,7 +53,8 @@ class WorkspaceFlowList extends StatelessWidget {
                     },
                   );
                 },
-                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               ),
             ],
           ),
@@ -62,182 +63,94 @@ class WorkspaceFlowList extends StatelessWidget {
           child: flowProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
               : flowProvider.flows.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.alt_route,
-                              size: 48,
-                              color: colors.onSurfaceVariant.withAlpha(100),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No flows yet',
-                              style: TextStyle(
-                                color: colors.onSurfaceVariant,
-                                fontSize: 14,
+              ? Center(
+                  child: Text(
+                    'No flows',
+                    style: TextStyle(color: colors.onSurfaceVariant),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  itemCount: flowProvider.flows.length,
+                  itemBuilder: (context, index) {
+                    final flowItem = flowProvider.flows[index];
+                    final isSelected = selectedFlow?.id == flowItem.id;
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: isSelected
+                            ? Border(
+                                left: BorderSide(
+                                  color: colors.primary,
+                                  width: 3,
+                                ),
+                              )
+                            : null,
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          onFlowSelected(flowItem);
+                          flowProvider.selectFlow(flowItem);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.subdirectory_arrow_right,
+                                size: 16,
+                                color: isSelected
+                                    ? colors.primary
+                                    : colors.onSurfaceVariant,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  flowItem.name,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                    color: isSelected
+                                        ? colors.onSurface
+                                        : colors.onSurfaceVariant,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (isSelected)
+                                GestureDetector(
+                                  onTap: () => _showOptions(
+                                    context,
+                                    flowItem,
+                                    flowProvider,
+                                  ),
+                                  child: Icon(
+                                    Icons.more_horiz,
+                                    size: 16,
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      itemCount: flowProvider.flows.length,
-                      itemBuilder: (context, index) {
-                        final flowItem = flowProvider.flows[index];
-                        final isSelected = selectedFlow?.id == flowItem.id;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Material(
-                            color: isSelected
-                                ? colors.secondaryContainer
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            child: InkWell(
-                              onTap: () {
-                                onFlowSelected(flowItem);
-                                flowProvider.selectFlow(flowItem);
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.layers_outlined,
-                                      size: 18,
-                                      color: isSelected
-                                          ? colors.onSecondaryContainer
-                                          : colors.onSurfaceVariant,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            flowItem.name,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: isSelected
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w500,
-                                              color: isSelected
-                                                  ? colors.onSecondaryContainer
-                                                  : colors.onSurface,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          if (flowItem.description != null) ...[
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              flowItem.description!,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: isSelected
-                                                    ? colors.onSecondaryContainer
-                                                          .withAlpha(200)
-                                                    : colors.onSurfaceVariant,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    PopupMenuButton(
-                                      icon: Icon(
-                                        Icons.more_vert,
-                                        size: 18,
-                                        color: colors.onSurfaceVariant,
-                                      ),
-                                      itemBuilder: (context) => [
-                                        const PopupMenuItem(
-                                          value: 'edit',
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.edit_outlined, size: 18),
-                                              SizedBox(width: 8),
-                                              Text('Edit'),
-                                            ],
-                                          ),
-                                        ),
-                                        const PopupMenuItem(
-                                          value: 'duplicate',
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.content_copy, size: 18),
-                                              SizedBox(width: 8),
-                                              Text('Duplicate'),
-                                            ],
-                                          ),
-                                        ),
-                                        const PopupMenuItem(
-                                          value: 'delete',
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.delete_outline, size: 18),
-                                              SizedBox(width: 8),
-                                              Text('Delete'),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                      onSelected: (value) async {
-                                        if (value == 'edit') {
-                                          FlowDialog.showEditDialog(
-                                            context,
-                                            flow: flowItem,
-                                            onUpdate: (id, name, description) async {
-                                              await flowProvider.updateFlow(
-                                                flowId: id,
-                                                name: name,
-                                                description: description,
-                                              );
-                                            },
-                                          );
-                                        } else if (value == 'duplicate') {
-                                           // Create a copy with "Copy" suffix
-                                          await flowProvider.createFlow(
-                                            flow.CreateFlowRequest(
-                                              projectId: flowItem.projectId,
-                                              name: '${flowItem.name} Copy',
-                                              description: flowItem.description,
-                                            ),
-                                          );
-                                        } else if (value == 'delete') {
-                                          FlowDialog.showDeleteDialog(
-                                            context,
-                                            flow: flowItem,
-                                            onDelete: (id) async {
-                                              await flowProvider.deleteFlow(id);
-                                            },
-                                          );
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                    );
+                  },
+                ),
         ),
       ],
     );
   }
+
+  void _showOptions(
+    BuildContext context,
+    flow.Flow flowItem,
+    FlowProvider provider,
+  ) {}
 }

@@ -34,8 +34,12 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
       if (projectProvider.selectedProject != null) {
         Future.microtask(() {
           _resetWorkspaceState();
-          flowProvider.loadFlows(projectId: projectProvider.selectedProject!.id);
-          endpointProvider.loadEndpoints(projectId: projectProvider.selectedProject!.id);
+          flowProvider.loadFlows(
+            projectId: projectProvider.selectedProject!.id,
+          );
+          endpointProvider.loadEndpoints(
+            projectId: projectProvider.selectedProject!.id,
+          );
         });
       }
     });
@@ -62,7 +66,6 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   void _resetWorkspaceState() {
     _selectedFlow = null;
     _sidebarTab = SidebarTab.flows;
-    // Reset other workspace state here if needed
   }
 
   @override
@@ -83,11 +86,15 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                     children: [
                       WorkspaceSidebar(
                         sidebarTab: _sidebarTab,
-                        onTabChanged: (tab) => setState(() => _sidebarTab = tab),
+                        onTabChanged: (tab) =>
+                            setState(() => _sidebarTab = tab),
                         selectedFlow: _selectedFlow,
-                        onFlowSelected: (flow) => setState(() => _selectedFlow = flow),
+                        onFlowSelected: (flow) =>
+                            setState(() => _selectedFlow = flow),
                       ),
-                      Expanded(child: WorkspaceCanvas(selectedFlow: _selectedFlow)),
+                      Expanded(
+                        child: WorkspaceCanvas(selectedFlow: _selectedFlow),
+                      ),
                     ],
                   ),
                 ),

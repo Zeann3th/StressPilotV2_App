@@ -34,4 +34,20 @@ class EndpointProvider extends ChangeNotifier {
     _endpoints = [];
     notifyListeners();
   }
+
+  Future<void> uploadEndpointsFile({required String filePath, required int projectId}) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _service.uploadEndpoints(filePath: filePath, projectId: projectId);
+      await loadEndpoints(projectId: projectId);
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
 }

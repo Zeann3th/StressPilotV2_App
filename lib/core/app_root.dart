@@ -11,6 +11,8 @@ import 'package:stress_pilot/features/projects/presentation/provider/project_pro
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/endpoint_provider.dart';
 
+import '../features/projects/presentation/provider/canvas_provider.dart';
+
 class AppRoot extends StatefulWidget {
   const AppRoot({super.key});
 
@@ -165,6 +167,9 @@ class _AppRootState extends State<AppRoot> {
         ChangeNotifierProvider<EndpointProvider>.value(
           value: getIt<EndpointProvider>(),
         ),
+        ChangeNotifierProvider<CanvasProvider>.value(
+          value: getIt<CanvasProvider>(),
+        ),
       ],
       child: const _AppWithTheme(),
     );
@@ -184,6 +189,9 @@ class _AppWithTheme extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeManager = getIt<ThemeManager>();
 
+    // Modern Minimalist Color Palette (Inter Blue)
+    const seedColor = Color(0xFF2563EB);
+
     return AnimatedBuilder(
       animation: themeManager,
       builder: (context, _) {
@@ -191,20 +199,153 @@ class _AppWithTheme extends StatelessWidget {
           title: 'Stress Pilot',
           debugShowCheckedModeBanner: false,
           navigatorKey: AppNavigator.navigatorKey,
+
+          // --- LIGHT THEME ---
           theme: ThemeData(
             useMaterial3: true,
+            brightness: Brightness.light,
             colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blue,
+              seedColor: seedColor,
               brightness: Brightness.light,
+              surface: Colors.white,
+              // Pure white surface
+              surfaceContainer: const Color(0xFFF8FAFC),
+              // Very light grey for containers
+              surfaceContainerLow: const Color(0xFFF1F5F9),
+              onSurface: const Color(0xFF0F172A),
+              // Dark slate text
+              onSurfaceVariant: const Color(0xFF64748B),
+              // Slate text
+              outline: const Color(0xFFE2E8F0),
+              // Subtle borders
+              outlineVariant: const Color(0xFFCBD5E1),
+            ),
+            scaffoldBackgroundColor: Colors.white,
+            dividerTheme: const DividerThemeData(
+              color: Color(0xFFE2E8F0),
+              thickness: 1,
+            ),
+            cardTheme: CardThemeData(
+              color: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
+              iconTheme: IconThemeData(color: Color(0xFF0F172A)),
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                elevation: 0,
+                backgroundColor: seedColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ),
+            outlinedButtonTheme: OutlinedButtonThemeData(
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+              ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: seedColor, width: 1.5),
+              ),
             ),
           ),
+
+          // --- DARK THEME ---
           darkTheme: ThemeData(
             useMaterial3: true,
+            brightness: Brightness.dark,
             colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blue,
+              seedColor: seedColor,
               brightness: Brightness.dark,
+              surface: const Color(0xFF0F172A),
+              // Dark Slate
+              surfaceContainer: const Color(0xFF1E293B),
+              surfaceContainerLow: const Color(0xFF1E293B),
+              onSurface: const Color(0xFFF8FAFC),
+              onSurfaceVariant: const Color(0xFF94A3B8),
+              outline: const Color(0xFF334155),
+              outlineVariant: const Color(0xFF475569),
+            ),
+            scaffoldBackgroundColor: const Color(0xFF0F172A),
+            dividerTheme: const DividerThemeData(
+              color: Color(0xFF334155),
+              thickness: 1,
+            ),
+            cardTheme: CardThemeData(
+              color: const Color(0xFF1E293B),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(color: Color(0xFF334155)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF0F172A),
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: const Color(0xFF1E293B),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFF334155)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFF334155)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: seedColor, width: 1.5),
+              ),
             ),
           ),
+
           themeMode: themeManager.themeMode,
           onGenerateRoute: AppRouter.generateRoute,
           initialRoute: AppRouter.projectsRoute,

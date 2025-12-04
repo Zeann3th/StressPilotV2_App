@@ -23,23 +23,18 @@ class ProjectTable extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: colors.outline), // Flat border
       ),
       child: Column(
         children: [
           _ProjectTableHeader(),
-          const Divider(height: 1),
+          Divider(height: 1, color: colors.outline),
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: projects.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
+            separatorBuilder: (_, _) =>
+                Divider(height: 1, color: colors.outline.withAlpha(100)),
             itemBuilder: (context, index) {
               final project = projects[index];
               return _ProjectTableRow(
@@ -63,21 +58,20 @@ class _ProjectTableHeader extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: colors.surfaceContainerLow.withAlpha(150),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
       ),
       child: Row(
         children: [
-          _HeaderCell('NAME', width: 200, text: text, colors: colors),
+          _HeaderCell('NAME', width: 250, text: text, colors: colors),
           _HeaderCell('DESCRIPTION', flex: 1, text: text, colors: colors),
           _HeaderCell('ID', width: 80, text: text, colors: colors),
-          _HeaderCell('CREATED AT', width: 140, text: text, colors: colors),
-          _HeaderCell('UPDATED AT', width: 140, text: text, colors: colors),
+          _HeaderCell('CREATED', width: 140, text: text, colors: colors),
           _HeaderCell(
             'ACTIONS',
-            width: 120,
+            width: 100,
             text: text,
             colors: colors,
             center: true,
@@ -113,6 +107,7 @@ class _HeaderCell extends StatelessWidget {
       style: text.labelSmall?.copyWith(
         color: colors.onSurfaceVariant,
         fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
       ),
     );
 
@@ -121,7 +116,7 @@ class _HeaderCell extends StatelessWidget {
   }
 }
 
-class _ProjectTableRow extends StatelessWidget {
+class _ProjectTableRow extends StatefulWidget {
   final Project project;
   final VoidCallback onTap;
   final VoidCallback onEdit;
@@ -135,104 +130,115 @@ class _ProjectTableRow extends StatelessWidget {
   });
 
   @override
+  State<_ProjectTableRow> createState() => _ProjectTableRowState();
+}
+
+class _ProjectTableRowState extends State<_ProjectTableRow> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 200,
-              child: Row(
-                children: [
-                  _ProjectAvatar(name: project.name),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      project.name,
-                      style: text.bodyMedium?.copyWith(color: colors.onSurface),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        child: Container(
+          color: _isHovered ? colors.surfaceContainerLow : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 250,
+                child: Row(
+                  children: [
+                    _ProjectAvatar(name: widget.project.name),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.project.name,
+                        style: text.bodyMedium?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: Text(
-                project.description,
-                style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            _TableCell('#${project.id}', width: 80),
-            _TableCell(_formatDate(project.createdAt), width: 140),
-            _TableCell(_formatDate(project.updatedAt), width: 140),
-            SizedBox(
-              width: 120,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.edit_outlined,
-                      size: 18,
-                      color: colors.onSurface,
-                    ),
-                    onPressed: onEdit,
-                    tooltip: 'Edit',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
+              Expanded(
+                child: Text(
+                  widget.project.description,
+                  style: text.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: colors.error,
-                    ),
-                    onPressed: onDelete,
-                    tooltip: 'Delete',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
-                  ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
+              _TableCell('#${widget.project.id}', width: 80),
+              _TableCell(_formatDate(widget.project.createdAt), width: 140),
+              SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _ActionButton(
+                      icon: Icons.edit_outlined,
+                      tooltip: 'Edit',
+                      onPressed: widget.onEdit,
+                      color: colors.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    _ActionButton(
+                      icon: Icons.delete_outline,
+                      tooltip: 'Delete',
+                      onPressed: widget.onDelete,
+                      color: colors.error.withAlpha(200),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   String _formatDate(DateTime date) {
-    const months = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[date.month]} ${date.day}, ${date.year}';
+    return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  final Color color;
+
+  const _ActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(icon, size: 18, color: color),
+      onPressed: onPressed,
+      tooltip: tooltip,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      style: IconButton.styleFrom(hoverColor: color.withAlpha(30)),
+    );
   }
 }
 
@@ -245,18 +251,24 @@ class _ProjectAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
 
+    // Generate a consistent color based on the project name
+    final color = _getColorForString(name);
+
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: _getColorFromString(name),
-        shape: BoxShape.circle,
+        color: color.withAlpha(30), // Pastel/Light background tint
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: color.withAlpha(100),
+        ), // Subtle colored border
       ),
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : 'P',
           style: text.labelMedium?.copyWith(
-            color: Colors.white,
+            color: color, // Text matches the random color
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -264,18 +276,23 @@ class _ProjectAvatar extends StatelessWidget {
     );
   }
 
-  Color _getColorFromString(String str) {
-    final colors = [
+  Color _getColorForString(String text) {
+    if (text.isEmpty) return Colors.grey;
+
+    // Simple modern palette
+    const colors = [
       Colors.blue,
+      Colors.red,
       Colors.green,
       Colors.orange,
       Colors.purple,
       Colors.teal,
       Colors.pink,
       Colors.indigo,
-      Colors.cyan,
     ];
-    return colors[str.length % colors.length];
+
+    // Use hash code to pick a consistent color
+    return colors[text.hashCode.abs() % colors.length];
   }
 }
 

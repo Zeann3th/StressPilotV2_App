@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_flow_list.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_endpoints_list.dart';
+
+import '../../../domain/canvas.dart';
 
 class WorkspaceSidebar extends StatefulWidget {
   final SidebarTab sidebarTab;
@@ -28,6 +31,9 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final flowProvider = context.watch<FlowProvider>();
+    // Get the current project ID from ProjectProvider
+    final projectProvider = context.watch<ProjectProvider>();
+    final projectId = projectProvider.selectedProject?.id ?? 0; // Default to 0 or handle null appropriately
 
     return Container(
       width: 280,
@@ -60,7 +66,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _buildTabButton(
-                    label: 'Endpoints',
+                    label: 'Nodes', // Đổi tên thành Nodes để bao gồm cả Logic Nodes
                     icon: Icons.dns_outlined,
                     isActive: widget.sidebarTab == SidebarTab.endpoints,
                     onTap: () => widget.onTabChanged(SidebarTab.endpoints),
@@ -73,13 +79,123 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
           Expanded(
             child: widget.sidebarTab == SidebarTab.flows
                 ? WorkspaceFlowList(
-                    flowProvider: flowProvider,
+              flowProvider: flowProvider,
+              selectedFlow: widget.selectedFlow,
+              onFlowSelected: widget.onFlowSelected,
+            )
+                : Column(
+              children: [
+                // Logic Nodes Section (Start, Branch)
+                _buildLogicNodesSection(context),
+                const Divider(height: 1),
+                // Endpoints List
+                Expanded(
+                  child: WorkspaceEndpointsList(
                     selectedFlow: widget.selectedFlow,
-                    onFlowSelected: widget.onFlowSelected,
-                  )
-                : WorkspaceEndpointsList(selectedFlow: widget.selectedFlow),
+                    projectId: projectId, // Pass the projectId here
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLogicNodesSection(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'LOGIC',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colors.onSurfaceVariant,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              // Bọc Draggable bằng Expanded
+              Expanded(
+                child: _buildDraggableLogicNode(
+                  context,
+                  FlowNodeType.start,
+                  'Start',
+                  Icons.play_circle_outline,
+                  Colors.green,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildDraggableLogicNode(
+                  context,
+                  FlowNodeType.branch,
+                  'Branch',
+                  Icons.call_split,
+                  Colors.purple,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDraggableLogicNode(
+      BuildContext context,
+      FlowNodeType type,
+      String label,
+      IconData icon,
+      Color color,
+      ) {
+    final colors = Theme.of(context).colorScheme;
+    final dragData = DragData(type: type, payload: {'name': label});
+
+    // Loại bỏ Expanded khỏi đây
+    return Draggable<DragData>(
+      data: dragData,
+      feedback: Material(
+        elevation: 6,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 100,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: 8),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      ),
+      child: Container( // Thay thế Expanded bằng Container
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 24, color: color),
+            const SizedBox(height: 4),
+            Text(label, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
       ),
     );
   }
