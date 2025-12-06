@@ -10,8 +10,11 @@ import 'package:stress_pilot/features/projects/presentation/provider/flow_provid
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/common/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/splash/presentation/pages/splash_screen.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
+import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
+import 'package:window_manager/window_manager.dart';
 import '../features/projects/presentation/provider/canvas_provider.dart';
 
 class AppRoot extends StatefulWidget {
@@ -73,6 +76,11 @@ class _AppRootState extends State<AppRoot> {
         name: 'AppRoot',
       );
 
+      await windowManager.setSize(const Size(1280, 720));
+      await windowManager.center();
+      await windowManager.setTitleBarStyle(TitleBarStyle.normal);
+      await windowManager.setResizable(true);
+
       setState(() {
         _initialized = true;
         _status = 'Ready';
@@ -97,61 +105,23 @@ class _AppRootState extends State<AppRoot> {
   Widget build(BuildContext context) {
     if (_error != null) {
       return MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                const Text(
-                  'Initialization Error',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                    _error!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _error = null;
-                      _status = 'Initializing...';
-                      _initialized = false;
-                    });
-                    _init();
-                  },
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
+        home: SplashScreen(
+          status: 'Failed',
+          error: _error,
+          onRetry: () {
+            setState(() {
+              _error = null;
+              _status = 'Initializing...';
+              _initialized = false;
+            });
+            _init();
+          },
         ),
       );
     }
 
     if (!_initialized) {
-      return MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(_status, style: const TextStyle(fontSize: 16)),
-              ],
-            ),
-          ),
-        ),
-      );
+      return MaterialApp(home: SplashScreen(status: _status));
     }
 
     return MultiProvider(
@@ -173,6 +143,9 @@ class _AppRootState extends State<AppRoot> {
         ),
         ChangeNotifierProvider<EnvironmentProvider>.value(
           value: getIt<EnvironmentProvider>(),
+        ),
+        ChangeNotifierProvider<ResultsProvider>(
+          create: (_) => getIt<ResultsProvider>(),
         ),
       ],
       child: const _AppWithTheme(),

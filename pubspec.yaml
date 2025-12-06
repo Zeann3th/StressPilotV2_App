@@ -21,7 +21,6 @@ dependencies:
   fluent_ui:
   flutter_mix:
   split_view:
-  bitsdojo_window:
   google_fonts:
 
   # Drag & Drop
@@ -55,6 +54,9 @@ dependencies:
   # Process Management
   process_run:
   http_parser: ^4.1.2
+  stomp_dart_client: ^3.0.1
+  fl_chart: ^1.1.1
+  window_manager: ^0.5.1
 
 
 dev_dependencies:

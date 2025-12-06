@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 
@@ -106,6 +107,11 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Flow execution started')),
+          );
+          Navigator.pushNamed(
+            context,
+            AppRouter.resultsRoute,
+            arguments: {'flowId': widget.flowId},
           );
         }
       } catch (e) {

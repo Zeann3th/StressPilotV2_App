@@ -13,6 +13,8 @@ import 'package:stress_pilot/features/settings/data/setting_service.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
+import 'package:stress_pilot/features/results/data/results_repository.dart';
+import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
 
 final getIt = GetIt.instance;
 
@@ -37,4 +39,9 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => CanvasProvider());
   getIt.registerLazySingleton(() => EnvironmentProvider());
+
+  getIt.registerLazySingleton(() => ResultsRepository());
+  getIt.registerLazySingleton(
+    () => ResultsProvider(getIt(), getIt<FlowService>()),
+  );
 }

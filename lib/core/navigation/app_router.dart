@@ -5,6 +5,7 @@ import 'package:stress_pilot/features/projects/presentation/pages/environment_pa
 import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 
 class AppRouter {
@@ -13,6 +14,7 @@ class AppRouter {
   static const String settingsRoute = '/settings';
   static const String projectEndpointsRoute = '/project/endpoints';
   static const String projectEnvironmentRoute = '/project/environment';
+  static const String resultsRoute = '/results';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     MaterialPageRoute<T> buildRoute<T>(Widget widget) {
@@ -47,6 +49,9 @@ class AppRouter {
             projectName: args['projectName'],
           ),
         );
+      case resultsRoute:
+        final args = settings.arguments as Map<String, dynamic>;
+        return buildRoute(ResultsPage(flowId: args['flowId']));
       default:
         return buildRoute(
           Scaffold(
