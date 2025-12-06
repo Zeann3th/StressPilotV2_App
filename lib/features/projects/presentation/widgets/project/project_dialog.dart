@@ -14,7 +14,7 @@ class ProjectDialogs {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Create New Project'),
         content: SizedBox(
-          width: 400,
+          width: 600,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -94,7 +94,7 @@ class ProjectDialogs {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Edit Project'),
         content: SizedBox(
-          width: 400,
+          width: 600,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

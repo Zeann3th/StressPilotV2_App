@@ -44,19 +44,40 @@ class CanvasNode {
       'type': type.toString().split('.').last,
       'position': {'x': position.dx, 'y': position.dy},
       'data': data,
+      'width': width,
+      'height': height,
     };
   }
 
   factory CanvasNode.fromJson(Map<String, dynamic> json) {
+    final typeStr = json['type'];
+    final type = FlowNodeType.values.firstWhere(
+      (e) => e.toString().split('.').last == typeStr,
+      orElse: () => FlowNodeType.endpoint,
+    );
+
+    // Default sizes based on type if missing
+    double defaultWidth = 160;
+    double defaultHeight = 90;
+
+    if (type == FlowNodeType.start) {
+      defaultWidth = 40;
+      defaultHeight = 40;
+    } else if (type == FlowNodeType.branch) {
+      defaultWidth = 80;
+      defaultHeight = 80;
+    }
+
     return CanvasNode(
       id: json['id'],
-      type: FlowNodeType.values.firstWhere(
-              (e) => e.toString().split('.').last == json['type']),
+      type: type,
       position: Offset(
         json['position']['x'] as double,
         json['position']['y'] as double,
       ),
       data: json['data'] ?? {},
+      width: (json['width'] as num?)?.toDouble() ?? defaultWidth,
+      height: (json['height'] as num?)?.toDouble() ?? defaultHeight,
     );
   }
 }

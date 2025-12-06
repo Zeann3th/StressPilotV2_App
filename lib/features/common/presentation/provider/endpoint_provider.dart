@@ -44,16 +44,17 @@ class EndpointProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> createEndpoint(Map<String, dynamic> data) async {
+  Future<Endpoint> createEndpoint(Map<String, dynamic> data) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _service.createEndpoint(data);
+      final created = await _service.createEndpoint(data);
       if (data['projectId'] != null) {
         await loadEndpoints(projectId: data['projectId']);
       }
+      return created;
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -62,16 +63,17 @@ class EndpointProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateEndpoint(int id, Map<String, dynamic> data) async {
+  Future<Endpoint> updateEndpoint(int id, Map<String, dynamic> data) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _service.updateEndpoint(id, data);
+      final updated = await _service.updateEndpoint(id, data);
       if (data['projectId'] != null) {
         await loadEndpoints(projectId: data['projectId']);
       }
+      return updated;
     } catch (e) {
       _error = e.toString();
       _isLoading = false;

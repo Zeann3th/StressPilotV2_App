@@ -60,12 +60,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                   ),
                   child: Row(
                     children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(Icons.arrow_back, color: colors.onSurface),
-                        tooltip: 'Back',
-                      ),
-                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Endpoints',
@@ -504,7 +498,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     final colors = Theme.of(context).colorScheme;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // --- TOP BAR ---
         Container(
@@ -730,7 +723,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
                     child: SelectableText(
-                      _getResponseBody(_response),
+                      const JsonEncoder.withIndent('  ').convert(_response),
                       style: const TextStyle(
                         fontFamily: 'JetBrains Mono',
                         fontSize: 12,
@@ -741,24 +734,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         ),
       ],
     );
-  }
-
-  String _getResponseBody(Map<String, dynamic>? response) {
-    if (response == null) return '';
-    if (response.containsKey('error') && response.length == 1) {
-      return response['error'].toString();
-    }
-    if (response['success'] == false && response.containsKey('message')) {
-      return response['message'].toString();
-    }
-    if (response.containsKey('body')) {
-      final body = response['body'];
-      if (body is Map || body is List) {
-        return const JsonEncoder.withIndent('  ').convert(body);
-      }
-      return body.toString();
-    }
-    return const JsonEncoder.withIndent('  ').convert(response);
   }
 
   Color _getMethodColor(String method) {

@@ -1,3 +1,97 @@
+class Flow {
+  final int id;
+  final String name;
+  final String? description;
+  final int projectId;
+  final List<FlowStep> steps;
+
+  Flow({
+    required this.id,
+    required this.name,
+    this.description,
+    required this.projectId,
+    this.steps = const [],
+  });
+
+  factory Flow.fromJson(Map<String, dynamic> json) {
+    return Flow(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'],
+      projectId: json['projectId'],
+      steps:
+          (json['steps'] as List?)?.map((e) => FlowStep.fromJson(e)).toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'projectId': projectId,
+    'steps': steps.map((e) => e.toJson()).toList(),
+  };
+
+  Flow copyWith({List<FlowStep>? steps}) {
+    return Flow(
+      id: id,
+      name: name,
+      description: description,
+      projectId: projectId,
+      steps: steps ?? this.steps,
+    );
+  }
+}
+
+class FlowStep {
+  final String id;
+  final String type;
+  final int? endpointId;
+  final String? nextIfTrue;
+  final String? nextIfFalse;
+  final String? condition;
+  final Map<String, dynamic>? preProcessor;
+  final Map<String, dynamic>? postProcessor;
+
+  FlowStep({
+    required this.id,
+    required this.type,
+    this.endpointId,
+    this.nextIfTrue,
+    this.nextIfFalse,
+    this.condition,
+    this.preProcessor,
+    this.postProcessor,
+  });
+
+  factory FlowStep.fromJson(Map<String, dynamic> json) {
+    return FlowStep(
+      id: json['id'],
+      type: json['type'],
+      endpointId: json['endpointId'],
+      nextIfTrue: json['nextIfTrue'],
+      nextIfFalse: json['nextIfFalse'],
+      condition: json['condition'],
+      preProcessor: json['preProcessor'],
+      postProcessor: json['postProcessor'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'endpointId': endpointId,
+      'nextIfTrue': nextIfTrue,
+      'nextIfFalse': nextIfFalse,
+      'condition': condition,
+      'preProcessor': preProcessor,
+      'postProcessor': postProcessor,
+    };
+  }
+}
+
 class CreateFlowRequest {
   final int projectId;
   final String name;
@@ -12,7 +106,7 @@ class CreateFlowRequest {
   Map<String, dynamic> toJson() => {
     'projectId': projectId,
     'name': name,
-    if (description != null) 'description': description,
+    'description': description,
   };
 }
 
@@ -20,115 +114,19 @@ class RunFlowRequest {
   final int threads;
   final int totalDuration;
   final int rampUpDuration;
-  final Map<String, dynamic> variables;
+  final Map<String, dynamic>? variables;
 
   RunFlowRequest({
-    required this.threads,
-    required this.totalDuration,
-    required this.rampUpDuration,
-    Map<String, dynamic>? variables,
-  }) : variables = variables ?? {};
+    this.threads = 1,
+    this.totalDuration = 60,
+    this.rampUpDuration = 0,
+    this.variables,
+  });
 
   Map<String, dynamic> toJson() => {
     'threads': threads,
     'totalDuration': totalDuration,
     'rampUpDuration': rampUpDuration,
     'variables': variables,
-  };
-}
-
-class Flow {
-  final int id;
-  final int projectId;
-  final String name;
-  final String? description;
-  final List<FlowStep> steps;
-
-  Flow({
-    required this.id,
-    required this.projectId,
-    required this.name,
-    this.description,
-    required this.steps,
-  });
-
-  factory Flow.fromJson(Map<String, dynamic> json) => Flow(
-    id: json['id'],
-    projectId: json['projectId'],
-    name: json['name'],
-    description: json['description'],
-    steps:
-        (json['steps'] as List<dynamic>?)
-            ?.map((e) => FlowStep.fromJson(e as Map<String, dynamic>))
-            .toList() ??
-        [],
-  );
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'projectId': projectId,
-    'name': name,
-    if (description != null) 'description': description,
-    'steps': steps.map((s) => s.toJson()).toList(),
-  };
-
-  Flow copyWith({
-    int? id,
-    int? projectId,
-    String? name,
-    String? description,
-    List<FlowStep>? steps,
-  }) {
-    return Flow(
-      id: id ?? this.id,
-      projectId: projectId ?? this.projectId,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      steps: steps ?? this.steps,
-    );
-  }
-}
-
-class FlowStep {
-  final String id;
-  final String type;
-  final int? endpointId;
-  final Map<String, dynamic>? preProcessor;
-  final Map<String, dynamic>? postProcessor;
-  final String? nextIfTrue;
-  final String? nextIfFalse;
-  final String? condition;
-
-  FlowStep({
-    required this.id,
-    required this.type,
-    this.endpointId,
-    this.preProcessor,
-    this.postProcessor,
-    this.nextIfTrue,
-    this.nextIfFalse,
-    this.condition,
-  });
-
-  factory FlowStep.fromJson(Map<String, dynamic> json) => FlowStep(
-    id: json['id'],
-    type: json['type'],
-    endpointId: json['endpointId'],
-    preProcessor: json['preProcessor'],
-    postProcessor: json['postProcessor'],
-    nextIfTrue: json['nextIfTrue'],
-    nextIfFalse: json['nextIfFalse'],
-    condition: json['condition'],
-  );
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'type': type,
-    'endpointId': endpointId,
-    'preProcessor': preProcessor,
-    'postProcessor': postProcessor,
-    'nextIfTrue': nextIfTrue,
-    'nextIfFalse': nextIfFalse,
-    'condition': condition,
   };
 }

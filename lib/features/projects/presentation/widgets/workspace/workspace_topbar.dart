@@ -25,6 +25,12 @@ class WorkspaceTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: colors.onSurface),
+            onPressed: () => _handleViewAllProjects(context),
+            tooltip: 'Back to Projects',
+          ),
+          const SizedBox(width: 8),
           // Flat Project Selector
           PopupMenuButton<String>(
             offset: const Offset(0, 48),
@@ -89,7 +95,7 @@ class WorkspaceTopBar extends StatelessWidget {
           const Spacer(),
 
           // Minimalist Action Buttons
-          OutlinedButton(
+          OutlinedButton.icon(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -97,16 +103,21 @@ class WorkspaceTopBar extends StatelessWidget {
                 ),
               );
             },
+            icon: Icon(
+              Icons.settings_applications_outlined,
+              size: 18,
+              color: colors.onSurface,
+            ),
+            label: Text(
+              "Environment",
+              style: TextStyle(color: colors.onSurface),
+            ),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: colors.outlineVariant),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            ),
-            child: Text(
-              "Environment",
-              style: TextStyle(color: colors.onSurface),
             ),
           ),
         ],

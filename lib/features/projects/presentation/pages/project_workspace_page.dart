@@ -20,50 +20,48 @@ class ProjectWorkspacePage extends StatefulWidget {
 class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   flow.Flow? _selectedFlow;
   SidebarTab _sidebarTab = SidebarTab.flows;
+  int? _lastLoadedProjectId; // Track the last ID to prevent loops
 
   @override
   void initState() {
     super.initState();
+    // Use addPostFrameCallback for one-time initialization actions
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final projectProvider = context.read<ProjectProvider>();
-      final flowProvider = context.read<FlowProvider>();
-      final endpointProvider = context.read<EndpointProvider>();
-
-      projectProvider.loadProjects();
-
-      if (projectProvider.selectedProject != null) {
-        Future.microtask(() {
-          _resetWorkspaceState();
-          flowProvider.loadFlows(
-            projectId: projectProvider.selectedProject!.id,
-          );
-          endpointProvider.loadEndpoints(
-            projectId: projectProvider.selectedProject!.id,
-          );
-        });
-      }
+      if (!mounted) return; // Always check mounted
+      context.read<ProjectProvider>().loadProjects();
     });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final projectProvider = context.watch<ProjectProvider>();
-    final flowProvider = context.read<FlowProvider>();
-    final endpointProvider = context.read<EndpointProvider>();
-    final currentProjectId = projectProvider.selectedProject?.id;
-    // Always reset workspace and reload flows/endpoints when project changes
-    _resetWorkspaceState();
-    if (currentProjectId != null) {
-      Future.microtask(() {
-        flowProvider.loadFlows(projectId: currentProjectId);
-        endpointProvider.loadEndpoints(projectId: currentProjectId);
-        setState(() {}); // Trigger UI refresh
+
+    // We use watch() here to listen to changes.
+    // Note: This will trigger on ANY change in ProjectProvider, but our guard clause below
+    // ensures we only act when the project ID actually changes.
+    final project = context.watch<ProjectProvider>().selectedProject;
+
+    // GUARD CLAUSE: Only load if the ID has actually changed
+    if (project != null && project.id != _lastLoadedProjectId) {
+      _lastLoadedProjectId = project.id;
+      _resetWorkspaceState();
+
+      // Perform data loading
+      // We don't need Future.microtask here if loadFlows is properly async and doesn't notify immediately during build
+      final flowProvider = context.read<FlowProvider>();
+      final endpointProvider = context.read<EndpointProvider>();
+
+      // Execute after the current build frame is done to be safe
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        flowProvider.loadFlows(projectId: project.id);
+        endpointProvider.loadEndpoints(projectId: project.id);
       });
     }
   }
 
   void _resetWorkspaceState() {
+    // No need to setState here if called during didChangeDependencies/build phase
     _selectedFlow = null;
     _sidebarTab = SidebarTab.flows;
   }
