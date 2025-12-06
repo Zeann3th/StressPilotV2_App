@@ -75,8 +75,8 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                         tooltip: 'New Endpoint',
                         style: IconButton.styleFrom(
                           foregroundColor: colors.primary,
-                          backgroundColor: colors.primaryContainer.withOpacity(
-                            0.2,
+                          backgroundColor: colors.primaryContainer.withValues(
+                            alpha: .2,
                           ),
                         ),
                       ),
@@ -103,7 +103,9 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? colors.primaryContainer.withOpacity(0.1)
+                                      ? colors.primaryContainer.withValues(
+                                          alpha: 0.1,
+                                        )
                                       : null,
                                   border: isSelected
                                       ? Border(
@@ -286,7 +288,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: method,
+              initialValue: method,
               items: [
                 'GET',
                 'POST',
@@ -443,15 +445,17 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         data,
       );
       widget.onUpdated(updated);
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Saved')));
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
+      }
     }
   }
 
@@ -465,8 +469,9 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     try {
       dynamic bodyPayload = _bodyCtrl.text;
       try {
-        if (bodyPayload.trim().isNotEmpty)
+        if (bodyPayload.trim().isNotEmpty) {
           bodyPayload = jsonDecode(bodyPayload);
+        }
       } catch (_) {}
 
       final result = await context

@@ -54,6 +54,7 @@ dependencies:
 
   # Process Management
   process_run:
+  http_parser: ^4.1.2
 
 
 dev_dependencies:

@@ -3,7 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dialog.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/node_configuration_dialog.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:convert';
 
 import '../../../domain/canvas.dart';
 
@@ -105,7 +108,7 @@ class _CanvasContentState extends State<_CanvasContent> {
     final y = -(_canvasSize / 2 - viewportSize.height / 2);
 
     _transformController.value = Matrix4.identity()
-      ..translate(x, y)
+      ..translate(x, y, 0)
       ..scale(_initialScale);
   }
 
@@ -201,6 +204,8 @@ class _CanvasContentState extends State<_CanvasContent> {
                                   node: node,
                                   canvasKey: _canvasKey,
                                   transformController: _transformController,
+                                  onDoubleTap: () =>
+                                      _showNodeConfiguration(node),
                                 ),
                               );
                             }),
@@ -256,7 +261,9 @@ class _CanvasContentState extends State<_CanvasContent> {
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: colors.shadow.withOpacity(0.1),
+                                          color: colors.shadow.withValues(
+                                            alpha: 0.1,
+                                          ),
                                           blurRadius: 4,
                                         ),
                                       ],
@@ -287,62 +294,134 @@ class _CanvasContentState extends State<_CanvasContent> {
 
   void _showRunDialog(BuildContext context) {
     final flowId = int.parse(widget.flowId);
-    final threadsController = TextEditingController(text: '1');
-    final durationController = TextEditingController(text: '60');
-    final rampUpController = TextEditingController(text: '0');
+    showDialog(
+      context: context,
+      builder: (context) => RunFlowDialog(flowId: flowId),
+    );
+  }
+
+  void _showJsonPayload(BuildContext context) {
+    final provider = context.read<CanvasProvider>();
+    final steps = provider.generateFlowConfiguration();
+    final jsonEncoder = const JsonEncoder.withIndent('  ');
+    final controller = TextEditingController(
+      text: jsonEncoder.convert(steps.map((s) => s.toJson()).toList()),
+    );
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Run Flow'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: threadsController,
-              decoration: const InputDecoration(labelText: 'Threads'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: durationController,
-              decoration: const InputDecoration(labelText: 'Duration (s)'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: rampUpController,
-              decoration: const InputDecoration(labelText: 'Ramp Up (s)'),
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final request = flow.RunFlowRequest(
-                threads: int.tryParse(threadsController.text) ?? 1,
-                totalDuration: int.tryParse(durationController.text) ?? 60,
-                rampUpDuration: int.tryParse(rampUpController.text) ?? 0,
-              );
+      builder: (context) {
+        final colors = Theme.of(context).colorScheme;
+        return Dialog(
+          backgroundColor: colors.surface,
+          surfaceTintColor: colors.surfaceTint,
+          child: Container(
+            width: 800,
+            height: 600,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Edit Flow Payload',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Warning: Modifying IDs or structure may break the visual layout.',
+                  style: TextStyle(color: colors.error, fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHighest.withValues(
+                        alpha: 0.3,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: colors.outlineVariant),
+                    ),
+                    child: TextField(
+                      controller: controller,
+                      maxLines: null,
+                      expands: true,
+                      style: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 12,
+                      ),
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.all(16),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () {
+                        try {
+                          final List<dynamic> jsonList = jsonDecode(
+                            controller.text,
+                          );
+                          final newSteps = jsonList
+                              .map((e) => flow.FlowStep.fromJson(e))
+                              .toList();
 
-              context.read<FlowProvider>().runFlow(
-                flowId: flowId,
-                runFlowRequest: request,
-              );
+                          provider.applyConfiguration(newSteps);
+                          Navigator.of(context).pop();
 
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Flow execution started')),
-              );
-            },
-            child: const Text('Run'),
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Flow configuration updated'),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Invalid JSON: $e'),
+                              backgroundColor: colors.error,
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text('Apply Changes'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  void _showNodeConfiguration(CanvasNode node) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => NodeConfigurationDialog(node: node),
+    );
+
+    if (result != null && mounted) {
+      context.read<CanvasProvider>().updateNodeData(node.id, result);
+    }
   }
 
   Widget _buildTopToolbar(
@@ -451,6 +530,17 @@ class _CanvasContentState extends State<_CanvasContent> {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
+            tooltip: 'Show JSON Payload',
+            onPressed: () => _showJsonPayload(context),
+            icon: Icon(Icons.data_object, color: colors.primary, size: 20),
+          ),
+          Divider(
+            indent: 8,
+            endIndent: 8,
+            height: 1,
+            color: colors.outlineVariant,
+          ),
+          IconButton(
             tooltip: _isLocked ? 'Unlock Canvas' : 'Lock Canvas',
             onPressed: _toggleLock,
             icon: Icon(
@@ -538,12 +628,14 @@ class DraggableNodeWidget extends StatelessWidget {
   final CanvasNode node;
   final GlobalKey canvasKey;
   final TransformationController transformController;
+  final VoidCallback? onDoubleTap;
 
   const DraggableNodeWidget({
     super.key,
     required this.node,
     required this.canvasKey,
     required this.transformController,
+    this.onDoubleTap,
   });
 
   @override
@@ -566,6 +658,7 @@ class DraggableNodeWidget extends StatelessWidget {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
+      onDoubleTap: onDoubleTap,
       onPanUpdate: (details) {
         // Since GestureDetector is inside InteractiveViewer, details.delta
         // is already in the local coordinate space (scaled).
@@ -592,7 +685,7 @@ class DraggableNodeWidget extends StatelessWidget {
         border: Border.all(color: colors.outlineVariant, width: 1),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withOpacity(0.08),
+            color: colors.shadow.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -631,7 +724,7 @@ class DraggableNodeWidget extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: methodColor.withOpacity(0.1),
+                        color: methodColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -673,7 +766,7 @@ class DraggableNodeWidget extends StatelessWidget {
                 child: Icon(
                   Icons.close,
                   size: 16,
-                  color: colors.onSurfaceVariant.withOpacity(0.7),
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -725,7 +818,7 @@ class DraggableNodeWidget extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: colors.primary.withOpacity(0.3),
+                  color: colors.primary.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -804,7 +897,7 @@ class DraggableNodeWidget extends StatelessWidget {
                 ), // Smaller radius for diamond
                 boxShadow: [
                   BoxShadow(
-                    color: colors.shadow.withOpacity(0.1),
+                    color: colors.shadow.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),

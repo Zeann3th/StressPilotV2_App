@@ -5,6 +5,8 @@ import 'package:stress_pilot/features/common/presentation/provider/endpoint_prov
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 
+import 'package:stress_pilot/core/navigation/app_router.dart';
+
 class WorkspaceTopBar extends StatelessWidget {
   const WorkspaceTopBar({super.key});
 
@@ -97,11 +99,15 @@ class WorkspaceTopBar extends StatelessWidget {
           // Minimalist Action Buttons
           OutlinedButton.icon(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Environment settings coming soon'),
-                ),
-              );
+              if (project != null) {
+                AppNavigator.pushNamed(
+                  AppRouter.projectEnvironmentRoute,
+                  arguments: {
+                    'environmentId': project.environmentId,
+                    'projectName': project.name,
+                  },
+                );
+              }
             },
             icon: Icon(
               Icons.settings_applications_outlined,

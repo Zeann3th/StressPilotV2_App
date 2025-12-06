@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/models/paged_response.dart';
 import '../domain/flow.dart';
@@ -70,8 +72,14 @@ class FlowService {
     MultipartFile? file,
   }) async {
     final formData = FormData();
-    formData.fields.add(
-      MapEntry('request', runFlowRequest.toJson().toString()),
+    formData.files.add(
+      MapEntry(
+        'request',
+        MultipartFile.fromString(
+          jsonEncode(runFlowRequest.toJson()),
+          contentType: MediaType.parse('application/json'),
+        ),
+      ),
     );
     if (file != null) {
       formData.files.add(MapEntry('file', file));

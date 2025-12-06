@@ -12,6 +12,8 @@ import 'package:stress_pilot/features/projects/presentation/provider/project_pro
 import 'package:stress_pilot/features/settings/data/setting_service.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 
+import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
+
 final getIt = GetIt.instance;
 
 void setupDependencies() {
@@ -24,7 +26,7 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => ProjectService());
   getIt.registerLazySingleton(() => ProjectProvider());
-  
+
   getIt.registerLazySingleton(() => FlowService());
   getIt.registerLazySingleton(() => FlowProvider());
 
@@ -34,4 +36,5 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => EndpointProvider());
 
   getIt.registerLazySingleton(() => CanvasProvider());
+  getIt.registerLazySingleton(() => EnvironmentProvider());
 }

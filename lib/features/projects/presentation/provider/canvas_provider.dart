@@ -47,6 +47,16 @@ class CanvasProvider extends ChangeNotifier {
     }
   }
 
+  void updateNodeData(String id, Map<String, dynamic> newData) {
+    final index = _nodes.indexWhere((n) => n.id == id);
+    if (index != -1) {
+      final currentData = Map<String, dynamic>.from(_nodes[index].data);
+      currentData.addAll(newData);
+      _nodes[index] = _nodes[index].copyWith(data: currentData);
+      notifyListeners();
+    }
+  }
+
   void removeNode(String id) {
     _nodes.removeWhere((n) => n.id == id);
     _connections.removeWhere(
@@ -288,6 +298,80 @@ class CanvasProvider extends ChangeNotifier {
           sourceHandle: conn.sourceHandle,
           targetHandle: conn.targetHandle,
         );
+      }
+    }
+
+    notifyListeners();
+  }
+
+  /// Apply configuration from JSON editor
+  /// This reconstructs connections and updates node data based on the provided steps.
+  void applyConfiguration(List<FlowStep> steps) {
+    // 1. Update Nodes Data
+    for (var step in steps) {
+      final index = _nodes.indexWhere((n) => n.id == step.id);
+      if (index != -1) {
+        final node = _nodes[index];
+        final Map<String, dynamic> newData = Map.from(node.data);
+
+        // Update processors
+        if (step.preProcessor != null) {
+          newData['preProcessor'] = step.preProcessor;
+        }
+        if (step.postProcessor != null) {
+          newData['postProcessor'] = step.postProcessor;
+        }
+
+        // Update condition for branches
+        if (node.type == FlowNodeType.branch && step.condition != null) {
+          newData['condition'] = step.condition;
+        }
+
+        _nodes[index] = node.copyWith(data: newData);
+      }
+    }
+
+    // 2. Rebuild Connections
+    // We clear all connections and rebuild them from the steps
+    _connections.clear();
+
+    for (var step in steps) {
+      // Handle nextIfTrue
+      if (step.nextIfTrue != null) {
+        String? sourceHandle;
+        // Check if the source node is a branch to assign correct handle
+        final sourceNode = _nodes.where((n) => n.id == step.id).firstOrNull;
+        if (sourceNode?.type == FlowNodeType.branch) {
+          sourceHandle = 'true';
+        }
+
+        if (_nodes.any((n) => n.id == step.nextIfTrue)) {
+          _connections.add(
+            CanvasConnection(
+              id: const Uuid().v4(),
+              sourceNodeId: step.id,
+              targetNodeId: step.nextIfTrue!,
+              sourceHandle: sourceHandle,
+            ),
+          );
+        }
+      }
+
+      // Handle nextIfFalse
+      if (step.nextIfFalse != null) {
+        final sourceNode = _nodes.where((n) => n.id == step.id).firstOrNull;
+        if (sourceNode?.type == FlowNodeType.branch) {
+          if (_nodes.any((n) => n.id == step.nextIfFalse)) {
+            _connections.add(
+              CanvasConnection(
+                id: const Uuid().v4(),
+                sourceNodeId: step.id,
+                targetNodeId: step.nextIfFalse!,
+                sourceHandle: 'false',
+              ),
+            );
+          }
+        }
       }
     }
 
