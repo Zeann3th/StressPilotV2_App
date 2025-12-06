@@ -105,7 +105,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                   itemCount: filtered.length,
                   separatorBuilder: (c, i) => Divider(
                     height: 1,
-                    color: colors.outlineVariant.withOpacity(0.5),
+                    color: colors.outlineVariant.withValues(alpha: 0.5),
                   ),
                   itemBuilder: (context, index) {
                     // We need the actual index in the provider list, not the filtered list
