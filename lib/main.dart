@@ -7,15 +7,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(600, 400),
+  const splashWindow = WindowOptions(
+    size: Size(720, 480),
+    minimumSize: Size(720, 480),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
   );
 
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+  await windowManager.waitUntilReadyToShow(splashWindow, () async {
     await windowManager.setResizable(false);
     await windowManager.show();
     await windowManager.focus();

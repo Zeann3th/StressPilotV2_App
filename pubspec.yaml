@@ -11,24 +11,12 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons:
-
   # State Management
   provider:
   get_it:
 
   # UI Components
-  fluent_ui:
-  flutter_mix:
-  split_view:
   google_fonts:
-
-  # Drag & Drop
-  desktop_drop:
-
-  # Flow Chart
-  graphview:
-  flutter_flow_chart:
 
   # HTTP
   dio:
@@ -43,16 +31,11 @@ dependencies:
 
   # Utilities
   uuid:
-  intl:
-  json_annotation:
 
   # Storage
   shared_preferences:
-  hive:
-  hive_flutter:
 
   # Process Management
-  process_run:
   http_parser: ^4.1.2
   stomp_dart_client: ^3.0.1
   fl_chart: ^1.1.1
@@ -65,13 +48,13 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
 
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/images/
-    - assets/icons/
     - assets/core/
     - assets/fonts/
 
@@ -81,3 +64,13 @@ flutter:
         - asset: assets/fonts/JetBrainsMono-Regular.ttf
         - asset: assets/fonts/JetBrainsMono-Bold.ttf
           weight: 700
+
+flutter_launcher_icons:
+  image_path: "assets/images/logo.png"
+
+  windows:
+    generate: true
+    icon_size: 256
+
+  linux:
+    generate: true
