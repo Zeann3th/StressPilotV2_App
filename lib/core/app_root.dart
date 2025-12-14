@@ -155,6 +155,10 @@ class _AppRootState extends State<AppRoot> {
   @override
   void dispose() {
     getIt<CoreProcessManager>().stop();
+    // Ensure session manager timers/resources are cleaned up
+    try {
+      getIt<SessionManager>().dispose();
+    } catch (_) {}
     super.dispose();
   }
 }

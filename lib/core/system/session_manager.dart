@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:stress_pilot/core/system/logger.dart';
@@ -8,11 +10,41 @@ class SessionManager {
   String? _sessionId;
   bool _isRefreshing = false;
 
+  Timer? _keepAliveTimer;
+  Duration _keepAliveInterval = const Duration(minutes: 25);
+
   SessionManager(this._dio);
 
   String? get sessionId => _sessionId;
 
   bool get isRefreshing => _isRefreshing;
+
+  /// Start periodic session auto-refresh. Will call [initializeSession] every [interval].
+  void startAutoRefresh({Duration? interval}) {
+    _keepAliveInterval = interval ?? _keepAliveInterval;
+    _keepAliveTimer?.cancel();
+    _keepAliveTimer = Timer.periodic(_keepAliveInterval, (_) async {
+      AppLogger.debug('Auto-refresh timer triggered', name: _logName);
+      try {
+        await initializeSession();
+      } catch (e) {
+        AppLogger.warning('Auto-refresh failed: $e', name: _logName);
+      }
+    });
+    AppLogger.info('Session auto-refresh started (every ${_keepAliveInterval.inMinutes}m)', name: _logName);
+  }
+
+  /// Stop periodic session auto-refresh.
+  void stopAutoRefresh() {
+    _keepAliveTimer?.cancel();
+    _keepAliveTimer = null;
+    AppLogger.info('Session auto-refresh stopped', name: _logName);
+  }
+
+  /// Dispose resources held by SessionManager.
+  void dispose() {
+    stopAutoRefresh();
+  }
 
   Future<bool> waitForHealthCheck({
     int maxAttempts = 12,
@@ -123,6 +155,13 @@ class SessionManager {
               'Could not load cookies for logging',
               name: _logName,
             );
+          }
+
+          // Ensure auto-refresh is scheduled so session stays alive
+          try {
+            startAutoRefresh();
+          } catch (e) {
+            AppLogger.debug('Failed to start auto-refresh: $e', name: _logName);
           }
         } else {
           throw Exception(

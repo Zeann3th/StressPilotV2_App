@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/features/results/data/run_service.dart';
+import 'package:stress_pilot/features/results/domain/models/run.dart';
 
 class RunFlowDialog extends StatefulWidget {
   final int flowId;
@@ -108,11 +111,64 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Flow execution started')),
           );
-          Navigator.pushNamed(
-            context,
-            AppRouter.resultsRoute,
-            arguments: {'flowId': widget.flowId},
-          );
+          // Resolve the last run for this flow and navigate directly to RunsPage.
+          // The backend may create the run asynchronously, so retry briefly until we find a run
+          // that appears to have been created after we started this execution.
+          final startTime = DateTime.now().toUtc();
+          try {
+            final runSvc = getIt<RunService>();
+            Run? found;
+            const int maxAttempts = 10;
+            const Duration delay = Duration(milliseconds: 500);
+            for (int attempt = 0; attempt < maxAttempts; attempt++) {
+              try {
+                final candidate = await runSvc.getLastRun(widget.flowId);
+                // getLastRun returns a non-null Run. Verify createdAt if available.
+                if (candidate.createdAt != null) {
+                  try {
+                    final created = DateTime.parse(candidate.createdAt!).toUtc();
+                    if (created.isAfter(startTime.subtract(const Duration(seconds: 1)))) {
+                      found = candidate;
+                      break;
+                    }
+                  } catch (_) {
+                    // Parsing issue - accept candidate as a best-effort
+                    found = candidate;
+                    break;
+                  }
+                } else {
+                  // No createdAt - accept the candidate as best-effort
+                  found = candidate;
+                  break;
+                }
+              } catch (_) {
+                // ignore and retry
+              }
+              await Future.delayed(delay);
+            }
+
+            if (found != null && mounted) {
+              Navigator.pushNamed(
+                context,
+                AppRouter.runsRoute,
+                arguments: {'runId': found.id},
+              );
+            } else {
+              // Fallback to previous routing if resolution fails
+              Navigator.pushNamed(
+                context,
+                AppRouter.resultsRoute,
+                arguments: {'flowId': widget.flowId},
+              );
+            }
+          } catch (e) {
+            // Unexpected error - fallback
+            Navigator.pushNamed(
+              context,
+              AppRouter.resultsRoute,
+              arguments: {'flowId': widget.flowId},
+            );
+          }
         }
       } catch (e) {
         if (mounted) {

@@ -204,8 +204,15 @@ class _CanvasContentState extends State<_CanvasContent> {
                                   node: node,
                                   canvasKey: _canvasKey,
                                   transformController: _transformController,
-                                  onDoubleTap: () =>
-                                      _showNodeConfiguration(node),
+                                  // Double-tap behavior:
+                                  // - Start node: no-op (indicator only)
+                                  // - Branch node: open a small dialog to edit the condition expression
+                                  // - Endpoint/other: open full node configuration
+                                  onDoubleTap: node.type == FlowNodeType.start
+                                      ? null
+                                      : node.type == FlowNodeType.branch
+                                          ? () => _showBranchConditionDialog(node)
+                                          : () => _showNodeConfiguration(node),
                                 ),
                               );
                             }),
@@ -421,6 +428,76 @@ class _CanvasContentState extends State<_CanvasContent> {
 
     if (result != null && mounted) {
       context.read<CanvasProvider>().updateNodeData(node.id, result);
+    }
+  }
+
+  Future<void> _showBranchConditionDialog(CanvasNode node) async {
+    final initial = node.data['condition']?.toString() ?? 'true';
+    final controller = TextEditingController(text: initial);
+
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (context) {
+        final colors = Theme.of(context).colorScheme;
+        return Dialog(
+          backgroundColor: colors.surface,
+          surfaceTintColor: colors.surfaceTint,
+          child: Container(
+            width: 480,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Edit Condition', style: Theme.of(context).textTheme.titleMedium),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text('Provide the expression used to evaluate the branch (e.g. "user.age > 18")', style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () {
+                        final value = controller.text.trim();
+                        Navigator.of(context).pop(value);
+                      },
+                      child: const Text('Save'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      context.read<CanvasProvider>().updateNodeData(node.id, {'condition': result});
     }
   }
 
@@ -883,36 +960,31 @@ class DraggableNodeWidget extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // Diamond Shape
+          // Diamond Shape (slightly tinted, stronger border and softer shadow)
           Transform.rotate(
             angle: 0.785398, // 45 deg
             child: Container(
               width: diamondSize,
               height: diamondSize,
               decoration: BoxDecoration(
-                color: colors.surface,
-                border: Border.all(color: colors.primary, width: 2),
+                color: colors.surfaceContainerHighest.withValues(alpha: 0.06),
+                border: Border.all(color: colors.primary, width: 1.8),
                 borderRadius: BorderRadius.circular(
                   4,
                 ), // Smaller radius for diamond
                 boxShadow: [
                   BoxShadow(
-                    color: colors.shadow.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    color: colors.shadow.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
             ),
           ),
-          // Icon
-          Center(
-            child: Icon(
-              Icons.question_mark_rounded,
-              size: 24,
-              color: colors.primary,
-            ),
-          ),
+
+          // Intentionally empty center: show only the diamond shape and the T/F ports.
+          const SizedBox.shrink(),
 
           // Delete button
           Positioned(
@@ -937,7 +1009,6 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          // Input Port - Center Left
           Positioned(
             left: -6,
             top: 0,
@@ -945,7 +1016,6 @@ class DraggableNodeWidget extends StatelessWidget {
             child: Center(child: _buildInputPort(context, provider)),
           ),
 
-          // Output "True" - Center Right
           Positioned(
             right: -6,
             top: 0,

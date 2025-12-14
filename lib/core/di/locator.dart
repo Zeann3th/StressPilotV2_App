@@ -14,6 +14,7 @@ import 'package:stress_pilot/features/settings/presentation/provider/setting_pro
 
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/results/data/results_repository.dart';
+import 'package:stress_pilot/features/results/data/run_service.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
 
 final getIt = GetIt.instance;
@@ -44,4 +45,6 @@ void setupDependencies() {
   getIt.registerLazySingleton(
     () => ResultsProvider(getIt(), getIt<FlowService>()),
   );
+  // Runs: service to fetch run metadata
+  getIt.registerLazySingleton(() => RunService());
 }
