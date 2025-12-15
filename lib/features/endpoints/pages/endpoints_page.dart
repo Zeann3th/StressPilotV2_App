@@ -16,10 +16,13 @@ class ProjectEndpointsPage extends StatefulWidget {
 
 class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
   Endpoint? _selectedEndpoint;
+  late ScrollController _scrollCtrl;
 
   @override
   void initState() {
     super.initState();
+    _scrollCtrl = ScrollController();
+    _scrollCtrl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EndpointProvider>().loadEndpoints(
         projectId: widget.projectId,
@@ -27,10 +30,27 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
     });
   }
 
+  void _onScroll() {
+    final provider = context.read<EndpointProvider>();
+    if (!provider.hasMore || provider.isLoadingMore) return;
+
+    if (_scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels < 200) {
+      // near the bottom
+      provider.loadMoreEndpoints(projectId: widget.projectId);
+    }
+  }
+
   void _createNewEndpoint() {
     setState(() {
       _selectedEndpoint = null;
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -94,8 +114,21 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                   child: provider.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : ListView.builder(
-                          itemCount: provider.endpoints.length,
+                          controller: _scrollCtrl,
+                          itemCount: provider.endpoints.length + (provider.hasMore ? 1 : 0),
                           itemBuilder: (context, index) {
+                            if (index >= provider.endpoints.length) {
+                              // footer loader
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                child: Center(
+                                  child: provider.isLoadingMore
+                                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                      : const SizedBox.shrink(),
+                                ),
+                              );
+                            }
+
                             final ep = provider.endpoints[index];
                             final isSelected = _selectedEndpoint?.id == ep.id;
 

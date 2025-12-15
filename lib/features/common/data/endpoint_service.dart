@@ -2,19 +2,30 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
 import '../domain/endpoint.dart';
+import 'package:stress_pilot/core/models/paged_response.dart';
 
 class EndpointService {
   final Dio _dio = HttpClient.getInstance();
 
-  Future<List<Endpoint>> fetchEndpoints({required int projectId}) async {
+  Future<PagedResponse<Endpoint>> fetchEndpoints({
+    required int projectId,
+    int page = 0,
+    int size = 20,
+  }) async {
     final response = await _dio.get(
       '/api/v1/endpoints',
-      queryParameters: {'projectId': projectId},
+      queryParameters: {
+        'projectId': projectId,
+        'page': page,
+        'size': size,
+      },
     );
+
     if (response.statusCode == 200) {
-      final data = response.data;
-      final List endpointsJson = data['content'] ?? [];
-      return endpointsJson.map((e) => Endpoint.fromJson(e)).toList();
+      return PagedResponse.fromJson(
+        response.data,
+        (json) => Endpoint.fromJson(json),
+      );
     } else {
       throw Exception('Failed to load endpoints');
     }

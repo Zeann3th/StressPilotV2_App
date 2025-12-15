@@ -7,7 +7,7 @@ import 'package:stress_pilot/features/common/domain/endpoint.dart'
 import '../../../domain/canvas.dart';
 import '../../../../common/presentation/provider/endpoint_provider.dart';
 
-class WorkspaceEndpointsList extends StatelessWidget {
+class WorkspaceEndpointsList extends StatefulWidget {
   final flow.Flow? selectedFlow;
   final int projectId;
 
@@ -16,6 +16,32 @@ class WorkspaceEndpointsList extends StatelessWidget {
     required this.selectedFlow,
     required this.projectId,
   });
+
+  @override
+  State<WorkspaceEndpointsList> createState() => _WorkspaceEndpointsListState();
+}
+
+class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
+  late ScrollController _scrollCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollCtrl = ScrollController();
+    _scrollCtrl.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // ensure initial load
+      context.read<EndpointProvider>().loadEndpoints(projectId: widget.projectId);
+    });
+  }
+
+  void _onScroll() {
+    final provider = context.read<EndpointProvider>();
+    if (!provider.hasMore || provider.isLoadingMore) return;
+    if (_scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels < 200) {
+      provider.loadMoreEndpoints(projectId: widget.projectId);
+    }
+  }
 
   Future<void> _handleUpload(BuildContext context) async {
     try {
@@ -37,7 +63,7 @@ class WorkspaceEndpointsList extends StatelessWidget {
         // 3. Call the provider
         await context.read<EndpointProvider>().uploadEndpointsFile(
           filePath: filePath,
-          projectId: projectId,
+          projectId: widget.projectId,
         );
 
         if (context.mounted) {
@@ -56,6 +82,13 @@ class WorkspaceEndpointsList extends StatelessWidget {
         );
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -121,9 +154,21 @@ class WorkspaceEndpointsList extends StatelessWidget {
                   ),
                 )
               : ListView.builder(
+                  controller: _scrollCtrl,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemCount: endpoints.length,
+                  itemCount: endpoints.length + (endpointProvider.hasMore ? 1 : 0),
                   itemBuilder: (context, index) {
+                    if (index >= endpoints.length) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: endpointProvider.isLoadingMore
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                              : const SizedBox.shrink(),
+                        ),
+                      );
+                    }
+
                     final endpoint = endpoints[index];
 
                     return Padding(

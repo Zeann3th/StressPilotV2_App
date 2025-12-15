@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../../data/endpoint_service.dart';
 import '../../domain/endpoint.dart';
+import 'package:stress_pilot/core/models/paged_response.dart';
 
 class EndpointProvider extends ChangeNotifier {
   final EndpointService _service = EndpointService();
   List<Endpoint> _endpoints = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+
+  // Pagination state
+  int _currentPage = 0; // 0-based
+  int _pageSize = 20;
+  bool _hasMore = true;
 
   // --- Added Execution State ---
   bool _isExecuting = false;
@@ -15,23 +22,67 @@ class EndpointProvider extends ChangeNotifier {
   List<Endpoint> get endpoints => _endpoints;
 
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMore => _hasMore;
 
   // --- Added Getter ---
   bool get isExecuting => _isExecuting;
 
   String? get error => _error;
 
-  Future<void> loadEndpoints({required int projectId}) async {
+  /// Loads the first page of endpoints (resets pagination).
+  Future<void> loadEndpoints({required int projectId, int pageSize = 20}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
+
+    _currentPage = 0;
+    _pageSize = pageSize;
+    _hasMore = true;
+
     try {
-      _endpoints = await _service.fetchEndpoints(projectId: projectId);
+      final PagedResponse<Endpoint> page = await _service.fetchEndpoints(
+        projectId: projectId,
+        page: _currentPage,
+        size: _pageSize,
+      );
+
+      _endpoints = page.content;
+      _hasMore = _currentPage < (page.totalPages - 1);
     } catch (e) {
       _error = e.toString();
       _endpoints = [];
+      _hasMore = false;
     }
+
     _isLoading = false;
+    notifyListeners();
+  }
+
+  /// Loads the next page and appends to the endpoints list if available.
+  Future<void> loadMoreEndpoints({required int projectId}) async {
+    if (!_hasMore || _isLoadingMore) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final nextPage = _currentPage + 1;
+      final PagedResponse<Endpoint> page = await _service.fetchEndpoints(
+        projectId: projectId,
+        page: nextPage,
+        size: _pageSize,
+      );
+
+      _endpoints.addAll(page.content);
+      _currentPage = page.pageNumber;
+      _hasMore = _currentPage < (page.totalPages - 1);
+    } catch (e) {
+      _error = e.toString();
+      // Do not clear existing endpoints on loadMore failure
+    }
+
+    _isLoadingMore = false;
     notifyListeners();
   }
 
