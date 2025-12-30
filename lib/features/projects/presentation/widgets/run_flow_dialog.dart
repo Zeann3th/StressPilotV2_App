@@ -24,8 +24,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   final _rampUpCtrl = TextEditingController(text: '0');
 
   // Variables
-  final List<MapEntry<TextEditingController, TextEditingController>>
-  _variables = [];
+  final List<MapEntry<TextEditingController, TextEditingController>> _variables = [];
 
   // File
   PlatformFile? _selectedFile;
@@ -72,6 +71,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   }
 
   void _run() async {
+    // ... (Your existing variable parsing logic remains the same) ...
     final threads = int.tryParse(_threadsCtrl.text) ?? 1;
     final duration = int.tryParse(_durationCtrl.text) ?? 60;
     final rampUp = int.tryParse(_rampUpCtrl.text) ?? 0;
@@ -98,84 +98,93 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       variables: variablesMap,
     );
 
-    if (mounted) {
-      try {
-        await context.read<FlowProvider>().runFlow(
-          flowId: widget.flowId,
-          runFlowRequest: request,
-          file: multipartFile,
-        );
+    if (!mounted) return;
 
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Flow execution started')),
-          );
-          // Resolve the last run for this flow and navigate directly to RunsPage.
-          // The backend may create the run asynchronously, so retry briefly until we find a run
-          // that appears to have been created after we started this execution.
-          final startTime = DateTime.now().toUtc();
+    try {
+      // 1. Run the flow logic
+      await context.read<FlowProvider>().runFlow(
+        flowId: widget.flowId,
+        runFlowRequest: request,
+        file: multipartFile,
+      );
+
+      if (!mounted) return;
+
+      // ---------------------------------------------------------
+      // FIX STARTS HERE
+      // ---------------------------------------------------------
+
+      // 2. CAPTURE the tools we need BEFORE popping the dialog
+      // Since 'context' dies when we pop, we save these references now.
+      final messenger = ScaffoldMessenger.of(context);
+      final navigator = Navigator.of(context);
+
+      // 3. NOW we can pop the dialog
+      navigator.pop();
+
+      // 4. Use the CAPTURED messenger to show the snackbar
+      // (Do not use 'context' here)
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Flow execution started')),
+      );
+
+      // 5. Polling Logic
+      // We use the CAPTURED 'navigator' for pushing routes too.
+      final startTime = DateTime.now().toUtc();
+      try {
+        final runSvc = getIt<RunService>();
+        Run? found;
+        const int maxAttempts = 10;
+        const Duration delay = Duration(milliseconds: 500);
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
           try {
-            final runSvc = getIt<RunService>();
-            Run? found;
-            const int maxAttempts = 10;
-            const Duration delay = Duration(milliseconds: 500);
-            for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            final candidate = await runSvc.getLastRun(widget.flowId);
+            if (candidate.createdAt != null) {
               try {
-                final candidate = await runSvc.getLastRun(widget.flowId);
-                // getLastRun returns a non-null Run. Verify createdAt if available.
-                if (candidate.createdAt != null) {
-                  try {
-                    final created = DateTime.parse(candidate.createdAt!).toUtc();
-                    if (created.isAfter(startTime.subtract(const Duration(seconds: 1)))) {
-                      found = candidate;
-                      break;
-                    }
-                  } catch (_) {
-                    // Parsing issue - accept candidate as a best-effort
-                    found = candidate;
-                    break;
-                  }
-                } else {
-                  // No createdAt - accept the candidate as best-effort
+                final created = DateTime.parse(candidate.createdAt!).toUtc();
+                if (created.isAfter(startTime.subtract(const Duration(seconds: 1)))) {
                   found = candidate;
                   break;
                 }
               } catch (_) {
-                // ignore and retry
+                found = candidate;
+                break;
               }
-              await Future.delayed(delay);
-            }
-
-            if (found != null && mounted) {
-              Navigator.pushNamed(
-                context,
-                AppRouter.runsRoute,
-                arguments: {'runId': found.id},
-              );
             } else {
-              // Fallback to previous routing if resolution fails
-              Navigator.pushNamed(
-                context,
-                AppRouter.resultsRoute,
-                arguments: {'flowId': widget.flowId},
-              );
+              found = candidate;
+              break;
             }
-          } catch (e) {
-            // Unexpected error - fallback
-            Navigator.pushNamed(
-              context,
-              AppRouter.resultsRoute,
-              arguments: {'flowId': widget.flowId},
-            );
-          }
+          } catch (_) {}
+          await Future.delayed(delay);
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+
+        if (found != null) {
+          navigator.pushNamed(
+            AppRouter.runsRoute,
+            arguments: {'runId': found.id},
+          );
+        } else {
+          navigator.pushNamed(
+            AppRouter.resultsRoute,
+            arguments: {'flowId': widget.flowId},
           );
         }
+      } catch (e) {
+        navigator.pushNamed(
+          AppRouter.resultsRoute,
+          arguments: {'flowId': widget.flowId},
+        );
+      }
+      // ---------------------------------------------------------
+      // FIX ENDS HERE
+      // ---------------------------------------------------------
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -185,7 +194,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
     return AlertDialog(
       title: const Text('Run Flow Configuration'),
       content: SizedBox(
-        width: 600, // Make the form bigger
+        width: 600,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -260,8 +269,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                           const SizedBox(width: 8),
                           IconButton(
                             icon: const Icon(Icons.close),
-                            onPressed: () =>
-                                setState(() => _selectedFile = null),
+                            onPressed: () => setState(() => _selectedFile = null),
                           ),
                         ],
                       ),

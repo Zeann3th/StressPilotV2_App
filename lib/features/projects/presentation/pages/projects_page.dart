@@ -49,6 +49,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   searchController: _searchController,
                   onRefresh: _handleRefresh,
                   onAdd: _handleCreate,
+                  onImport: _handleImport,
+                  onExport: _handleExport,
                   onSearchSubmitted: _handleSearch,
                   onSearchChanged: () => setState(() {}),
                 ),
@@ -141,5 +143,94 @@ class _ProjectsPageState extends State<ProjectsPage> {
   Future<void> _handleProjectTap(Project project) async {
     await context.read<ProjectProvider>().selectProject(project);
     AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
+  }
+
+  Future<void> _handleImport() async {
+    try {
+      await context.read<ProjectProvider>().importProject();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Project imported successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to import project: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleExport() async {
+    final provider = context.read<ProjectProvider>();
+    
+    if (provider.projects.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No projects available to export'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Show dialog to select which project to export
+    final selectedProject = await showDialog<Project>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Project to Export'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: provider.projects.length,
+            itemBuilder: (context, index) {
+              final project = provider.projects[index];
+              return ListTile(
+                title: Text(project.name),
+                subtitle: Text(project.description),
+                onTap: () => Navigator.of(context).pop(project),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedProject == null) return;
+
+    try {
+      await provider.exportProject(selectedProject.id, selectedProject.name);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Project exported successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to export project: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

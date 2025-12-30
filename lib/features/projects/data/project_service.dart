@@ -65,4 +65,34 @@ class ProjectService {
   Future<void> deleteProject(int projectId) async {
     await _dio.delete('/api/v1/projects/$projectId');
   }
+
+  Future<void> exportProject(int projectId, String savePath) async {
+    await _dio.download(
+      '/api/v1/projects/$projectId/export',
+      savePath,
+      options: Options(
+        responseType: ResponseType.bytes,
+        followRedirects: false,
+      ),
+    );
+  }
+
+  Future<Project> importProject(String filePath) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        filePath,
+        filename: filePath.split('/').last,
+      ),
+    });
+
+    final response = await _dio.post(
+      '/api/v1/projects/import',
+      data: formData,
+      options: Options(
+        contentType: 'multipart/form-data',
+      ),
+    );
+
+    return Project.fromJson(response.data);
+  }
 }

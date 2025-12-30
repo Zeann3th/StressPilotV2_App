@@ -421,13 +421,13 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
     // Initialize Body
     String bodyText = '';
-    if (widget.endpoint.httpBody != null) {
-      if (widget.endpoint.httpBody is String) {
-        bodyText = widget.endpoint.httpBody;
+    if (widget.endpoint.body != null) {
+      if (widget.endpoint.body is String) {
+        bodyText = widget.endpoint.body;
       } else {
         bodyText = const JsonEncoder.withIndent(
           '  ',
-        ).convert(widget.endpoint.httpBody);
+        ).convert(widget.endpoint.body);
       }
     }
     _bodyCtrl = TextEditingController(text: bodyText);
@@ -473,7 +473,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         'name': _nameCtrl.text,
         'url': _urlCtrl.text,
         'httpMethod': _method,
-        'httpBody': bodyPayload,
+        'body': bodyPayload,
         'httpHeaders': _headers,
         'httpParameters': _params,
         'projectId': widget.projectId,
@@ -518,7 +518,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
           .executeEndpoint(widget.endpoint.id, {
             'url': _urlCtrl.text,
             'httpMethod': _method,
-            'httpBody': bodyPayload,
+            'body': bodyPayload,
             'httpHeaders': _headers,
             'httpParameters': _params,
           });

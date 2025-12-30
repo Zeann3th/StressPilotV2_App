@@ -48,7 +48,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
       // 1. Pick the file
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['json', 'yaml', 'yml'], // Allowed extensions
+        allowedExtensions: ['json', 'yaml', 'yml', 'proto'], // Allowed extensions
       );
 
       if (result != null && result.files.single.path != null) {

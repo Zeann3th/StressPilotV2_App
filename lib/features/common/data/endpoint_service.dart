@@ -67,9 +67,9 @@ class EndpointService {
       }
     }
 
-    // httpBody special handling: if it's a Map/List, stringify it.
-    if (dataToSend['httpBody'] is Map || dataToSend['httpBody'] is List) {
-      dataToSend['httpBody'] = jsonEncode(dataToSend['httpBody']);
+    // body special handling: if it's a Map/List, stringify it.
+    if (dataToSend['body'] is Map || dataToSend['body'] is List) {
+      dataToSend['body'] = jsonEncode(dataToSend['body']);
     }
 
     final response = await _dio.patch(

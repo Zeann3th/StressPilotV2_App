@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stress_pilot/core/models/paged_response.dart';
@@ -146,6 +147,63 @@ class ProjectProvider extends ChangeNotifier {
       }
 
       notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> exportProject(int projectId, String projectName) async {
+    try {
+      // Use file_picker to get save location
+      final result = await FilePicker.platform.saveFile(
+        dialogTitle: 'Export Project',
+        fileName: '${projectName.replaceAll(' ', '_')}_export.json',
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result == null) {
+        // User cancelled the picker
+        return;
+      }
+
+      await _projectService.exportProject(projectId, result);
+      _error = null;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<Project> importProject() async {
+    try {
+      // Use file_picker to select a file
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: 'Import Project',
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        // User cancelled the picker
+        throw Exception('No file selected');
+      }
+
+      final filePath = result.files.first.path;
+      if (filePath == null) {
+        throw Exception('Invalid file path');
+      }
+
+      final project = await _projectService.importProject(filePath);
+      _projects.insert(0, project);
+      _error = null;
+      notifyListeners();
+      return project;
     } catch (e) {
       _error = e.toString();
       notifyListeners();

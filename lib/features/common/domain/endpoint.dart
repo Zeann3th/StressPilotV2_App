@@ -6,7 +6,7 @@ class Endpoint {
   final String url;
   final String? httpMethod;
   final Map<String, dynamic>? httpHeaders;
-  final dynamic httpBody;
+  final dynamic body;
   final Map<String, dynamic>? httpParameters;
   final String? grpcServiceName;
   final String? grpcMethodName;
@@ -23,7 +23,7 @@ class Endpoint {
     required this.url,
     this.httpMethod,
     this.httpHeaders,
-    this.httpBody,
+    this.body,
     this.httpParameters,
     this.grpcServiceName,
     this.grpcMethodName,
@@ -41,7 +41,7 @@ class Endpoint {
     url: json['url'],
     httpMethod: json['httpMethod'],
     httpHeaders: json['httpHeaders'] as Map<String, dynamic>?,
-    httpBody: json['httpBody'],
+    body: json['body'],
     httpParameters: json['httpParameters'] as Map<String, dynamic>?,
     grpcServiceName: json['grpcServiceName'],
     grpcMethodName: json['grpcMethodName'],

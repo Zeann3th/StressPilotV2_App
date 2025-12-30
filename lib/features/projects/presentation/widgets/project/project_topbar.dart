@@ -4,6 +4,8 @@ class ProjectTopBar extends StatelessWidget {
   final TextEditingController searchController;
   final VoidCallback onRefresh;
   final VoidCallback onAdd;
+  final VoidCallback onImport;
+  final VoidCallback onExport;
   final ValueChanged<String> onSearchSubmitted;
   final VoidCallback onSearchChanged;
 
@@ -12,6 +14,8 @@ class ProjectTopBar extends StatelessWidget {
     required this.searchController,
     required this.onRefresh,
     required this.onAdd,
+    required this.onImport,
+    required this.onExport,
     required this.onSearchSubmitted,
     required this.onSearchChanged,
   });
@@ -106,6 +110,34 @@ class ProjectTopBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
+
+          // Import Button
+          OutlinedButton.icon(
+            onPressed: onImport,
+            icon: const Icon(Icons.upload_file, size: 18),
+            label: const Text("Import"),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // Export Button
+          OutlinedButton.icon(
+            onPressed: onExport,
+            icon: const Icon(Icons.download, size: 18),
+            label: const Text("Export"),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
 
           // Create Button (Primary Action)
           FilledButton.icon(
