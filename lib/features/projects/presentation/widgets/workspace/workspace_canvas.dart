@@ -301,9 +301,17 @@ class _CanvasContentState extends State<_CanvasContent> {
 
   void _showRunDialog(BuildContext context) {
     final flowId = int.parse(widget.flowId);
+
+    final flowProvider = context.read<FlowProvider>();
+
     showDialog(
       context: context,
-      builder: (context) => RunFlowDialog(flowId: flowId),
+      builder: (_) {
+        return ChangeNotifierProvider.value(
+          value: flowProvider,
+          child: RunFlowDialog(flowId: flowId),
+        );
+      },
     );
   }
 

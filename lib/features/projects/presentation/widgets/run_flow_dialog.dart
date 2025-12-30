@@ -71,10 +71,14 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   }
 
   void _run() async {
-    // ... (Your existing variable parsing logic remains the same) ...
+    print("🚀 PRESSED RUN: Starting logic..."); // <--- LOOK FOR THIS
+
+    // 1. Parse Inputs
     final threads = int.tryParse(_threadsCtrl.text) ?? 1;
     final duration = int.tryParse(_durationCtrl.text) ?? 60;
     final rampUp = int.tryParse(_rampUpCtrl.text) ?? 0;
+
+    print("📊 Inputs: Threads=$threads, Duration=$duration");
 
     final variablesMap = <String, dynamic>{};
     for (var entry in _variables) {
@@ -83,8 +87,10 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       }
     }
 
+    // 2. Prepare File
     MultipartFile? multipartFile;
     if (_selectedFile != null && _selectedFile!.path != null) {
+      print("📂 File selected: ${_selectedFile!.name}");
       multipartFile = await MultipartFile.fromFile(
         _selectedFile!.path!,
         filename: _selectedFile!.name,
@@ -98,39 +104,47 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       variables: variablesMap,
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      print("⚠️ Widget unmounted before execution");
+      return;
+    }
 
     try {
-      // 1. Run the flow logic
+      print("⏳ Calling Provider.runFlow()...");
+
+      // 3. Run the flow logic
       await context.read<FlowProvider>().runFlow(
         flowId: widget.flowId,
         runFlowRequest: request,
         file: multipartFile,
       );
 
+      print("✅ Provider.runFlow() returned success!");
+
       if (!mounted) return;
 
-      // ---------------------------------------------------------
-      // FIX STARTS HERE
-      // ---------------------------------------------------------
-
-      // 2. CAPTURE the tools we need BEFORE popping the dialog
-      // Since 'context' dies when we pop, we save these references now.
-      final messenger = ScaffoldMessenger.of(context);
+      // 4. Navigation & Polling
       final navigator = Navigator.of(context);
+      final messenger = ScaffoldMessenger.of(context);
 
-      // 3. NOW we can pop the dialog
       navigator.pop();
+      print("👋 Dialog Popped");
 
-      // 4. Use the CAPTURED messenger to show the snackbar
-      // (Do not use 'context' here)
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Flow execution started')),
-      );
+      await Future.delayed(const Duration(milliseconds: 300));
 
-      // 5. Polling Logic
-      // We use the CAPTURED 'navigator' for pushing routes too.
+      // Show SnackBar
+      try {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Flow execution started')),
+        );
+      } catch (e) {
+        print("⚠️ SnackBar error (harmless): $e");
+      }
+
+      // Start Polling
+      print("🕵️ Starting Polling...");
       final startTime = DateTime.now().toUtc();
+
       try {
         final runSvc = getIt<RunService>();
         Run? found;
@@ -138,24 +152,26 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         const Duration delay = Duration(milliseconds: 500);
 
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
+          print("🔄 Polling attempt ${attempt + 1}/$maxAttempts");
           try {
             final candidate = await runSvc.getLastRun(widget.flowId);
+
             if (candidate.createdAt != null) {
-              try {
-                final created = DateTime.parse(candidate.createdAt!).toUtc();
-                if (created.isAfter(startTime.subtract(const Duration(seconds: 1)))) {
-                  found = candidate;
-                  break;
-                }
-              } catch (_) {
+              final created = DateTime.parse(candidate.createdAt!).toUtc();
+              // Adjust buffer if needed
+              if (created.isAfter(startTime.subtract(const Duration(seconds: 1)))) {
+                print("🎯 Found new run: ${candidate.id}");
                 found = candidate;
                 break;
               }
             } else {
+              // If your backend doesn't return createdAt, we assume it's the one
               found = candidate;
               break;
             }
-          } catch (_) {}
+          } catch (e) {
+            print("   Polling fetch error: $e");
+          }
           await Future.delayed(delay);
         }
 
@@ -165,26 +181,28 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
             arguments: {'runId': found.id},
           );
         } else {
+          print("⚠️ Polling timed out, going to Results list");
           navigator.pushNamed(
             AppRouter.resultsRoute,
             arguments: {'flowId': widget.flowId},
           );
         }
       } catch (e) {
+        print("❌ Polling block error: $e");
         navigator.pushNamed(
           AppRouter.resultsRoute,
           arguments: {'flowId': widget.flowId},
         );
       }
-      // ---------------------------------------------------------
-      // FIX ENDS HERE
-      // ---------------------------------------------------------
 
     } catch (e) {
+      print("❌ CRITICAL ERROR in _run: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        try {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        } catch (_) {}
       }
     }
   }
