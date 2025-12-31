@@ -1375,67 +1375,256 @@ class ConnectionPainter extends CustomPainter {
       final source = nodeMap[conn.sourceNodeId];
       final target = nodeMap[conn.targetNodeId];
       if (source == null || target == null) continue;
-      Offset start = _getOutputPos(source, conn.sourceHandle);
-      Offset end = _getInputPos(target);
-      _drawBezier(canvas, start, end, paint);
+
+      _drawSmartConnection(canvas, source, target, conn.sourceHandle, paint);
     }
 
     // Draw "Live" connection line
     if (tempSourceId != null && tempEndPos != null) {
       final source = nodeMap[tempSourceId];
       if (source != null) {
-        Offset start = _getOutputPos(source, tempSourceHandle);
-        _drawBezier(canvas, start, tempEndPos!, activePaint);
+        _drawSmartLiveConnection(
+          canvas,
+          source,
+          tempSourceHandle,
+          tempEndPos!,
+          activePaint,
+        );
       }
     }
   }
 
-  Offset _getOutputPos(CanvasNode node, String? handle) {
+  void _drawSmartConnection(
+    Canvas canvas,
+    CanvasNode source,
+    CanvasNode target,
+    String? sourceHandle,
+    Paint paint,
+  ) {
+    // 1. Determine Start Point
+    // If handle is provided (Branch), force that side.
+    // Otherwise, allow any side for source.
+    final (startPos, startDir) = _getStartPoint(
+      source,
+      sourceHandle,
+      target.position,
+    );
+
+    // 2. Determine End Point
+    // Allow any side for target that is "facing" the start point or convenient.
+    final (endPos, endDir) = _getBestEndPoint(target, startPos);
+
+    // 3. Draw Orthogonal Line
+    _drawOrthogonalLine(canvas, startPos, endPos, startDir, endDir, paint);
+  }
+
+  void _drawSmartLiveConnection(
+    Canvas canvas,
+    CanvasNode source,
+    String? sourceHandle,
+    Offset endPos,
+    Paint paint,
+  ) {
+    final (startPos, startDir) = _getStartPoint(source, sourceHandle, endPos);
+
+    // For live connection, we don't have a target node orientation yet,
+    // so we infer "arrival" direction based on relative position.
+    AxisDirection endDir = AxisDirection.left; // Default
+    if ((endPos.dx - startPos.dx).abs() > (endPos.dy - startPos.dy).abs()) {
+      endDir = endPos.dx > startPos.dx
+          ? AxisDirection.left
+          : AxisDirection.right;
+    } else {
+      endDir = endPos.dy > startPos.dy ? AxisDirection.up : AxisDirection.down;
+    }
+
+    _drawOrthogonalLine(canvas, startPos, endPos, startDir, endDir, paint);
+  }
+
+  (Offset, AxisDirection) _getStartPoint(
+    CanvasNode node,
+    String? handle,
+    Offset targetCenter,
+  ) {
     if (node.type == FlowNodeType.branch) {
       if (handle == 'true') {
-        // Right side, centered vertically
-        return node.position + Offset(node.width, node.height / 2);
+        return (
+          node.position + Offset(node.width, node.height / 2),
+          AxisDirection.right,
+        );
       } else if (handle == 'false') {
-        // Bottom side, centered horizontally
-        return node.position + Offset(node.width / 2, node.height);
+        return (
+          node.position + Offset(node.width / 2, node.height),
+          AxisDirection.down,
+        );
       }
     }
-    // Default centers
-    if (node.type == FlowNodeType.start) {
-      return node.position + Offset(node.width / 2, node.height / 2);
+
+    // For standard nodes, choose the side closest to the target
+    final center = node.position + Offset(node.width / 2, node.height / 2);
+    final dx = targetCenter.dx - center.dx;
+    final dy = targetCenter.dy - center.dy;
+
+    if (dx.abs() > dy.abs()) {
+      // Horizontal preference
+      if (dx > 0) {
+        return (
+          node.position + Offset(node.width, node.height / 2),
+          AxisDirection.right,
+        );
+      } else {
+        return (node.position + Offset(0, node.height / 2), AxisDirection.left);
+      }
+    } else {
+      // Vertical preference
+      if (dy > 0) {
+        return (
+          node.position + Offset(node.width / 2, node.height),
+          AxisDirection.down,
+        );
+      } else {
+        return (node.position + Offset(node.width / 2, 0), AxisDirection.up);
+      }
     }
-    // Standard node: Right edge or center?
-    // Figma usually does edge to edge.
-    // Let's use Right Center for standard output
-    return node.position + Offset(node.width, node.height / 2);
   }
 
-  Offset _getInputPos(CanvasNode node) {
-    // Left side, centered vertically
-    return node.position + Offset(0, node.height / 2);
+  (Offset, AxisDirection) _getBestEndPoint(CanvasNode node, Offset startPos) {
+    final center = node.position + Offset(node.width / 2, node.height / 2);
+    final dx = startPos.dx - center.dx;
+    final dy = startPos.dy - center.dy;
+
+    // We want to enter from the side facing the start position
+    if (dx.abs() > dy.abs()) {
+      if (dx > 0) {
+        // Start is to the right, so we enter from right (pointing left)
+        return (
+          node.position + Offset(node.width, node.height / 2),
+          AxisDirection.right,
+        );
+      } else {
+        // Start is to the left, so we enter from left (pointing right)
+        return (node.position + Offset(0, node.height / 2), AxisDirection.left);
+      }
+    } else {
+      if (dy > 0) {
+        // Start is below, enter from bottom (pointing up)
+        return (
+          node.position + Offset(node.width / 2, node.height),
+          AxisDirection.down,
+        );
+      } else {
+        // Start is above, enter from top (pointing down)
+        return (node.position + Offset(node.width / 2, 0), AxisDirection.up);
+      }
+    }
   }
 
-  void _drawBezier(Canvas canvas, Offset start, Offset end, Paint paint) {
+  void _drawOrthogonalLine(
+    Canvas canvas,
+    Offset start,
+    Offset end,
+    AxisDirection startDir,
+    AxisDirection endDir,
+    Paint paint,
+  ) {
     final path = Path();
     path.moveTo(start.dx, start.dy);
-    double dist = (end.dx - start.dx).abs();
 
-    // Control points for smooth curve
-    final controlPoint1 = Offset(start.dx + dist * 0.5, start.dy);
-    final controlPoint2 = Offset(end.dx - dist * 0.5, end.dy);
+    final points = _getOrthogonalPoints(start, end, startDir, endDir);
+    for (final point in points) {
+      path.lineTo(point.dx, point.dy);
+    }
 
-    path.cubicTo(
-      controlPoint1.dx,
-      controlPoint1.dy,
-      controlPoint2.dx,
-      controlPoint2.dy,
-      end.dx,
-      end.dy,
-    );
+    // Ensure we actually reach the end point exactly
+    if (points.isNotEmpty && points.last != end) {
+      path.lineTo(end.dx, end.dy);
+    }
+
     canvas.drawPath(path, paint);
 
-    // Draw Arrowhead at the end
-    _drawArrowHead(canvas, end, controlPoint2, paint.color);
+    // Draw Arrowhead
+    // Use the last segment direction
+    final prevPoint = points.isNotEmpty ? points.last : start;
+    _drawArrowHead(canvas, end, prevPoint, paint.color);
+  }
+
+  List<Offset> _getOrthogonalPoints(
+    Offset start,
+    Offset end,
+    AxisDirection startDir,
+    AxisDirection endDir,
+  ) {
+    // Improved Manhattan routing
+    // 1. Move out from start
+    // 2. Move out from end (acting as approach point)
+    // 3. Connect them
+
+    const double margin = 20.0;
+
+    Offset p1 = _moveInDirection(start, startDir, margin);
+
+    Offset p2 = _moveInDirection(end, endDir, margin);
+
+    List<Offset> points = [p1];
+
+    // Now connect p1 to p2 orthogonally
+    // We essentially have a new start (p1) and end (p2) but we can turn freely now?
+    // Not exactly, we prefer minimizing turns.
+
+    double midX = (p1.dx + p2.dx) / 2;
+    double midY = (p1.dy + p2.dy) / 2;
+
+    bool startVertical =
+        startDir == AxisDirection.up || startDir == AxisDirection.down;
+    bool endVertical =
+        endDir == AxisDirection.up || endDir == AxisDirection.down;
+
+    // Heuristic:
+    // If we are vertical at start, we usually want to move horizontally next.
+    // If we are horizontal at start, we usually want to move vertically next.
+
+    if (startVertical == endVertical) {
+      // Both starting vertical (e.g. Top -> Bottom)
+      // Connect via horizontal mid segment
+      // Z path: Vertical -> Horizontal -> Vertical
+      if (startVertical) {
+        points.add(Offset(p1.dx, midY));
+        points.add(Offset(p2.dx, midY));
+      } else {
+        // Both horizontal
+        points.add(Offset(midX, p1.dy));
+        points.add(Offset(midX, p2.dy));
+      }
+    } else {
+      // Perpendicular (e.g. Right -> Bottom)
+      // L path: Horizontal -> Vertical or V -> H
+      if (startVertical) {
+        // Moving Vertically first.
+        // Can we go straight to p2.y?
+        points.add(Offset(p1.dx, p2.dy));
+      } else {
+        // Moving Horizontally first
+        points.add(Offset(p2.dx, p1.dy));
+      }
+    }
+
+    points.add(p2);
+    points.add(end);
+
+    return points;
+  }
+
+  Offset _moveInDirection(Offset p, AxisDirection dir, double distance) {
+    switch (dir) {
+      case AxisDirection.left:
+        return p + Offset(-distance, 0);
+      case AxisDirection.right:
+        return p + Offset(distance, 0);
+      case AxisDirection.up:
+        return p + Offset(0, -distance);
+      case AxisDirection.down:
+        return p + Offset(0, distance);
+    }
   }
 
   void _drawArrowHead(
@@ -1444,26 +1633,22 @@ class ConnectionPainter extends CustomPainter {
     Offset prevPoint,
     Color color,
   ) {
-    // Calculate angle of the line entering the target
+    if ((tip - prevPoint).distance < 1.0) return; // Prevention
+
     final angle = (tip - prevPoint).direction;
     const arrowSize = 6.0;
 
     final arrowPath = Path();
     arrowPath.moveTo(tip.dx, tip.dy);
-    arrowPath.lineTo(
-      tip.dx - arrowSize * 1.5 * 0.8, // x component
-      tip.dy - arrowSize * 0.8, // y component
-    );
+    arrowPath.lineTo(tip.dx - arrowSize * 1.5 * 0.8, tip.dy - arrowSize * 0.8);
     arrowPath.lineTo(tip.dx - arrowSize * 1.5 * 0.8, tip.dy + arrowSize * 0.8);
     arrowPath.close();
 
-    // Rotate arrow to match curve direction
     canvas.save();
     canvas.translate(tip.dx, tip.dy);
     canvas.rotate(angle);
     canvas.translate(-tip.dx, -tip.dy);
 
-    // Draw filled arrow
     canvas.drawPath(
       arrowPath,
       Paint()
