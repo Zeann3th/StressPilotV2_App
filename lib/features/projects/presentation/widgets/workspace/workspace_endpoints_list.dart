@@ -31,14 +31,17 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
     _scrollCtrl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // ensure initial load
-      context.read<EndpointProvider>().loadEndpoints(projectId: widget.projectId);
+      context.read<EndpointProvider>().loadEndpoints(
+        projectId: widget.projectId,
+      );
     });
   }
 
   void _onScroll() {
     final provider = context.read<EndpointProvider>();
     if (!provider.hasMore || provider.isLoadingMore) return;
-    if (_scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels < 200) {
+    if (_scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels <
+        200) {
       provider.loadMoreEndpoints(projectId: widget.projectId);
     }
   }
@@ -48,7 +51,12 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
       // 1. Pick the file
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['json', 'yaml', 'yml', 'proto'], // Allowed extensions
+        allowedExtensions: [
+          'json',
+          'yaml',
+          'yml',
+          'proto',
+        ], // Allowed extensions
       );
 
       if (result != null && result.files.single.path != null) {
@@ -59,6 +67,8 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
             const SnackBar(content: Text('Uploading endpoints...')),
           );
         }
+
+        if (!context.mounted) return;
 
         // 3. Call the provider
         await context.read<EndpointProvider>().uploadEndpointsFile(
@@ -156,14 +166,21 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
               : ListView.builder(
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemCount: endpoints.length + (endpointProvider.hasMore ? 1 : 0),
+                  itemCount:
+                      endpoints.length + (endpointProvider.hasMore ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index >= endpoints.length) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Center(
                           child: endpointProvider.isLoadingMore
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : const SizedBox.shrink(),
                         ),
                       );

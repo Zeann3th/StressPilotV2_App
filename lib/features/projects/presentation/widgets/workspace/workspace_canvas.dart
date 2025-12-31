@@ -108,8 +108,8 @@ class _CanvasContentState extends State<_CanvasContent> {
     final y = -(_canvasSize / 2 - viewportSize.height / 2);
 
     _transformController.value = Matrix4.identity()
-      ..translate(x, y, 0)
-      ..scale(_initialScale);
+      ..translateByDouble(x, y, 0, 1.0)
+      ..scaleByDouble(_initialScale, _initialScale, _initialScale, 1.0);
   }
 
   void _zoom(double factor) {
@@ -119,9 +119,9 @@ class _CanvasContentState extends State<_CanvasContent> {
     final center = Offset(viewportSize.width / 2, viewportSize.height / 2);
 
     // Translate to center, scale, translate back
-    matrix.translate(center.dx, center.dy);
-    matrix.scale(factor);
-    matrix.translate(-center.dx, -center.dy);
+    matrix.translateByDouble(center.dx, center.dy, 0, 1.0);
+    matrix.scaleByDouble(factor, factor, factor, 1.0);
+    matrix.translateByDouble(-center.dx, -center.dy, 0, 1.0);
 
     final newScale = matrix.getMaxScaleOnAxis();
     if (newScale < 0.1 || newScale > 5.0) return;
@@ -160,131 +160,153 @@ class _CanvasContentState extends State<_CanvasContent> {
                   onAcceptWithDetails: (details) =>
                       _handleDrop(details, context),
                   builder: (context, candidateData, rejectedData) {
-                    return GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                        key: _canvasKey,
-                        width: _canvasSize,
-                        height: _canvasSize,
-                        color: colors.surface,
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child: RepaintBoundary(
-                                child: CustomPaint(
-                                  painter: GridPainter(
-                                    color: colors.onSurface.withAlpha(15),
-                                    scale: 1.0,
+                    return Listener(
+                      onPointerMove: (event) {
+                        if (canvasProvider.canvasMode == CanvasMode.connect &&
+                            canvasProvider.selectedSourceNodeId != null) {
+                          final RenderBox box =
+                              _canvasKey.currentContext!.findRenderObject()
+                                  as RenderBox;
+                          final localPos = box.globalToLocal(event.position);
+                          canvasProvider.updateCursorPosition(localPos);
+                        }
+                      },
+                      child: GestureDetector(
+                        onTap: () {
+                          // Background tap to deselect?
+                          if (canvasProvider.canvasMode == CanvasMode.connect) {
+                            canvasProvider.setCanvasMode(
+                              CanvasMode.connect,
+                            ); // Resets selection
+                          }
+                        },
+                        child: Container(
+                          key: _canvasKey,
+                          width: _canvasSize,
+                          height: _canvasSize,
+                          color: colors.surface,
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: RepaintBoundary(
+                                  child: CustomPaint(
+                                    painter: GridPainter(
+                                      color: colors.onSurface.withValues(
+                                        alpha: 0.05,
+                                      ), // Updated to withValues
+                                      scale: 1.0,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Positioned.fill(
-                              child: RepaintBoundary(
-                                child: CustomPaint(
-                                  painter: ConnectionPainter(
-                                    connections: canvasProvider.connections,
-                                    nodes: canvasProvider.nodes,
-                                    tempSourceId:
-                                        canvasProvider.tempSourceNodeId,
-                                    tempSourceHandle:
-                                        canvasProvider.tempSourceHandle,
-                                    tempEndPos: canvasProvider.tempDragPosition,
-                                    lineColor: colors.onSurface,
-                                    activeColor: colors.primary,
+                              Positioned.fill(
+                                child: RepaintBoundary(
+                                  child: CustomPaint(
+                                    painter: ConnectionPainter(
+                                      connections: canvasProvider.connections,
+                                      nodes: canvasProvider.nodes,
+                                      tempSourceId:
+                                          canvasProvider.selectedSourceNodeId,
+                                      tempSourceHandle:
+                                          canvasProvider.selectedSourceHandle,
+                                      tempEndPos:
+                                          canvasProvider.tempDragPosition,
+                                      lineColor: colors.onSurface,
+                                      activeColor: colors.primary,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            ...canvasProvider.nodes.map((node) {
-                              return Positioned(
-                                left: node.position.dx,
-                                top: node.position.dy,
-                                child: DraggableNodeWidget(
-                                  node: node,
-                                  canvasKey: _canvasKey,
-                                  transformController: _transformController,
-                                  // Double-tap behavior:
-                                  // - Start node: no-op (indicator only)
-                                  // - Branch node: open a small dialog to edit the condition expression
-                                  // - Endpoint/other: open full node configuration
-                                  onDoubleTap: node.type == FlowNodeType.start
-                                      ? null
-                                      : node.type == FlowNodeType.branch
-                                          ? () => _showBranchConditionDialog(node)
-                                          : () => _showNodeConfiguration(node),
-                                ),
-                              );
-                            }),
-                            // Connection Delete Buttons
-                            ...canvasProvider.connections.map((conn) {
-                              final source = canvasProvider.nodes.firstWhere(
-                                (n) => n.id == conn.sourceNodeId,
-                              );
-                              final target = canvasProvider.nodes.firstWhere(
-                                (n) => n.id == conn.targetNodeId,
-                              );
+                              ...canvasProvider.nodes.map((node) {
+                                return Positioned(
+                                  left: node.position.dx,
+                                  top: node.position.dy,
+                                  child: DraggableNodeWidget(
+                                    node: node,
+                                    canvasKey: _canvasKey,
+                                    transformController: _transformController,
+                                    // Double-tap behavior:
+                                    // - Start node: no-op (indicator only)
+                                    // - Branch node: open a small dialog to edit the condition expression
+                                    // - Endpoint/other: open full node configuration
+                                    onDoubleTap: node.type == FlowNodeType.start
+                                        ? null
+                                        : node.type == FlowNodeType.branch
+                                        ? () => _showBranchConditionDialog(node)
+                                        : () => _showNodeConfiguration(node),
+                                  ),
+                                );
+                              }),
+                              // Connection Delete Buttons
+                              ...canvasProvider.connections.map((conn) {
+                                final source = canvasProvider.nodes.firstWhere(
+                                  (n) => n.id == conn.sourceNodeId,
+                                );
+                                final target = canvasProvider.nodes.firstWhere(
+                                  (n) => n.id == conn.targetNodeId,
+                                );
 
-                              // Calculate midpoint for delete button
-                              Offset start;
-                              if (source.type == FlowNodeType.branch) {
-                                if (conn.sourceHandle == 'true') {
-                                  start =
-                                      source.position +
-                                      Offset(source.width, source.height / 2);
+                                // Calculate midpoint for delete button
+                                Offset start;
+                                if (source.type == FlowNodeType.branch) {
+                                  if (conn.sourceHandle == 'true') {
+                                    start =
+                                        source.position +
+                                        Offset(source.width, source.height / 2);
+                                  } else {
+                                    start =
+                                        source.position +
+                                        Offset(source.width / 2, source.height);
+                                  }
                                 } else {
                                   start =
                                       source.position +
-                                      Offset(source.width / 2, source.height);
+                                      Offset(source.width, source.height / 2);
                                 }
-                              } else {
-                                start =
-                                    source.position +
-                                    Offset(source.width, source.height / 2);
-                              }
 
-                              final end =
-                                  target.position +
-                                  Offset(0, target.height / 2);
+                                final end =
+                                    target.position +
+                                    Offset(0, target.height / 2);
 
-                              // Simple midpoint approximation
-                              final midX = (start.dx + end.dx) / 2;
-                              final midY = (start.dy + end.dy) / 2;
+                                // Simple midpoint approximation
+                                final midX = (start.dx + end.dx) / 2;
+                                final midY = (start.dy + end.dy) / 2;
 
-                              return Positioned(
-                                left: midX - 10,
-                                top: midY - 10,
-                                child: InkWell(
-                                  onTap: () =>
-                                      canvasProvider.removeConnection(conn.id),
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: colors.surface,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: colors.outlineVariant,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: colors.shadow.withValues(
-                                            alpha: 0.1,
-                                          ),
-                                          blurRadius: 4,
+                                return Positioned(
+                                  left: midX - 10,
+                                  top: midY - 10,
+                                  child: InkWell(
+                                    onTap: () => canvasProvider
+                                        .removeConnection(conn.id),
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        color: colors.surface,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: colors.outlineVariant,
                                         ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      Icons.close,
-                                      size: 12,
-                                      color: colors.error,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: colors.shadow.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        Icons.close,
+                                        size: 12,
+                                        color: colors.error,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }),
-                          ],
+                                );
+                              }),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -460,7 +482,10 @@ class _CanvasContentState extends State<_CanvasContent> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Edit Condition', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Edit Condition',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(null),
                       icon: const Icon(Icons.close),
@@ -468,7 +493,13 @@ class _CanvasContentState extends State<_CanvasContent> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('Provide the expression used to evaluate the branch (e.g. "user.age > 18")', style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12)),
+                Text(
+                  'Provide the expression used to evaluate the branch (e.g. "user.age > 18")',
+                  style: TextStyle(
+                    color: colors.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: controller,
@@ -476,7 +507,10 @@ class _CanvasContentState extends State<_CanvasContent> {
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -505,7 +539,9 @@ class _CanvasContentState extends State<_CanvasContent> {
     );
 
     if (result != null && mounted) {
-      context.read<CanvasProvider>().updateNodeData(node.id, {'condition': result});
+      context.read<CanvasProvider>().updateNodeData(node.id, {
+        'condition': result,
+      });
     }
   }
 
@@ -525,6 +561,34 @@ class _CanvasContentState extends State<_CanvasContent> {
       ),
       child: Row(
         children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildModeButton(
+                  context,
+                  provider,
+                  CanvasMode.move,
+                  Icons.pan_tool_rounded,
+                  'Move',
+                ),
+                const SizedBox(width: 4),
+                _buildModeButton(
+                  context,
+                  provider,
+                  CanvasMode.connect,
+                  Icons.cable_rounded,
+                  'Connect',
+                ),
+              ],
+            ),
+          ),
           const Spacer(),
           TextButton.icon(
             onPressed: () => provider.clearCanvas(),
@@ -593,6 +657,49 @@ class _CanvasContentState extends State<_CanvasContent> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildModeButton(
+    BuildContext context,
+    CanvasProvider provider,
+    CanvasMode mode,
+    IconData icon,
+    String label,
+  ) {
+    final isSelected = provider.canvasMode == mode;
+    final colors = Theme.of(context).colorScheme;
+
+    return InkWell(
+      onTap: () => provider.setCanvasMode(mode),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.primaryContainer : null,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? colors.primary : colors.onSurfaceVariant,
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: colors.primary,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -744,13 +851,42 @@ class DraggableNodeWidget extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onDoubleTap: onDoubleTap,
-      onPanUpdate: (details) {
-        // Since GestureDetector is inside InteractiveViewer, details.delta
-        // is already in the local coordinate space (scaled).
-        // We don't need to divide by scale again.
-        provider.updateNodePosition(node.id, node.position + details.delta);
+      onTap: () {
+        if (provider.canvasMode == CanvasMode.connect) {
+          if (provider.selectedSourceNodeId != null) {
+            // Allow connecting to any node (including self)
+            provider.connectToTarget(node.id);
+          } else {
+            provider.selectSourceNode(node.id);
+          }
+        }
       },
-      child: RepaintBoundary(child: nodeContent),
+      onPanUpdate: (details) {
+        if (provider.canvasMode == CanvasMode.move) {
+          provider.updateNodePosition(node.id, node.position + details.delta);
+        }
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          RepaintBoundary(child: nodeContent),
+          if (provider.selectedSourceNodeId == node.id)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colors.primary, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.primary.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -766,37 +902,49 @@ class DraggableNodeWidget extends StatelessWidget {
       constraints: BoxConstraints(minHeight: node.height),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.outlineVariant, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.5),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: colors.shadow.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.surface,
+            Color.lerp(colors.surface, methodColor, 0.05)!,
+          ],
+        ),
       ),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Colored top strip
+          // Left accent bar
           Positioned(
-            top: 0,
             left: 0,
-            right: 0,
-            height: 4,
+            top: 12,
+            bottom: 12,
+            width: 4,
             child: Container(
               decoration: BoxDecoration(
                 color: methodColor,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(4),
+                  bottomRight: Radius.circular(4),
                 ),
               ),
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -811,13 +959,17 @@ class DraggableNodeWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: methodColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: methodColor.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Text(
                         node.data['method'] ?? 'GET',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: methodColor,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -831,52 +983,45 @@ class DraggableNodeWidget extends StatelessWidget {
                     color: colors.onSurface,
                     fontFamily: 'JetBrains Mono',
                     height: 1.4,
+                    fontWeight: FontWeight.w500,
                   ),
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
 
-          // Delete - Top Right
+          // Delete - Top Right (Floating)
           Positioned(
-            top: 8,
-            right: 8,
+            top: -8,
+            right: -8,
             child: InkWell(
               onTap: () => provider.removeNode(node.id),
               borderRadius: BorderRadius.circular(16),
-              child: Padding(
+              child: Container(
                 padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.outlineVariant),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
                 child: Icon(
                   Icons.close,
-                  size: 16,
-                  color: colors.onSurfaceVariant.withValues(alpha: 0.7),
+                  size: 14,
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.8),
                 ),
               ),
             ),
           ),
 
-          // Ports - Centered vertically
-          Positioned(
-            left: -6,
-            top: 0,
-            bottom: 0,
-            child: Center(child: _buildInputPort(context, provider)),
-          ),
-          Positioned(
-            right: -6,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: _buildPortHandle(
-                context,
-                provider,
-                'default',
-                colors.onSurfaceVariant,
-              ),
-            ),
-          ),
+          // Ports removed
         ],
       ),
     );
@@ -896,16 +1041,20 @@ class DraggableNodeWidget extends StatelessWidget {
         children: [
           // Start Circle
           Container(
-            width: 32,
-            height: 32,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: colors.primary,
+              gradient: LinearGradient(
+                colors: [colors.primary, colors.tertiary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: colors.primary.withValues(alpha: 0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
               ],
               border: Border.all(color: Colors.white, width: 2),
@@ -913,22 +1062,15 @@ class DraggableNodeWidget extends StatelessWidget {
             child: const Icon(
               Icons.play_arrow_rounded,
               color: Colors.white,
-              size: 20,
+              size: 28,
             ),
           ),
-          // Output port only
-          Positioned(
-            right: -6,
-            child: _buildPortHandle(
-              context,
-              provider,
-              'default',
-              colors.onSurfaceVariant,
-            ),
-          ),
+          // Output port removed
+
           // Delete
           Positioned(
             top: -12,
+            right: 0,
             child: InkWell(
               onTap: () => provider.removeNode(node.id),
               borderRadius: BorderRadius.circular(12),
@@ -938,6 +1080,13 @@ class DraggableNodeWidget extends StatelessWidget {
                   color: colors.surface,
                   shape: BoxShape.circle,
                   border: Border.all(color: colors.outlineVariant),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Icon(
                   Icons.close,
@@ -968,31 +1117,43 @@ class DraggableNodeWidget extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // Diamond Shape (slightly tinted, stronger border and softer shadow)
+          // Diamond Shape (Gradient & Glow)
           Transform.rotate(
             angle: 0.785398, // 45 deg
             child: Container(
               width: diamondSize,
               height: diamondSize,
               decoration: BoxDecoration(
-                color: colors.surfaceContainerHighest.withValues(alpha: 0.06),
-                border: Border.all(color: colors.primary, width: 1.8),
-                borderRadius: BorderRadius.circular(
-                  4,
-                ), // Smaller radius for diamond
+                gradient: LinearGradient(
+                  colors: [
+                    colors.surface,
+                    colors.surfaceContainerHighest.withValues(alpha: 0.5),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: colors.shadow.withValues(alpha: 0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 6),
+                    color: colors.primary.withValues(alpha: 0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
             ),
           ),
 
-          // Intentionally empty center: show only the diamond shape and the T/F ports.
-          const SizedBox.shrink(),
+          // Icon in center
+          const Icon(
+            Icons.call_split_rounded,
+            size: 20,
+            color: Colors.grey, // Subtle icon in center
+          ),
 
           // Delete button
           Positioned(
@@ -1007,6 +1168,13 @@ class DraggableNodeWidget extends StatelessWidget {
                   color: colors.surface,
                   shape: BoxShape.circle,
                   border: Border.all(color: colors.outlineVariant),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Icon(
                   Icons.close,
@@ -1017,139 +1185,116 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          Positioned(
-            left: -6,
-            top: 0,
-            bottom: 0,
-            child: Center(child: _buildInputPort(context, provider)),
-          ),
+          // Input port removed
 
+          // True Button
           Positioned(
-            right: -6,
+            right: -8, // Slightly more offset for better hit area
             top: 0,
             bottom: 0,
             child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: Text(
-                      "T",
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
-                      ),
+              child: GestureDetector(
+                onTap: () {
+                  if (provider.canvasMode == CanvasMode.connect) {
+                    provider.selectSourceNode(node.id, 'true');
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        provider.selectedSourceNodeId == node.id &&
+                            provider.selectedSourceHandle == 'true'
+                        ? colors.primaryContainer
+                        : colors.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color:
+                          provider.selectedSourceNodeId == node.id &&
+                              provider.selectedSourceHandle == 'true'
+                          ? colors.primary
+                          : colors.primary.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      if (provider.selectedSourceNodeId == node.id &&
+                          provider.selectedSourceHandle == 'true')
+                        BoxShadow(
+                          color: colors.primary.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                        ),
+                    ],
+                  ),
+                  child: Text(
+                    "T",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: colors.primary,
                     ),
                   ),
-                  _buildPortHandle(context, provider, 'true', colors.primary),
-                ],
+                ),
               ),
             ),
           ),
 
-          // Output "False" - Bottom Center
+          // False Button
           Positioned(
-            bottom: -6,
+            bottom: -8,
             left: 0,
             right: 0,
             child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
+              child: GestureDetector(
+                onTap: () {
+                  if (provider.canvasMode == CanvasMode.connect) {
+                    provider.selectSourceNode(node.id, 'false');
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        provider.selectedSourceNodeId == node.id &&
+                            provider.selectedSourceHandle == 'false'
+                        ? colors.errorContainer
+                        : colors.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color:
+                          provider.selectedSourceNodeId == node.id &&
+                              provider.selectedSourceHandle == 'false'
+                          ? colors.error
+                          : colors.error.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      if (provider.selectedSourceNodeId == node.id &&
+                          provider.selectedSourceHandle == 'false')
+                        BoxShadow(
+                          color: colors.error.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                        ),
+                    ],
+                  ),
+                  child: Text(
                     "F",
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
                       color: colors.error,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  _buildPortHandle(context, provider, 'false', colors.error),
-                ],
+                ),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildInputPort(BuildContext context, CanvasProvider provider) {
-    final colors = Theme.of(context).colorScheme;
-    return DragTarget<String>(
-      onWillAcceptWithDetails: (details) => details.data != node.id,
-      onAcceptWithDetails: (details) => provider.endConnection(node.id),
-      builder: (context, candidateData, rejectedData) {
-        final isHovering = candidateData.isNotEmpty;
-        return Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: isHovering ? colors.primary : colors.surface,
-            shape: BoxShape.circle,
-            border: Border.all(color: colors.onSurface, width: 2),
-            boxShadow: isHovering
-                ? [
-                    BoxShadow(
-                      color: colors.primary.withAlpha(100),
-                      blurRadius: 4,
-                    ),
-                  ]
-                : null,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPortHandle(
-    BuildContext context,
-    CanvasProvider provider,
-    String handleId,
-    Color color,
-  ) {
-    final colors = Theme.of(context).colorScheme;
-    return Draggable<String>(
-      data: node.id,
-      feedback: Container(
-        width: 12,
-        height: 12,
-        decoration: BoxDecoration(
-          color: colors.primary,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 4),
-          ],
-        ),
-      ),
-      onDragStarted: () {
-        final RenderBox renderBox = context.findRenderObject() as RenderBox;
-        final globalPos = renderBox.localToGlobal(Offset.zero);
-        final RenderBox canvasBox =
-            canvasKey.currentContext!.findRenderObject() as RenderBox;
-        final localStartPos =
-            canvasBox.globalToLocal(globalPos) + const Offset(6, 6);
-        provider.startConnection(node.id, handleId, localStartPos);
-      },
-      onDragUpdate: (details) {
-        final RenderBox canvasBox =
-            canvasKey.currentContext!.findRenderObject() as RenderBox;
-        final localPos = canvasBox.globalToLocal(details.globalPosition);
-        provider.updateTempConnection(localPos);
-      },
-      onDragEnd: (details) => provider.cancelConnection(),
-      child: Container(
-        width: 12,
-        height: 12,
-        decoration: BoxDecoration(
-          color: colors.surface,
-          shape: BoxShape.circle,
-          border: Border.all(color: color, width: 2),
-        ),
       ),
     );
   }
@@ -1223,29 +1368,25 @@ class ConnectionPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
+    // Optimization: Create a map for O(1) lookups
+    final nodeMap = {for (final node in nodes) node.id: node};
+
     for (final conn in connections) {
-      final source = _findNode(conn.sourceNodeId);
-      final target = _findNode(conn.targetNodeId);
+      final source = nodeMap[conn.sourceNodeId];
+      final target = nodeMap[conn.targetNodeId];
       if (source == null || target == null) continue;
       Offset start = _getOutputPos(source, conn.sourceHandle);
       Offset end = _getInputPos(target);
       _drawBezier(canvas, start, end, paint);
     }
 
+    // Draw "Live" connection line
     if (tempSourceId != null && tempEndPos != null) {
-      final source = _findNode(tempSourceId!);
+      final source = nodeMap[tempSourceId];
       if (source != null) {
         Offset start = _getOutputPos(source, tempSourceHandle);
         _drawBezier(canvas, start, tempEndPos!, activePaint);
       }
-    }
-  }
-
-  CanvasNode? _findNode(String id) {
-    try {
-      return nodes.firstWhere((n) => n.id == id);
-    } catch (e) {
-      return null;
     }
   }
 
@@ -1259,11 +1400,13 @@ class ConnectionPainter extends CustomPainter {
         return node.position + Offset(node.width / 2, node.height);
       }
     }
+    // Default centers
     if (node.type == FlowNodeType.start) {
-      // Right side, centered vertically
-      return node.position + Offset(node.width, node.height / 2);
+      return node.position + Offset(node.width / 2, node.height / 2);
     }
-    // Standard node: Right side, centered vertically
+    // Standard node: Right edge or center?
+    // Figma usually does edge to edge.
+    // Let's use Right Center for standard output
     return node.position + Offset(node.width, node.height / 2);
   }
 
@@ -1276,11 +1419,11 @@ class ConnectionPainter extends CustomPainter {
     final path = Path();
     path.moveTo(start.dx, start.dy);
     double dist = (end.dx - start.dx).abs();
-    // Adjust control points for vertical flow from bottom port
-    // If start.dy < end.dy significantly and start.dx is close to end.dx, use vertical logic?
-    // For now, standard horizontal-bias bezier
+
+    // Control points for smooth curve
     final controlPoint1 = Offset(start.dx + dist * 0.5, start.dy);
     final controlPoint2 = Offset(end.dx - dist * 0.5, end.dy);
+
     path.cubicTo(
       controlPoint1.dx,
       controlPoint1.dy,
@@ -1290,6 +1433,44 @@ class ConnectionPainter extends CustomPainter {
       end.dy,
     );
     canvas.drawPath(path, paint);
+
+    // Draw Arrowhead at the end
+    _drawArrowHead(canvas, end, controlPoint2, paint.color);
+  }
+
+  void _drawArrowHead(
+    Canvas canvas,
+    Offset tip,
+    Offset prevPoint,
+    Color color,
+  ) {
+    // Calculate angle of the line entering the target
+    final angle = (tip - prevPoint).direction;
+    const arrowSize = 6.0;
+
+    final arrowPath = Path();
+    arrowPath.moveTo(tip.dx, tip.dy);
+    arrowPath.lineTo(
+      tip.dx - arrowSize * 1.5 * 0.8, // x component
+      tip.dy - arrowSize * 0.8, // y component
+    );
+    arrowPath.lineTo(tip.dx - arrowSize * 1.5 * 0.8, tip.dy + arrowSize * 0.8);
+    arrowPath.close();
+
+    // Rotate arrow to match curve direction
+    canvas.save();
+    canvas.translate(tip.dx, tip.dy);
+    canvas.rotate(angle);
+    canvas.translate(-tip.dx, -tip.dy);
+
+    // Draw filled arrow
+    canvas.drawPath(
+      arrowPath,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.fill,
+    );
+    canvas.restore();
   }
 
   @override

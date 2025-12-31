@@ -5,7 +5,8 @@ import 'package:stress_pilot/features/projects/presentation/pages/environment_pa
 import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
-import 'package:stress_pilot/features/results/presentation/pages/runs_page.dart';
+import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
+import 'package:stress_pilot/features/results/presentation/pages/runs_list_page.dart';
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 
 class AppRouter {
@@ -50,9 +51,12 @@ class AppRouter {
             projectName: args['projectName'],
           ),
         );
-      case runsRoute:
+      case resultsRoute:
         final args = settings.arguments as Map<String, dynamic>;
-        return buildRoute(RunsPage(runId: args['runId']));
+        return buildRoute(ResultsPage(runId: args['runId']));
+      case runsRoute:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return buildRoute(RunsListPage(flowId: args?['flowId']));
       default:
         return buildRoute(
           Scaffold(

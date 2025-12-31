@@ -7,14 +7,21 @@ import 'package:uuid/uuid.dart';
 
 import '../../domain/canvas.dart';
 
+enum CanvasMode { move, connect }
+
 class CanvasProvider extends ChangeNotifier {
   List<CanvasNode> _nodes = [];
   List<CanvasConnection> _connections = [];
 
   // Dragging state
   String? _tempSourceNodeId;
-  String? _tempSourceHandle;
+  String? _tempSourceHandle; // Keeping for compatibility, though simplified now
   Offset? _tempDragPosition;
+
+  // Interaction State
+  CanvasMode _canvasMode = CanvasMode.move;
+  String? _selectedSourceNodeId; // For click-to-connect
+  String? _selectedSourceHandle;
 
   bool _isLoading = false;
   bool _isSaving = false;
@@ -27,6 +34,10 @@ class CanvasProvider extends ChangeNotifier {
   String? get tempSourceHandle => _tempSourceHandle;
 
   Offset? get tempDragPosition => _tempDragPosition;
+
+  CanvasMode get canvasMode => _canvasMode;
+  String? get selectedSourceNodeId => _selectedSourceNodeId;
+  String? get selectedSourceHandle => _selectedSourceHandle;
 
   bool get isLoading => _isLoading;
 
@@ -76,7 +87,59 @@ class CanvasProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Interaction Modes ---
+
+  void setCanvasMode(CanvasMode mode) {
+    _canvasMode = mode;
+    _selectedSourceNodeId = null;
+    _selectedSourceHandle = null;
+    _tempDragPosition = null;
+    notifyListeners();
+  }
+
+  void selectSourceNode(String nodeId, [String handle = 'default']) {
+    if (_canvasMode == CanvasMode.connect) {
+      if (_selectedSourceNodeId == nodeId && _selectedSourceHandle == handle) {
+        // Deselect if clicking same node/handle
+        _selectedSourceNodeId = null;
+        _selectedSourceHandle = null;
+        _tempDragPosition = null;
+      } else {
+        _selectedSourceNodeId = nodeId;
+        _selectedSourceHandle = handle;
+      }
+      notifyListeners();
+    }
+  }
+
+  void connectToTarget(String targetNodeId) {
+    if (_canvasMode == CanvasMode.connect && _selectedSourceNodeId != null) {
+      // Create connection
+      _connections.add(
+        CanvasConnection(
+          id: const Uuid().v4(),
+          sourceNodeId: _selectedSourceNodeId!,
+          targetNodeId: targetNodeId,
+          sourceHandle: _selectedSourceHandle ?? 'default',
+        ),
+      );
+      // Keep source logic or reset?
+      // Resetting feels cleaner to avoid accidental double connects
+      // but let's allow chaining for now as user might want to fan-out.
+      notifyListeners();
+    }
+  }
+
+  void updateCursorPosition(Offset pos) {
+    if (_canvasMode == CanvasMode.connect && _selectedSourceNodeId != null) {
+      _tempDragPosition = pos;
+      notifyListeners();
+    }
+  }
+
   // --- Connection Management ---
+
+  // --- Legacy Connection Management (Cleanup later if fully unused) ---
 
   void startConnection(String nodeId, String handleId, Offset startPos) {
     _tempSourceNodeId = nodeId;
@@ -114,6 +177,7 @@ class CanvasProvider extends ChangeNotifier {
     _tempSourceNodeId = null;
     _tempSourceHandle = null;
     _tempDragPosition = null;
+    _selectedSourceNodeId = null; // Also clear selection on cancel
     notifyListeners();
   }
 
@@ -227,6 +291,7 @@ class CanvasProvider extends ChangeNotifier {
             nextIfFalse = conn.targetNodeId;
           }
         } else {
+          // Standard, Start, and Loop nodes have single output logic here
           nextIfTrue = conn.targetNodeId;
         }
       }
@@ -326,6 +391,7 @@ class CanvasProvider extends ChangeNotifier {
         if (node.type == FlowNodeType.branch && step.condition != null) {
           newData['condition'] = step.condition;
         }
+        // Loops might have 'count' or 'condition' in future, for now standard update is fine
 
         _nodes[index] = node.copyWith(data: newData);
       }

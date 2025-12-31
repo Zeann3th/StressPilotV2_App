@@ -13,7 +13,6 @@ class ResultsProvider extends ChangeNotifier {
   List<RequestLog> _filteredLogs = [];
 
   // Metadata
-  int? _currentFlowId;
   final Map<int, String> _endpointNames = {};
 
   // Filter
@@ -47,7 +46,6 @@ class ResultsProvider extends ChangeNotifier {
   List<FlSpotData> get rpsPoints => _rpsPoints;
 
   void initialize(int flowId) async {
-    _currentFlowId = flowId;
     _allLogs.clear();
     _filteredLogs.clear();
     _responseTimePoints.clear();
@@ -101,7 +99,8 @@ class ResultsProvider extends ChangeNotifier {
 
     // Update metrics based on new logs
     for (var log in newLogs) {
-      if (_selectedEndpointId != null && log.endpointId != _selectedEndpointId) {
+      if (_selectedEndpointId != null &&
+          log.endpointId != _selectedEndpointId) {
         continue;
       }
 

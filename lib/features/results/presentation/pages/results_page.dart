@@ -10,16 +10,16 @@ import 'package:stress_pilot/features/results/presentation/widgets/metrics_card.
 import 'package:stress_pilot/features/results/presentation/widgets/realtime_chart.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 
-class RunsPage extends StatefulWidget {
+class ResultsPage extends StatefulWidget {
   final int runId;
 
-  const RunsPage({super.key, required this.runId});
+  const ResultsPage({super.key, required this.runId});
 
   @override
-  State<RunsPage> createState() => _RunsPageState();
+  State<ResultsPage> createState() => _ResultsPageState();
 }
 
-class _RunsPageState extends State<RunsPage> {
+class _ResultsPageState extends State<ResultsPage> {
   Run? _currentRun;
   bool _loadingRun = false;
 
@@ -34,7 +34,7 @@ class _RunsPageState extends State<RunsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Load run metadata first, then initialize results provider for the run's flow
       await _loadRun();
-      if (_currentRun != null) {
+      if (_currentRun != null && mounted) {
         context.read<ResultsProvider>().initialize(_currentRun!.flowId);
         _startTimers();
       }
@@ -98,9 +98,9 @@ class _RunsPageState extends State<RunsPage> {
       });
     } catch (e) {
       debugPrint('Failed to load run: $e');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load run: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load run: $e')));
     } finally {
-      setState(() => _loadingRun = false);
+      if (mounted) setState(() => _loadingRun = false);
     }
   }
 
@@ -132,13 +132,13 @@ class _RunsPageState extends State<RunsPage> {
       final svc = getIt<RunService>();
       final File? file = await svc.exportRun(_currentRun!.id);
       if (file == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Export returned empty')));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Export returned empty')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export saved to ${file.path}')));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export saved to ${file.path}')));
       }
     } catch (e) {
       debugPrint('Export failed: $e');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
     } finally {
       setState(() => _exporting = false);
     }
@@ -318,7 +318,7 @@ class _RunsPageState extends State<RunsPage> {
               Text('${_currentRun!.rampUpDuration}s', style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(width: 16),
               Text('Elapsed: ', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              Text('${_formatDuration(_elapsed)}', style: Theme.of(context).textTheme.bodyLarge),
+              Text(_formatDuration(_elapsed), style: Theme.of(context).textTheme.bodyLarge),
             ],
           ),
         ],

@@ -24,7 +24,8 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   final _rampUpCtrl = TextEditingController(text: '0');
 
   // Variables
-  final List<MapEntry<TextEditingController, TextEditingController>> _variables = [];
+  final List<MapEntry<TextEditingController, TextEditingController>>
+  _variables = [];
 
   // File
   PlatformFile? _selectedFile;
@@ -71,14 +72,14 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   }
 
   void _run() async {
-    print("🚀 PRESSED RUN: Starting logic..."); // <--- LOOK FOR THIS
+    debugPrint("🚀 PRESSED RUN: Starting logic..."); // <--- LOOK FOR THIS
 
     // 1. Parse Inputs
     final threads = int.tryParse(_threadsCtrl.text) ?? 1;
     final duration = int.tryParse(_durationCtrl.text) ?? 60;
     final rampUp = int.tryParse(_rampUpCtrl.text) ?? 0;
 
-    print("📊 Inputs: Threads=$threads, Duration=$duration");
+    debugPrint("📊 Inputs: Threads=$threads, Duration=$duration");
 
     final variablesMap = <String, dynamic>{};
     for (var entry in _variables) {
@@ -90,7 +91,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
     // 2. Prepare File
     MultipartFile? multipartFile;
     if (_selectedFile != null && _selectedFile!.path != null) {
-      print("📂 File selected: ${_selectedFile!.name}");
+      debugPrint("📂 File selected: ${_selectedFile!.name}");
       multipartFile = await MultipartFile.fromFile(
         _selectedFile!.path!,
         filename: _selectedFile!.name,
@@ -105,12 +106,12 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
     );
 
     if (!mounted) {
-      print("⚠️ Widget unmounted before execution");
+      debugPrint("⚠️ Widget unmounted before execution");
       return;
     }
 
     try {
-      print("⏳ Calling Provider.runFlow()...");
+      debugPrint("⏳ Calling Provider.runFlow()...");
 
       // 3. Run the flow logic
       await context.read<FlowProvider>().runFlow(
@@ -119,7 +120,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         file: multipartFile,
       );
 
-      print("✅ Provider.runFlow() returned success!");
+      debugPrint("✅ Provider.runFlow() returned success!");
 
       if (!mounted) return;
 
@@ -128,7 +129,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       final messenger = ScaffoldMessenger.of(context);
 
       navigator.pop();
-      print("👋 Dialog Popped");
+      debugPrint("👋 Dialog Popped");
 
       await Future.delayed(const Duration(milliseconds: 300));
 
@@ -138,11 +139,11 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
           const SnackBar(content: Text('Flow execution started')),
         );
       } catch (e) {
-        print("⚠️ SnackBar error (harmless): $e");
+        debugPrint("⚠️ SnackBar error (harmless): $e");
       }
 
       // Start Polling
-      print("🕵️ Starting Polling...");
+      debugPrint("🕵️ Starting Polling...");
       final startTime = DateTime.now().toUtc();
 
       try {
@@ -152,15 +153,17 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         const Duration delay = Duration(milliseconds: 500);
 
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
-          print("🔄 Polling attempt ${attempt + 1}/$maxAttempts");
+          debugPrint("🔄 Polling attempt ${attempt + 1}/$maxAttempts");
           try {
             final candidate = await runSvc.getLastRun(widget.flowId);
 
             if (candidate.createdAt != null) {
               final created = DateTime.parse(candidate.createdAt!).toUtc();
               // Adjust buffer if needed
-              if (created.isAfter(startTime.subtract(const Duration(seconds: 1)))) {
-                print("🎯 Found new run: ${candidate.id}");
+              if (created.isAfter(
+                startTime.subtract(const Duration(seconds: 1)),
+              )) {
+                debugPrint("🎯 Found new run: ${candidate.id}");
                 found = candidate;
                 break;
               }
@@ -170,33 +173,32 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
               break;
             }
           } catch (e) {
-            print("   Polling fetch error: $e");
+            debugPrint("   Polling fetch error: $e");
           }
           await Future.delayed(delay);
         }
 
         if (found != null) {
           navigator.pushNamed(
-            AppRouter.runsRoute,
+            AppRouter.resultsRoute,
             arguments: {'runId': found.id},
           );
         } else {
-          print("⚠️ Polling timed out, going to Results list");
+          debugPrint("⚠️ Polling timed out, going to Runs list");
           navigator.pushNamed(
-            AppRouter.resultsRoute,
+            AppRouter.runsRoute,
             arguments: {'flowId': widget.flowId},
           );
         }
       } catch (e) {
-        print("❌ Polling block error: $e");
+        debugPrint("❌ Polling block error: $e");
         navigator.pushNamed(
-          AppRouter.resultsRoute,
+          AppRouter.runsRoute,
           arguments: {'flowId': widget.flowId},
         );
       }
-
     } catch (e) {
-      print("❌ CRITICAL ERROR in _run: $e");
+      debugPrint("❌ CRITICAL ERROR in _run: $e");
       if (mounted) {
         try {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -287,7 +289,8 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                           const SizedBox(width: 8),
                           IconButton(
                             icon: const Icon(Icons.close),
-                            onPressed: () => setState(() => _selectedFile = null),
+                            onPressed: () =>
+                                setState(() => _selectedFile = null),
                           ),
                         ],
                       ),

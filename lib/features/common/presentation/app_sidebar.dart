@@ -25,6 +25,11 @@ class AppSidebar extends StatelessWidget {
           const SizedBox(height: 8),
           _icon(Icons.notifications_outlined, 'Notifications', () {}),
 
+          const SizedBox(height: 8),
+          _icon(Icons.list_alt_outlined, 'Runs', () {
+            AppNavigator.pushNamed(AppRouter.runsRoute);
+          }),
+
           const Spacer(),
 
           _icon(
