@@ -44,11 +44,17 @@ class _ResultsPageState extends State<ResultsPage> {
   void _startTimers() {
     // Start 30s polling
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _refreshRun());
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _refreshRun(),
+    );
 
     // Start 1s tick to update elapsed display
     _tickTimer?.cancel();
-    _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) => _updateElapsed());
+    _tickTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _updateElapsed(),
+    );
   }
 
   void _stopTimers() {
@@ -98,7 +104,11 @@ class _ResultsPageState extends State<ResultsPage> {
       });
     } catch (e) {
       debugPrint('Failed to load run: $e');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load run: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load run: $e')));
+      }
     } finally {
       if (mounted) setState(() => _loadingRun = false);
     }
@@ -122,7 +132,10 @@ class _ResultsPageState extends State<ResultsPage> {
 
   bool _isTerminalStatus(String status) {
     final s = status.toUpperCase();
-    return s == 'COMPLETED' || s == 'FAILED' || s == 'ABORTED' || s == 'CANCELED';
+    return s == 'COMPLETED' ||
+        s == 'FAILED' ||
+        s == 'ABORTED' ||
+        s == 'CANCELED';
   }
 
   Future<void> _exportRun() async {
@@ -130,15 +143,27 @@ class _ResultsPageState extends State<ResultsPage> {
     setState(() => _exporting = true);
     try {
       final svc = getIt<RunService>();
-      final File? file = await svc.exportRun(_currentRun!.id);
+      final File? file = await svc.exportRun(_currentRun!);
       if (file == null) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Export returned empty')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Export returned empty')),
+          );
+        }
       } else {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export saved to ${file.path}')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Export saved to ${file.path}')),
+          );
+        }
       }
     } catch (e) {
       debugPrint('Export failed: $e');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      }
     } finally {
       setState(() => _exporting = false);
     }
@@ -165,8 +190,13 @@ class _ResultsPageState extends State<ResultsPage> {
               hint: const Text('All Endpoints'),
               underline: const SizedBox(),
               items: [
-                const DropdownMenuItem(value: null, child: Text('All Endpoints')),
-                ...provider.endpointNames.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))),
+                const DropdownMenuItem(
+                  value: null,
+                  child: Text('All Endpoints'),
+                ),
+                ...provider.endpointNames.entries.map(
+                  (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                ),
               ],
               onChanged: (v) => provider.setEndpointFilter(v),
             ),
@@ -175,9 +205,18 @@ class _ResultsPageState extends State<ResultsPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: IconButton(
-              icon: _exporting ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.download),
+              icon: _exporting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.download),
               tooltip: 'Export Run',
-              onPressed: (_currentRun != null && _currentRun!.status.toUpperCase() == 'COMPLETED' && !_exporting)
+              onPressed:
+                  (_currentRun != null &&
+                      _currentRun!.status.toUpperCase() == 'COMPLETED' &&
+                      !_exporting)
                   ? () => _exportRun()
                   : null,
             ),
@@ -191,9 +230,7 @@ class _ResultsPageState extends State<ResultsPage> {
             // Run info & metrics
             Row(
               children: [
-                Expanded(
-                  child: _buildRunInfoCard(),
-                ),
+                Expanded(child: _buildRunInfoCard()),
                 const SizedBox(width: 16),
                 Expanded(
                   child: MetricsCard(
@@ -268,7 +305,9 @@ class _ResultsPageState extends State<ResultsPage> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
         child: const Center(child: CircularProgressIndicator()),
       );
@@ -280,7 +319,9 @@ class _ResultsPageState extends State<ResultsPage> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
         child: const Center(child: Text('No run metadata available')),
       );
@@ -301,24 +342,78 @@ class _ResultsPageState extends State<ResultsPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Run #${_currentRun!.id}', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                'Run #${_currentRun!.id}',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               Text(status, style: Theme.of(context).textTheme.labelLarge),
             ],
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
             children: [
-              Text('CCU (threads): ', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              Text(_currentRun!.threads.toString(), style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(width: 16),
-              Text('Duration: ', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              Text('${_currentRun!.duration}s', style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(width: 16),
-              Text('Ramp Up: ', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              Text('${_currentRun!.rampUpDuration}s', style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(width: 16),
-              Text('Elapsed: ', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              Text(_formatDuration(_elapsed), style: Theme.of(context).textTheme.bodyLarge),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'CCU (threads): ',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    _currentRun!.threads.toString(),
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Duration: ',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    '${_currentRun!.duration}s',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Ramp Up: ',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    '${_currentRun!.rampUpDuration}s',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Elapsed: ',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    _formatDuration(_elapsed),
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
+              ),
             ],
           ),
         ],

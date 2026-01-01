@@ -20,7 +20,7 @@ class _RunsListPageState extends State<RunsListPage> {
   final _runService = getIt<RunService>();
   List<Run>? _runs;
   bool _isLoading = false;
-  
+
   // Set to store IDs of runs currently being exported to show progress
   final Set<int> _exportingRunIds = {};
 
@@ -39,24 +39,24 @@ class _RunsListPageState extends State<RunsListPage> {
       setState(() => _runs = runs);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load runs: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load runs: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-  
+
   Future<void> _exportRun(Run run) async {
     if (_exportingRunIds.contains(run.id)) return;
-    
+
     setState(() {
       _exportingRunIds.add(run.id);
     });
-    
+
     try {
-      final File? file = await _runService.exportRun(run.id);
+      final File? file = await _runService.exportRun(run);
       if (mounted) {
         if (file == null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -70,9 +70,9 @@ class _RunsListPageState extends State<RunsListPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
       }
     } finally {
       if (mounted) {
@@ -98,10 +98,16 @@ class _RunsListPageState extends State<RunsListPage> {
       // Let's assume for others we do nothing or maybe just show a snackbar explaining?
       // Or maybe allow export for FAILED too?
       // For now, adhere strictly to user request for RUNNING/COMPLETED logic.
-      if (['FAILED', 'ABORTED', 'CANCELED'].contains(run.status.toUpperCase())) {
-         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text('Run is ${run.status}. Cannot view live dashboard.')),
-         );
+      if ([
+        'FAILED',
+        'ABORTED',
+        'CANCELED',
+      ].contains(run.status.toUpperCase())) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Run is ${run.status}. Cannot view live dashboard.'),
+          ),
+        );
       }
     }
   }
@@ -112,28 +118,25 @@ class _RunsListPageState extends State<RunsListPage> {
       appBar: AppBar(
         title: Text(widget.flowId != null ? 'Flow Runs' : 'All Runs'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadRuns,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadRuns),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _runs == null
-              ? const Center(child: Text('Failed to load runs'))
-              : _runs!.isEmpty
-                  ? const Center(child: Text('No runs found'))
-                  : RefreshIndicator(
-                      onRefresh: _loadRuns,
-                      child: ListView.builder(
-                        itemCount: _runs!.length,
-                        itemBuilder: (context, index) {
-                          final run = _runs![index];
-                          return _buildRunTile(run);
-                        },
-                      ),
-                    ),
+          ? const Center(child: Text('Failed to load runs'))
+          : _runs!.isEmpty
+          ? const Center(child: Text('No runs found'))
+          : RefreshIndicator(
+              onRefresh: _loadRuns,
+              child: ListView.builder(
+                itemCount: _runs!.length,
+                itemBuilder: (context, index) {
+                  final run = _runs![index];
+                  return _buildRunTile(run);
+                },
+              ),
+            ),
     );
   }
 
@@ -159,7 +162,7 @@ class _RunsListPageState extends State<RunsListPage> {
         statusColor = Colors.grey;
         statusIcon = Icons.help_outline;
     }
-    
+
     final isExporting = _exportingRunIds.contains(run.id);
 
     return Card(
@@ -173,7 +176,9 @@ class _RunsListPageState extends State<RunsListPage> {
             Text('Flow ID: ${run.flowId} | Status: $status'),
             if (run.createdAt != null)
               Text(
-                DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(run.createdAt!).toLocal()),
+                DateFormat(
+                  'yyyy-MM-dd HH:mm:ss',
+                ).format(DateTime.parse(run.createdAt!).toLocal()),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
           ],
@@ -181,12 +186,16 @@ class _RunsListPageState extends State<RunsListPage> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-             if (status == 'RUNNING')
-               const Icon(Icons.arrow_forward_ios, size: 16),
-             if (status == 'COMPLETED')
-               isExporting 
-                 ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                 : const Icon(Icons.download, color: Colors.blue),
+            if (status == 'RUNNING')
+              const Icon(Icons.arrow_forward_ios, size: 16),
+            if (status == 'COMPLETED')
+              isExporting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.download, color: Colors.blue),
           ],
         ),
         onTap: () => _handleRunTap(run),

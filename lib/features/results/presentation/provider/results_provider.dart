@@ -28,6 +28,11 @@ class ResultsProvider extends ChangeNotifier {
   final List<FlSpotData> _responseTimePoints = [];
   final List<FlSpotData> _rpsPoints = [];
 
+  int _logsSinceLastTick = 0;
+  double _responseSumSinceLastTick = 0;
+  DateTime _lastNotifyTime = DateTime.fromMillisecondsSinceEpoch(0);
+  double _totalResponseTimeSum = 0;
+
   StreamSubscription? _subscription;
   Timer? _metricsTimer;
 
@@ -51,6 +56,7 @@ class ResultsProvider extends ChangeNotifier {
     _responseTimePoints.clear();
     _rpsPoints.clear();
     _resetMetrics();
+    _totalResponseTimeSum = 0;
 
     await _loadFlowDetails(flowId);
 
@@ -58,7 +64,10 @@ class ResultsProvider extends ChangeNotifier {
     _subscription = _repository.logStream.listen(_onNewLogs);
 
     // Start a timer to calculate RPS every second
-    _metricsTimer = Timer.periodic(const Duration(seconds: 1), _calculateRPS);
+    _metricsTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      _calculateMetricsTick,
+    );
   }
 
   Future<void> _loadFlowDetails(int flowId) async {
@@ -91,32 +100,37 @@ class ResultsProvider extends ChangeNotifier {
   }
 
   void _onNewLogs(List<RequestLog> newLogs) {
-    // Filter logs for current flow/run if possible.
-    // Since we don't have runId easily, we just take all incoming logs as "realtime".
+    debugPrint("[Performance] Received batch of ${newLogs.length} logs");
 
     _allLogs.addAll(newLogs);
-    _applyFilter();
 
-    // Update metrics based on new logs
-    for (var log in newLogs) {
-      if (_selectedEndpointId != null &&
-          log.endpointId != _selectedEndpointId) {
-        continue;
-      }
+    // Incremental update logic: only add logs that match current filter
+    final matchingLogs = _selectedEndpointId == null
+        ? newLogs
+        : newLogs.where((l) => l.endpointId == _selectedEndpointId).toList();
 
+    if (matchingLogs.isEmpty) return;
+
+    _filteredLogs.addAll(matchingLogs);
+
+    for (var log in matchingLogs) {
       _totalRequests++;
+      _logsSinceLastTick++;
+
       if (log.statusCode == null || log.statusCode! >= 400) {
         _errorCount++;
       }
 
-      // Add to response time chart
-      // We use totalRequests as X axis for simplicity or timestamp
-      _responseTimePoints.add(
-        FlSpotData(
-          x: DateTime.now().millisecondsSinceEpoch.toDouble(),
-          y: log.responseTime?.toDouble() ?? 0,
-        ),
-      );
+      if (log.responseTime != null) {
+        final rt = log.responseTime!.toDouble();
+        _totalResponseTimeSum += rt;
+        _responseSumSinceLastTick += rt;
+      }
+    }
+
+    // Update Avg Response Time incrementally
+    if (_totalRequests > 0) {
+      _avgResponseTime = _totalResponseTimeSum / _totalRequests;
     }
 
     // Keep chart points manageable
@@ -124,7 +138,12 @@ class ResultsProvider extends ChangeNotifier {
       _responseTimePoints.removeRange(0, _responseTimePoints.length - 100);
     }
 
-    notifyListeners();
+    // Throttle UI updates (max 4 per second = 250ms)
+    final now = DateTime.now();
+    if (now.difference(_lastNotifyTime).inMilliseconds > 250) {
+      _lastNotifyTime = now;
+      notifyListeners();
+    }
   }
 
   void setEndpointFilter(int? endpointId) {
@@ -149,70 +168,42 @@ class ResultsProvider extends ChangeNotifier {
     _errorCount = _filteredLogs
         .where((l) => l.statusCode == null || l.statusCode! >= 400)
         .length;
+
+    _totalResponseTimeSum = 0;
     if (_totalRequests > 0) {
-      final totalTime = _filteredLogs.fold(
-        0,
+      _totalResponseTimeSum = _filteredLogs.fold(
+        0.0,
         (sum, l) => sum + (l.responseTime ?? 0),
       );
-      _avgResponseTime = totalTime / _totalRequests;
+      _avgResponseTime = _totalResponseTimeSum / _totalRequests;
     } else {
       _avgResponseTime = 0;
     }
   }
 
-  void _calculateRPS(Timer timer) {
-    // Simple RPS: Count logs in last second
-    // In a real app, we'd use timestamps from logs.
-    // Here we just check how many logs arrived since last tick?
-    // Or better: use a sliding window.
+  void _calculateMetricsTick(Timer timer) {
+    // 1. RPS Calculation
+    _requestsPerSecond = _logsSinceLastTick.toDouble();
 
-    // For simplicity:
-    // We can't easily calculate exact RPS without timestamps in logs relative to now.
-    // Let's just assume the logs arriving are "now".
-    // But _onNewLogs adds them.
-
-    // Let's use a counter that resets every second.
-    // But that's handled in _onNewLogs? No.
-
-    // Let's just use the chart data.
-    // Actually, let's just mock it or calculate from _filteredLogs timestamps if available.
-    // RequestLog has createdAt (String).
-
-    // Let's try to parse createdAt.
-    // Assuming ISO8601.
-
-    final now = DateTime.now();
-    final oneSecondAgo = now.subtract(const Duration(seconds: 1));
-
-    int count = 0;
-    // Optimization: iterate backwards
-    for (int i = _filteredLogs.length - 1; i >= 0; i--) {
-      final log = _filteredLogs[i];
-      if (log.createdAt != null) {
-        try {
-          final created = DateTime.parse(log.createdAt!);
-          if (created.isAfter(oneSecondAgo)) {
-            count++;
-          } else {
-            // Assuming logs are ordered, we can break
-            // But they might not be strictly ordered by createdAt if async
-            // break;
-          }
-        } catch (_) {}
-      }
+    // 2. Avg Response Time for this tick (for chart)
+    double avgRtForTick = 0;
+    if (_logsSinceLastTick > 0) {
+      avgRtForTick = _responseSumSinceLastTick / _logsSinceLastTick;
     }
 
-    _requestsPerSecond = count.toDouble();
-    _rpsPoints.add(
-      FlSpotData(
-        x: now.millisecondsSinceEpoch.toDouble(),
-        y: _requestsPerSecond,
-      ),
-    );
+    // Reset tick counters
+    _logsSinceLastTick = 0;
+    _responseSumSinceLastTick = 0;
 
-    if (_rpsPoints.length > 60) {
-      _rpsPoints.removeAt(0);
-    }
+    final nowMs = DateTime.now().millisecondsSinceEpoch.toDouble();
+
+    // Update RPS Chart
+    _rpsPoints.add(FlSpotData(x: nowMs, y: _requestsPerSecond));
+    if (_rpsPoints.length > 60) _rpsPoints.removeAt(0);
+
+    // Update Response Time Chart
+    _responseTimePoints.add(FlSpotData(x: nowMs, y: avgRtForTick));
+    if (_responseTimePoints.length > 60) _responseTimePoints.removeAt(0);
 
     notifyListeners();
   }
