@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
@@ -93,16 +94,18 @@ class HttpClient {
       ),
     );
 
-    dio.interceptors.add(
-      LogInterceptor(
-        request: true,
-        requestBody: true,
-        responseBody: true,
-        responseHeader: false,
-        error: true,
-        logPrint: (obj) => AppLogger.info(obj.toString(), name: 'HTTP'),
-      ),
-    );
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(
+          request: true,
+          requestBody: true,
+          responseBody: true,
+          responseHeader: false,
+          error: true,
+          logPrint: (obj) => AppLogger.info(obj.toString(), name: 'HTTP'),
+        ),
+      );
+    }
 
     _dio = dio;
     _cookieJar = jar;
@@ -129,7 +132,11 @@ class HttpClient {
     return await getInstance().delete(uri.toString());
   }
 
-  Future<Response> upload(Uri uri, {required Map<String, String> fields, required String filePath}) async {
+  Future<Response> upload(
+    Uri uri, {
+    required Map<String, String> fields,
+    required String filePath,
+  }) async {
     final formData = FormData.fromMap({
       ...fields,
       'file': await MultipartFile.fromFile(filePath),

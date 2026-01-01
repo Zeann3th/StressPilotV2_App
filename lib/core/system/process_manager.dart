@@ -6,7 +6,7 @@ class CoreProcessManager {
   static const _logName = 'CoreProcess';
   Process? _process;
 
-  Future<void> initialize() async {
+  Future<void> initialize({bool attachLogs = true}) async {
     if (_process != null) {
       AppLogger.warning('Backend already running', name: _logName);
       return;
@@ -19,7 +19,7 @@ class CoreProcessManager {
       'app.jar',
     );
 
-    AppLogger.info('Starting backend JAR at: $jarPath', name: _logName);
+    AppLogger.info('Starting backend JAR at: $jarPath (Logs enabled: $attachLogs)', name: _logName);
 
     try {
       _process = await Process.start(
@@ -29,19 +29,24 @@ class CoreProcessManager {
         mode: ProcessStartMode.normal,
       );
 
-      _process!.stdout
-          .transform(SystemEncoding().decoder)
-          .listen((data) => AppLogger.info(
-        data.trim(),
-        name: '$_logName.stdout',
-      ));
+      if (attachLogs) {
+        _process!.stdout
+            .transform(SystemEncoding().decoder)
+            .listen((data) => AppLogger.info(
+                  data.trim(),
+                  name: '$_logName.stdout',
+                ));
 
-      _process!.stderr
-          .transform(SystemEncoding().decoder)
-          .listen((data) => AppLogger.error(
-        data.trim(),
-        name: '$_logName.stderr',
-      ));
+        _process!.stderr
+            .transform(SystemEncoding().decoder)
+            .listen((data) => AppLogger.error(
+                  data.trim(),
+                  name: '$_logName.stderr',
+                ));
+      } else {
+        _process!.stdout.drain();
+        _process!.stderr.drain();
+      }
 
       AppLogger.info(
         'Backend started successfully (pid=${_process!.pid})',

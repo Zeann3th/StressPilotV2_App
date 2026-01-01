@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -145,7 +146,7 @@ class _AppRootState extends State<AppRoot> {
     try {
       AppLogger.info('Starting application initialization', name: 'AppRoot');
 
-      await getIt<CoreProcessManager>().initialize();
+      await getIt<CoreProcessManager>().initialize(attachLogs: kDebugMode);
 
       final isHealthy = await getIt<SessionManager>().waitForHealthCheck(
         maxAttempts: 24,

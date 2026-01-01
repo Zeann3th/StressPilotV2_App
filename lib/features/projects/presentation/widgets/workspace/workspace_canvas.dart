@@ -975,12 +975,29 @@ class DraggableNodeWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
+                if (node.data['name'] != null &&
+                    node.data['name'].toString().isNotEmpty) ...[
+                  Tooltip(
+                    message: node.data['name'],
+                    child: Text(
+                      node.data['name'],
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: colors.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
                 Text(
                   node.data['url'] ?? "Action node",
                   style: TextStyle(
-                    fontSize: 13,
-                    color: colors.onSurface,
+                    fontSize: 12,
+                    color: colors.onSurfaceVariant,
                     fontFamily: 'JetBrains Mono',
                     height: 1.4,
                     fontWeight: FontWeight.w500,
