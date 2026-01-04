@@ -23,7 +23,7 @@ import 'package:stress_pilot/features/results/presentation/provider/results_prov
 final getIt = GetIt.instance;
 
 void setupDependencies() {
-  getIt.registerLazySingleton(() => CoreProcessManager());
+  getIt.registerLazySingleton(() => ProcessManager());
   getIt.registerLazySingleton(() => ThemeManager());
 
   getIt.registerLazySingleton(() => HttpClient.getInstance());
@@ -51,7 +51,6 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => RunService());
 
-  // Marketplace
   getIt.registerLazySingleton(() => NexusService());
   getIt.registerLazySingleton(() => PluginService());
   getIt.registerLazySingleton(() => MarketplaceProvider());

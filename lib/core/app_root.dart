@@ -210,17 +210,10 @@ class _AppRootState extends State<AppRoot> {
     try {
       AppLogger.info('Starting application initialization', name: 'AppRoot');
 
-      await getIt<CoreProcessManager>().initialize(attachLogs: kDebugMode);
+      await getIt<ProcessManager>().startBackend(attachLogs: kDebugMode);
 
-      final isHealthy = await getIt<SessionManager>().waitForHealthCheck(
-        maxAttempts: 24,
-        interval: const Duration(seconds: 5),
-      );
-
-      if (!isHealthy) {
-        _hasError = true;
-        return;
-      }
+      // ProcessManager handles health checks
+      AppLogger.info('Backend initialization complete.', name: 'AppRoot');
 
       await getIt<SessionManager>().initializeSession();
       await getIt<ProjectProvider>().initialize();
@@ -263,7 +256,7 @@ class _AppRootState extends State<AppRoot> {
 
   @override
   void dispose() {
-    getIt<CoreProcessManager>().stop();
+    getIt<ProcessManager>().stopBackend();
     try {
       getIt<SessionManager>().dispose();
     } catch (_) {}

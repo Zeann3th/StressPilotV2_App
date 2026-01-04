@@ -16,12 +16,14 @@ class MetricsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: colors.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF38383A)),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         children: [
@@ -39,8 +41,8 @@ class MetricsCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Color(0xFF98989D),
+                style: TextStyle(
+                  color: colors.onSurfaceVariant,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -48,8 +50,8 @@ class MetricsCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: colors.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'JetBrains Mono',

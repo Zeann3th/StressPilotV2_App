@@ -50,13 +50,8 @@ class MarketplaceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _pluginService.installPlugin(
-        artifact.downloadUrl!,
-        artifact.artifactId,
-        artifact.version,
-      );
+      await _pluginService.installPlugin(artifact);
 
-      // Refresh list to show "Installed" status
       await loadInstalledPlugins();
 
       if (context.mounted) {

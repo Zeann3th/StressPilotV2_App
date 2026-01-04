@@ -18,20 +18,22 @@ class RealtimeChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: colors.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF38383A)),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Color(0xFF98989D),
+            style: TextStyle(
+              color: colors.onSurfaceVariant,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -39,10 +41,12 @@ class RealtimeChart extends StatelessWidget {
           const SizedBox(height: 16),
           Expanded(
             child: data.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'Waiting for data...',
-                      style: TextStyle(color: Color(0xFF48484A)),
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant.withValues(alpha: 0.5),
+                      ),
                     ),
                   )
                 : LineChart(
@@ -52,7 +56,7 @@ class RealtimeChart extends StatelessWidget {
                         drawVerticalLine: false,
                         getDrawingHorizontalLine: (value) {
                           return FlLine(
-                            color: const Color(0xFF38383A),
+                            color: colors.outlineVariant,
                             strokeWidth: 1,
                           );
                         },
@@ -78,8 +82,8 @@ class RealtimeChart extends StatelessWidget {
                               }
                               return Text(
                                 value.toInt().toString(),
-                                style: const TextStyle(
-                                  color: Color(0xFF636366),
+                                style: TextStyle(
+                                  color: colors.onSurfaceVariant,
                                   fontSize: 10,
                                 ),
                               );

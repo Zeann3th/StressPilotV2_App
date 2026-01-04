@@ -60,44 +60,60 @@ class _MarketplaceViewState extends State<_MarketplaceView> {
             ),
             child: Row(
               children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back, color: colors.onSurface),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                const SizedBox(width: 8),
-                Icon(CupertinoIcons.cart_fill, size: 28, color: colors.primary),
-                const SizedBox(width: 16),
-                Text(
-                  'Plugin Marketplace',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colors.onSurface,
+                Expanded(
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: colors.onSurface),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        CupertinoIcons.cart_fill,
+                        size: 20,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Plugin Marketplace',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colors.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
-                SizedBox(
-                  width: 300,
-                  child: TextField(
-                    controller: _searchController,
-                    onSubmitted: (query) => provider.searchPlugins(query),
-                    decoration: InputDecoration(
-                      hintText: 'Search plugins...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colors.outlineVariant),
-                      ),
-                      filled: true,
-                      fillColor: colors.surfaceContainerHighest.withValues(
-                        alpha: 0.3,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 0,
-                        horizontal: 16,
+                Expanded(
+                  child: Center(
+                    child: SizedBox(
+                      width: 400,
+                      child: TextField(
+                        controller: _searchController,
+                        onSubmitted: (query) => provider.searchPlugins(query),
+                        decoration: InputDecoration(
+                          hintText: 'Search plugins...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: colors.outlineVariant,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: colors.surfaceContainerHighest.withValues(
+                            alpha: 0.3,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 0,
+                            horizontal: 16,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
+                const Expanded(child: SizedBox()),
               ],
             ),
           ),
@@ -182,7 +198,7 @@ class _PluginCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: colors.primaryContainer,
+                  color: colors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -198,9 +214,10 @@ class _PluginCard extends StatelessWidget {
                   children: [
                     Text(
                       artifact.artifactId,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: colors.onSurface,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -223,14 +240,15 @@ class _PluginCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: colors.surfaceContainerHighest,
+              color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               'v${artifact.version}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'JetBrains Mono',
                 fontSize: 11,
+                color: colors.onSurfaceVariant,
               ),
             ),
           ),

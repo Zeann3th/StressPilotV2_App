@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/endpoints/pages/endpoints_page.dart';
+import 'package:stress_pilot/features/marketplace/pages/marketplace_page.dart';
 import 'package:stress_pilot/features/projects/domain/project.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/environment_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
@@ -61,6 +62,8 @@ class AppRouter {
       case runsRoute:
         final args = settings.arguments as Map<String, dynamic>?;
         return buildRoute(RunsListPage(flowId: args?['flowId']));
+      case marketplaceRoute:
+        return buildRoute(const MarketplacePage());
       default:
         return buildRoute(
           Scaffold(

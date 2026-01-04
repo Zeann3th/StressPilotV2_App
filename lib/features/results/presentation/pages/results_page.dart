@@ -184,18 +184,23 @@ class _ResultsPageState extends State<ResultsPage> {
         ), // Back button blue
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFF38383A), height: 1),
+          child: Container(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            height: 1,
+          ),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: DropdownButton<int?>(
               value: provider.selectedEndpointId,
-              hint: const Text(
+              hint: Text(
                 'All Endpoints',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
-              dropdownColor: const Color(0xFF1C1C1E),
+              dropdownColor: Theme.of(context).colorScheme.surfaceContainer,
               underline: const SizedBox(),
               icon: const Icon(
                 CupertinoIcons.chevron_down,
@@ -203,11 +208,13 @@ class _ResultsPageState extends State<ResultsPage> {
                 color: Color(0xFF98989D),
               ),
               items: [
-                const DropdownMenuItem(
+                DropdownMenuItem(
                   value: null,
                   child: Text(
                     'All Endpoints',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ),
                 ...provider.endpointNames.entries.map(
@@ -215,7 +222,9 @@ class _ResultsPageState extends State<ResultsPage> {
                     value: e.key,
                     child: Text(
                       e.value,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   ),
                 ),
@@ -331,33 +340,35 @@ class _ResultsPageState extends State<ResultsPage> {
 
   Widget _buildRunInfoCard() {
     if (_loadingRun) {
+      final colors = Theme.of(context).colorScheme;
       return Container(
         height: 100, // Fixed height to match metrics
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E),
+          color: colors.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF38383A)),
+          border: Border.all(color: colors.outlineVariant),
         ),
-        child: const Center(
-          child: CupertinoActivityIndicator(color: Colors.white),
+        child: Center(
+          child: CupertinoActivityIndicator(color: colors.onSurface),
         ),
       );
     }
 
     if (_currentRun == null) {
+      final colors = Theme.of(context).colorScheme;
       return Container(
         height: 100,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E),
+          color: colors.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF38383A)),
+          border: Border.all(color: colors.outlineVariant),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'No run metadata available',
-            style: TextStyle(color: Color(0xFF98989D)),
+            style: TextStyle(color: colors.onSurfaceVariant),
           ),
         ),
       );
@@ -384,8 +395,8 @@ class _ResultsPageState extends State<ResultsPage> {
             children: [
               Text(
                 'Run #${_currentRun!.id}',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -446,12 +457,15 @@ class _InfoBadge extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF98989D), fontSize: 11),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 11,
+          ),
         ),
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 13,
             fontFamily: 'JetBrains Mono',
           ),

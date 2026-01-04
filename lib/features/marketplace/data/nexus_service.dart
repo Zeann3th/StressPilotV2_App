@@ -18,20 +18,17 @@ class NexusService {
   Future<List<NexusArtifact>> searchPlugins(String query) async {
     try {
       final Map<String, dynamic> queryParams = {
-        'repository': 'maven-releases', // Target specific repo
+        'repository':
+            'stress-pilot-public', // Search the group repo (includes your plugins + Maven Central proxy)
         'format': 'maven2',
       };
 
-      // If query is not empty, use the keyword search 'q'
       if (query.isNotEmpty) {
         queryParams['q'] = query;
       } else {
-        // If empty, maybe sort by version or fetch recent (Nexus API sort is limited)
         queryParams['sort'] = 'version';
       }
 
-      // We use the /search endpoint (Components) instead of /search/assets
-      // This groups the .jar, .pom, .javadoc together so we get 1 result per plugin version
       final response = await _dio.get(
         '/service/rest/v1/search',
         queryParameters: queryParams,
@@ -39,13 +36,20 @@ class NexusService {
 
       if (response.statusCode == 200 && response.data['items'] != null) {
         final items = response.data['items'] as List;
-
+        AppLogger.info(
+          'Nexus Search Response: ${response.data}',
+          name: 'NexusService',
+        );
         // Map to artifacts and filter out any that don't have a valid JAR link
         return items
             .map((e) => NexusArtifact.fromJson(e as Map<String, dynamic>))
             .where((artifact) => artifact.downloadUrl != null)
             .toList();
       }
+      AppLogger.warning(
+        'Nexus Search Failed: ${response.statusCode}',
+        name: 'NexusService',
+      );
       return [];
     } catch (e, stackTrace) {
       AppLogger.error(
