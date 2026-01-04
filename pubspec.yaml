@@ -55,6 +55,7 @@ dev_dependencies:
 
   build_runner: ^2.4.8
   injectable_generator: ^2.4.1
+  inno_bundle: ^0.11.2
 
 flutter:
   uses-material-design: true
@@ -80,3 +81,8 @@ flutter_launcher_icons:
 
   linux:
     generate: true
+
+inno_bundle:
+  id: a8bea9a0-e96d-11f0-85ae-7f61cad0019a
+  publisher: Ly Hien Long
+  name: Stress Pilot
