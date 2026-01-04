@@ -12,7 +12,6 @@ class HttpClient {
   static SessionManager? _sessionManager;
 
   static Dio getInstance({SessionManager? sessionManager}) {
-    
     if (sessionManager != null) {
       _sessionManager = sessionManager;
     }
@@ -23,8 +22,8 @@ class HttpClient {
       BaseOptions(
         baseUrl: AppConfig.apiBaseUrl,
         headers: {'Content-Type': 'application/json'},
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 60),
       ),
     );
 
