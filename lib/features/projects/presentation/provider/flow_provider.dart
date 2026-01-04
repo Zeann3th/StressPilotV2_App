@@ -36,12 +36,8 @@ class FlowProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final PagedResponse<flow_domain.Flow> response = await _flowService.getFlows(
-        projectId: projectId,
-        name: name,
-        page: 0,
-        size: 20,
-      );
+      final PagedResponse<flow_domain.Flow> response = await _flowService
+          .getFlows(projectId: projectId, name: name, page: 0, size: 20);
       _flows = response.content;
     } catch (e) {
       _error = e.toString();
@@ -84,7 +80,9 @@ class FlowProvider extends ChangeNotifier {
     }
   }
 
-  Future<flow_domain.Flow> createFlow(flow_domain.CreateFlowRequest request) async {
+  Future<flow_domain.Flow> createFlow(
+    flow_domain.CreateFlowRequest request,
+  ) async {
     try {
       final created = await _flowService.createFlow(request);
       _flows.insert(0, created);
@@ -139,6 +137,29 @@ class FlowProvider extends ChangeNotifier {
       }
 
       notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<flow_domain.Flow> getFlow(int flowId) async {
+    try {
+      final flow = await _flowService.getFlowDetail(flowId);
+
+      // Update cache if this is the selected flow
+      final index = _flows.indexWhere((f) => f.id == flowId);
+      if (index != -1) {
+        _flows[index] = flow;
+      }
+
+      if (_selectedFlow?.id == flowId) {
+        _selectedFlow = flow;
+      }
+
+      notifyListeners();
+      return flow;
     } catch (e) {
       _error = e.toString();
       notifyListeners();

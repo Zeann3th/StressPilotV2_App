@@ -15,17 +15,23 @@ class NodeConfigurationDialog extends StatefulWidget {
 class _NodeConfigurationDialogState extends State<NodeConfigurationDialog> {
   late Map<String, dynamic> _preProcessor;
   late Map<String, dynamic> _postProcessor;
-  int _selectedTab = 0; 
+  int _selectedTab = 0;
 
   @override
   void initState() {
     super.initState();
+
+    debugPrint('[NodeConfigDialog] Initializing for node ${widget.node.id}');
+    debugPrint('[NodeConfigDialog] Full node data: ${widget.node.data}');
     _preProcessor = Map<String, dynamic>.from(
       widget.node.data['preProcessor'] ?? {},
     );
     _postProcessor = Map<String, dynamic>.from(
       widget.node.data['postProcessor'] ?? {},
     );
+
+    debugPrint('[NodeConfigDialog] Extracted preProcessor: $_preProcessor');
+    debugPrint('[NodeConfigDialog] Extracted postProcessor: $_postProcessor');
   }
 
   @override
@@ -47,7 +53,7 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog> {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
-            
+
             Row(
               children: [
                 _buildTab('Pre-Processor', 0, colors),
@@ -59,10 +65,12 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog> {
             Expanded(
               child: _selectedTab == 0
                   ? _ProcessorEditor(
+                      key: const ValueKey('pre'),
                       data: _preProcessor,
                       onChanged: (data) => _preProcessor = data,
                     )
                   : _ProcessorEditor(
+                      key: const ValueKey('post'),
                       data: _postProcessor,
                       onChanged: (data) => _postProcessor = data,
                     ),
@@ -123,7 +131,11 @@ class _ProcessorEditor extends StatefulWidget {
   final Map<String, dynamic> data;
   final ValueChanged<Map<String, dynamic>> onChanged;
 
-  const _ProcessorEditor({required this.data, required this.onChanged});
+  const _ProcessorEditor({
+    super.key,
+    required this.data,
+    required this.onChanged,
+  });
 
   @override
   State<_ProcessorEditor> createState() => _ProcessorEditorState();
@@ -137,6 +149,12 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
   @override
   void initState() {
     super.initState();
+
+    debugPrint('[ProcessorEditor] Initializing with data: ${widget.data}');
+    debugPrint('[ProcessorEditor] sleep: ${widget.data['sleep']}');
+    debugPrint('[ProcessorEditor] inject: ${widget.data['inject']}');
+    debugPrint('[ProcessorEditor] extract: ${widget.data['extract']}');
+
     _sleepController = TextEditingController(
       text: widget.data['sleep']?.toString() ?? '',
     );
@@ -145,6 +163,11 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
     );
     _extractController = TextEditingController(
       text: _formatJson(widget.data['extract']),
+    );
+
+    debugPrint('[ProcessorEditor] Formatted inject: ${_injectController.text}');
+    debugPrint(
+      '[ProcessorEditor] Formatted extract: ${_extractController.text}',
     );
   }
 
@@ -167,17 +190,13 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
     if (_injectController.text.isNotEmpty) {
       try {
         newData['inject'] = jsonDecode(_injectController.text);
-      } catch (_) {
-        
-      }
+      } catch (_) {}
     }
 
     if (_extractController.text.isNotEmpty) {
       try {
         newData['extract'] = jsonDecode(_extractController.text);
-      } catch (_) {
-        
-      }
+      } catch (_) {}
     }
 
     widget.onChanged(newData);

@@ -13,14 +13,12 @@ class CanvasProvider extends ChangeNotifier {
   List<CanvasNode> _nodes = [];
   List<CanvasConnection> _connections = [];
 
-  
   String? _tempSourceNodeId;
-  String? _tempSourceHandle; 
+  String? _tempSourceHandle;
   Offset? _tempDragPosition;
 
-  
   CanvasMode _canvasMode = CanvasMode.move;
-  String? _selectedSourceNodeId; 
+  String? _selectedSourceNodeId;
   String? _selectedSourceHandle;
 
   bool _isLoading = false;
@@ -42,8 +40,6 @@ class CanvasProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   bool get isSaving => _isSaving;
-
-  
 
   void addNode(CanvasNode node) {
     _nodes.add(node);
@@ -87,8 +83,6 @@ class CanvasProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  
-
   void setCanvasMode(CanvasMode mode) {
     _canvasMode = mode;
     _selectedSourceNodeId = null;
@@ -100,7 +94,6 @@ class CanvasProvider extends ChangeNotifier {
   void selectSourceNode(String nodeId, [String handle = 'default']) {
     if (_canvasMode == CanvasMode.connect) {
       if (_selectedSourceNodeId == nodeId && _selectedSourceHandle == handle) {
-        
         _selectedSourceNodeId = null;
         _selectedSourceHandle = null;
         _tempDragPosition = null;
@@ -114,7 +107,6 @@ class CanvasProvider extends ChangeNotifier {
 
   void connectToTarget(String targetNodeId) {
     if (_canvasMode == CanvasMode.connect && _selectedSourceNodeId != null) {
-      
       _connections.add(
         CanvasConnection(
           id: const Uuid().v4(),
@@ -123,9 +115,7 @@ class CanvasProvider extends ChangeNotifier {
           sourceHandle: _selectedSourceHandle ?? 'default',
         ),
       );
-      
-      
-      
+
       notifyListeners();
     }
   }
@@ -136,10 +126,6 @@ class CanvasProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  
-
-  
 
   void startConnection(String nodeId, String handleId, Offset startPos) {
     _tempSourceNodeId = nodeId;
@@ -177,11 +163,9 @@ class CanvasProvider extends ChangeNotifier {
     _tempSourceNodeId = null;
     _tempSourceHandle = null;
     _tempDragPosition = null;
-    _selectedSourceNodeId = null; 
+    _selectedSourceNodeId = null;
     notifyListeners();
   }
-
-  
 
   Future<void> saveFlowLayout(String flowId, {bool silent = false}) async {
     _isSaving = true;
@@ -228,8 +212,6 @@ class CanvasProvider extends ChangeNotifier {
     }
   }
 
-  
-
   Future<void> saveFlowConfiguration(
     int flowId,
     FlowProvider flowProvider,
@@ -238,16 +220,12 @@ class CanvasProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      
       final steps = generateFlowConfiguration();
 
-      
       final updatedSteps = await flowProvider.configureFlow(flowId, steps);
 
-      
       syncWithBackend(updatedSteps);
 
-      
       await saveFlowLayout(flowId.toString(), silent: true);
     } finally {
       _isSaving = false;
@@ -255,9 +233,6 @@ class CanvasProvider extends ChangeNotifier {
     }
   }
 
-  
-  
-  
   List<FlowStep> generateFlowConfiguration() {
     return _nodes.map((node) {
       String type;
@@ -291,12 +266,10 @@ class CanvasProvider extends ChangeNotifier {
             nextIfFalse = conn.targetNodeId;
           }
         } else {
-          
           nextIfTrue = conn.targetNodeId;
         }
       }
 
-      
       Map<String, dynamic> preProcessor = {};
       if (node.data['preProcessor'] != null) {
         preProcessor = Map<String, dynamic>.from(node.data['preProcessor']);
@@ -305,51 +278,69 @@ class CanvasProvider extends ChangeNotifier {
 
       return FlowStep(
         id: node.id,
-        
+
         type: type,
         endpointId: endpointId,
         nextIfTrue: nextIfTrue,
         nextIfFalse: nextIfFalse,
         condition: condition,
         preProcessor: preProcessor,
-        
+
         postProcessor: node.data['postProcessor'],
       );
     }).toList();
   }
 
-  
-  
   void syncWithBackend(List<FlowStep> responseSteps) {
-    Map<String, String> idMap = {}; 
+    debugPrint('[syncWithBackend] Syncing ${responseSteps.length} steps');
+    Map<String, String> idMap = {};
+    Map<String, FlowStep> stepMap = {}; // Map to quickly find steps by ID
 
-    
+    // Build ID mapping (temp ID -> real ID) and step lookup
     for (var step in responseSteps) {
       final oldId = step.preProcessor?['_temp_sync_id'];
       if (oldId != null && oldId is String) {
         idMap[oldId] = step.id;
       }
+      stepMap[step.id] = step; // Always store step by its real ID
     }
 
-    
+    // Update nodes with new IDs and merge processor data from backend
     for (int i = 0; i < _nodes.length; i++) {
-      final oldId = _nodes[i].id;
-      if (idMap.containsKey(oldId)) {
-        final newId = idMap[oldId]!;
+      final nodeId = _nodes[i].id;
 
-        
+      // Try to find the backend step either by:
+      // 1. Mapping from temp ID to real ID (for newly created nodes)
+      // 2. Direct ID match (for nodes loaded from backend)
+      final newId = idMap[nodeId] ?? nodeId;
+      final backendStep = stepMap[newId];
+
+      if (backendStep != null) {
+        debugPrint('[syncWithBackend] Merging data for node $nodeId -> $newId');
+
         final Map<String, dynamic> updatedData = Map.from(_nodes[i].data);
-        if (updatedData.containsKey('preProcessor')) {
-          final pre = Map<String, dynamic>.from(updatedData['preProcessor']);
+
+        // Merge preProcessor from backend if it exists (excluding temp sync ID)
+        if (backendStep.preProcessor != null) {
+          final pre = Map<String, dynamic>.from(backendStep.preProcessor!);
           pre.remove('_temp_sync_id');
           updatedData['preProcessor'] = pre;
+        }
+
+        // Merge postProcessor from backend if it exists
+        if (backendStep.postProcessor != null) {
+          debugPrint(
+            '[syncWithBackend] Merging postProcessor: ${backendStep.postProcessor}',
+          );
+          updatedData['postProcessor'] = Map<String, dynamic>.from(
+            backendStep.postProcessor!,
+          );
         }
 
         _nodes[i] = _nodes[i].copyWith(id: newId, data: updatedData);
       }
     }
 
-    
     for (int i = 0; i < _connections.length; i++) {
       final conn = _connections[i];
       final newSource = idMap[conn.sourceNodeId] ?? conn.sourceNodeId;
@@ -369,17 +360,13 @@ class CanvasProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  
-  
   void applyConfiguration(List<FlowStep> steps) {
-    
     for (var step in steps) {
       final index = _nodes.indexWhere((n) => n.id == step.id);
       if (index != -1) {
         final node = _nodes[index];
         final Map<String, dynamic> newData = Map.from(node.data);
 
-        
         if (step.preProcessor != null) {
           newData['preProcessor'] = step.preProcessor;
         }
@@ -387,25 +374,20 @@ class CanvasProvider extends ChangeNotifier {
           newData['postProcessor'] = step.postProcessor;
         }
 
-        
         if (node.type == FlowNodeType.branch && step.condition != null) {
           newData['condition'] = step.condition;
         }
-        
 
         _nodes[index] = node.copyWith(data: newData);
       }
     }
 
-    
-    
     _connections.clear();
 
     for (var step in steps) {
-      
       if (step.nextIfTrue != null) {
         String? sourceHandle;
-        
+
         final sourceNode = _nodes.where((n) => n.id == step.id).firstOrNull;
         if (sourceNode?.type == FlowNodeType.branch) {
           sourceHandle = 'true';
@@ -423,7 +405,6 @@ class CanvasProvider extends ChangeNotifier {
         }
       }
 
-      
       if (step.nextIfFalse != null) {
         final sourceNode = _nodes.where((n) => n.id == step.id).firstOrNull;
         if (sourceNode?.type == FlowNodeType.branch) {

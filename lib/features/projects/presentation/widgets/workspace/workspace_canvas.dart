@@ -69,9 +69,32 @@ class _CanvasContentState extends State<_CanvasContent> {
   void initState() {
     super.initState();
     _canvasProvider = context.read<CanvasProvider>();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
-        _canvasProvider?.loadFlowLayout(widget.flowId);
+        await _canvasProvider?.loadFlowLayout(widget.flowId);
+
+        // Load flow configuration from backend to get processor data
+        final flowProvider = context.read<FlowProvider>();
+        try {
+          final flowId = int.parse(widget.flowId);
+          final flow = await flowProvider.getFlow(flowId);
+
+          // Merge processor data from backend into canvas nodes
+          if (flow.steps != null && flow.steps.isNotEmpty) {
+            debugPrint(
+              '[Canvas Init] Syncing ${flow.steps.length} steps from backend',
+            );
+            for (var step in flow.steps) {
+              debugPrint(
+                '[Canvas Init] Step ${step.id}: pre=${step.preProcessor}, post=${step.postProcessor}',
+              );
+            }
+            _canvasProvider?.syncWithBackend(flow.steps);
+          }
+        } catch (e) {
+          debugPrint('Failed to load flow configuration: $e');
+        }
+
         _centerCanvas();
       }
     });
@@ -445,7 +468,32 @@ class _CanvasContentState extends State<_CanvasContent> {
     );
 
     if (result != null && mounted) {
-      context.read<CanvasProvider>().updateNodeData(node.id, result);
+      final canvasProvider = context.read<CanvasProvider>();
+      final flowProvider = context.read<FlowProvider>();
+
+      // Update local state
+      canvasProvider.updateNodeData(node.id, result);
+
+      // Auto-save to backend
+      try {
+        final flowId = int.parse(widget.flowId);
+        await canvasProvider.saveFlowConfiguration(flowId, flowProvider);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Node configuration saved')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to save configuration: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
     }
   }
 
