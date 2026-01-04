@@ -12,19 +12,19 @@ class ResultsProvider extends ChangeNotifier {
   final List<RequestLog> _allLogs = [];
   List<RequestLog> _filteredLogs = [];
 
-  // Metadata
+  
   final Map<int, String> _endpointNames = {};
 
-  // Filter
+  
   int? _selectedEndpointId;
 
-  // Metrics
+  
   double _requestsPerSecond = 0;
   double _avgResponseTime = 0;
   int _totalRequests = 0;
   int _errorCount = 0;
 
-  // Chart Data (Simplified for now)
+  
   final List<FlSpotData> _responseTimePoints = [];
   final List<FlSpotData> _rpsPoints = [];
 
@@ -63,7 +63,7 @@ class ResultsProvider extends ChangeNotifier {
     _repository.connect();
     _subscription = _repository.logStream.listen(_onNewLogs);
 
-    // Start a timer to calculate RPS every second
+    
     _metricsTimer = Timer.periodic(
       const Duration(seconds: 1),
       _calculateMetricsTick,
@@ -74,20 +74,20 @@ class ResultsProvider extends ChangeNotifier {
     try {
       final flow = await _flowService.getFlowDetail(flowId);
       _endpointNames.clear();
-      // We need to fetch endpoints to get names, but FlowDetail only has steps with endpointId.
-      // Ideally we should fetch endpoints for the project or just use ID for now.
-      // Or we can infer from steps if steps contain endpoint info?
-      // FlowStepDTO has endpointId.
-      // We might need to fetch endpoints separately or just show ID.
-      // For now, let's just map ID to "Endpoint $id" if we can't get names easily without another API call.
-      // Actually, let's try to be smart. The user said "call flow detail first to get the flow steps and endpoint id".
-      // FlowDetail response usually contains steps.
+      
+      
+      
+      
+      
+      
+      
+      
 
-      // If we want names, we might need to fetch endpoints.
-      // Let's assume we just show IDs for now or "Endpoint X".
-      // Wait, the user said "filter by api".
+      
+      
+      
 
-      // Let's just store IDs found in steps.
+      
       for (var step in flow.steps) {
         if (step.endpointId != null) {
           _endpointNames[step.endpointId!] = "Endpoint ${step.endpointId}";
@@ -104,7 +104,7 @@ class ResultsProvider extends ChangeNotifier {
 
     _allLogs.addAll(newLogs);
 
-    // Incremental update logic: only add logs that match current filter
+    
     final matchingLogs = _selectedEndpointId == null
         ? newLogs
         : newLogs.where((l) => l.endpointId == _selectedEndpointId).toList();
@@ -128,17 +128,17 @@ class ResultsProvider extends ChangeNotifier {
       }
     }
 
-    // Update Avg Response Time incrementally
+    
     if (_totalRequests > 0) {
       _avgResponseTime = _totalResponseTimeSum / _totalRequests;
     }
 
-    // Keep chart points manageable
+    
     if (_responseTimePoints.length > 100) {
       _responseTimePoints.removeRange(0, _responseTimePoints.length - 100);
     }
 
-    // Throttle UI updates (max 4 per second = 250ms)
+    
     final now = DateTime.now();
     if (now.difference(_lastNotifyTime).inMilliseconds > 250) {
       _lastNotifyTime = now;
@@ -182,26 +182,26 @@ class ResultsProvider extends ChangeNotifier {
   }
 
   void _calculateMetricsTick(Timer timer) {
-    // 1. RPS Calculation
+    
     _requestsPerSecond = _logsSinceLastTick.toDouble();
 
-    // 2. Avg Response Time for this tick (for chart)
+    
     double avgRtForTick = 0;
     if (_logsSinceLastTick > 0) {
       avgRtForTick = _responseSumSinceLastTick / _logsSinceLastTick;
     }
 
-    // Reset tick counters
+    
     _logsSinceLastTick = 0;
     _responseSumSinceLastTick = 0;
 
     final nowMs = DateTime.now().millisecondsSinceEpoch.toDouble();
 
-    // Update RPS Chart
+    
     _rpsPoints.add(FlSpotData(x: nowMs, y: _requestsPerSecond));
     if (_rpsPoints.length > 60) _rpsPoints.removeAt(0);
 
-    // Update Response Time Chart
+    
     _responseTimePoints.add(FlSpotData(x: nowMs, y: avgRtForTick));
     if (_responseTimePoints.length > 60) _responseTimePoints.removeAt(0);
 

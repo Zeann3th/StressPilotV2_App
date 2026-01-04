@@ -10,12 +10,12 @@ class EndpointProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isLoadingMore = false;
 
-  // Pagination state
-  int _currentPage = 0; // 0-based
+  
+  int _currentPage = 0; 
   int _pageSize = 20;
   bool _hasMore = true;
 
-  // --- Added Execution State ---
+  
   bool _isExecuting = false;
   String? _error;
 
@@ -25,12 +25,12 @@ class EndpointProvider extends ChangeNotifier {
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
 
-  // --- Added Getter ---
+  
   bool get isExecuting => _isExecuting;
 
   String? get error => _error;
 
-  /// Loads the first page of endpoints (resets pagination).
+  
   Future<void> loadEndpoints({required int projectId, int pageSize = 20}) async {
     _isLoading = true;
     _error = null;
@@ -59,7 +59,7 @@ class EndpointProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Loads the next page and appends to the endpoints list if available.
+  
   Future<void> loadMoreEndpoints({required int projectId}) async {
     if (!_hasMore || _isLoadingMore) return;
 
@@ -79,7 +79,7 @@ class EndpointProvider extends ChangeNotifier {
       _hasMore = _currentPage < (page.totalPages - 1);
     } catch (e) {
       _error = e.toString();
-      // Do not clear existing endpoints on loadMore failure
+      
     }
 
     _isLoadingMore = false;
@@ -168,7 +168,7 @@ class EndpointProvider extends ChangeNotifier {
     }
   }
 
-  // --- Added Execution Method ---
+  
   Future<Map<String, dynamic>> executeEndpoint(
     int endpointId,
     Map<String, dynamic> body,

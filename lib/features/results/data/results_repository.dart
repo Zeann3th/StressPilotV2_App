@@ -15,7 +15,7 @@ class ResultsRepository {
   void connect() {
     if (_client != null && _client!.connected) return;
 
-    // Spring Boot with SockJS usually exposes raw WebSocket at /websocket suffix
+    
     final wsUrl =
         '${AppConfig.apiBaseUrl.replaceFirst('http', 'ws')}/ws/websocket';
 

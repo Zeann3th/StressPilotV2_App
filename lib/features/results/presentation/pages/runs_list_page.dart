@@ -21,7 +21,7 @@ class _RunsListPageState extends State<RunsListPage> {
   List<Run>? _runs;
   bool _isLoading = false;
 
-  // Set to store IDs of runs currently being exported to show progress
+  
   final Set<int> _exportingRunIds = {};
 
   @override
@@ -34,7 +34,7 @@ class _RunsListPageState extends State<RunsListPage> {
     setState(() => _isLoading = true);
     try {
       final runs = await _runService.getRuns(flowId: widget.flowId);
-      // Sort by descending ID (newest first) since createdAt varies
+      
       runs.sort((a, b) => b.id.compareTo(a.id));
       setState(() => _runs = runs);
     } catch (e) {
@@ -89,15 +89,15 @@ class _RunsListPageState extends State<RunsListPage> {
         context,
         AppRouter.resultsRoute,
         arguments: {'runId': run.id},
-      ).then((_) => _loadRuns()); // Refresh on return
+      ).then((_) => _loadRuns()); 
     } else if (run.status.toUpperCase() == 'COMPLETED') {
       _exportRun(run);
     } else {
-      // For other statuses (FAILED, ABORTED, etc.), maybe just show details or allow export?
-      // User said "only let them enter results page if run is in status RUNNING, else COMPLETED then they can export"
-      // Let's assume for others we do nothing or maybe just show a snackbar explaining?
-      // Or maybe allow export for FAILED too?
-      // For now, adhere strictly to user request for RUNNING/COMPLETED logic.
+      
+      
+      
+      
+      
       if ([
         'FAILED',
         'ABORTED',
@@ -174,11 +174,13 @@ class _RunsListPageState extends State<RunsListPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Flow ID: ${run.flowId} | Status: $status'),
-            if (run.createdAt != null)
+            Text(
+              DateFormat('yyyy-MM-dd HH:mm:ss').format(run.startedAt.toLocal()),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (run.completedAt != null)
               Text(
-                DateFormat(
-                  'yyyy-MM-dd HH:mm:ss',
-                ).format(DateTime.parse(run.createdAt!).toLocal()),
+                'Completed: ${DateFormat('HH:mm:ss').format(run.completedAt!.toLocal())}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
           ],

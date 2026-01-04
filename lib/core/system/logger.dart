@@ -142,7 +142,7 @@ class AppLogger {
     }
   }
 
-  // Helper for measuring execution time
+  
   static Future<T> measure<T>(
       String operation,
       Future<T> Function() function, {

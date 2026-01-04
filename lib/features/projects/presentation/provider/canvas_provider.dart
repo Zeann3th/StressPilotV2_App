@@ -13,14 +13,14 @@ class CanvasProvider extends ChangeNotifier {
   List<CanvasNode> _nodes = [];
   List<CanvasConnection> _connections = [];
 
-  // Dragging state
+  
   String? _tempSourceNodeId;
-  String? _tempSourceHandle; // Keeping for compatibility, though simplified now
+  String? _tempSourceHandle; 
   Offset? _tempDragPosition;
 
-  // Interaction State
+  
   CanvasMode _canvasMode = CanvasMode.move;
-  String? _selectedSourceNodeId; // For click-to-connect
+  String? _selectedSourceNodeId; 
   String? _selectedSourceHandle;
 
   bool _isLoading = false;
@@ -43,7 +43,7 @@ class CanvasProvider extends ChangeNotifier {
 
   bool get isSaving => _isSaving;
 
-  // --- Node Management ---
+  
 
   void addNode(CanvasNode node) {
     _nodes.add(node);
@@ -87,7 +87,7 @@ class CanvasProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- Interaction Modes ---
+  
 
   void setCanvasMode(CanvasMode mode) {
     _canvasMode = mode;
@@ -100,7 +100,7 @@ class CanvasProvider extends ChangeNotifier {
   void selectSourceNode(String nodeId, [String handle = 'default']) {
     if (_canvasMode == CanvasMode.connect) {
       if (_selectedSourceNodeId == nodeId && _selectedSourceHandle == handle) {
-        // Deselect if clicking same node/handle
+        
         _selectedSourceNodeId = null;
         _selectedSourceHandle = null;
         _tempDragPosition = null;
@@ -114,7 +114,7 @@ class CanvasProvider extends ChangeNotifier {
 
   void connectToTarget(String targetNodeId) {
     if (_canvasMode == CanvasMode.connect && _selectedSourceNodeId != null) {
-      // Create connection
+      
       _connections.add(
         CanvasConnection(
           id: const Uuid().v4(),
@@ -123,9 +123,9 @@ class CanvasProvider extends ChangeNotifier {
           sourceHandle: _selectedSourceHandle ?? 'default',
         ),
       );
-      // Keep source logic or reset?
-      // Resetting feels cleaner to avoid accidental double connects
-      // but let's allow chaining for now as user might want to fan-out.
+      
+      
+      
       notifyListeners();
     }
   }
@@ -137,9 +137,9 @@ class CanvasProvider extends ChangeNotifier {
     }
   }
 
-  // --- Connection Management ---
+  
 
-  // --- Legacy Connection Management (Cleanup later if fully unused) ---
+  
 
   void startConnection(String nodeId, String handleId, Offset startPos) {
     _tempSourceNodeId = nodeId;
@@ -177,11 +177,11 @@ class CanvasProvider extends ChangeNotifier {
     _tempSourceNodeId = null;
     _tempSourceHandle = null;
     _tempDragPosition = null;
-    _selectedSourceNodeId = null; // Also clear selection on cancel
+    _selectedSourceNodeId = null; 
     notifyListeners();
   }
 
-  // --- Storage (Local Layout) ---
+  
 
   Future<void> saveFlowLayout(String flowId, {bool silent = false}) async {
     _isSaving = true;
@@ -228,7 +228,7 @@ class CanvasProvider extends ChangeNotifier {
     }
   }
 
-  // --- Configuration Logic ---
+  
 
   Future<void> saveFlowConfiguration(
     int flowId,
@@ -238,16 +238,16 @@ class CanvasProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Generate configuration with smuggled IDs
+      
       final steps = generateFlowConfiguration();
 
-      // 2. Send to backend via FlowProvider
+      
       final updatedSteps = await flowProvider.configureFlow(flowId, steps);
 
-      // 3. Sync local nodes with backend IDs
+      
       syncWithBackend(updatedSteps);
 
-      // 4. Save local layout again with new IDs
+      
       await saveFlowLayout(flowId.toString(), silent: true);
     } finally {
       _isSaving = false;
@@ -255,9 +255,9 @@ class CanvasProvider extends ChangeNotifier {
     }
   }
 
-  /// 1. Generate Configuration with "Smuggled" ID
-  /// We inject the client-side `node.id` into `preProcessor['_temp_sync_id']`.
-  /// The backend will save this blob and return it to us unchanged.
+  
+  
+  
   List<FlowStep> generateFlowConfiguration() {
     return _nodes.map((node) {
       String type;
@@ -291,12 +291,12 @@ class CanvasProvider extends ChangeNotifier {
             nextIfFalse = conn.targetNodeId;
           }
         } else {
-          // Standard, Start, and Loop nodes have single output logic here
+          
           nextIfTrue = conn.targetNodeId;
         }
       }
 
-      // Preserve existing preProcessor data if any, and add our sync ID
+      
       Map<String, dynamic> preProcessor = {};
       if (node.data['preProcessor'] != null) {
         preProcessor = Map<String, dynamic>.from(node.data['preProcessor']);
@@ -305,25 +305,25 @@ class CanvasProvider extends ChangeNotifier {
 
       return FlowStep(
         id: node.id,
-        // Backend will likely ignore/overwrite this
+        
         type: type,
         endpointId: endpointId,
         nextIfTrue: nextIfTrue,
         nextIfFalse: nextIfFalse,
         condition: condition,
         preProcessor: preProcessor,
-        // <--- ID hidden here
+        
         postProcessor: node.data['postProcessor'],
       );
     }).toList();
   }
 
-  /// 2. Sync Logic
-  /// Read the `_temp_sync_id` from the response to map Backend IDs to Local Nodes
+  
+  
   void syncWithBackend(List<FlowStep> responseSteps) {
-    Map<String, String> idMap = {}; // Map<OldId, NewId>
+    Map<String, String> idMap = {}; 
 
-    // 1. Build the Map using the smuggled ID
+    
     for (var step in responseSteps) {
       final oldId = step.preProcessor?['_temp_sync_id'];
       if (oldId != null && oldId is String) {
@@ -331,13 +331,13 @@ class CanvasProvider extends ChangeNotifier {
       }
     }
 
-    // 2. Update Nodes (ID + Data)
+    
     for (int i = 0; i < _nodes.length; i++) {
       final oldId = _nodes[i].id;
       if (idMap.containsKey(oldId)) {
         final newId = idMap[oldId]!;
 
-        // Clean up the temp ID from our local data to keep it clean
+        
         final Map<String, dynamic> updatedData = Map.from(_nodes[i].data);
         if (updatedData.containsKey('preProcessor')) {
           final pre = Map<String, dynamic>.from(updatedData['preProcessor']);
@@ -349,7 +349,7 @@ class CanvasProvider extends ChangeNotifier {
       }
     }
 
-    // 3. Update Connections (Source + Target)
+    
     for (int i = 0; i < _connections.length; i++) {
       final conn = _connections[i];
       final newSource = idMap[conn.sourceNodeId] ?? conn.sourceNodeId;
@@ -369,17 +369,17 @@ class CanvasProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Apply configuration from JSON editor
-  /// This reconstructs connections and updates node data based on the provided steps.
+  
+  
   void applyConfiguration(List<FlowStep> steps) {
-    // 1. Update Nodes Data
+    
     for (var step in steps) {
       final index = _nodes.indexWhere((n) => n.id == step.id);
       if (index != -1) {
         final node = _nodes[index];
         final Map<String, dynamic> newData = Map.from(node.data);
 
-        // Update processors
+        
         if (step.preProcessor != null) {
           newData['preProcessor'] = step.preProcessor;
         }
@@ -387,25 +387,25 @@ class CanvasProvider extends ChangeNotifier {
           newData['postProcessor'] = step.postProcessor;
         }
 
-        // Update condition for branches
+        
         if (node.type == FlowNodeType.branch && step.condition != null) {
           newData['condition'] = step.condition;
         }
-        // Loops might have 'count' or 'condition' in future, for now standard update is fine
+        
 
         _nodes[index] = node.copyWith(data: newData);
       }
     }
 
-    // 2. Rebuild Connections
-    // We clear all connections and rebuild them from the steps
+    
+    
     _connections.clear();
 
     for (var step in steps) {
-      // Handle nextIfTrue
+      
       if (step.nextIfTrue != null) {
         String? sourceHandle;
-        // Check if the source node is a branch to assign correct handle
+        
         final sourceNode = _nodes.where((n) => n.id == step.id).firstOrNull;
         if (sourceNode?.type == FlowNodeType.branch) {
           sourceHandle = 'true';
@@ -423,7 +423,7 @@ class CanvasProvider extends ChangeNotifier {
         }
       }
 
-      // Handle nextIfFalse
+      
       if (step.nextIfFalse != null) {
         final sourceNode = _nodes.where((n) => n.id == step.id).firstOrNull;
         if (sourceNode?.type == FlowNodeType.branch) {

@@ -19,7 +19,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
     final variables = provider.variables;
     final colors = Theme.of(context).colorScheme;
 
-    // Filter
+    
     final filtered = variables.where((v) {
       final q = _search.toLowerCase();
       return v.key.toLowerCase().contains(q) ||
@@ -28,12 +28,12 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
 
     return Column(
       children: [
-        // Toolbar
+        
         Padding(
           padding: const EdgeInsets.all(24),
           child: Row(
             children: [
-              // Search
+              
               SizedBox(
                 width: 300,
                 child: TextField(
@@ -50,7 +50,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 ),
               ),
               const Spacer(),
-              // Add Button
+              
               FilledButton.icon(
                 onPressed: () => provider.addVariable(),
                 icon: const Icon(Icons.add),
@@ -60,7 +60,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
           ),
         ),
 
-        // Header
+        
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           decoration: BoxDecoration(
@@ -92,12 +92,12 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-              const SizedBox(width: 48), // Actions
+              const SizedBox(width: 48), 
             ],
           ),
         ),
 
-        // List
+        
         Expanded(
           child: provider.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -108,17 +108,17 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                     color: colors.outlineVariant.withValues(alpha: 0.5),
                   ),
                   itemBuilder: (context, index) {
-                    // We need the actual index in the provider list, not the filtered list
-                    // But for simplicity, let's assume we pass the object and find index in provider
-                    // Or better, just pass the index if we didn't filter.
-                    // Since we filter, we need to find the real index.
+                    
+                    
+                    
+                    
                     final v = filtered[index];
                     final realIndex = variables.indexOf(v);
 
                     return _EnvironmentRow(
                       key: ValueKey(
                         v.id,
-                      ), // Use ID as key. For new items, ID is unique negative.
+                      ), 
                       variable: v,
                       onChanged: (key, value, isActive) {
                         provider.updateVariable(

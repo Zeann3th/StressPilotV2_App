@@ -19,7 +19,7 @@ class SessionManager {
 
   bool get isRefreshing => _isRefreshing;
 
-  /// Start periodic session auto-refresh. Will call [initializeSession] every [interval].
+  
   void startAutoRefresh({Duration? interval}) {
     _keepAliveInterval = interval ?? _keepAliveInterval;
     _keepAliveTimer?.cancel();
@@ -34,14 +34,14 @@ class SessionManager {
     AppLogger.info('Session auto-refresh started (every ${_keepAliveInterval.inMinutes}m)', name: _logName);
   }
 
-  /// Stop periodic session auto-refresh.
+  
   void stopAutoRefresh() {
     _keepAliveTimer?.cancel();
     _keepAliveTimer = null;
     AppLogger.info('Session auto-refresh stopped', name: _logName);
   }
 
-  /// Dispose resources held by SessionManager.
+  
   void dispose() {
     stopAutoRefresh();
   }
@@ -157,7 +157,7 @@ class SessionManager {
             );
           }
 
-          // Ensure auto-refresh is scheduled so session stays alive
+          
           try {
             startAutoRefresh();
           } catch (e) {

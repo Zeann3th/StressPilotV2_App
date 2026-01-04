@@ -23,8 +23,8 @@ class _ResultsPageState extends State<ResultsPage> {
   Run? _currentRun;
   bool _loadingRun = false;
 
-  Timer? _pollTimer; // 30s polling
-  Timer? _tickTimer; // 1s UI tick for elapsed
+  Timer? _pollTimer; 
+  Timer? _tickTimer; 
   Duration _elapsed = Duration.zero;
   bool _exporting = false;
 
@@ -32,7 +32,7 @@ class _ResultsPageState extends State<ResultsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Load run metadata first, then initialize results provider for the run's flow
+      
       await _loadRun();
       if (_currentRun != null && mounted) {
         context.read<ResultsProvider>().initialize(_currentRun!.flowId);
@@ -42,14 +42,14 @@ class _ResultsPageState extends State<ResultsPage> {
   }
 
   void _startTimers() {
-    // Start 30s polling
+    
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(
       const Duration(seconds: 30),
       (_) => _refreshRun(),
     );
 
-    // Start 1s tick to update elapsed display
+    
     _tickTimer?.cancel();
     _tickTimer = Timer.periodic(
       const Duration(seconds: 1),
@@ -64,19 +64,13 @@ class _ResultsPageState extends State<ResultsPage> {
 
   Future<void> _updateElapsed() async {
     if (_currentRun == null) return;
-    // If run has a createdAt or startedAt, try to compute elapsed. Fall back to internal timer.
-    if (_currentRun!.createdAt != null) {
-      try {
-        final created = DateTime.parse(_currentRun!.createdAt!);
-        setState(() {
-          _elapsed = DateTime.now().toUtc().difference(created.toUtc());
-        });
-      } catch (_) {
-        setState(() {
-          _elapsed = _elapsed + const Duration(seconds: 1);
-        });
-      }
-    } else {
+    
+    try {
+      final created = _currentRun!.startedAt;
+      setState(() {
+        _elapsed = DateTime.now().toUtc().difference(created.toUtc());
+      });
+    } catch (_) {
       setState(() {
         _elapsed = _elapsed + const Duration(seconds: 1);
       });
@@ -90,15 +84,12 @@ class _ResultsPageState extends State<ResultsPage> {
       final run = await svc.getRun(widget.runId);
       setState(() {
         _currentRun = run;
-        // initialize elapsed based on createdAt if available
-        if (_currentRun?.createdAt != null) {
-          try {
-            final created = DateTime.parse(_currentRun!.createdAt!);
-            _elapsed = DateTime.now().toUtc().difference(created.toUtc());
-          } catch (_) {
-            _elapsed = Duration.zero;
-          }
-        } else {
+        
+        
+        try {
+          final created = _currentRun!.startedAt;
+          _elapsed = DateTime.now().toUtc().difference(created.toUtc());
+        } catch (_) {
           _elapsed = Duration.zero;
         }
       });
@@ -121,7 +112,7 @@ class _ResultsPageState extends State<ResultsPage> {
       setState(() {
         _currentRun = run;
       });
-      // If run completed, stop timers
+      
       if (_currentRun != null && _isTerminalStatus(_currentRun!.status)) {
         _stopTimers();
       }
@@ -201,7 +192,7 @@ class _ResultsPageState extends State<ResultsPage> {
               onChanged: (v) => provider.setEndpointFilter(v),
             ),
           ),
-          // Export Button: disabled until run is COMPLETED
+          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: IconButton(
@@ -227,7 +218,7 @@ class _ResultsPageState extends State<ResultsPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Run info & metrics
+            
             Row(
               children: [
                 Expanded(child: _buildRunInfoCard()),

@@ -23,11 +23,11 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   final _durationCtrl = TextEditingController(text: '60');
   final _rampUpCtrl = TextEditingController(text: '0');
 
-  // Variables
+  
   final List<MapEntry<TextEditingController, TextEditingController>>
   _variables = [];
 
-  // File
+  
   PlatformFile? _selectedFile;
 
   @override
@@ -72,9 +72,9 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   }
 
   void _run() async {
-    debugPrint("🚀 PRESSED RUN: Starting logic..."); // <--- LOOK FOR THIS
+    debugPrint("🚀 PRESSED RUN: Starting logic..."); 
 
-    // 1. Parse Inputs
+    
     final threads = int.tryParse(_threadsCtrl.text) ?? 1;
     final duration = int.tryParse(_durationCtrl.text) ?? 60;
     final rampUp = int.tryParse(_rampUpCtrl.text) ?? 0;
@@ -88,7 +88,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       }
     }
 
-    // 2. Prepare File
+    
     MultipartFile? multipartFile;
     if (_selectedFile != null && _selectedFile!.path != null) {
       debugPrint("📂 File selected: ${_selectedFile!.name}");
@@ -113,7 +113,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
     try {
       debugPrint("⏳ Calling Provider.runFlow()...");
 
-      // 3. Run the flow logic
+      
       await context.read<FlowProvider>().runFlow(
         flowId: widget.flowId,
         runFlowRequest: request,
@@ -124,7 +124,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
       if (!mounted) return;
 
-      // 4. Navigation & Polling
+      
       final navigator = Navigator.of(context);
       final messenger = ScaffoldMessenger.of(context);
 
@@ -133,7 +133,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
       await Future.delayed(const Duration(milliseconds: 300));
 
-      // Show SnackBar
+      
       try {
         messenger.showSnackBar(
           const SnackBar(content: Text('Flow execution started')),
@@ -142,7 +142,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         debugPrint("⚠️ SnackBar error (harmless): $e");
       }
 
-      // Start Polling
+      
       debugPrint("🕵️ Starting Polling...");
       final startTime = DateTime.now().toUtc();
 
@@ -157,18 +157,12 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
           try {
             final candidate = await runSvc.getLastRun(widget.flowId);
 
-            if (candidate.createdAt != null) {
-              final created = DateTime.parse(candidate.createdAt!).toUtc();
-              // Adjust buffer if needed
-              if (created.isAfter(
-                startTime.subtract(const Duration(seconds: 1)),
-              )) {
-                debugPrint("🎯 Found new run: ${candidate.id}");
-                found = candidate;
-                break;
-              }
-            } else {
-              // If your backend doesn't return createdAt, we assume it's the one
+            final created = candidate.startedAt.toUtc();
+            
+            if (created.isAfter(
+              startTime.subtract(const Duration(seconds: 1)),
+            )) {
+              debugPrint("🎯 Found new run: ${candidate.id}");
               found = candidate;
               break;
             }
@@ -220,7 +214,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Configuration Section
+              
               const Text(
                 'General Settings',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -265,7 +259,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
               const SizedBox(height: 24),
 
-              // Credentials File Section
+              
               const Text(
                 'Credentials',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -305,7 +299,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
               const SizedBox(height: 24),
 
-              // Variables Section
+              
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

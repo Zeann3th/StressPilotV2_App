@@ -29,26 +29,24 @@ class RunService {
     return Run.fromJson(response.data);
   }
 
-  /// Downloads the export for the given run and allows user to save it.
-  /// Returns the saved [File] on success, or null on error/cancel.
+  
+  
   Future<File?> exportRun(Run run) async {
     try {
       final response = await _dio.get<List<int>>(
         '/api/v1/runs/${run.id}/export',
-        options: Options(responseType: ResponseType.bytes),
+        
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(minutes: 2),
+        ),
       );
 
       final bytes = response.data;
       if (bytes == null || bytes.isEmpty) return null;
 
-      // Format: [Stress Pilot] Detailed report of run <run id> <yyyyMMdd_HH:mm:ss>.xlsx
-      // Note: Windows filenames cannot contain ':', replacing with '.' for valid filename.
-      final date = run.createdAt != null
-          ? DateTime.parse(run.createdAt!).toLocal()
-          : DateTime.now();
+      final date = run.startedAt.toLocal();
 
-      // Use intl pattern if available or manual formatting to ensure correct format
-      // Pattern: yyyyMMdd_HH.mm.ss
       final dateStr =
           '${date.year}${date.month.toString().padLeft(2, '0')}${date.day.toString().padLeft(2, '0')}_'
           '${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')}.${date.second.toString().padLeft(2, '0')}';
@@ -64,11 +62,9 @@ class RunService {
       );
 
       if (outputFile == null) {
-        // User canceled the picker
         return null;
       }
 
-      // Append extension if missing (some platforms might not add it automatically)
       if (!outputFile.toLowerCase().endsWith('.xlsx')) {
         outputFile = '$outputFile.xlsx';
       }
@@ -77,10 +73,7 @@ class RunService {
       await finalFile.writeAsBytes(bytes);
       return finalFile;
     } catch (e) {
-      // Let caller handle errors / show messages
       rethrow;
     }
   }
 }
-
-// Helper extension to safely get first element

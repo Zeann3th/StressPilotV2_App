@@ -45,6 +45,6 @@ void setupDependencies() {
   getIt.registerLazySingleton(
     () => ResultsProvider(getIt(), getIt<FlowService>()),
   );
-  // Runs: service to fetch run metadata
+  
   getIt.registerLazySingleton(() => RunService());
 }

@@ -12,7 +12,7 @@ class HttpClient {
   static SessionManager? _sessionManager;
 
   static Dio getInstance({SessionManager? sessionManager}) {
-    // If a session manager is provided, ensure it's assigned even if Dio already exists.
+    
     if (sessionManager != null) {
       _sessionManager = sessionManager;
     }

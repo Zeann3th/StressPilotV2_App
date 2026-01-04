@@ -33,7 +33,7 @@ class WorkspaceTopBar extends StatelessWidget {
             tooltip: 'Back to Projects',
           ),
           const SizedBox(width: 8),
-          // Flat Project Selector
+          
           PopupMenuButton<String>(
             offset: const Offset(0, 48),
             child: Row(
@@ -96,7 +96,7 @@ class WorkspaceTopBar extends StatelessWidget {
 
           const Spacer(),
 
-          // Minimalist Action Buttons
+          
           OutlinedButton.icon(
             onPressed: () {
               if (project != null) {

@@ -32,7 +32,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final flowProvider = context.watch<FlowProvider>();
-    // Get the current project ID from ProjectProvider
+    
     final projectProvider = context.watch<ProjectProvider>();
     final projectId = projectProvider.selectedProject?.id ?? 0;
 
@@ -46,7 +46,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
       ),
       child: Column(
         children: [
-          // Tab Selector
+          
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -76,7 +76,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
               ],
             ),
           ),
-          // Content based on active tab
+          
           Expanded(
             child: widget.sidebarTab == SidebarTab.flows
                 ? WorkspaceFlowList(
@@ -86,7 +86,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
                   )
                 : Column(
                     children: [
-                      // "Manage All" button for Endpoints
+                      
                       Padding(
                         padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                         child: OutlinedButton(
@@ -104,10 +104,10 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
                         ),
                       ),
 
-                      // Logic Nodes Section (Start, Branch)
+                      
                       _buildLogicNodesSection(context),
                       const Divider(height: 1),
-                      // Endpoints List
+                      
                       Expanded(
                         child: WorkspaceEndpointsList(
                           selectedFlow: widget.selectedFlow,

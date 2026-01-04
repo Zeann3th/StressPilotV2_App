@@ -30,7 +30,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
     _scrollCtrl = ScrollController();
     _scrollCtrl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // ensure initial load
+      
       context.read<EndpointProvider>().loadEndpoints(
         projectId: widget.projectId,
       );
@@ -48,7 +48,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
 
   Future<void> _handleUpload(BuildContext context) async {
     try {
-      // 1. Pick the file
+      
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: [
@@ -56,7 +56,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
           'yaml',
           'yml',
           'proto',
-        ], // Allowed extensions
+        ], 
       );
 
       if (result != null && result.files.single.path != null) {
@@ -70,7 +70,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
 
         if (!context.mounted) return;
 
-        // 3. Call the provider
+        
         await context.read<EndpointProvider>().uploadEndpointsFile(
           filePath: filePath,
           projectId: widget.projectId,
@@ -130,7 +130,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.upload_file, size: 18),
-                tooltip: 'Import Endpoints', // Changed to general import text
+                tooltip: 'Import Endpoints', 
                 onPressed: () => _handleUpload(context),
                 visualDensity: VisualDensity.compact,
               ),
@@ -138,7 +138,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
                 icon: const Icon(Icons.add, size: 18),
                 tooltip: 'Add Endpoint',
                 onPressed: () {
-                  // Logic for manually adding an endpoint
+                  
                 },
                 visualDensity: VisualDensity.compact,
               ),

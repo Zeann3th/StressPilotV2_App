@@ -53,12 +53,12 @@ class EndpointService {
     int endpointId,
     Map<String, dynamic> endpointData,
   ) async {
-    // Create a copy to avoid modifying the original map
+    
     final dataToSend = Map<String, dynamic>.from(endpointData);
 
-    // Serialize complex fields to JSON strings if they are Maps/Lists
-    // This is required because the backend uses reflection to update the Entity directly,
-    // and the Entity likely stores these as JSON Strings.
+    
+    
+    
     final complexFields = ['httpHeaders', 'httpParameters', 'graphqlVariables'];
 
     for (final field in complexFields) {
@@ -67,7 +67,7 @@ class EndpointService {
       }
     }
 
-    // body special handling: if it's a Map/List, stringify it.
+    
     if (dataToSend['body'] is Map || dataToSend['body'] is List) {
       dataToSend['body'] = jsonEncode(dataToSend['body']);
     }

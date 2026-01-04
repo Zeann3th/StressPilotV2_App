@@ -20,14 +20,14 @@ class ProjectWorkspacePage extends StatefulWidget {
 class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   flow.Flow? _selectedFlow;
   SidebarTab _sidebarTab = SidebarTab.flows;
-  int? _lastLoadedProjectId; // Track the last ID to prevent loops
+  int? _lastLoadedProjectId; 
 
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback for one-time initialization actions
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return; // Always check mounted
+      if (!mounted) return; 
       context.read<ProjectProvider>().loadProjects();
     });
   }
@@ -36,22 +36,22 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // We use watch() here to listen to changes.
-    // Note: This will trigger on ANY change in ProjectProvider, but our guard clause below
-    // ensures we only act when the project ID actually changes.
+    
+    
+    
     final project = context.watch<ProjectProvider>().selectedProject;
 
-    // GUARD CLAUSE: Only load if the ID has actually changed
+    
     if (project != null && project.id != _lastLoadedProjectId) {
       _lastLoadedProjectId = project.id;
       _resetWorkspaceState();
 
-      // Perform data loading
-      // We don't need Future.microtask here if loadFlows is properly async and doesn't notify immediately during build
+      
+      
       final flowProvider = context.read<FlowProvider>();
       final endpointProvider = context.read<EndpointProvider>();
 
-      // Execute after the current build frame is done to be safe
+      
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         flowProvider.loadFlows(projectId: project.id);
@@ -61,7 +61,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   }
 
   void _resetWorkspaceState() {
-    // No need to setState here if called during didChangeDependencies/build phase
+    
     _selectedFlow = null;
     _sidebarTab = SidebarTab.flows;
   }

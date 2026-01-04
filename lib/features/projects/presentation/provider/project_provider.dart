@@ -156,7 +156,7 @@ class ProjectProvider extends ChangeNotifier {
 
   Future<void> exportProject(int projectId, String projectName) async {
     try {
-      // Use file_picker to get save location
+      
       final result = await FilePicker.platform.saveFile(
         dialogTitle: 'Export Project',
         fileName: '${projectName.replaceAll(' ', '_')}_export.json',
@@ -165,7 +165,7 @@ class ProjectProvider extends ChangeNotifier {
       );
 
       if (result == null) {
-        // User cancelled the picker
+        
         return;
       }
 
@@ -181,7 +181,7 @@ class ProjectProvider extends ChangeNotifier {
 
   Future<Project> importProject() async {
     try {
-      // Use file_picker to select a file
+      
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Import Project',
         type: FileType.custom,
@@ -190,7 +190,7 @@ class ProjectProvider extends ChangeNotifier {
       );
 
       if (result == null || result.files.isEmpty) {
-        // User cancelled the picker
+        
         throw Exception('No file selected');
       }
 

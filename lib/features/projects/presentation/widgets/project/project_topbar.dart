@@ -34,7 +34,7 @@ class ProjectTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Refresh Icon (Subtle)
+          
           IconButton(
             icon: Icon(Icons.refresh, color: colors.onSurfaceVariant, size: 20),
             onPressed: onRefresh,
@@ -43,7 +43,7 @@ class ProjectTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 16),
 
-          // Search Input (Clean & Minimal)
+          
           Expanded(
             child: Container(
               constraints: const BoxConstraints(maxWidth: 400),
@@ -78,11 +78,11 @@ class ProjectTopBar extends StatelessWidget {
                       : null,
                   filled: true,
                   fillColor: colors.surfaceContainerLow,
-                  // Minimal background
+                  
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(6),
                     borderSide: BorderSide
-                        .none, // No border for cleaner look inside toolbar
+                        .none, 
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(6),
@@ -97,7 +97,7 @@ class ProjectTopBar extends StatelessWidget {
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 0, // Centered vertically
+                    vertical: 0, 
                   ),
                 ),
                 style: text.bodyMedium?.copyWith(
@@ -111,7 +111,7 @@ class ProjectTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 16),
 
-          // Import Button
+          
           OutlinedButton.icon(
             onPressed: onImport,
             icon: const Icon(Icons.upload_file, size: 18),
@@ -125,7 +125,7 @@ class ProjectTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
 
-          // Export Button
+          
           OutlinedButton.icon(
             onPressed: onExport,
             icon: const Icon(Icons.download, size: 18),
@@ -139,7 +139,7 @@ class ProjectTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
 
-          // Create Button (Primary Action)
+          
           FilledButton.icon(
             onPressed: onAdd,
             icon: const Icon(Icons.add, size: 18),

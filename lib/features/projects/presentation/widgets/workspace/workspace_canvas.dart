@@ -114,11 +114,11 @@ class _CanvasContentState extends State<_CanvasContent> {
 
   void _zoom(double factor) {
     final matrix = _transformController.value.clone();
-    // Zoom towards the center of the viewport
+    
     final viewportSize = MediaQuery.of(context).size;
     final center = Offset(viewportSize.width / 2, viewportSize.height / 2);
 
-    // Translate to center, scale, translate back
+    
     matrix.translateByDouble(center.dx, center.dy, 0, 1.0);
     matrix.scaleByDouble(factor, factor, factor, 1.0);
     matrix.translateByDouble(-center.dx, -center.dy, 0, 1.0);
@@ -173,11 +173,11 @@ class _CanvasContentState extends State<_CanvasContent> {
                       },
                       child: GestureDetector(
                         onTap: () {
-                          // Background tap to deselect?
+                          
                           if (canvasProvider.canvasMode == CanvasMode.connect) {
                             canvasProvider.setCanvasMode(
                               CanvasMode.connect,
-                            ); // Resets selection
+                            ); 
                           }
                         },
                         child: Container(
@@ -193,7 +193,7 @@ class _CanvasContentState extends State<_CanvasContent> {
                                     painter: GridPainter(
                                       color: colors.onSurface.withValues(
                                         alpha: 0.05,
-                                      ), // Updated to withValues
+                                      ), 
                                       scale: 1.0,
                                     ),
                                   ),
@@ -225,10 +225,10 @@ class _CanvasContentState extends State<_CanvasContent> {
                                     node: node,
                                     canvasKey: _canvasKey,
                                     transformController: _transformController,
-                                    // Double-tap behavior:
-                                    // - Start node: no-op (indicator only)
-                                    // - Branch node: open a small dialog to edit the condition expression
-                                    // - Endpoint/other: open full node configuration
+                                    
+                                    
+                                    
+                                    
                                     onDoubleTap: node.type == FlowNodeType.start
                                         ? null
                                         : node.type == FlowNodeType.branch
@@ -237,7 +237,7 @@ class _CanvasContentState extends State<_CanvasContent> {
                                   ),
                                 );
                               }),
-                              // Connection Delete Buttons
+                              
                               ...canvasProvider.connections.map((conn) {
                                 final source = canvasProvider.nodes.firstWhere(
                                   (n) => n.id == conn.sourceNodeId,
@@ -246,7 +246,7 @@ class _CanvasContentState extends State<_CanvasContent> {
                                   (n) => n.id == conn.targetNodeId,
                                 );
 
-                                // Calculate midpoint for delete button
+                                
                                 Offset start;
                                 if (source.type == FlowNodeType.branch) {
                                   if (conn.sourceHandle == 'true') {
@@ -268,7 +268,7 @@ class _CanvasContentState extends State<_CanvasContent> {
                                     target.position +
                                     Offset(0, target.height / 2);
 
-                                // Simple midpoint approximation
+                                
                                 final midX = (start.dx + end.dx) / 2;
                                 final midY = (start.dy + end.dy) / 2;
 
@@ -854,7 +854,7 @@ class DraggableNodeWidget extends StatelessWidget {
       onTap: () {
         if (provider.canvasMode == CanvasMode.connect) {
           if (provider.selectedSourceNodeId != null) {
-            // Allow connecting to any node (including self)
+            
             provider.connectToTarget(node.id);
           } else {
             provider.selectSourceNode(node.id);
@@ -926,7 +926,7 @@ class DraggableNodeWidget extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Left accent bar
+          
           Positioned(
             left: 0,
             top: 12,
@@ -1009,7 +1009,7 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          // Delete - Top Right (Floating)
+          
           Positioned(
             top: -8,
             right: -8,
@@ -1038,7 +1038,7 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          // Ports removed
+          
         ],
       ),
     );
@@ -1056,7 +1056,7 @@ class DraggableNodeWidget extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // Start Circle
+          
           Container(
             width: 48,
             height: 48,
@@ -1082,9 +1082,9 @@ class DraggableNodeWidget extends StatelessWidget {
               size: 28,
             ),
           ),
-          // Output port removed
+          
 
-          // Delete
+          
           Positioned(
             top: -12,
             right: 0,
@@ -1123,9 +1123,9 @@ class DraggableNodeWidget extends StatelessWidget {
     CanvasProvider provider,
     ColorScheme colors,
   ) {
-    // Ensure diamond is always square based on the smaller dimension
+    
     final size = node.width < node.height ? node.width : node.height;
-    final diamondSize = size * 0.7; // Slightly larger to fill space better
+    final diamondSize = size * 0.7; 
 
     return SizedBox(
       width: node.width,
@@ -1134,9 +1134,9 @@ class DraggableNodeWidget extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // Diamond Shape (Gradient & Glow)
+          
           Transform.rotate(
-            angle: 0.785398, // 45 deg
+            angle: 0.785398, 
             child: Container(
               width: diamondSize,
               height: diamondSize,
@@ -1165,14 +1165,14 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          // Icon in center
+          
           const Icon(
             Icons.call_split_rounded,
             size: 20,
-            color: Colors.grey, // Subtle icon in center
+            color: Colors.grey, 
           ),
 
-          // Delete button
+          
           Positioned(
             top: 0,
             right: 0,
@@ -1202,11 +1202,11 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          // Input port removed
+          
 
-          // True Button
+          
           Positioned(
-            right: -8, // Slightly more offset for better hit area
+            right: -8, 
             top: 0,
             bottom: 0,
             child: Center(
@@ -1258,7 +1258,7 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          // False Button
+          
           Positioned(
             bottom: -8,
             left: 0,
@@ -1341,7 +1341,7 @@ class GridPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 1.0 / scale;
-    const spacing = 40.0; // Larger spacing
+    const spacing = 40.0; 
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
@@ -1385,7 +1385,7 @@ class ConnectionPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    // Optimization: Create a map for O(1) lookups
+    
     final nodeMap = {for (final node in nodes) node.id: node};
 
     for (final conn in connections) {
@@ -1396,7 +1396,7 @@ class ConnectionPainter extends CustomPainter {
       _drawSmartConnection(canvas, source, target, conn.sourceHandle, paint);
     }
 
-    // Draw "Live" connection line
+    
     if (tempSourceId != null && tempEndPos != null) {
       final source = nodeMap[tempSourceId];
       if (source != null) {
@@ -1418,20 +1418,20 @@ class ConnectionPainter extends CustomPainter {
     String? sourceHandle,
     Paint paint,
   ) {
-    // 1. Determine Start Point
-    // If handle is provided (Branch), force that side.
-    // Otherwise, allow any side for source.
+    
+    
+    
     final (startPos, startDir) = _getStartPoint(
       source,
       sourceHandle,
       target.position,
     );
 
-    // 2. Determine End Point
-    // Allow any side for target that is "facing" the start point or convenient.
+    
+    
     final (endPos, endDir) = _getBestEndPoint(target, startPos);
 
-    // 3. Draw Orthogonal Line
+    
     _drawOrthogonalLine(canvas, startPos, endPos, startDir, endDir, paint);
   }
 
@@ -1444,9 +1444,9 @@ class ConnectionPainter extends CustomPainter {
   ) {
     final (startPos, startDir) = _getStartPoint(source, sourceHandle, endPos);
 
-    // For live connection, we don't have a target node orientation yet,
-    // so we infer "arrival" direction based on relative position.
-    AxisDirection endDir = AxisDirection.left; // Default
+    
+    
+    AxisDirection endDir = AxisDirection.left; 
     if ((endPos.dx - startPos.dx).abs() > (endPos.dy - startPos.dy).abs()) {
       endDir = endPos.dx > startPos.dx
           ? AxisDirection.left
@@ -1477,13 +1477,13 @@ class ConnectionPainter extends CustomPainter {
       }
     }
 
-    // For standard nodes, choose the side closest to the target
+    
     final center = node.position + Offset(node.width / 2, node.height / 2);
     final dx = targetCenter.dx - center.dx;
     final dy = targetCenter.dy - center.dy;
 
     if (dx.abs() > dy.abs()) {
-      // Horizontal preference
+      
       if (dx > 0) {
         return (
           node.position + Offset(node.width, node.height / 2),
@@ -1493,7 +1493,7 @@ class ConnectionPainter extends CustomPainter {
         return (node.position + Offset(0, node.height / 2), AxisDirection.left);
       }
     } else {
-      // Vertical preference
+      
       if (dy > 0) {
         return (
           node.position + Offset(node.width / 2, node.height),
@@ -1510,27 +1510,27 @@ class ConnectionPainter extends CustomPainter {
     final dx = startPos.dx - center.dx;
     final dy = startPos.dy - center.dy;
 
-    // We want to enter from the side facing the start position
+    
     if (dx.abs() > dy.abs()) {
       if (dx > 0) {
-        // Start is to the right, so we enter from right (pointing left)
+        
         return (
           node.position + Offset(node.width, node.height / 2),
           AxisDirection.right,
         );
       } else {
-        // Start is to the left, so we enter from left (pointing right)
+        
         return (node.position + Offset(0, node.height / 2), AxisDirection.left);
       }
     } else {
       if (dy > 0) {
-        // Start is below, enter from bottom (pointing up)
+        
         return (
           node.position + Offset(node.width / 2, node.height),
           AxisDirection.down,
         );
       } else {
-        // Start is above, enter from top (pointing down)
+        
         return (node.position + Offset(node.width / 2, 0), AxisDirection.up);
       }
     }
@@ -1552,15 +1552,15 @@ class ConnectionPainter extends CustomPainter {
       path.lineTo(point.dx, point.dy);
     }
 
-    // Ensure we actually reach the end point exactly
+    
     if (points.isNotEmpty && points.last != end) {
       path.lineTo(end.dx, end.dy);
     }
 
     canvas.drawPath(path, paint);
 
-    // Draw Arrowhead
-    // Use the last segment direction
+    
+    
     final prevPoint = points.isNotEmpty ? points.last : start;
     _drawArrowHead(canvas, end, prevPoint, paint.color);
   }
@@ -1571,10 +1571,10 @@ class ConnectionPainter extends CustomPainter {
     AxisDirection startDir,
     AxisDirection endDir,
   ) {
-    // Improved Manhattan routing
-    // 1. Move out from start
-    // 2. Move out from end (acting as approach point)
-    // 3. Connect them
+    
+    
+    
+    
 
     const double margin = 20.0;
 
@@ -1584,9 +1584,9 @@ class ConnectionPainter extends CustomPainter {
 
     List<Offset> points = [p1];
 
-    // Now connect p1 to p2 orthogonally
-    // We essentially have a new start (p1) and end (p2) but we can turn freely now?
-    // Not exactly, we prefer minimizing turns.
+    
+    
+    
 
     double midX = (p1.dx + p2.dx) / 2;
     double midY = (p1.dy + p2.dy) / 2;
@@ -1596,31 +1596,31 @@ class ConnectionPainter extends CustomPainter {
     bool endVertical =
         endDir == AxisDirection.up || endDir == AxisDirection.down;
 
-    // Heuristic:
-    // If we are vertical at start, we usually want to move horizontally next.
-    // If we are horizontal at start, we usually want to move vertically next.
+    
+    
+    
 
     if (startVertical == endVertical) {
-      // Both starting vertical (e.g. Top -> Bottom)
-      // Connect via horizontal mid segment
-      // Z path: Vertical -> Horizontal -> Vertical
+      
+      
+      
       if (startVertical) {
         points.add(Offset(p1.dx, midY));
         points.add(Offset(p2.dx, midY));
       } else {
-        // Both horizontal
+        
         points.add(Offset(midX, p1.dy));
         points.add(Offset(midX, p2.dy));
       }
     } else {
-      // Perpendicular (e.g. Right -> Bottom)
-      // L path: Horizontal -> Vertical or V -> H
+      
+      
       if (startVertical) {
-        // Moving Vertically first.
-        // Can we go straight to p2.y?
+        
+        
         points.add(Offset(p1.dx, p2.dy));
       } else {
-        // Moving Horizontally first
+        
         points.add(Offset(p2.dx, p1.dy));
       }
     }
@@ -1650,7 +1650,7 @@ class ConnectionPainter extends CustomPainter {
     Offset prevPoint,
     Color color,
   ) {
-    if ((tip - prevPoint).distance < 1.0) return; // Prevention
+    if ((tip - prevPoint).distance < 1.0) return; 
 
     final angle = (tip - prevPoint).direction;
     const arrowSize = 6.0;

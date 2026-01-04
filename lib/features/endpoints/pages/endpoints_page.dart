@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../common/domain/endpoint.dart';
 import '../../common/presentation/provider/endpoint_provider.dart';
+import '../widgets/key_value_editor.dart';
+import 'create_endpoint_dialog.dart';
 
 class ProjectEndpointsPage extends StatefulWidget {
   final int projectId;
@@ -34,8 +36,8 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
     final provider = context.read<EndpointProvider>();
     if (!provider.hasMore || provider.isLoadingMore) return;
 
-    if (_scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels < 200) {
-      // near the bottom
+    if (_scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels <
+        200) {
       provider.loadMoreEndpoints(projectId: widget.projectId);
     }
   }
@@ -61,7 +63,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
     return Scaffold(
       body: Row(
         children: [
-          // --- LEFT PANE: LIST ---
           Container(
             width: 280,
             decoration: BoxDecoration(
@@ -70,7 +71,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
             ),
             child: Column(
               children: [
-                // Header / Search
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -109,21 +109,30 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                     ],
                   ),
                 ),
-                // List
+
                 Expanded(
                   child: provider.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : ListView.builder(
                           controller: _scrollCtrl,
-                          itemCount: provider.endpoints.length + (provider.hasMore ? 1 : 0),
+                          itemCount:
+                              provider.endpoints.length +
+                              (provider.hasMore ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index >= provider.endpoints.length) {
-                              // footer loader
                               return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 child: Center(
                                   child: provider.isLoadingMore
-                                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
                                       : const SizedBox.shrink(),
                                 ),
                               );
@@ -207,7 +216,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
             ),
           ),
 
-          // --- RIGHT PANE: WORKSPACE ---
           Expanded(
             child: _selectedEndpoint == null
                 ? _EmptyState(
@@ -294,7 +302,6 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: () {
-              // Quick create action
               _showCreateDialog(context);
             },
             child: const Text('Create Endpoint'),
@@ -304,73 +311,15 @@ class _EmptyState extends StatelessWidget {
     );
   }
 
-  void _showCreateDialog(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final urlCtrl = TextEditingController();
-    String method = 'GET';
-
-    showDialog(
+  void _showCreateDialog(BuildContext context) async {
+    final result = await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New Endpoint'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: urlCtrl,
-              decoration: const InputDecoration(labelText: 'URL'),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: method,
-              items: [
-                'GET',
-                'POST',
-                'PUT',
-                'DELETE',
-                'PATCH',
-              ].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
-              onChanged: (v) => method = v!,
-              decoration: const InputDecoration(labelText: 'Method'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (nameCtrl.text.isEmpty || urlCtrl.text.isEmpty) return;
-              try {
-                final ep = await context
-                    .read<EndpointProvider>()
-                    .createEndpoint({
-                      'name': nameCtrl.text,
-                      'url': urlCtrl.text,
-                      'httpMethod': method,
-                      'type': 'HTTP',
-                      'projectId': projectId,
-                    });
-                if (context.mounted) {
-                  Navigator.pop(ctx);
-                  onCreated(ep);
-                }
-              } catch (e) {
-                // Handle error
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+      builder: (ctx) => CreateEndpointDialog(projectId: projectId),
     );
+
+    if (result != null && result is Endpoint) {
+      onCreated(result);
+    }
   }
 }
 
@@ -398,12 +347,11 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   late TextEditingController _nameCtrl;
   late String _method;
 
-  // Request Data
   late TextEditingController _bodyCtrl;
   Map<String, String> _headers = {};
   Map<String, String> _params = {};
+  Map<String, String> _variables = {};
 
-  // Response Data
   Map<String, dynamic>? _response;
   bool _isLoading = false;
   int? _statusCode;
@@ -419,7 +367,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     _nameCtrl = TextEditingController(text: widget.endpoint.name);
     _method = widget.endpoint.httpMethod ?? 'GET';
 
-    // Initialize Body
     String bodyText = '';
     if (widget.endpoint.body != null) {
       if (widget.endpoint.body is String) {
@@ -432,7 +379,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     }
     _bodyCtrl = TextEditingController(text: bodyText);
 
-    // Initialize Headers/Params
     if (widget.endpoint.httpHeaders != null) {
       widget.endpoint.httpHeaders!.forEach(
         (k, v) => _headers[k] = v.toString(),
@@ -444,7 +390,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       );
     }
 
-    _reqTabCtrl = TabController(length: 3, vsync: this);
+    _reqTabCtrl = TabController(length: 4, vsync: this);
     _resTabCtrl = TabController(length: 2, vsync: this);
   }
 
@@ -460,14 +406,13 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
   Future<void> _save() async {
     try {
-      // Parse body if JSON
       dynamic bodyPayload = _bodyCtrl.text;
       try {
         if (bodyPayload.trim().startsWith('{') ||
             bodyPayload.trim().startsWith('[')) {
           bodyPayload = jsonDecode(bodyPayload);
         }
-      } catch (_) {} // Keep as string if invalid JSON
+      } catch (_) {}
 
       final data = {
         'name': _nameCtrl.text,
@@ -521,6 +466,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
             'body': bodyPayload,
             'httpHeaders': _headers,
             'httpParameters': _params,
+            'variables': _variables,
           });
 
       setState(() {
@@ -539,12 +485,17 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
   @override
   Widget build(BuildContext context) {
+    // Hot-reload fix: Ensure controller length matches current tabs
+    if (_reqTabCtrl.length != 4) {
+      _reqTabCtrl.dispose();
+      _reqTabCtrl = TabController(length: 4, vsync: this);
+    }
+
     final colors = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // --- TOP BAR ---
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -553,7 +504,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
           ),
           child: Column(
             children: [
-              // Name Row
               Row(
                 children: [
                   Expanded(
@@ -584,7 +534,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                 ],
               ),
               const SizedBox(height: 8),
-              // Request Row
+
               Row(
                 children: [
                   Container(
@@ -670,7 +620,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
           ),
         ),
 
-        // --- REQUEST TABS ---
         Container(
           color: colors.surface,
           child: TabBar(
@@ -684,19 +633,23 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
             tabs: const [
               Tab(text: 'Params'),
               Tab(text: 'Headers'),
+              Tab(text: 'Variables'),
               Tab(text: 'Body'),
             ],
           ),
         ),
 
-        // --- REQUEST EDITOR ---
         Expanded(
           flex: 3,
           child: TabBarView(
             controller: _reqTabCtrl,
             children: [
-              _KeyValueEditor(data: _params, onChanged: (d) => _params = d),
-              _KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
+              KeyValueEditor(data: _params, onChanged: (d) => _params = d),
+              KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
+              KeyValueEditor(
+                data: _variables,
+                onChanged: (d) => _variables = d,
+              ),
               Padding(
                 padding: const EdgeInsets.all(1.0),
                 child: TextField(
@@ -718,7 +671,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
           ),
         ),
 
-        // --- RESPONSE SECTION ---
         const Divider(height: 1),
         Container(
           height: 40,
@@ -810,112 +762,5 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       default:
         return Colors.blue;
     }
-  }
-}
-
-class _KeyValueEditor extends StatefulWidget {
-  final Map<String, String> data;
-  final ValueChanged<Map<String, String>> onChanged;
-
-  const _KeyValueEditor({required this.data, required this.onChanged});
-
-  @override
-  State<_KeyValueEditor> createState() => _KeyValueEditorState();
-}
-
-class _KeyValueEditorState extends State<_KeyValueEditor> {
-  late List<MapEntry<TextEditingController, TextEditingController>>
-  _controllers;
-
-  @override
-  void initState() {
-    super.initState();
-    _initControllers();
-  }
-
-  void _initControllers() {
-    _controllers = widget.data.entries
-        .map(
-          (e) => MapEntry(
-            TextEditingController(text: e.key),
-            TextEditingController(text: e.value),
-          ),
-        )
-        .toList();
-    // Add empty row
-    _addEmptyRow();
-  }
-
-  void _addEmptyRow() {
-    _controllers.add(
-      MapEntry(TextEditingController(), TextEditingController()),
-    );
-  }
-
-  void _updateData() {
-    final newData = <String, String>{};
-    for (var entry in _controllers) {
-      if (entry.key.text.isNotEmpty) {
-        newData[entry.key.text] = entry.value.text;
-      }
-    }
-    widget.onChanged(newData);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return ListView.separated(
-      itemCount: _controllers.length,
-      separatorBuilder: (c, i) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final entry = _controllers[index];
-        return Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: entry.key,
-                decoration: const InputDecoration(
-                  hintText: 'Key',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                ),
-                style: const TextStyle(fontSize: 13),
-                onChanged: (v) {
-                  if (index == _controllers.length - 1 && v.isNotEmpty) {
-                    setState(() => _addEmptyRow());
-                  }
-                  _updateData();
-                },
-              ),
-            ),
-            Container(width: 1, height: 24, color: colors.outlineVariant),
-            Expanded(
-              child: TextField(
-                controller: entry.value,
-                decoration: const InputDecoration(
-                  hintText: 'Value',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                ),
-                style: const TextStyle(fontSize: 13),
-                onChanged: (v) => _updateData(),
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.close, size: 16),
-              onPressed: () {
-                if (index < _controllers.length - 1) {
-                  setState(() {
-                    _controllers.removeAt(index);
-                    _updateData();
-                  });
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 }

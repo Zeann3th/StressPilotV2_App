@@ -24,7 +24,7 @@ class EnvironmentProvider extends ChangeNotifier {
     try {
       final vars = await _service.getVariables(environmentId);
       _variables = List.from(vars);
-      // Deep copy for original to compare later
+      
       _originalVariables = vars.map((e) => e.copyWith()).toList();
     } catch (e) {
       _error = e.toString();
@@ -39,7 +39,7 @@ class EnvironmentProvider extends ChangeNotifier {
     _tempIdCounter--;
     final newVar = EnvironmentVariable(
       id: _tempIdCounter,
-      environmentId: 0, // Placeholder, not used for new items
+      environmentId: 0, 
       key: '',
       value: '',
       isActive: true,
@@ -76,15 +76,15 @@ class EnvironmentProvider extends ChangeNotifier {
       final updated = <Map<String, dynamic>>[];
       final removed = <int>[];
 
-      // Find Added and Updated
+      
       for (final v in _variables) {
         if (v.id <= 0) {
           added.add({'key': v.key, 'value': v.value});
         } else {
-          // Check if updated
+          
           final original = _originalVariables.firstWhere(
             (o) => o.id == v.id,
-            orElse: () => v, // Should not happen if logic is correct
+            orElse: () => v, 
           );
 
           if (original.key != v.key ||
@@ -100,7 +100,7 @@ class EnvironmentProvider extends ChangeNotifier {
         }
       }
 
-      // Find Removed
+      
       final currentIds = _variables.map((v) => v.id).toSet();
       for (final original in _originalVariables) {
         if (!currentIds.contains(original.id)) {
@@ -121,7 +121,7 @@ class EnvironmentProvider extends ChangeNotifier {
         removed: removed,
       );
 
-      // Reload to get fresh state (and real IDs for new items)
+      
       await loadVariables(environmentId);
     } catch (e) {
       _error = e.toString();
@@ -134,15 +134,15 @@ class EnvironmentProvider extends ChangeNotifier {
   bool _calculateHasChanges() {
     if (_variables.length != _originalVariables.length) return true;
 
-    // Check for added/removed/modified
-    // Simple check: if any new ID exists
+    
+    
     if (_variables.any((v) => v.id <= 0)) return true;
 
-    // Check for removed IDs
+    
     final currentIds = _variables.map((v) => v.id).toSet();
     if (_originalVariables.any((v) => !currentIds.contains(v.id))) return true;
 
-    // Check for modifications
+    
     for (final v in _variables) {
       final original = _originalVariables.firstWhere((o) => o.id == v.id);
       if (original.key != v.key ||

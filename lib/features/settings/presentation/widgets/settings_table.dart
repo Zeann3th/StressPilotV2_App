@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
-import 'settings_row.dart'; // Import the separated widget
+import 'settings_row.dart'; 
 
 class SettingsTable extends StatefulWidget {
   const SettingsTable({super.key});
@@ -41,14 +41,14 @@ class _SettingsTableState extends State<SettingsTable> {
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
-    // Filter
+    
     final filteredEntries = configs.entries.where((e) {
       final q = _search.toLowerCase();
       return e.key.toLowerCase().contains(q) ||
           e.value.toLowerCase().contains(q);
     }).toList();
 
-    // Group
+    
     final Map<String, List<MapEntry<String, String>>> grouped = {};
     for (var entry in filteredEntries) {
       final parts = entry.key.split('_');
@@ -60,7 +60,7 @@ class _SettingsTableState extends State<SettingsTable> {
     }
     final categories = grouped.keys.toList()..sort();
 
-    // Init Keys
+    
     for (var cat in categories) {
       _categoryKeys.putIfAbsent(cat, () => GlobalKey());
     }
@@ -68,7 +68,7 @@ class _SettingsTableState extends State<SettingsTable> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- LEFT SIDEBAR (TOC) ---
+        
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeInOut,
@@ -141,11 +141,11 @@ class _SettingsTableState extends State<SettingsTable> {
           ),
         ),
 
-        // --- MAIN CONTENT ---
+        
         Expanded(
           child: Column(
             children: [
-              // Search Bar & Toggle
+              
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -159,7 +159,7 @@ class _SettingsTableState extends State<SettingsTable> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Toggle Sidebar Button
+                    
                     IconButton(
                       icon: Icon(
                         _isSidebarOpen ? Icons.menu_open : Icons.menu,
@@ -173,7 +173,7 @@ class _SettingsTableState extends State<SettingsTable> {
                     ),
                     const SizedBox(width: 16),
 
-                    // Search Input
+                    
                     Expanded(
                       child: Container(
                         constraints: const BoxConstraints(maxWidth: 600),
@@ -234,7 +234,7 @@ class _SettingsTableState extends State<SettingsTable> {
                 ),
               ),
 
-              // Content List
+              
               Expanded(
                 child: filteredEntries.isEmpty
                     ? Center(
@@ -248,7 +248,7 @@ class _SettingsTableState extends State<SettingsTable> {
                     : SingleChildScrollView(
                         controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(48, 24, 48, 64),
-                        // More padding for clean look
+                        
                         child: Center(
                           child: Container(
                             constraints: const BoxConstraints(maxWidth: 800),

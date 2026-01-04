@@ -15,7 +15,7 @@ class NodeConfigurationDialog extends StatefulWidget {
 class _NodeConfigurationDialogState extends State<NodeConfigurationDialog> {
   late Map<String, dynamic> _preProcessor;
   late Map<String, dynamic> _postProcessor;
-  int _selectedTab = 0; // 0: Pre, 1: Post
+  int _selectedTab = 0; 
 
   @override
   void initState() {
@@ -47,7 +47,7 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog> {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
-            // Tabs
+            
             Row(
               children: [
                 _buildTab('Pre-Processor', 0, colors),
@@ -168,7 +168,7 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
       try {
         newData['inject'] = jsonDecode(_injectController.text);
       } catch (_) {
-        // Invalid JSON, maybe ignore or handle error
+        
       }
     }
 
@@ -176,7 +176,7 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
       try {
         newData['extract'] = jsonDecode(_extractController.text);
       } catch (_) {
-        // Invalid JSON
+        
       }
     }
 

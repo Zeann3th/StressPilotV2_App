@@ -23,7 +23,7 @@ class ProjectTable extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colors.outline), // Flat border
+        border: Border.all(color: colors.outline), 
       ),
       child: Column(
         children: [
@@ -251,24 +251,24 @@ class _ProjectAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
 
-    // Generate a consistent color based on the project name
+    
     final color = _getColorForString(name);
 
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: color.withAlpha(30), // Pastel/Light background tint
+        color: color.withAlpha(30), 
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: color.withAlpha(100),
-        ), // Subtle colored border
+        ), 
       ),
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : 'P',
           style: text.labelMedium?.copyWith(
-            color: color, // Text matches the random color
+            color: color, 
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -279,7 +279,7 @@ class _ProjectAvatar extends StatelessWidget {
   Color _getColorForString(String text) {
     if (text.isEmpty) return Colors.grey;
 
-    // Simple modern palette
+    
     const colors = [
       Colors.blue,
       Colors.red,
@@ -291,7 +291,7 @@ class _ProjectAvatar extends StatelessWidget {
       Colors.indigo,
     ];
 
-    // Use hash code to pick a consistent color
+    
     return colors[text.hashCode.abs() % colors.length];
   }
 }

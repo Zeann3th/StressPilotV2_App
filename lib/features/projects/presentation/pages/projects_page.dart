@@ -181,7 +181,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
       return;
     }
 
-    // Show dialog to select which project to export
+    
     final selectedProject = await showDialog<Project>(
       context: context,
       builder: (context) => AlertDialog(

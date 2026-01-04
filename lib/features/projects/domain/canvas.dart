@@ -37,7 +37,7 @@ class CanvasNode {
     );
   }
 
-  // Serialize để lưu DB/File
+  
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -56,7 +56,7 @@ class CanvasNode {
       orElse: () => FlowNodeType.endpoint,
     );
 
-    // Default sizes based on type if missing
+    
     double defaultWidth = 160;
     double defaultHeight = 90;
 
@@ -82,7 +82,7 @@ class CanvasNode {
   }
 }
 
-/// Đại diện cho dây nối giữa các Node
+
 class CanvasConnection {
   final String id;
   final String sourceNodeId;

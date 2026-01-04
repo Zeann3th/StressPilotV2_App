@@ -105,7 +105,7 @@ class _SettingsRowState extends State<SettingsRow> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // KEY
+            
             Expanded(
               flex: 4,
               child: SelectableText(
@@ -119,7 +119,7 @@ class _SettingsRowState extends State<SettingsRow> {
             ),
             const SizedBox(width: 24),
 
-            // VALUE (Editable)
+            
             Expanded(
               flex: 6,
               child: _isEditing
