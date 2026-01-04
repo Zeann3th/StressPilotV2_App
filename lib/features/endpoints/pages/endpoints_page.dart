@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../common/domain/endpoint.dart';
 import '../../common/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/common/presentation/widgets/environment_dialog.dart';
+import 'package:stress_pilot/features/common/presentation/widgets/endpoint_type_badge.dart';
 import 'package:stress_pilot/features/projects/domain/project.dart';
 
 import '../widgets/key_value_editor.dart';
@@ -130,8 +131,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                   padding: const EdgeInsets.all(12),
                   child: CupertinoSearchTextField(
                     placeholder: 'Search Endpoints',
-                    onChanged: (value) {
-                    },
+                    onChanged: (value) {},
                   ),
                 ),
 
@@ -218,7 +218,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                     children: [
                                       Row(
                                         children: [
-                                          _TypeBadge(
+                                          EndpointTypeBadge(
                                             type: ep.type,
                                             compact: true,
                                             inverse: isSelected,
@@ -252,7 +252,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                           },
                         ),
                 ),
-
               ],
             ),
           ),

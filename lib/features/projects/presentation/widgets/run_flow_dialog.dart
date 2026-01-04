@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
@@ -24,6 +23,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   final _durationCtrl = TextEditingController(text: '60');
   final _rampUpCtrl = TextEditingController(text: '0');
 
+  // List of variables as Key-Value pairs
   final List<MapEntry<TextEditingController, TextEditingController>>
   _variables = [];
 
@@ -111,7 +111,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       final navigator = Navigator.of(context);
       final messenger = ScaffoldMessenger.of(context);
 
-      navigator.pop();
+      navigator.pop(); // Close dialog
 
       await Future.delayed(const Duration(milliseconds: 300));
 
@@ -120,51 +120,10 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
           const SnackBar(content: Text('Flow execution started')),
         );
       } catch (e) {
-        debugPrint("⚠️ SnackBar error (harmless): $e");
+        // Ignored
       }
 
-      final startTime = DateTime.now().toUtc();
-
-      try {
-        final runSvc = getIt<RunService>();
-        Run? found;
-        const int maxAttempts = 10;
-        const Duration delay = Duration(milliseconds: 500);
-
-        for (int attempt = 0; attempt < maxAttempts; attempt++) {
-          try {
-            final candidate = await runSvc.getLastRun(widget.flowId);
-            final created = candidate.startedAt.toUtc();
-
-            if (created.isAfter(
-              startTime.subtract(const Duration(seconds: 1)),
-            )) {
-              found = candidate;
-              break;
-            }
-          } catch (e) {
-            debugPrint("   Polling fetch error: $e");
-          }
-          await Future.delayed(delay);
-        }
-
-        if (found != null) {
-          navigator.pushNamed(
-            AppRouter.resultsRoute,
-            arguments: {'runId': found.id},
-          );
-        } else {
-          navigator.pushNamed(
-            AppRouter.runsRoute,
-            arguments: {'flowId': widget.flowId},
-          );
-        }
-      } catch (e) {
-        navigator.pushNamed(
-          AppRouter.runsRoute,
-          arguments: {'flowId': widget.flowId},
-        );
-      }
+      await _pollForRun(messenger, navigator);
     } catch (e) {
       if (mounted) {
         try {
@@ -176,254 +135,306 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
     }
   }
 
+  Future<void> _pollForRun(
+    ScaffoldMessengerState messenger,
+    NavigatorState navigator,
+  ) async {
+    final startTime = DateTime.now().toUtc();
+    try {
+      final runSvc = getIt<RunService>();
+      Run? found;
+      const int maxAttempts = 10;
+      const Duration delay = Duration(milliseconds: 500);
+
+      for (int attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          final candidate = await runSvc.getLastRun(widget.flowId);
+          final created = candidate.startedAt.toUtc();
+
+          // Check if created after we started polling (with small buffer)
+          if (created.isAfter(startTime.subtract(const Duration(seconds: 1)))) {
+            found = candidate;
+            break;
+          }
+        } catch (e) {
+          // Flatten connection errors during polling
+        }
+        await Future.delayed(delay);
+      }
+
+      if (found != null) {
+        navigator.pushNamed(
+          AppRouter.resultsRoute,
+          arguments: {'runId': found.id},
+        );
+      } else {
+        // Fallback to runs list
+        navigator.pushNamed(
+          AppRouter.runsRoute,
+          arguments: {'flowId': widget.flowId},
+        );
+      }
+    } catch (e) {
+      // General error fallback
+      navigator.pushNamed(
+        AppRouter.runsRoute,
+        arguments: {'flowId': widget.flowId},
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Dialog(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Container(
-        width: 600,
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
+      backgroundColor: colorScheme.surface,
+      surfaceTintColor: colorScheme.surfaceTint,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 550),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Run Flow Configuration',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              const Text(
-                'General Settings',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF98989D),
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 8),
+              // Header
               Row(
                 children: [
-                  Expanded(
-                    child: _buildInput(_threadsCtrl, 'Threads', isNumber: true),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildInput(
-                      _durationCtrl,
-                      'Duration (s)',
-                      isNumber: true,
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.rocket_launch_rounded,
+                      color: colorScheme.primary,
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildInput(
-                      _rampUpCtrl,
-                      'Ramp Up (s)',
-                      isNumber: true,
+                  Text(
+                    'Run Flow',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
                     ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Close',
                   ),
                 ],
               ),
-
               const SizedBox(height: 24),
 
-              const Text(
-                'Credentials',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF98989D),
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: _pickFile,
-                      child: Row(
-                        children: const [
-                          Icon(
-                            CupertinoIcons.doc_fill,
-                            color: Color(0xFF007AFF),
-                            size: 18,
+              // Configuration Form
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Section: Performance Settings
+                      _buildSectionHeader('Performance Settings'),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildIntegerField(
+                              _threadsCtrl,
+                              'Threads',
+                              Icons.groups_rounded,
+                            ),
                           ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Select JSON File',
-                            style: TextStyle(
-                              color: Color(0xFF007AFF),
-                              fontSize: 14,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildIntegerField(
+                              _durationCtrl,
+                              'Duration (s)',
+                              Icons.timer_rounded,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildIntegerField(
+                              _rampUpCtrl,
+                              'Ramp Up (s)',
+                              Icons.trending_up_rounded,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _selectedFile != null
-                          ? Row(
-                              children: [
-                                Icon(
-                                  CupertinoIcons.doc_text,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _selectedFile!.name,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface,
-                                      fontSize: 13,
+
+                      const SizedBox(height: 24),
+
+                      // Section: Data & Environment
+                      _buildSectionHeader('Data & Environment'),
+                      const SizedBox(height: 12),
+
+                      // File Upload
+                      InkWell(
+                        onTap: _pickFile,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest
+                                .withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _selectedFile != null
+                                  ? colorScheme.primary
+                                  : colorScheme.outlineVariant,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _selectedFile != null
+                                    ? Icons.description
+                                    : Icons.upload_file_rounded,
+                                color: _selectedFile != null
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _selectedFile?.name ??
+                                          'Select Data File (JSON)',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: _selectedFile != null
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        color: _selectedFile != null
+                                            ? colorScheme.onSurface
+                                            : colorScheme.onSurfaceVariant,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                    if (_selectedFile == null)
+                                      Text(
+                                        'Optional: Upload CSV or JSON data source',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: colorScheme.onSurfaceVariant
+                                              .withOpacity(0.7),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                                CupertinoButton(
-                                  padding: EdgeInsets.zero,
-                                  minSize: 0,
+                              ),
+                              if (_selectedFile != null)
+                                IconButton(
                                   onPressed: () =>
                                       setState(() => _selectedFile = null),
-                                  child: const Icon(
-                                    CupertinoIcons.clear_circled_solid,
-                                    color: Color(0xFF636366),
-                                    size: 18,
-                                  ),
+                                  icon: const Icon(Icons.close, size: 18),
+                                  visualDensity: VisualDensity.compact,
                                 ),
-                              ],
-                            )
-                          : const Text(
-                              'No file selected (Optional)',
-                              style: TextStyle(
-                                color: Color(0xFF636366),
-                                fontSize: 13,
-                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Section: Variables
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildSectionHeader('Variables'),
+                          TextButton.icon(
+                            onPressed: _addVariable,
+                            icon: const Icon(Icons.add, size: 16),
+                            label: const Text('Add Variable'),
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
                             ),
-                    ),
-                  ],
+                          ),
+                        ],
+                      ),
+                      if (_variables.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            'No custom variables defined.',
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant.withOpacity(
+                                0.5,
+                              ),
+                              fontStyle: FontStyle.italic,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+
+                      ..._variables.asMap().entries.map((entry) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: _buildTextField(entry.value.key, 'Key'),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 3,
+                                child: _buildTextField(
+                                  entry.value.value,
+                                  'Value',
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () => _removeVariable(entry.key),
+                                icon: Icon(
+                                  Icons.remove_circle_outline,
+                                  color: colorScheme.error.withOpacity(0.8),
+                                  size: 20,
+                                ),
+                                splashRadius: 20,
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 24),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Runtime Variables',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF98989D),
-                      fontSize: 13,
-                    ),
-                  ),
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    minSize: 0,
-                    onPressed: _addVariable,
-                    child: Row(
-                      children: const [
-                        Icon(
-                          CupertinoIcons.add,
-                          size: 14,
-                          color: Color(0xFF007AFF),
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Add Variable',
-                          style: TextStyle(
-                            color: Color(0xFF007AFF),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (_variables.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    'No variables added',
-                    style: TextStyle(color: Color(0xFF636366), fontSize: 13),
-                  ),
-                )
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _variables.length,
-                  separatorBuilder: (c, i) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: _buildInput(_variables[index].key, 'Key'),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 2,
-                          child: _buildInput(_variables[index].value, 'Value'),
-                        ),
-                        const SizedBox(width: 8),
-                        CupertinoButton(
-                          padding: EdgeInsets.zero,
-                          minSize: 0,
-                          onPressed: () => _removeVariable(index),
-                          child: const Icon(
-                            CupertinoIcons.trash,
-                            color: Color(0xFFFF453A),
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-
-              const SizedBox(height: 32),
-
+              // Action Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  CupertinoButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Color(0xFF98989D)),
-                    ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
                   ),
-                  const SizedBox(width: 16),
-                  CupertinoButton.filled(
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
                     onPressed: _run,
-                    child: const Text(
-                      'Run Flow',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
+                    icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                    label: const Text('Start Run'),
                   ),
                 ],
               ),
@@ -434,32 +445,49 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
     );
   }
 
-  Widget _buildInput(
-    TextEditingController controller,
-    String placeholder, {
-    bool isNumber = false,
-  }) {
-    return Container(
-      height: 36,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title.toUpperCase(),
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.0,
+        color: Theme.of(context).colorScheme.outline,
       ),
-      child: CupertinoTextField(
-        controller: controller,
-        placeholder: placeholder,
-        placeholderStyle: const TextStyle(
-          color: Color(0xFF636366),
-          fontSize: 13,
+    );
+  }
+
+  Widget _buildIntegerField(
+    TextEditingController controller,
+    String label,
+    IconData icon,
+  ) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      textAlign: TextAlign.center,
+      decoration: InputDecoration(
+        labelText: label,
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        prefixIcon: Icon(icon, size: 16),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.all(12),
+        isDense: true,
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String hint) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        hintText: hint,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
         ),
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.onSurface,
-          fontSize: 13,
-        ),
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        decoration: null,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+        isDense: true,
       ),
     );
   }

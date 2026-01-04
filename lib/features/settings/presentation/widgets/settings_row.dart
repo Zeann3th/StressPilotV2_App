@@ -54,9 +54,11 @@ class _SettingsRowState extends State<SettingsRow> {
       builder: (context) {
         final colors = Theme.of(context).colorScheme;
         return AlertDialog(
+          backgroundColor: colors.surface,
+          surfaceTintColor: colors.surfaceTint,
           title: const Text('Change Setting?'),
           content: const Text(
-            'This change will only be applied after the next app restart.\n\nDo you want to continue?',
+            'This change will only be applied after the next app restart.',
           ),
           actions: [
             TextButton(
@@ -97,107 +99,91 @@ class _SettingsRowState extends State<SettingsRow> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: Container(
-        color: _isHovered && !_isEditing
-            ? colors.onSurface.withAlpha(10)
-            : Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            
-            Expanded(
-              flex: 4,
-              child: SelectableText(
-                widget.keyName,
-                style: text.bodyMedium?.copyWith(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          if (!_isEditing) setState(() => _isEditing = true);
+        },
+        child: Container(
+          color: _isHovered
+              ? colors.primary.withOpacity(0.05)
+              : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: 4,
+                child: Text(
+                  widget.keyName.replaceAll('_', ' '),
+                  style: text.bodyMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 24),
-
-            
-            Expanded(
-              flex: 6,
-              child: _isEditing
-                  ? Focus(
-                      onFocusChange: (hasFocus) {
-                        if (!hasFocus) _handleSubmission();
-                      },
-                      child: TextField(
-                        controller: _controller,
-                        autofocus: true,
-                        onSubmitted: (_) => _handleSubmission(),
-                        style: text.bodySmall?.copyWith(
-                          color: colors.onSurface,
-                          fontFamily: 'monospace',
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 6,
+                child: _isEditing
+                    ? Focus(
+                        onFocusChange: (hasFocus) {
+                          if (!hasFocus) _handleSubmission();
+                        },
+                        child: TextField(
+                          controller: _controller,
+                          autofocus: true,
+                          onSubmitted: (_) => _handleSubmission(),
+                          style: text.bodyMedium?.copyWith(
+                            color: colors.onSurface,
+                            fontFamily: 'JetBrains Mono',
+                          ),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: colors.surfaceContainerHighest
+                                .withOpacity(0.5),
+                          ),
                         ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4),
-                            borderSide: BorderSide(color: colors.onSurface),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4),
-                            borderSide: BorderSide(
-                              color: colors.primary,
-                              width: 1.5,
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.value.isEmpty ? 'Not Set' : widget.value,
+                              style: text.bodyMedium?.copyWith(
+                                color: widget.value.isEmpty
+                                    ? colors.onSurfaceVariant.withOpacity(0.7)
+                                    : colors.onSurfaceVariant,
+                                fontFamily: 'JetBrains Mono',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
                             ),
                           ),
-                        ),
+                          if (_isHovered) ...[
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 16,
+                              color: colors.onSurfaceVariant.withOpacity(0.5),
+                            ),
+                          ],
+                        ],
                       ),
-                    )
-                  : InkWell(
-                      onTap: () => setState(() => _isEditing = true),
-                      borderRadius: BorderRadius.circular(4),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          border: widget.value.isEmpty
-                              ? Border.all(color: colors.error.withAlpha(100))
-                              : null,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          widget.value.isEmpty ? 'Empty' : widget.value,
-                          style: text.bodySmall?.copyWith(
-                            color: widget.value.isEmpty
-                                ? colors.error.withAlpha(150)
-                                : colors.onSurface.withAlpha(200),
-                            fontFamily: 'monospace',
-                            fontStyle: widget.value.isEmpty
-                                ? FontStyle.italic
-                                : FontStyle.normal,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-            ),
-
-            SizedBox(
-              width: 24,
-              child: _isHovered && !_isEditing
-                  ? Icon(
-                      Icons.edit_outlined,
-                      size: 14,
-                      color: colors.onSurface.withAlpha(100),
-                    )
-                  : null,
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -7,8 +7,10 @@ import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dia
 import 'package:stress_pilot/features/projects/presentation/widgets/node_configuration_dialog.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
+import 'dart:ui';
 
 import '../../../domain/canvas.dart';
+import 'canvas_painters.dart';
 
 class WorkspaceCanvas extends StatelessWidget {
   final flow.Flow? selectedFlow;
@@ -114,11 +116,10 @@ class _CanvasContentState extends State<_CanvasContent> {
 
   void _zoom(double factor) {
     final matrix = _transformController.value.clone();
-    
+
     final viewportSize = MediaQuery.of(context).size;
     final center = Offset(viewportSize.width / 2, viewportSize.height / 2);
 
-    
     matrix.translateByDouble(center.dx, center.dy, 0, 1.0);
     matrix.scaleByDouble(factor, factor, factor, 1.0);
     matrix.translateByDouble(-center.dx, -center.dy, 0, 1.0);
@@ -142,179 +143,164 @@ class _CanvasContentState extends State<_CanvasContent> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Column(
+    return Stack(
       children: [
-        _buildTopToolbar(context, colors, canvasProvider),
-        Expanded(
-          child: Stack(
-            children: [
-              InteractiveViewer(
-                transformationController: _transformController,
-                panEnabled: !_isLocked,
-                scaleEnabled: !_isLocked,
-                minScale: 0.1,
-                maxScale: 5.0,
-                boundaryMargin: const EdgeInsets.all(double.infinity),
-                constrained: false,
-                child: DragTarget<DragData>(
-                  onAcceptWithDetails: (details) =>
-                      _handleDrop(details, context),
-                  builder: (context, candidateData, rejectedData) {
-                    return Listener(
-                      onPointerMove: (event) {
-                        if (canvasProvider.canvasMode == CanvasMode.connect &&
-                            canvasProvider.selectedSourceNodeId != null) {
-                          final RenderBox box =
-                              _canvasKey.currentContext!.findRenderObject()
-                                  as RenderBox;
-                          final localPos = box.globalToLocal(event.position);
-                          canvasProvider.updateCursorPosition(localPos);
-                        }
-                      },
-                      child: GestureDetector(
-                        onTap: () {
-                          
-                          if (canvasProvider.canvasMode == CanvasMode.connect) {
-                            canvasProvider.setCanvasMode(
-                              CanvasMode.connect,
-                            ); 
-                          }
-                        },
-                        child: Container(
-                          key: _canvasKey,
-                          width: _canvasSize,
-                          height: _canvasSize,
-                          color: colors.surface,
-                          child: Stack(
-                            children: [
-                              Positioned.fill(
-                                child: RepaintBoundary(
-                                  child: CustomPaint(
-                                    painter: GridPainter(
-                                      color: colors.onSurface.withValues(
-                                        alpha: 0.05,
-                                      ), 
-                                      scale: 1.0,
-                                    ),
-                                  ),
-                                ),
+        InteractiveViewer(
+          transformationController: _transformController,
+          panEnabled: !_isLocked,
+          scaleEnabled: !_isLocked,
+          minScale: 0.1,
+          maxScale: 5.0,
+          boundaryMargin: const EdgeInsets.all(double.infinity),
+          constrained: false,
+          child: DragTarget<DragData>(
+            onAcceptWithDetails: (details) => _handleDrop(details, context),
+            builder: (context, candidateData, rejectedData) {
+              return Listener(
+                onPointerMove: (event) {
+                  if (canvasProvider.canvasMode == CanvasMode.connect &&
+                      canvasProvider.selectedSourceNodeId != null) {
+                    final RenderBox box =
+                        _canvasKey.currentContext!.findRenderObject()
+                            as RenderBox;
+                    final localPos = box.globalToLocal(event.position);
+                    canvasProvider.updateCursorPosition(localPos);
+                  }
+                },
+                child: GestureDetector(
+                  onTap: () {
+                    if (canvasProvider.canvasMode == CanvasMode.connect) {
+                      canvasProvider.setCanvasMode(CanvasMode.connect);
+                    }
+                  },
+                  child: Container(
+                    key: _canvasKey,
+                    width: _canvasSize,
+                    height: _canvasSize,
+                    color: colors.surface,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: RepaintBoundary(
+                            child: CustomPaint(
+                              painter: GridPainter(
+                                color: colors.onSurface.withValues(alpha: 0.1),
+                                scale: 1.0,
                               ),
-                              Positioned.fill(
-                                child: RepaintBoundary(
-                                  child: CustomPaint(
-                                    painter: ConnectionPainter(
-                                      connections: canvasProvider.connections,
-                                      nodes: canvasProvider.nodes,
-                                      tempSourceId:
-                                          canvasProvider.selectedSourceNodeId,
-                                      tempSourceHandle:
-                                          canvasProvider.selectedSourceHandle,
-                                      tempEndPos:
-                                          canvasProvider.tempDragPosition,
-                                      lineColor: colors.onSurface,
-                                      activeColor: colors.primary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              ...canvasProvider.nodes.map((node) {
-                                return Positioned(
-                                  left: node.position.dx,
-                                  top: node.position.dy,
-                                  child: DraggableNodeWidget(
-                                    node: node,
-                                    canvasKey: _canvasKey,
-                                    transformController: _transformController,
-                                    
-                                    
-                                    
-                                    
-                                    onDoubleTap: node.type == FlowNodeType.start
-                                        ? null
-                                        : node.type == FlowNodeType.branch
-                                        ? () => _showBranchConditionDialog(node)
-                                        : () => _showNodeConfiguration(node),
-                                  ),
-                                );
-                              }),
-                              
-                              ...canvasProvider.connections.map((conn) {
-                                final source = canvasProvider.nodes.firstWhere(
-                                  (n) => n.id == conn.sourceNodeId,
-                                );
-                                final target = canvasProvider.nodes.firstWhere(
-                                  (n) => n.id == conn.targetNodeId,
-                                );
-
-                                
-                                Offset start;
-                                if (source.type == FlowNodeType.branch) {
-                                  if (conn.sourceHandle == 'true') {
-                                    start =
-                                        source.position +
-                                        Offset(source.width, source.height / 2);
-                                  } else {
-                                    start =
-                                        source.position +
-                                        Offset(source.width / 2, source.height);
-                                  }
-                                } else {
-                                  start =
-                                      source.position +
-                                      Offset(source.width, source.height / 2);
-                                }
-
-                                final end =
-                                    target.position +
-                                    Offset(0, target.height / 2);
-
-                                
-                                final midX = (start.dx + end.dx) / 2;
-                                final midY = (start.dy + end.dy) / 2;
-
-                                return Positioned(
-                                  left: midX - 10,
-                                  top: midY - 10,
-                                  child: InkWell(
-                                    onTap: () => canvasProvider
-                                        .removeConnection(conn.id),
-                                    child: Container(
-                                      width: 20,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        color: colors.surface,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: colors.outlineVariant,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: colors.shadow.withValues(
-                                              alpha: 0.1,
-                                            ),
-                                            blurRadius: 4,
-                                          ),
-                                        ],
-                                      ),
-                                      child: Icon(
-                                        Icons.close,
-                                        size: 12,
-                                        color: colors.error,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                        Positioned.fill(
+                          child: RepaintBoundary(
+                            child: CustomPaint(
+                              painter: ConnectionPainter(
+                                connections: canvasProvider.connections,
+                                nodes: canvasProvider.nodes,
+                                tempSourceId:
+                                    canvasProvider.selectedSourceNodeId,
+                                tempSourceHandle:
+                                    canvasProvider.selectedSourceHandle,
+                                tempEndPos: canvasProvider.tempDragPosition,
+                                lineColor: colors.onSurface,
+                                activeColor: colors.primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        ...canvasProvider.nodes.map((node) {
+                          return Positioned(
+                            left: node.position.dx,
+                            top: node.position.dy,
+                            child: DraggableNodeWidget(
+                              node: node,
+                              canvasKey: _canvasKey,
+                              transformController: _transformController,
+                              onDoubleTap: node.type == FlowNodeType.start
+                                  ? null
+                                  : node.type == FlowNodeType.branch
+                                  ? () => _showBranchConditionDialog(node)
+                                  : () => _showNodeConfiguration(node),
+                            ),
+                          );
+                        }),
+
+                        ...canvasProvider.connections.map((conn) {
+                          final source = canvasProvider.nodes.firstWhere(
+                            (n) => n.id == conn.sourceNodeId,
+                          );
+                          final target = canvasProvider.nodes.firstWhere(
+                            (n) => n.id == conn.targetNodeId,
+                          );
+
+                          Offset start;
+                          if (source.type == FlowNodeType.branch) {
+                            if (conn.sourceHandle == 'true') {
+                              start =
+                                  source.position +
+                                  Offset(source.width, source.height / 2);
+                            } else {
+                              start =
+                                  source.position +
+                                  Offset(source.width / 2, source.height);
+                            }
+                          } else {
+                            start =
+                                source.position +
+                                Offset(source.width, source.height / 2);
+                          }
+
+                          final end =
+                              target.position + Offset(0, target.height / 2);
+
+                          final midX = (start.dx + end.dx) / 2;
+                          final midY = (start.dy + end.dy) / 2;
+
+                          return Positioned(
+                            left: midX - 10,
+                            top: midY - 10,
+                            child: InkWell(
+                              onTap: () =>
+                                  canvasProvider.removeConnection(conn.id),
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: colors.surface,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: colors.outlineVariant,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colors.shadow.withOpacity(0.1),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.close,
+                                  size: 12,
+                                  color: colors.error,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              Positioned(bottom: 16, right: 16, child: _buildControls(colors)),
-            ],
+              );
+            },
+          ),
+        ),
+
+        Positioned(
+          bottom: 32,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: _buildUnifiedToolbar(context, colors, canvasProvider),
           ),
         ),
       ],
@@ -381,9 +367,7 @@ class _CanvasContentState extends State<_CanvasContent> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest.withValues(
-                        alpha: 0.3,
-                      ),
+                      color: colors.surfaceContainerHighest.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: colors.outlineVariant),
                     ),
@@ -545,118 +529,190 @@ class _CanvasContentState extends State<_CanvasContent> {
     }
   }
 
-  Widget _buildTopToolbar(
+  Future<void> _showClearConfirmation(
+    BuildContext context,
+    CanvasProvider provider,
+  ) async {
+    final colors = Theme.of(context).colorScheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: colors.surface,
+        title: const Text('Clear Canvas?'),
+        content: const Text(
+          'This will remove all nodes and connections. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: colors.error,
+              foregroundColor: colors.onError,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      provider.clearCanvas();
+    }
+  }
+
+  Widget _buildUnifiedToolbar(
     BuildContext context,
     ColorScheme colors,
     CanvasProvider provider,
   ) {
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(
-          bottom: BorderSide(color: colors.outlineVariant, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: colors.outlineVariant),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildModeButton(
-                  context,
-                  provider,
-                  CanvasMode.move,
-                  Icons.pan_tool_rounded,
-                  'Move',
-                ),
-                const SizedBox(width: 4),
-                _buildModeButton(
-                  context,
-                  provider,
-                  CanvasMode.connect,
-                  Icons.cable_rounded,
-                  'Connect',
-                ),
-              ],
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(32),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: colors.surface.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: colors.outlineVariant.withOpacity(0.5)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          const Spacer(),
-          TextButton.icon(
-            onPressed: () => provider.clearCanvas(),
-            icon: Icon(
-              Icons.delete_sweep_outlined,
-              size: 18,
-              color: colors.error,
-            ),
-            label: Text("Clear", style: TextStyle(color: colors.error)),
-          ),
-          const SizedBox(width: 8),
-          OutlinedButton.icon(
-            onPressed: provider.isSaving
-                ? null
-                : () async {
-                    final flowId = int.parse(widget.flowId);
-                    final flowProvider = context.read<FlowProvider>();
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // --- Interaction Modes ---
+              _buildModeButton(
+                context,
+                provider,
+                CanvasMode.move,
+                Icons.pan_tool_rounded,
+                'Pan',
+              ),
+              const SizedBox(width: 8),
+              _buildModeButton(
+                context,
+                provider,
+                CanvasMode.connect,
+                Icons.cable_rounded,
+                'Link',
+              ),
 
-                    try {
-                      await provider.saveFlowConfiguration(
-                        flowId,
-                        flowProvider,
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Flow saved successfully!"),
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Error saving flow: $e")),
-                        );
-                      }
-                    }
-                  },
-            icon: provider.isSaving
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(Icons.save, size: 18, color: colors.onSurface),
-            label: Text(
-              provider.isSaving ? "Saving..." : "Save",
-              style: TextStyle(color: colors.onSurface),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: colors.outlineVariant),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+              Container(
+                width: 1,
+                height: 24,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                color: colors.outlineVariant,
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: () => _showRunDialog(context),
-            icon: const Icon(Icons.play_arrow, size: 18),
-            label: const Text("Run"),
-            style: FilledButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+
+              // --- View Controls ---
+              IconButton(
+                tooltip: _isLocked ? 'Unlock Canvas' : 'Lock Canvas',
+                onPressed: _toggleLock,
+                icon: Icon(
+                  _isLocked ? Icons.lock : Icons.lock_open,
+                  color: _isLocked ? colors.primary : colors.onSurfaceVariant,
+                ),
               ),
-            ),
+              IconButton(
+                tooltip: 'Zoom Out',
+                onPressed: () => _zoom(0.9),
+                icon: Icon(Icons.remove, color: colors.onSurface),
+              ),
+              IconButton(
+                tooltip: 'Zoom In',
+                onPressed: () => _zoom(1.1),
+                icon: Icon(Icons.add, color: colors.onSurface),
+              ),
+              IconButton(
+                tooltip: 'Reset View',
+                onPressed: _centerCanvas,
+                icon: Icon(Icons.center_focus_strong, color: colors.onSurface),
+              ),
+
+              Container(
+                width: 1,
+                height: 24,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                color: colors.outlineVariant,
+              ),
+
+              // --- Actions ---
+              IconButton(
+                tooltip: 'Show JSON',
+                onPressed: () => _showJsonPayload(context),
+                icon: Icon(Icons.code_rounded, color: colors.onSurfaceVariant),
+              ),
+              IconButton(
+                onPressed: () => _showClearConfirmation(context, provider),
+                icon: Icon(Icons.delete_sweep_outlined, color: colors.error),
+                tooltip: 'Clear Canvas',
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: provider.isSaving
+                    ? null
+                    : () async {
+                        final flowId = int.parse(widget.flowId);
+                        final flowProvider = context.read<FlowProvider>();
+
+                        try {
+                          await provider.saveFlowConfiguration(
+                            flowId,
+                            flowProvider,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Flow saved successfully!"),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Error saving flow: $e")),
+                            );
+                          }
+                        }
+                      },
+                icon: provider.isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(Icons.save_outlined, color: colors.onSurface),
+                tooltip: 'Save Flow',
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: () => _showRunDialog(context),
+                icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                label: const Text("Run"),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -673,106 +729,41 @@ class _CanvasContentState extends State<_CanvasContent> {
 
     return InkWell(
       onTap: () => provider.setCanvasMode(mode),
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      borderRadius: BorderRadius.circular(24),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? colors.primaryContainer : null,
-          borderRadius: BorderRadius.circular(6),
+          color: isSelected
+              ? colors.primary
+              : Colors.transparent, // High contrast active fill
+          borderRadius: BorderRadius.circular(24),
+          border: isSelected
+              ? null
+              : Border.all(color: colors.outlineVariant.withOpacity(0.5)),
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              size: 18,
-              color: isSelected ? colors.primary : colors.onSurfaceVariant,
+              size: 20,
+              color: isSelected
+                  ? colors.onPrimary
+                  : colors.onSurface, // White icon on active
             ),
             if (isSelected) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: colors.primary,
+                  color: colors.onPrimary, // White text on active
                 ),
               ),
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildControls(ColorScheme colors) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colors.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(10),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            tooltip: 'Show JSON Payload',
-            onPressed: () => _showJsonPayload(context),
-            icon: Icon(Icons.data_object, color: colors.primary, size: 20),
-          ),
-          Divider(
-            indent: 8,
-            endIndent: 8,
-            height: 1,
-            color: colors.outlineVariant,
-          ),
-          IconButton(
-            tooltip: _isLocked ? 'Unlock Canvas' : 'Lock Canvas',
-            onPressed: _toggleLock,
-            icon: Icon(
-              _isLocked ? Icons.lock : Icons.lock_open,
-              color: _isLocked ? colors.primary : colors.onSurfaceVariant,
-              size: 20,
-            ),
-          ),
-          Divider(
-            indent: 8,
-            endIndent: 8,
-            height: 1,
-            color: colors.outlineVariant,
-          ),
-          IconButton(
-            tooltip: 'Zoom In',
-            onPressed: () => _zoom(1.1),
-            icon: Icon(Icons.add, color: colors.onSurface, size: 20),
-          ),
-          IconButton(
-            tooltip: 'Zoom Out',
-            onPressed: () => _zoom(0.9),
-            icon: Icon(Icons.remove, color: colors.onSurface, size: 20),
-          ),
-          Divider(
-            indent: 8,
-            endIndent: 8,
-            height: 1,
-            color: colors.outlineVariant,
-          ),
-          IconButton(
-            tooltip: 'Reset View',
-            onPressed: _centerCanvas,
-            icon: Icon(
-              Icons.center_focus_strong,
-              color: colors.onSurface,
-              size: 20,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -854,7 +845,6 @@ class DraggableNodeWidget extends StatelessWidget {
       onTap: () {
         if (provider.canvasMode == CanvasMode.connect) {
           if (provider.selectedSourceNodeId != null) {
-            
             provider.connectToTarget(node.id);
           } else {
             provider.selectSourceNode(node.id);
@@ -878,7 +868,7 @@ class DraggableNodeWidget extends StatelessWidget {
                   border: Border.all(color: colors.primary, width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.3),
+                      color: colors.primary.withOpacity(0.3),
                       blurRadius: 12,
                     ),
                   ],
@@ -895,56 +885,53 @@ class DraggableNodeWidget extends StatelessWidget {
     CanvasProvider provider,
     ColorScheme colors,
   ) {
-    final methodColor = _getMethodColor(node.data['method']);
+    final type = node.data['type'] ?? 'HTTP';
+    final methodColor = _getTypeColor(type);
 
     return Container(
       width: node.width,
       constraints: BoxConstraints(minHeight: node.height),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.5),
+          color: colors.outlineVariant.withOpacity(0.6),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.05),
-            blurRadius: 16,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: methodColor.withOpacity(0.1),
+            blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.surface,
-            Color.lerp(colors.surface, methodColor, 0.05)!,
-          ],
-        ),
       ),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          
           Positioned(
             left: 0,
             top: 12,
             bottom: 12,
-            width: 4,
+            width: 3,
             child: Container(
               decoration: BoxDecoration(
                 color: methodColor,
                 borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(4),
-                  bottomRight: Radius.circular(4),
+                  topRight: Radius.circular(3),
+                  bottomRight: Radius.circular(3),
                 ),
               ),
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -953,21 +940,18 @@ class DraggableNodeWidget extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 6,
+                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: methodColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: methodColor.withValues(alpha: 0.3),
-                        ),
+                        color: methodColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        node.data['method'] ?? 'GET',
+                        type.toUpperCase(),
                         style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
                           color: methodColor,
                           letterSpacing: 0.5,
                         ),
@@ -975,7 +959,7 @@ class DraggableNodeWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 if (node.data['name'] != null &&
                     node.data['name'].toString().isNotEmpty) ...[
                   Tooltip(
@@ -986,21 +970,21 @@ class DraggableNodeWidget extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: colors.onSurface,
+                        letterSpacing: -0.2,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                 ],
                 Text(
                   node.data['url'] ?? "Action node",
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: colors.onSurfaceVariant,
                     fontFamily: 'JetBrains Mono',
                     height: 1.4,
-                    fontWeight: FontWeight.w500,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -1009,36 +993,35 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          
           Positioned(
-            top: -8,
-            right: -8,
+            top: -6,
+            right: -6,
             child: InkWell(
               onTap: () => provider.removeNode(node.id),
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   color: colors.surface,
                   shape: BoxShape.circle,
-                  border: Border.all(color: colors.outlineVariant),
+                  border: Border.all(
+                    color: colors.outlineVariant.withOpacity(0.5),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 4,
                     ),
                   ],
                 ),
                 child: Icon(
                   Icons.close,
-                  size: 14,
-                  color: colors.onSurfaceVariant.withValues(alpha: 0.8),
+                  size: 12,
+                  color: colors.onSurfaceVariant.withOpacity(0.8),
                 ),
               ),
             ),
           ),
-
-          
         ],
       ),
     );
@@ -1056,7 +1039,6 @@ class DraggableNodeWidget extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          
           Container(
             width: 48,
             height: 48,
@@ -1069,7 +1051,7 @@ class DraggableNodeWidget extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.4),
+                  color: colors.primary.withOpacity(0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -1082,9 +1064,7 @@ class DraggableNodeWidget extends StatelessWidget {
               size: 28,
             ),
           ),
-          
 
-          
           Positioned(
             top: -12,
             right: 0,
@@ -1123,9 +1103,8 @@ class DraggableNodeWidget extends StatelessWidget {
     CanvasProvider provider,
     ColorScheme colors,
   ) {
-    
     final size = node.width < node.height ? node.width : node.height;
-    final diamondSize = size * 0.7; 
+    final diamondSize = size * 0.7;
 
     return SizedBox(
       width: node.width,
@@ -1134,9 +1113,8 @@ class DraggableNodeWidget extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          
           Transform.rotate(
-            angle: 0.785398, 
+            angle: 0.785398,
             child: Container(
               width: diamondSize,
               height: diamondSize,
@@ -1144,19 +1122,19 @@ class DraggableNodeWidget extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     colors.surface,
-                    colors.surfaceContainerHighest.withValues(alpha: 0.5),
+                    colors.surfaceContainerHighest.withOpacity(0.5),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: colors.primary.withValues(alpha: 0.5),
+                  color: colors.primary.withOpacity(0.5),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.15),
+                    color: colors.primary.withOpacity(0.15),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   ),
@@ -1165,14 +1143,8 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          
-          const Icon(
-            Icons.call_split_rounded,
-            size: 20,
-            color: Colors.grey, 
-          ),
+          const Icon(Icons.call_split_rounded, size: 20, color: Colors.grey),
 
-          
           Positioned(
             top: 0,
             right: 0,
@@ -1202,11 +1174,8 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          
-
-          
           Positioned(
-            right: -8, 
+            right: -8,
             top: 0,
             bottom: 0,
             child: Center(
@@ -1233,14 +1202,14 @@ class DraggableNodeWidget extends StatelessWidget {
                           provider.selectedSourceNodeId == node.id &&
                               provider.selectedSourceHandle == 'true'
                           ? colors.primary
-                          : colors.primary.withValues(alpha: 0.5),
+                          : colors.primary.withOpacity(0.5),
                       width: 1.5,
                     ),
                     boxShadow: [
                       if (provider.selectedSourceNodeId == node.id &&
                           provider.selectedSourceHandle == 'true')
                         BoxShadow(
-                          color: colors.primary.withValues(alpha: 0.3),
+                          color: colors.primary.withOpacity(0.3),
                           blurRadius: 8,
                         ),
                     ],
@@ -1258,7 +1227,6 @@ class DraggableNodeWidget extends StatelessWidget {
             ),
           ),
 
-          
           Positioned(
             bottom: -8,
             left: 0,
@@ -1287,14 +1255,14 @@ class DraggableNodeWidget extends StatelessWidget {
                           provider.selectedSourceNodeId == node.id &&
                               provider.selectedSourceHandle == 'false'
                           ? colors.error
-                          : colors.error.withValues(alpha: 0.5),
+                          : colors.error.withOpacity(0.5),
                       width: 1.5,
                     ),
                     boxShadow: [
                       if (provider.selectedSourceNodeId == node.id &&
                           provider.selectedSourceHandle == 'false')
                         BoxShadow(
-                          color: colors.error.withValues(alpha: 0.3),
+                          color: colors.error.withOpacity(0.3),
                           blurRadius: 8,
                         ),
                     ],
@@ -1316,365 +1284,25 @@ class DraggableNodeWidget extends StatelessWidget {
     );
   }
 
-  Color _getMethodColor(String? method) {
-    switch (method) {
-      case 'POST':
-        return Colors.green;
-      case 'DELETE':
-        return Colors.red;
-      case 'PUT':
-        return Colors.orange;
-      default:
+  Color _getTypeColor(String type) {
+    switch (type.toUpperCase()) {
+      case 'HTTP':
         return Colors.blue;
+      case 'GRPC':
+        return Colors.teal;
+      case 'TCP':
+        return Colors.orange;
+      case 'JDBC':
+        return Colors.purple;
+      default:
+        // Generate a random but consistent color based on the type name
+        final int hash = type.hashCode;
+        return HSLColor.fromAHSL(
+          1.0,
+          (hash % 360).toDouble(),
+          0.7, // Saturation
+          0.5, // Lightness
+        ).toColor();
     }
   }
-}
-
-class GridPainter extends CustomPainter {
-  final Color color;
-  final double scale;
-
-  GridPainter({required this.color, this.scale = 1.0});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.0 / scale;
-    const spacing = 40.0; 
-    for (double x = 0; x < size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class ConnectionPainter extends CustomPainter {
-  final List<CanvasConnection> connections;
-  final List<CanvasNode> nodes;
-  final String? tempSourceId;
-  final String? tempSourceHandle;
-  final Offset? tempEndPos;
-  final Color lineColor;
-  final Color activeColor;
-
-  ConnectionPainter({
-    required this.connections,
-    required this.nodes,
-    this.tempSourceId,
-    this.tempSourceHandle,
-    this.tempEndPos,
-    required this.lineColor,
-    required this.activeColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-    final activePaint = Paint()
-      ..color = activeColor
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    
-    final nodeMap = {for (final node in nodes) node.id: node};
-
-    for (final conn in connections) {
-      final source = nodeMap[conn.sourceNodeId];
-      final target = nodeMap[conn.targetNodeId];
-      if (source == null || target == null) continue;
-
-      _drawSmartConnection(canvas, source, target, conn.sourceHandle, paint);
-    }
-
-    
-    if (tempSourceId != null && tempEndPos != null) {
-      final source = nodeMap[tempSourceId];
-      if (source != null) {
-        _drawSmartLiveConnection(
-          canvas,
-          source,
-          tempSourceHandle,
-          tempEndPos!,
-          activePaint,
-        );
-      }
-    }
-  }
-
-  void _drawSmartConnection(
-    Canvas canvas,
-    CanvasNode source,
-    CanvasNode target,
-    String? sourceHandle,
-    Paint paint,
-  ) {
-    
-    
-    
-    final (startPos, startDir) = _getStartPoint(
-      source,
-      sourceHandle,
-      target.position,
-    );
-
-    
-    
-    final (endPos, endDir) = _getBestEndPoint(target, startPos);
-
-    
-    _drawOrthogonalLine(canvas, startPos, endPos, startDir, endDir, paint);
-  }
-
-  void _drawSmartLiveConnection(
-    Canvas canvas,
-    CanvasNode source,
-    String? sourceHandle,
-    Offset endPos,
-    Paint paint,
-  ) {
-    final (startPos, startDir) = _getStartPoint(source, sourceHandle, endPos);
-
-    
-    
-    AxisDirection endDir = AxisDirection.left; 
-    if ((endPos.dx - startPos.dx).abs() > (endPos.dy - startPos.dy).abs()) {
-      endDir = endPos.dx > startPos.dx
-          ? AxisDirection.left
-          : AxisDirection.right;
-    } else {
-      endDir = endPos.dy > startPos.dy ? AxisDirection.up : AxisDirection.down;
-    }
-
-    _drawOrthogonalLine(canvas, startPos, endPos, startDir, endDir, paint);
-  }
-
-  (Offset, AxisDirection) _getStartPoint(
-    CanvasNode node,
-    String? handle,
-    Offset targetCenter,
-  ) {
-    if (node.type == FlowNodeType.branch) {
-      if (handle == 'true') {
-        return (
-          node.position + Offset(node.width, node.height / 2),
-          AxisDirection.right,
-        );
-      } else if (handle == 'false') {
-        return (
-          node.position + Offset(node.width / 2, node.height),
-          AxisDirection.down,
-        );
-      }
-    }
-
-    
-    final center = node.position + Offset(node.width / 2, node.height / 2);
-    final dx = targetCenter.dx - center.dx;
-    final dy = targetCenter.dy - center.dy;
-
-    if (dx.abs() > dy.abs()) {
-      
-      if (dx > 0) {
-        return (
-          node.position + Offset(node.width, node.height / 2),
-          AxisDirection.right,
-        );
-      } else {
-        return (node.position + Offset(0, node.height / 2), AxisDirection.left);
-      }
-    } else {
-      
-      if (dy > 0) {
-        return (
-          node.position + Offset(node.width / 2, node.height),
-          AxisDirection.down,
-        );
-      } else {
-        return (node.position + Offset(node.width / 2, 0), AxisDirection.up);
-      }
-    }
-  }
-
-  (Offset, AxisDirection) _getBestEndPoint(CanvasNode node, Offset startPos) {
-    final center = node.position + Offset(node.width / 2, node.height / 2);
-    final dx = startPos.dx - center.dx;
-    final dy = startPos.dy - center.dy;
-
-    
-    if (dx.abs() > dy.abs()) {
-      if (dx > 0) {
-        
-        return (
-          node.position + Offset(node.width, node.height / 2),
-          AxisDirection.right,
-        );
-      } else {
-        
-        return (node.position + Offset(0, node.height / 2), AxisDirection.left);
-      }
-    } else {
-      if (dy > 0) {
-        
-        return (
-          node.position + Offset(node.width / 2, node.height),
-          AxisDirection.down,
-        );
-      } else {
-        
-        return (node.position + Offset(node.width / 2, 0), AxisDirection.up);
-      }
-    }
-  }
-
-  void _drawOrthogonalLine(
-    Canvas canvas,
-    Offset start,
-    Offset end,
-    AxisDirection startDir,
-    AxisDirection endDir,
-    Paint paint,
-  ) {
-    final path = Path();
-    path.moveTo(start.dx, start.dy);
-
-    final points = _getOrthogonalPoints(start, end, startDir, endDir);
-    for (final point in points) {
-      path.lineTo(point.dx, point.dy);
-    }
-
-    
-    if (points.isNotEmpty && points.last != end) {
-      path.lineTo(end.dx, end.dy);
-    }
-
-    canvas.drawPath(path, paint);
-
-    
-    
-    final prevPoint = points.isNotEmpty ? points.last : start;
-    _drawArrowHead(canvas, end, prevPoint, paint.color);
-  }
-
-  List<Offset> _getOrthogonalPoints(
-    Offset start,
-    Offset end,
-    AxisDirection startDir,
-    AxisDirection endDir,
-  ) {
-    
-    
-    
-    
-
-    const double margin = 20.0;
-
-    Offset p1 = _moveInDirection(start, startDir, margin);
-
-    Offset p2 = _moveInDirection(end, endDir, margin);
-
-    List<Offset> points = [p1];
-
-    
-    
-    
-
-    double midX = (p1.dx + p2.dx) / 2;
-    double midY = (p1.dy + p2.dy) / 2;
-
-    bool startVertical =
-        startDir == AxisDirection.up || startDir == AxisDirection.down;
-    bool endVertical =
-        endDir == AxisDirection.up || endDir == AxisDirection.down;
-
-    
-    
-    
-
-    if (startVertical == endVertical) {
-      
-      
-      
-      if (startVertical) {
-        points.add(Offset(p1.dx, midY));
-        points.add(Offset(p2.dx, midY));
-      } else {
-        
-        points.add(Offset(midX, p1.dy));
-        points.add(Offset(midX, p2.dy));
-      }
-    } else {
-      
-      
-      if (startVertical) {
-        
-        
-        points.add(Offset(p1.dx, p2.dy));
-      } else {
-        
-        points.add(Offset(p2.dx, p1.dy));
-      }
-    }
-
-    points.add(p2);
-    points.add(end);
-
-    return points;
-  }
-
-  Offset _moveInDirection(Offset p, AxisDirection dir, double distance) {
-    switch (dir) {
-      case AxisDirection.left:
-        return p + Offset(-distance, 0);
-      case AxisDirection.right:
-        return p + Offset(distance, 0);
-      case AxisDirection.up:
-        return p + Offset(0, -distance);
-      case AxisDirection.down:
-        return p + Offset(0, distance);
-    }
-  }
-
-  void _drawArrowHead(
-    Canvas canvas,
-    Offset tip,
-    Offset prevPoint,
-    Color color,
-  ) {
-    if ((tip - prevPoint).distance < 1.0) return; 
-
-    final angle = (tip - prevPoint).direction;
-    const arrowSize = 6.0;
-
-    final arrowPath = Path();
-    arrowPath.moveTo(tip.dx, tip.dy);
-    arrowPath.lineTo(tip.dx - arrowSize * 1.5 * 0.8, tip.dy - arrowSize * 0.8);
-    arrowPath.lineTo(tip.dx - arrowSize * 1.5 * 0.8, tip.dy + arrowSize * 0.8);
-    arrowPath.close();
-
-    canvas.save();
-    canvas.translate(tip.dx, tip.dy);
-    canvas.rotate(angle);
-    canvas.translate(-tip.dx, -tip.dy);
-
-    canvas.drawPath(
-      arrowPath,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.fill,
-    );
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

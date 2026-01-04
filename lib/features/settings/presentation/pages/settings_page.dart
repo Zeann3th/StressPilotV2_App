@@ -42,10 +42,6 @@ class _SettingsPageState extends State<SettingsPage> {
           icon: Icon(Icons.arrow_back, color: colors.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, color: colors.outlineVariant),
-        ),
       ),
       body: const SettingsTable(),
     );

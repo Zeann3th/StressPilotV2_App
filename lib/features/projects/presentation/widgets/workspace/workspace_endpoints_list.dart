@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
 import 'package:stress_pilot/features/common/domain/endpoint.dart'
     as domain_endpoint;
+import 'package:stress_pilot/features/common/presentation/widgets/endpoint_type_badge.dart';
 import '../../../domain/canvas.dart';
 import '../../../../common/presentation/provider/endpoint_provider.dart';
 
@@ -30,7 +31,6 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
     _scrollCtrl = ScrollController();
     _scrollCtrl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      
       context.read<EndpointProvider>().loadEndpoints(
         projectId: widget.projectId,
       );
@@ -48,15 +48,9 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
 
   Future<void> _handleUpload(BuildContext context) async {
     try {
-      
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: [
-          'json',
-          'yaml',
-          'yml',
-          'proto',
-        ], 
+        allowedExtensions: ['json', 'yaml', 'yml', 'proto'],
       );
 
       if (result != null && result.files.single.path != null) {
@@ -70,7 +64,6 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
 
         if (!context.mounted) return;
 
-        
         await context.read<EndpointProvider>().uploadEndpointsFile(
           filePath: filePath,
           projectId: widget.projectId,
@@ -130,16 +123,8 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.upload_file, size: 18),
-                tooltip: 'Import Endpoints', 
+                tooltip: 'Import Endpoints',
                 onPressed: () => _handleUpload(context),
-                visualDensity: VisualDensity.compact,
-              ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 18),
-                tooltip: 'Add Endpoint',
-                onPressed: () {
-                  
-                },
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -198,6 +183,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
                             'name': endpoint.name,
                             'method': endpoint.httpMethod,
                             'url': endpoint.url,
+                            'type': endpoint.type,
                           },
                         ),
                         feedback: Material(
@@ -260,47 +246,19 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
     bool isDragging,
   ) {
     final colors = Theme.of(context).colorScheme;
-    Color methodColor;
-    switch (endpoint.httpMethod) {
-      case 'POST':
-        methodColor = Colors.green;
-        break;
-      case 'PUT':
-        methodColor = Colors.orange;
-        break;
-      case 'DELETE':
-        methodColor = Colors.red;
-        break;
-      default:
-        methodColor = Colors.blue;
-    }
+
     return Row(
       children: [
         if (!isDragging) ...[
           Icon(
             Icons.drag_indicator,
             size: 16,
-            color: colors.onSurfaceVariant.withAlpha(150),
+            color: colors.onSurfaceVariant.withOpacity(0.5),
           ),
           const SizedBox(width: 8),
         ],
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-          decoration: BoxDecoration(
-            color: methodColor.withAlpha(40),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: methodColor, width: 1),
-          ),
-          child: Text(
-            endpoint.httpMethod ?? 'GET',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: methodColor,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
+        EndpointTypeBadge(type: endpoint.type, compact: true),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,6 +269,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: colors.onSurface,
+                  letterSpacing: -0.2,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -321,7 +280,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
                 style: TextStyle(
                   fontSize: 11,
                   color: colors.onSurfaceVariant,
-                  fontFamily: 'monospace',
+                  fontFamily: 'JetBrains Mono',
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
