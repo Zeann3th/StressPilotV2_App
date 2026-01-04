@@ -124,7 +124,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                   itemCount: filtered.length,
                   separatorBuilder: (c, i) => Divider(
                     height: 1,
-                    color: colors.outlineVariant.withOpacity(0.5),
+                    color: colors.outlineVariant.withValues(alpha: 0.5),
                   ),
                   itemBuilder: (context, index) {
                     final v = filtered[index];
@@ -231,7 +231,7 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
               decoration: InputDecoration(
                 hintText: 'KEY',
                 hintStyle: TextStyle(
-                  color: colors.onSurfaceVariant.withOpacity(0.5),
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 border: InputBorder.none,
                 isDense: true,
@@ -252,7 +252,7 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
               decoration: InputDecoration(
                 hintText: 'Value',
                 hintStyle: TextStyle(
-                  color: colors.onSurfaceVariant.withOpacity(0.5),
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 border: InputBorder.none,
                 isDense: true,

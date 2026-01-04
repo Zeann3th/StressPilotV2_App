@@ -111,9 +111,9 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      minimumSize: const Size(0, 0),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Theme.of(context).colorScheme.surfaceContainer,
-      minSize: 32,
       borderRadius: BorderRadius.circular(8),
       onPressed: onPressed,
       child: Row(
@@ -149,9 +149,9 @@ class _PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
+      color: const Color(0xFF007AFF),
+      minimumSize: const Size(0, 0),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: const Color(0xFF007AFF), // System Blue
-      minSize: 32,
       borderRadius: BorderRadius.circular(8),
       onPressed: onPressed,
       child: Row(

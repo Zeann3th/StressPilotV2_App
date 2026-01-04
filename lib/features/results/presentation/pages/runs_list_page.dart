@@ -160,7 +160,8 @@ class _RunsListPageState extends State<RunsListPage> {
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: _runs!.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final run = _runs![index];
                   return _buildRunTile(run);
@@ -233,7 +234,7 @@ class _RunsListPageState extends State<RunsListPage> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.2),
+                              color: statusColor.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(

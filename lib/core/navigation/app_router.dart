@@ -18,6 +18,7 @@ class AppRouter {
   static const String projectEnvironmentRoute = '/project/environment';
   static const String resultsRoute = '/results';
   static const String runsRoute = '/runs';
+  static const String marketplaceRoute = '/marketplace';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     MaterialPageRoute<T> buildRoute<T>(Widget widget) {

@@ -54,6 +54,10 @@ class AppSidebar extends StatelessWidget {
             themeManager.toggleTheme,
           ),
           const SizedBox(height: 16),
+          _icon(context, CupertinoIcons.cart, 'Marketplace', () {
+            AppNavigator.pushNamed(AppRouter.marketplaceRoute);
+          }),
+          const SizedBox(height: 16),
           _icon(context, CupertinoIcons.person_crop_circle, 'Profile', () {}),
         ],
       ),

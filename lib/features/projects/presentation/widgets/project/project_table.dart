@@ -125,7 +125,7 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
         onTap: widget.onTap,
         child: Container(
           color: _isHovered
-              ? Theme.of(context).colorScheme.onSurface.withOpacity(0.05)
+              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)
               : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           child: Row(
@@ -236,9 +236,9 @@ class _ProjectAvatar extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Center(
         child: Text(

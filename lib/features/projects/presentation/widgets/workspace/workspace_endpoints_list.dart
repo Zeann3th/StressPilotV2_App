@@ -253,7 +253,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
           Icon(
             Icons.drag_indicator,
             size: 16,
-            color: colors.onSurfaceVariant.withOpacity(0.5),
+            color: colors.onSurfaceVariant.withValues(alpha: 0.5),
           ),
           const SizedBox(width: 8),
         ],

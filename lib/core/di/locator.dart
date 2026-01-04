@@ -11,6 +11,9 @@ import 'package:stress_pilot/features/projects/presentation/provider/flow_provid
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/settings/data/setting_service.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
+import 'package:stress_pilot/features/marketplace/data/nexus_service.dart';
+import 'package:stress_pilot/features/marketplace/data/plugin_service.dart';
+import 'package:stress_pilot/features/marketplace/presentation/provider/marketplace_provider.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/results/data/results_repository.dart';
@@ -45,6 +48,11 @@ void setupDependencies() {
   getIt.registerLazySingleton(
     () => ResultsProvider(getIt(), getIt<FlowService>()),
   );
-  
+
   getIt.registerLazySingleton(() => RunService());
+
+  // Marketplace
+  getIt.registerLazySingleton(() => NexusService());
+  getIt.registerLazySingleton(() => PluginService());
+  getIt.registerLazySingleton(() => MarketplaceProvider());
 }

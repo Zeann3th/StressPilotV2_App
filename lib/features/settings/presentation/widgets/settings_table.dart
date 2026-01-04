@@ -86,7 +86,9 @@ class _SettingsTableState extends State<SettingsTable> {
                     color: colors.onSurfaceVariant,
                   ),
                   filled: true,
-                  fillColor: colors.surfaceContainerHighest.withOpacity(0.3),
+                  fillColor: colors.surfaceContainerHighest.withValues(
+                    alpha: 0.3,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -109,10 +111,10 @@ class _SettingsTableState extends State<SettingsTable> {
                 decoration: BoxDecoration(
                   border: Border(
                     right: BorderSide(
-                      color: colors.outlineVariant.withOpacity(0.5),
+                      color: colors.outlineVariant.withValues(alpha: 0.5),
                     ),
                   ),
-                  color: colors.surface.withOpacity(0.5),
+                  color: colors.surface.withValues(alpha: 0.5),
                 ),
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(
@@ -120,7 +122,8 @@ class _SettingsTableState extends State<SettingsTable> {
                     horizontal: 8,
                   ),
                   itemCount: categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 4),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 4),
                   itemBuilder: (context, index) {
                     final cat = categories[index];
                     final isSelected = cat == _selectedCategory;
@@ -134,7 +137,7 @@ class _SettingsTableState extends State<SettingsTable> {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? colors.primary.withOpacity(0.1)
+                              ? colors.primary.withValues(alpha: 0.1)
                               : null,
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -197,12 +200,12 @@ class _SettingsTableState extends State<SettingsTable> {
                                             ),
                                             border: Border.all(
                                               color: colors.outlineVariant
-                                                  .withOpacity(0.5),
+                                                  .withValues(alpha: 0.5),
                                             ),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withOpacity(
-                                                  0.03,
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.03,
                                                 ),
                                                 blurRadius: 10,
                                                 offset: const Offset(0, 2),
@@ -222,7 +225,7 @@ class _SettingsTableState extends State<SettingsTable> {
                                                     height: 1,
                                                     thickness: 1,
                                                     color: colors.outlineVariant
-                                                        .withOpacity(0.3),
+                                                        .withValues(alpha: 0.3),
                                                     indent: 16,
                                                   ),
                                                 SettingsRow(

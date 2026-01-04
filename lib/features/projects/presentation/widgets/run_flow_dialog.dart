@@ -205,7 +205,9 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withOpacity(0.4),
+                      color: colorScheme.primaryContainer.withValues(
+                        alpha: 0.4,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -285,7 +287,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                           ),
                           decoration: BoxDecoration(
                             color: colorScheme.surfaceContainerHighest
-                                .withOpacity(0.3),
+                                .withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _selectedFile != null
@@ -329,7 +331,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: colorScheme.onSurfaceVariant
-                                              .withOpacity(0.7),
+                                              .withValues(alpha: 0.7),
                                         ),
                                       ),
                                   ],
@@ -370,8 +372,8 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                           child: Text(
                             'No custom variables defined.',
                             style: TextStyle(
-                              color: colorScheme.onSurfaceVariant.withOpacity(
-                                0.5,
+                              color: colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.5,
                               ),
                               fontStyle: FontStyle.italic,
                               fontSize: 13,
@@ -400,7 +402,9 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                                 onPressed: () => _removeVariable(entry.key),
                                 icon: Icon(
                                   Icons.remove_circle_outline,
-                                  color: colorScheme.error.withOpacity(0.8),
+                                  color: colorScheme.error.withValues(
+                                    alpha: 0.8,
+                                  ),
                                   size: 20,
                                 ),
                                 splashRadius: 20,

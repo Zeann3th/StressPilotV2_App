@@ -272,7 +272,9 @@ class _CanvasContentState extends State<_CanvasContent> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: colors.shadow.withOpacity(0.1),
+                                      color: colors.shadow.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       blurRadius: 4,
                                     ),
                                   ],
@@ -367,7 +369,9 @@ class _CanvasContentState extends State<_CanvasContent> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest.withOpacity(0.3),
+                      color: colors.surfaceContainerHighest.withValues(
+                        alpha: 0.3,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: colors.outlineVariant),
                     ),
@@ -577,12 +581,14 @@ class _CanvasContentState extends State<_CanvasContent> {
           height: 64,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: colors.surface.withOpacity(0.9),
+            color: colors.surface.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: colors.outlineVariant.withOpacity(0.5)),
+            border: Border.all(
+              color: colors.outlineVariant.withValues(alpha: 0.5),
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -740,7 +746,7 @@ class _CanvasContentState extends State<_CanvasContent> {
           borderRadius: BorderRadius.circular(24),
           border: isSelected
               ? null
-              : Border.all(color: colors.outlineVariant.withOpacity(0.5)),
+              : Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
         ),
         child: Row(
           children: [
@@ -868,7 +874,7 @@ class DraggableNodeWidget extends StatelessWidget {
                   border: Border.all(color: colors.primary, width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.primary.withOpacity(0.3),
+                      color: colors.primary.withValues(alpha: 0.3),
                       blurRadius: 12,
                     ),
                   ],
@@ -895,17 +901,17 @@ class DraggableNodeWidget extends StatelessWidget {
         color: colors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colors.outlineVariant.withOpacity(0.6),
+          color: colors.outlineVariant.withValues(alpha: 0.6),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: methodColor.withOpacity(0.1),
+            color: methodColor.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -944,7 +950,7 @@ class DraggableNodeWidget extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: methodColor.withOpacity(0.1),
+                        color: methodColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -1005,11 +1011,11 @@ class DraggableNodeWidget extends StatelessWidget {
                   color: colors.surface,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: colors.outlineVariant.withOpacity(0.5),
+                    color: colors.outlineVariant.withValues(alpha: 0.5),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                     ),
                   ],
@@ -1017,7 +1023,7 @@ class DraggableNodeWidget extends StatelessWidget {
                 child: Icon(
                   Icons.close,
                   size: 12,
-                  color: colors.onSurfaceVariant.withOpacity(0.8),
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.8),
                 ),
               ),
             ),
@@ -1051,7 +1057,7 @@ class DraggableNodeWidget extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: colors.primary.withOpacity(0.4),
+                  color: colors.primary.withValues(alpha: 0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -1122,19 +1128,19 @@ class DraggableNodeWidget extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     colors.surface,
-                    colors.surfaceContainerHighest.withOpacity(0.5),
+                    colors.surfaceContainerHighest.withValues(alpha: 0.5),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: colors.primary.withOpacity(0.5),
+                  color: colors.primary.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: colors.primary.withOpacity(0.15),
+                    color: colors.primary.withValues(alpha: 0.15),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   ),
@@ -1202,14 +1208,14 @@ class DraggableNodeWidget extends StatelessWidget {
                           provider.selectedSourceNodeId == node.id &&
                               provider.selectedSourceHandle == 'true'
                           ? colors.primary
-                          : colors.primary.withOpacity(0.5),
+                          : colors.primary.withValues(alpha: 0.5),
                       width: 1.5,
                     ),
                     boxShadow: [
                       if (provider.selectedSourceNodeId == node.id &&
                           provider.selectedSourceHandle == 'true')
                         BoxShadow(
-                          color: colors.primary.withOpacity(0.3),
+                          color: colors.primary.withValues(alpha: 0.3),
                           blurRadius: 8,
                         ),
                     ],
@@ -1255,14 +1261,14 @@ class DraggableNodeWidget extends StatelessWidget {
                           provider.selectedSourceNodeId == node.id &&
                               provider.selectedSourceHandle == 'false'
                           ? colors.error
-                          : colors.error.withOpacity(0.5),
+                          : colors.error.withValues(alpha: 0.5),
                       width: 1.5,
                     ),
                     boxShadow: [
                       if (provider.selectedSourceNodeId == node.id &&
                           provider.selectedSourceHandle == 'false')
                         BoxShadow(
-                          color: colors.error.withOpacity(0.3),
+                          color: colors.error.withValues(alpha: 0.3),
                           blurRadius: 8,
                         ),
                     ],

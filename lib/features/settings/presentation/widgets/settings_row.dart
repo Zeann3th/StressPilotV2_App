@@ -106,7 +106,7 @@ class _SettingsRowState extends State<SettingsRow> {
         },
         child: Container(
           color: _isHovered
-              ? colors.primary.withOpacity(0.05)
+              ? colors.primary.withValues(alpha: 0.05)
               : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
@@ -150,7 +150,7 @@ class _SettingsRowState extends State<SettingsRow> {
                             ),
                             filled: true,
                             fillColor: colors.surfaceContainerHighest
-                                .withOpacity(0.5),
+                                .withValues(alpha: 0.5),
                           ),
                         ),
                       )
@@ -162,7 +162,9 @@ class _SettingsRowState extends State<SettingsRow> {
                               widget.value.isEmpty ? 'Not Set' : widget.value,
                               style: text.bodyMedium?.copyWith(
                                 color: widget.value.isEmpty
-                                    ? colors.onSurfaceVariant.withOpacity(0.7)
+                                    ? colors.onSurfaceVariant.withValues(
+                                        alpha: 0.7,
+                                      )
                                     : colors.onSurfaceVariant,
                                 fontFamily: 'JetBrains Mono',
                               ),
@@ -176,7 +178,9 @@ class _SettingsRowState extends State<SettingsRow> {
                             Icon(
                               Icons.chevron_right,
                               size: 16,
-                              color: colors.onSurfaceVariant.withOpacity(0.5),
+                              color: colors.onSurfaceVariant.withValues(
+                                alpha: 0.5,
+                              ),
                             ),
                           ],
                         ],

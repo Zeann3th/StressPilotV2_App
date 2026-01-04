@@ -145,7 +145,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                           Expanded(
                             flex: 1,
                             child: DropdownButtonFormField<String>(
-                              value: _selectedType,
+                              initialValue: _selectedType,
                               decoration: const InputDecoration(
                                 labelText: 'Type *',
                                 border: OutlineInputBorder(),
@@ -173,8 +173,9 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                           helperText: _getUrlHelper(),
                         ),
                         validator: (v) {
-                          if (_selectedType == 'JS')
-                            return null; // Optional for JS
+                          if (_selectedType == 'JS') {
+                            return null;
+                          } // Optional for JS
                           if (v == null || v.isEmpty) return 'Required';
 
                           if (_selectedType == 'JDBC' &&

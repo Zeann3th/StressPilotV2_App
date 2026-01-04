@@ -277,77 +277,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
   }
 }
 
-class _TypeBadge extends StatelessWidget {
-  final String type;
-  final bool compact;
-  final bool inverse;
-  const _TypeBadge({
-    required this.type,
-    this.compact = false,
-    this.inverse = false,
-  });
-
-  Color _getTypeColor(String type) {
-    switch (type.toUpperCase()) {
-      case 'HTTP':
-        return Colors.blue;
-      case 'GRPC':
-        return Colors.teal;
-      case 'WSS':
-      case 'WS':
-      case 'WEBSOCKET':
-        return Colors.orange;
-      case 'GRAPHQL':
-        return Colors.pink;
-      case 'JDBC':
-      case 'SQL':
-        return Colors.indigo;
-      case 'JS':
-      case 'JAVASCRIPT':
-        return Colors.amber.shade700; // Darker yellow for contrast
-      default:
-        final int hash = type.hashCode;
-        return HSLColor.fromAHSL(
-          1.0,
-          (hash % 360).toDouble(),
-          0.7, // Saturation
-          0.5, // Lightness
-        ).toColor();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _getTypeColor(type);
-
-    final textColor = inverse ? Colors.white : color;
-    final bgColor = inverse
-        ? Colors.white.withOpacity(0.25)
-        : color.withOpacity(0.1);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        type.toUpperCase().substring(
-          0,
-          compact && type.length > 4
-              ? 4
-              : null, // Truncate if too long in compact mode
-        ),
-        style: TextStyle(
-          fontSize: compact ? 10 : 11,
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyState extends StatelessWidget {
   final int projectId;
   final Function(Endpoint) onCreated;
@@ -917,10 +846,12 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                   color:
                                       (_statusCode! >= 200 &&
                                           _statusCode! < 300)
-                                      ? const Color(0xFF30D158).withOpacity(0.2)
+                                      ? const Color(
+                                          0xFF30D158,
+                                        ).withValues(alpha: 0.2)
                                       : const Color(
                                           0xFFFF453A,
-                                        ).withOpacity(0.2),
+                                        ).withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -1060,7 +991,7 @@ class _SegmentedTabControlState extends State<_SegmentedTabControl> {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),

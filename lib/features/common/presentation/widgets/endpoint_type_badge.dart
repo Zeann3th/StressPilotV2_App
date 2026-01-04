@@ -47,8 +47,8 @@ class EndpointTypeBadge extends StatelessWidget {
 
     final textColor = inverse ? Colors.white : color;
     final bgColor = inverse
-        ? Colors.white.withOpacity(0.25)
-        : color.withOpacity(0.1);
+        ? Colors.white.withValues(alpha: 0.25)
+        : color.withValues(alpha: 0.1);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
