@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/endpoints/pages/endpoints_page.dart';
+import 'package:stress_pilot/features/projects/domain/project.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/environment_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
@@ -42,7 +43,9 @@ class AppRouter {
         return buildRoute(const SettingsPage());
       case projectEndpointsRoute:
         final args = settings.arguments as Map<String, dynamic>;
-        return buildRoute(ProjectEndpointsPage(projectId: args['projectId']));
+        return buildRoute(
+          ProjectEndpointsPage(project: args['project'] as Project),
+        );
       case projectEnvironmentRoute:
         final args = settings.arguments as Map<String, dynamic>;
         return buildRoute(

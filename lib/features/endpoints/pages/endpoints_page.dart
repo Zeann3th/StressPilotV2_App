@@ -1,16 +1,20 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../common/domain/endpoint.dart';
 import '../../common/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/common/presentation/widgets/environment_dialog.dart';
+import 'package:stress_pilot/features/projects/domain/project.dart';
+
 import '../widgets/key_value_editor.dart';
 import 'create_endpoint_dialog.dart';
 
 class ProjectEndpointsPage extends StatefulWidget {
-  final int projectId;
+  final Project project;
 
-  const ProjectEndpointsPage({super.key, required this.projectId});
+  const ProjectEndpointsPage({super.key, required this.project});
 
   @override
   State<ProjectEndpointsPage> createState() => _ProjectEndpointsPageState();
@@ -27,7 +31,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
     _scrollCtrl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EndpointProvider>().loadEndpoints(
-        projectId: widget.projectId,
+        projectId: widget.project.id,
       );
     });
   }
@@ -38,7 +42,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
 
     if (_scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels <
         200) {
-      provider.loadMoreEndpoints(projectId: widget.projectId);
+      provider.loadMoreEndpoints(projectId: widget.project.id);
     }
   }
 
@@ -57,7 +61,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final provider = context.watch<EndpointProvider>();
 
     return Scaffold(
@@ -66,44 +69,94 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
           Container(
             width: 280,
             decoration: BoxDecoration(
-              border: Border(right: BorderSide(color: colors.outlineVariant)),
-              color: colors.surface,
+              border: Border(
+                right: BorderSide(color: Theme.of(context).dividerTheme.color!),
+              ),
+              color: Theme.of(context).colorScheme.surface,
             ),
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  height: 56, // Standard app bar height
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
                     border: Border(
-                      bottom: BorderSide(color: colors.outlineVariant),
+                      bottom: BorderSide(
+                        color: Theme.of(context).dividerTheme.color!,
+                      ),
                     ),
                   ),
                   child: Row(
                     children: [
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(Icons.arrow_back, color: colors.onSurface),
-                        tooltip: 'Back',
+                        icon: const Icon(CupertinoIcons.arrow_left, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: 'Back to Projects',
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Endpoints',
-                          style: TextStyle(
+                          widget.project.name,
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: colors.onSurface,
+                            fontSize: 14,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       IconButton(
+                        onPressed: () {
+                          EnvironmentManagerDialog.show(
+                            context,
+                            widget.project.environmentId,
+                            widget.project.name,
+                          );
+                        },
+                        icon: const Icon(CupertinoIcons.layers_alt, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: 'Environment',
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: CupertinoSearchTextField(
+                    placeholder: 'Search Endpoints',
+                    onChanged: (value) {
+                    },
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Row(
+                    children: [
+                      const Text(
+                        'Endpoints',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF98989D), // Secondary Label
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
                         onPressed: _createNewEndpoint,
-                        icon: const Icon(Icons.add),
+                        icon: const Icon(Icons.add, size: 18),
+                        color: const Color(0xFF98989D),
                         tooltip: 'New Endpoint',
-                        style: IconButton.styleFrom(
-                          foregroundColor: colors.primary,
-                          backgroundColor: colors.primaryContainer.withValues(
-                            alpha: 0.2,
-                          ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        style: const ButtonStyle(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
                     ],
@@ -115,6 +168,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                       ? const Center(child: CircularProgressIndicator())
                       : ListView.builder(
                           controller: _scrollCtrl,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
                           itemCount:
                               provider.endpoints.length +
                               (provider.hasMore ? 1 : 0),
@@ -127,8 +181,8 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                 child: Center(
                                   child: provider.isLoadingMore
                                       ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
+                                          width: 16,
+                                          height: 16,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
                                           ),
@@ -141,77 +195,64 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                             final ep = provider.endpoints[index];
                             final isSelected = _selectedEndpoint?.id == ep.id;
 
-                            return InkWell(
-                              onTap: () =>
-                                  setState(() => _selectedEndpoint = ep),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? colors.primaryContainer.withValues(
-                                          alpha: 0.1,
-                                        )
-                                      : null,
-                                  border: isSelected
-                                      ? Border(
-                                          left: BorderSide(
-                                            color: colors.primary,
-                                            width: 3,
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: InkWell(
+                                onTap: () =>
+                                    setState(() => _selectedEndpoint = ep),
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? const Color(0xFF007AFF) // System Blue
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          _TypeBadge(
+                                            type: ep.type,
+                                            compact: true,
+                                            inverse: isSelected,
                                           ),
-                                        )
-                                      : const Border(
-                                          left: BorderSide(
-                                            color: Colors.transparent,
-                                            width: 3,
-                                          ),
-                                        ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        _MethodBadge(
-                                          method: ep.httpMethod ?? 'GET',
-                                          compact: true,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            ep.name,
-                                            style: TextStyle(
-                                              fontWeight: isSelected
-                                                  ? FontWeight.w600
-                                                  : FontWeight.normal,
-                                              color: colors.onSurface,
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              ep.name,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.w600
+                                                    : FontWeight.normal,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : Theme.of(
+                                                        context,
+                                                      ).colorScheme.onSurface,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      ep.url,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: colors.onSurfaceVariant,
-                                        fontFamily: 'JetBrains Mono',
+                                        ],
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
                           },
                         ),
                 ),
+
               ],
             ),
           ),
@@ -219,13 +260,13 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
           Expanded(
             child: _selectedEndpoint == null
                 ? _EmptyState(
-                    projectId: widget.projectId,
+                    projectId: widget.project.id,
                     onCreated: (ep) => setState(() => _selectedEndpoint = ep),
                   )
                 : _EndpointWorkspace(
                     key: ValueKey(_selectedEndpoint!.id),
                     endpoint: _selectedEndpoint!,
-                    projectId: widget.projectId,
+                    projectId: widget.project.id,
                     onDeleted: () => setState(() => _selectedEndpoint = null),
                     onUpdated: (updated) =>
                         setState(() => _selectedEndpoint = updated),
@@ -237,39 +278,72 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
   }
 }
 
-class _MethodBadge extends StatelessWidget {
-  final String method;
+class _TypeBadge extends StatelessWidget {
+  final String type;
   final bool compact;
-  const _MethodBadge({required this.method, this.compact = false});
+  final bool inverse;
+  const _TypeBadge({
+    required this.type,
+    this.compact = false,
+    this.inverse = false,
+  });
+
+  Color _getTypeColor(String type) {
+    switch (type.toUpperCase()) {
+      case 'HTTP':
+        return Colors.blue;
+      case 'GRPC':
+        return Colors.teal;
+      case 'WSS':
+      case 'WS':
+      case 'WEBSOCKET':
+        return Colors.orange;
+      case 'GRAPHQL':
+        return Colors.pink;
+      case 'JDBC':
+      case 'SQL':
+        return Colors.indigo;
+      case 'JS':
+      case 'JAVASCRIPT':
+        return Colors.amber.shade700; // Darker yellow for contrast
+      default:
+        final int hash = type.hashCode;
+        return HSLColor.fromAHSL(
+          1.0,
+          (hash % 360).toDouble(),
+          0.7, // Saturation
+          0.5, // Lightness
+        ).toColor();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    Color color;
-    switch (method.toUpperCase()) {
-      case 'POST':
-        color = Colors.green;
-        break;
-      case 'DELETE':
-        color = Colors.red;
-        break;
-      case 'PUT':
-        color = Colors.orange;
-        break;
-      case 'PATCH':
-        color = Colors.purple;
-        break;
-      default:
-        color = Colors.blue;
-    }
-    return Text(
-      method.toUpperCase().substring(
-        0,
-        compact && method.length > 3 ? 3 : null,
+    final color = _getTypeColor(type);
+
+    final textColor = inverse ? Colors.white : color;
+    final bgColor = inverse
+        ? Colors.white.withOpacity(0.25)
+        : color.withOpacity(0.1);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(4),
       ),
-      style: TextStyle(
-        fontSize: compact ? 10 : 11,
-        fontWeight: FontWeight.bold,
-        color: color,
+      child: Text(
+        type.toUpperCase().substring(
+          0,
+          compact && type.length > 4
+              ? 4
+              : null, // Truncate if too long in compact mode
+        ),
+        style: TextStyle(
+          fontSize: compact ? 10 : 11,
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
       ),
     );
   }
@@ -287,23 +361,48 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.api,
-            size: 64,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Select an endpoint or create a new one',
-            style: TextStyle(
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              shape: BoxShape.circle,
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
+            ),
+            child: Icon(
+              CupertinoIcons.cube_box,
+              size: 48,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),
+          Text(
+            'No Endpoint Selected',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Select an endpoint from the sidebar\nor create a new one to get started.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 24),
           FilledButton(
-            onPressed: () {
-              _showCreateDialog(context);
-            },
+            onPressed: () => _showCreateDialog(context),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text('Create Endpoint'),
           ),
         ],
@@ -485,251 +584,408 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
   @override
   Widget build(BuildContext context) {
-    // Hot-reload fix: Ensure controller length matches current tabs
-    if (_reqTabCtrl.length != 4) {
-      _reqTabCtrl.dispose();
-      _reqTabCtrl = TabController(length: 4, vsync: this);
-    }
-
-    final colors = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _nameCtrl,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Endpoint Name',
+                      hintStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                    ),
+                    style: TextStyle(
+                      fontSize: 20, // Slightly smaller for dense feel
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _save,
+                  icon: const Icon(CupertinoIcons.floppy_disk),
+                  color: Theme.of(context).colorScheme.primary,
+                  tooltip: 'Save',
+                ),
+                IconButton(
+                  onPressed: widget.onDeleted,
+                  icon: const Icon(CupertinoIcons.trash),
+                  color: Theme.of(context).colorScheme.error,
+                  iconSize: 20,
+                  tooltip: 'Delete',
+                ),
+              ],
+            ),
           ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _nameCtrl,
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        hintText: 'Endpoint Name',
-                      ),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _save,
-                    icon: const Icon(Icons.save_outlined),
-                    tooltip: 'Save',
-                  ),
-                  IconButton(
-                    onPressed: widget.onDeleted,
-                    icon: const Icon(Icons.delete_outline),
-                    color: colors.error,
-                    tooltip: 'Delete',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+          Divider(height: 1, color: Theme.of(context).dividerTheme.color),
 
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: colors.outlineVariant),
-                      borderRadius: const BorderRadius.horizontal(
-                        left: Radius.circular(4),
-                      ),
-                      color: colors.surfaceContainerLow,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _method,
-                        items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-                            .map(
-                              (m) => DropdownMenuItem(
-                                value: m,
-                                child: Text(
-                                  m,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: _getMethodColor(m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              height: 36,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainer,
+                                borderRadius: const BorderRadius.horizontal(
+                                  left: Radius.circular(8),
+                                ),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
+                              ),
+                              child: Center(
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _method,
+                                    dropdownColor: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainer,
+                                    icon: Icon(
+                                      CupertinoIcons.chevron_down,
+                                      size: 12,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    items:
+                                        [
+                                          'GET',
+                                          'POST',
+                                          'PUT',
+                                          'DELETE',
+                                          'PATCH',
+                                        ].map((m) {
+                                          return DropdownMenuItem(
+                                            value: m,
+                                            child: Text(
+                                              m,
+                                              style: TextStyle(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                    onChanged: (v) =>
+                                        setState(() => _method = v!),
                                   ),
                                 ),
                               ),
-                            )
-                            .toList(),
-                        onChanged: (v) => setState(() => _method = v!),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _urlCtrl,
-                      decoration: InputDecoration(
-                        hintText: 'Enter request URL',
-                        border: OutlineInputBorder(
-                          borderRadius: const BorderRadius.horizontal(
-                            right: Radius.circular(4),
-                          ),
-                          borderSide: BorderSide(color: colors.outlineVariant),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 14,
-                        ),
-                        isDense: true,
-                      ),
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _isLoading ? null : _send,
-                    icon: _isLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
                             ),
-                          )
-                        : const Icon(Icons.send, size: 16),
-                    label: const Text('Send'),
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
+                            Expanded(
+                              child: Container(
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainer,
+                                  border: Border(
+                                    top: BorderSide(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outline,
+                                    ),
+                                    bottom: BorderSide(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outline,
+                                    ),
+                                    right: BorderSide(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outline,
+                                    ),
+                                  ),
+                                  borderRadius: const BorderRadius.horizontal(
+                                    right: Radius.circular(8),
+                                  ),
+                                ),
+                                alignment: Alignment.centerLeft,
+                                child: TextField(
+                                  controller: _urlCtrl,
+                                  decoration: InputDecoration(
+                                    hintText:
+                                        'https://api.example.com/v1/resource',
+                                    hintStyle: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                      fontSize: 13,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 0,
+                                    ),
+                                    isDense: true,
+                                  ),
+                                  style: TextStyle(
+                                    fontFamily: 'JetBrains Mono',
+                                    fontSize: 13,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                  ),
+                                  textAlignVertical: TextAlignVertical.center,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              height: 36,
+                              child: FilledButton.icon(
+                                onPressed: _isLoading ? null : _send,
+                                icon: _isLoading
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        CupertinoIcons.play_fill,
+                                        size: 14,
+                                      ),
+                                label: const Text('Send'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 18,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: SizedBox(
+                          height: 32,
+                          child: _SegmentedTabControl(
+                            controller: _reqTabCtrl,
+                            tabs: const [
+                              'Params',
+                              'Headers',
+                              'Variables',
+                              'Body',
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        Container(
-          color: colors.surface,
-          child: TabBar(
-            controller: _reqTabCtrl,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            labelColor: colors.primary,
-            unselectedLabelColor: colors.onSurfaceVariant,
-            indicatorSize: TabBarIndicatorSize.label,
-            dividerColor: colors.outlineVariant,
-            tabs: const [
-              Tab(text: 'Params'),
-              Tab(text: 'Headers'),
-              Tab(text: 'Variables'),
-              Tab(text: 'Body'),
-            ],
-          ),
-        ),
-
-        Expanded(
-          flex: 3,
-          child: TabBarView(
-            controller: _reqTabCtrl,
-            children: [
-              KeyValueEditor(data: _params, onChanged: (d) => _params = d),
-              KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
-              KeyValueEditor(
-                data: _variables,
-                onChanged: (d) => _variables = d,
-              ),
-              Padding(
-                padding: const EdgeInsets.all(1.0),
-                child: TextField(
-                  controller: _bodyCtrl,
-                  maxLines: null,
-                  expands: true,
-                  style: const TextStyle(
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: 13,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: 'Request Body (JSON)',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(16),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(
+                                color: Theme.of(context).dividerTheme.color!,
+                              ),
+                            ),
+                          ),
+                          child: TabBarView(
+                            controller: _reqTabCtrl,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: KeyValueEditor(
+                                  data: _params,
+                                  onChanged: (d) => _params = d,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: KeyValueEditor(
+                                  data: _headers,
+                                  onChanged: (d) => _headers = d,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: KeyValueEditor(
+                                  data: _variables,
+                                  onChanged: (d) => _variables = d,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(1),
+                                child: TextField(
+                                  controller: _bodyCtrl,
+                                  maxLines: null,
+                                  expands: true,
+                                  style: TextStyle(
+                                    fontFamily: 'JetBrains Mono',
+                                    fontSize: 13,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: 'Request Body (JSON)',
+                                    hintStyle: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.all(16),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-
-        const Divider(height: 1),
-        Container(
-          height: 40,
-          color: colors.surfaceContainerLow,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              const Text(
-                'Response',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-              const Spacer(),
-              if (_statusCode != null) ...[
-                Text(
-                  'Status: $_statusCode',
-                  style: TextStyle(
-                    color: _statusCode! >= 200 && _statusCode! < 300
-                        ? Colors.green
-                        : Colors.red,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  'Time: ${_responseTime}ms',
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 12,
+                Divider(height: 1, color: Theme.of(context).dividerTheme.color),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Theme.of(context).dividerTheme.color!,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Response',
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (_statusCode != null) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      (_statusCode! >= 200 &&
+                                          _statusCode! < 300)
+                                      ? const Color(0xFF30D158).withOpacity(0.2)
+                                      : const Color(
+                                          0xFFFF453A,
+                                        ).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Status: $_statusCode',
+                                  style: TextStyle(
+                                    color:
+                                        (_statusCode! >= 200 &&
+                                            _statusCode! < 300)
+                                        ? const Color(0xFF30D158)
+                                        : const Color(0xFFFF453A),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '${_responseTime}ms',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  fontSize: 12,
+                                  fontFamily: 'JetBrains Mono',
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: _response == null
+                            ? Center(
+                                child: Text(
+                                  'Ready to send',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                padding: const EdgeInsets.all(16),
+                                child: SelectableText(
+                                  _getResponseBody(_response),
+                                  style: TextStyle(
+                                    fontFamily: 'JetBrains Mono',
+                                    fontSize: 12,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ],
+            ),
           ),
-        ),
-        Expanded(
-          flex: 2,
-          child: Container(
-            color: colors.surface,
-            child: _response == null
-                ? Center(
-                    child: Text(
-                      'Enter URL and click Send to get a response',
-                      style: TextStyle(color: colors.onSurfaceVariant),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: SelectableText(
-                      _getResponseBody(_response),
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -750,17 +1006,86 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     }
     return const JsonEncoder.withIndent('  ').convert(response);
   }
+}
 
-  Color _getMethodColor(String method) {
-    switch (method) {
-      case 'POST':
-        return Colors.green;
-      case 'DELETE':
-        return Colors.red;
-      case 'PUT':
-        return Colors.orange;
-      default:
-        return Colors.blue;
-    }
+class _SegmentedTabControl extends StatefulWidget {
+  final TabController controller;
+  final List<String> tabs;
+
+  const _SegmentedTabControl({required this.controller, required this.tabs});
+
+  @override
+  State<_SegmentedTabControl> createState() => _SegmentedTabControlState();
+}
+
+class _SegmentedTabControlState extends State<_SegmentedTabControl> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: List.generate(widget.tabs.length, (index) {
+          final isSelected = widget.controller.index == index;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => widget.controller.animateTo(index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                margin: const EdgeInsets.symmetric(horizontal: 1),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Theme.of(context).cardTheme.color
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : [],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  widget.tabs[index],
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.onSurface
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 }

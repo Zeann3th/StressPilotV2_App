@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:stress_pilot/core/di/locator.dart';
@@ -21,7 +22,6 @@ class _RunsListPageState extends State<RunsListPage> {
   List<Run>? _runs;
   bool _isLoading = false;
 
-  
   final Set<int> _exportingRunIds = {};
 
   @override
@@ -34,7 +34,6 @@ class _RunsListPageState extends State<RunsListPage> {
     setState(() => _isLoading = true);
     try {
       final runs = await _runService.getRuns(flowId: widget.flowId);
-      
       runs.sort((a, b) => b.id.compareTo(a.id));
       setState(() => _runs = runs);
     } catch (e) {
@@ -89,15 +88,10 @@ class _RunsListPageState extends State<RunsListPage> {
         context,
         AppRouter.resultsRoute,
         arguments: {'runId': run.id},
-      ).then((_) => _loadRuns()); 
+      ).then((_) => _loadRuns());
     } else if (run.status.toUpperCase() == 'COMPLETED') {
       _exportRun(run);
     } else {
-      
-      
-      
-      
-      
       if ([
         'FAILED',
         'ABORTED',
@@ -115,22 +109,58 @@ class _RunsListPageState extends State<RunsListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(widget.flowId != null ? 'Flow Runs' : 'All Runs'),
+        title: Text(
+          widget.flowId != null ? 'Flow Runs' : 'All Runs',
+          style: TextStyle(
+            color: Theme.of(context).appBarTheme.foregroundColor,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF007AFF)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            color: Theme.of(context).dividerTheme.color,
+            height: 1,
+          ),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadRuns),
+          IconButton(
+            icon: const Icon(CupertinoIcons.refresh),
+            onPressed: _loadRuns,
+            color: const Color(0xFF007AFF),
+          ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CupertinoActivityIndicator())
           : _runs == null
-          ? const Center(child: Text('Failed to load runs'))
+          ? const Center(
+              child: Text(
+                'Failed to load runs',
+                style: TextStyle(color: Color(0xFF98989D)),
+              ),
+            )
           : _runs!.isEmpty
-          ? const Center(child: Text('No runs found'))
+          ? const Center(
+              child: Text(
+                'No runs found',
+                style: TextStyle(color: Color(0xFF98989D)),
+              ),
+            )
           : RefreshIndicator(
               onRefresh: _loadRuns,
-              child: ListView.builder(
+              color: const Color(0xFF007AFF),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
                 itemCount: _runs!.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final run = _runs![index];
                   return _buildRunTile(run);
@@ -147,60 +177,118 @@ class _RunsListPageState extends State<RunsListPage> {
 
     switch (status) {
       case 'RUNNING':
-        statusColor = Colors.blue;
-        statusIcon = Icons.play_circle_outline;
+        statusColor = const Color(0xFF007AFF); // Blue
+        statusIcon = CupertinoIcons.play_circle;
         break;
       case 'COMPLETED':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle_outline;
+        statusColor = const Color(0xFF30D158); // Green
+        statusIcon = CupertinoIcons.check_mark_circled;
         break;
       case 'FAILED':
-        statusColor = Colors.red;
-        statusIcon = Icons.error_outline;
+        statusColor = const Color(0xFFFF453A); // Red
+        statusIcon = CupertinoIcons.exclamationmark_circle;
         break;
       default:
-        statusColor = Colors.grey;
-        statusIcon = Icons.help_outline;
+        statusColor = const Color(0xFF8E8E93); // Gray
+        statusIcon = CupertinoIcons.question_circle;
     }
 
     final isExporting = _exportingRunIds.contains(run.id);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        leading: Icon(statusIcon, color: statusColor),
-        title: Text('Run #${run.id}'),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Flow ID: ${run.flowId} | Status: $status'),
-            Text(
-              DateFormat('yyyy-MM-dd HH:mm:ss').format(run.startedAt.toLocal()),
-              style: Theme.of(context).textTheme.bodySmall,
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _handleRunTap(run),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(statusIcon, color: statusColor, size: 28),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Run #${run.id}',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Flow ID: ${run.flowId}',
+                        style: const TextStyle(
+                          color: Color(0xFF98989D),
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        DateFormat(
+                          'yyyy-MM-dd HH:mm:ss',
+                        ).format(run.startedAt.toLocal()),
+                        style: const TextStyle(
+                          color: Color(0xFF98989D),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (status == 'RUNNING')
+                  const Icon(
+                    CupertinoIcons.chevron_right,
+                    size: 16,
+                    color: Color(0xFF636366),
+                  ),
+                if (status == 'COMPLETED')
+                  isExporting
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CupertinoActivityIndicator(radius: 10),
+                        )
+                      : const Icon(
+                          CupertinoIcons.arrow_down_doc,
+                          color: Color(0xFF007AFF),
+                        ),
+              ],
             ),
-            if (run.completedAt != null)
-              Text(
-                'Completed: ${DateFormat('HH:mm:ss').format(run.completedAt!.toLocal())}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-          ],
+          ),
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (status == 'RUNNING')
-              const Icon(Icons.arrow_forward_ios, size: 16),
-            if (status == 'COMPLETED')
-              isExporting
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.download, color: Colors.blue),
-          ],
-        ),
-        onTap: () => _handleRunTap(run),
       ),
     );
   }

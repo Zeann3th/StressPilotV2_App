@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
@@ -23,11 +24,9 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   final _durationCtrl = TextEditingController(text: '60');
   final _rampUpCtrl = TextEditingController(text: '0');
 
-  
   final List<MapEntry<TextEditingController, TextEditingController>>
   _variables = [];
 
-  
   PlatformFile? _selectedFile;
 
   @override
@@ -72,14 +71,9 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   }
 
   void _run() async {
-    debugPrint("🚀 PRESSED RUN: Starting logic..."); 
-
-    
     final threads = int.tryParse(_threadsCtrl.text) ?? 1;
     final duration = int.tryParse(_durationCtrl.text) ?? 60;
     final rampUp = int.tryParse(_rampUpCtrl.text) ?? 0;
-
-    debugPrint("📊 Inputs: Threads=$threads, Duration=$duration");
 
     final variablesMap = <String, dynamic>{};
     for (var entry in _variables) {
@@ -88,10 +82,8 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       }
     }
 
-    
     MultipartFile? multipartFile;
     if (_selectedFile != null && _selectedFile!.path != null) {
-      debugPrint("📂 File selected: ${_selectedFile!.name}");
       multipartFile = await MultipartFile.fromFile(
         _selectedFile!.path!,
         filename: _selectedFile!.name,
@@ -105,35 +97,24 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       variables: variablesMap,
     );
 
-    if (!mounted) {
-      debugPrint("⚠️ Widget unmounted before execution");
-      return;
-    }
+    if (!mounted) return;
 
     try {
-      debugPrint("⏳ Calling Provider.runFlow()...");
-
-      
       await context.read<FlowProvider>().runFlow(
         flowId: widget.flowId,
         runFlowRequest: request,
         file: multipartFile,
       );
 
-      debugPrint("✅ Provider.runFlow() returned success!");
-
       if (!mounted) return;
 
-      
       final navigator = Navigator.of(context);
       final messenger = ScaffoldMessenger.of(context);
 
       navigator.pop();
-      debugPrint("👋 Dialog Popped");
 
       await Future.delayed(const Duration(milliseconds: 300));
 
-      
       try {
         messenger.showSnackBar(
           const SnackBar(content: Text('Flow execution started')),
@@ -142,8 +123,6 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         debugPrint("⚠️ SnackBar error (harmless): $e");
       }
 
-      
-      debugPrint("🕵️ Starting Polling...");
       final startTime = DateTime.now().toUtc();
 
       try {
@@ -153,16 +132,13 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         const Duration delay = Duration(milliseconds: 500);
 
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
-          debugPrint("🔄 Polling attempt ${attempt + 1}/$maxAttempts");
           try {
             final candidate = await runSvc.getLastRun(widget.flowId);
-
             final created = candidate.startedAt.toUtc();
-            
+
             if (created.isAfter(
               startTime.subtract(const Duration(seconds: 1)),
             )) {
-              debugPrint("🎯 Found new run: ${candidate.id}");
               found = candidate;
               break;
             }
@@ -178,21 +154,18 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
             arguments: {'runId': found.id},
           );
         } else {
-          debugPrint("⚠️ Polling timed out, going to Runs list");
           navigator.pushNamed(
             AppRouter.runsRoute,
             arguments: {'flowId': widget.flowId},
           );
         }
       } catch (e) {
-        debugPrint("❌ Polling block error: $e");
         navigator.pushNamed(
           AppRouter.runsRoute,
           arguments: {'flowId': widget.flowId},
         );
       }
     } catch (e) {
-      debugPrint("❌ CRITICAL ERROR in _run: $e");
       if (mounted) {
         try {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -205,53 +178,55 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Run Flow Configuration'),
-      content: SizedBox(
+    return Dialog(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Container(
         width: 600,
+        padding: const EdgeInsets.all(24),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
+              Text(
+                'Run Flow Configuration',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 24),
+
               const Text(
                 'General Settings',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF98989D),
+                  fontSize: 13,
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _threadsCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Threads',
-                        border: OutlineInputBorder(),
-                      ),
+                    child: _buildInput(_threadsCtrl, 'Threads', isNumber: true),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildInput(
+                      _durationCtrl,
+                      'Duration (s)',
+                      isNumber: true,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: TextField(
-                      controller: _durationCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Duration (s)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextField(
-                      controller: _rampUpCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Ramp Up (s)',
-                        border: OutlineInputBorder(),
-                      ),
+                    child: _buildInput(
+                      _rampUpCtrl,
+                      'Ramp Up (s)',
+                      isNumber: true,
                     ),
                   ),
                 ],
@@ -259,66 +234,143 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
               const SizedBox(height: 24),
 
-              
               const Text(
                 'Credentials',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF98989D),
+                  fontSize: 13,
+                ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: _pickFile,
-                    icon: const Icon(Icons.upload_file),
-                    label: const Text('Select JSON File'),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline,
                   ),
-                  const SizedBox(width: 16),
-                  if (_selectedFile != null)
-                    Expanded(
+                ),
+                child: Row(
+                  children: [
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: _pickFile,
                       child: Row(
-                        children: [
-                          const Icon(Icons.description),
-                          const SizedBox(width: 8),
-                          Text(_selectedFile!.name),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () =>
-                                setState(() => _selectedFile = null),
+                        children: const [
+                          Icon(
+                            CupertinoIcons.doc_fill,
+                            color: Color(0xFF007AFF),
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Select JSON File',
+                            style: TextStyle(
+                              color: Color(0xFF007AFF),
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
-                    )
-                  else
-                    const Text(
-                      'No file selected (Optional)',
-                      style: TextStyle(color: Colors.grey),
                     ),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _selectedFile != null
+                          ? Row(
+                              children: [
+                                Icon(
+                                  CupertinoIcons.doc_text,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _selectedFile!.name,
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                CupertinoButton(
+                                  padding: EdgeInsets.zero,
+                                  minSize: 0,
+                                  onPressed: () =>
+                                      setState(() => _selectedFile = null),
+                                  child: const Icon(
+                                    CupertinoIcons.clear_circled_solid,
+                                    color: Color(0xFF636366),
+                                    size: 18,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : const Text(
+                              'No file selected (Optional)',
+                              style: TextStyle(
+                                color: Color(0xFF636366),
+                                fontSize: 13,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 24),
 
-              
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Runtime Variables',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF98989D),
+                      fontSize: 13,
+                    ),
                   ),
-                  TextButton.icon(
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    minSize: 0,
                     onPressed: _addVariable,
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Add Variable'),
+                    child: Row(
+                      children: const [
+                        Icon(
+                          CupertinoIcons.add,
+                          size: 14,
+                          color: Color(0xFF007AFF),
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Add Variable',
+                          style: TextStyle(
+                            color: Color(0xFF007AFF),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               if (_variables.isEmpty)
-                const Text(
-                  'No variables added',
-                  style: TextStyle(color: Colors.grey),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'No variables added',
+                    style: TextStyle(color: Color(0xFF636366), fontSize: 13),
+                  ),
                 )
               else
                 ListView.separated(
@@ -330,47 +382,85 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                     return Row(
                       children: [
                         Expanded(
-                          child: TextField(
-                            controller: _variables[index].key,
-                            decoration: const InputDecoration(
-                              hintText: 'Key',
-                              isDense: true,
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
+                          child: _buildInput(_variables[index].key, 'Key'),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           flex: 2,
-                          child: TextField(
-                            controller: _variables[index].value,
-                            decoration: const InputDecoration(
-                              hintText: 'Value',
-                              isDense: true,
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
+                          child: _buildInput(_variables[index].value, 'Value'),
                         ),
                         const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          minSize: 0,
                           onPressed: () => _removeVariable(index),
+                          child: const Icon(
+                            CupertinoIcons.trash,
+                            color: Color(0xFFFF453A),
+                            size: 20,
+                          ),
                         ),
                       ],
                     );
                   },
                 ),
+
+              const SizedBox(height: 32),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Color(0xFF98989D)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  CupertinoButton.filled(
+                    onPressed: _run,
+                    child: const Text(
+                      'Run Flow',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+    );
+  }
+
+  Widget _buildInput(
+    TextEditingController controller,
+    String placeholder, {
+    bool isNumber = false,
+  }) {
+    return Container(
+      height: 36,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
+      ),
+      child: CupertinoTextField(
+        controller: controller,
+        placeholder: placeholder,
+        placeholderStyle: const TextStyle(
+          color: Color(0xFF636366),
+          fontSize: 13,
         ),
-        ElevatedButton(onPressed: _run, child: const Text('Run Flow')),
-      ],
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: 13,
+        ),
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        decoration: null,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      ),
     );
   }
 }

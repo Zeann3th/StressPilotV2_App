@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/features/projects/domain/project.dart';
 
@@ -17,24 +18,23 @@ class ProjectTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
     return Container(
       decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colors.outline), 
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           _ProjectTableHeader(),
-          Divider(height: 1, color: colors.outline),
+          Divider(height: 1, color: Theme.of(context).dividerTheme.color),
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: projects.length,
             separatorBuilder: (_, _) =>
-                Divider(height: 1, color: colors.outline.withAlpha(100)),
+                Divider(height: 1, color: Theme.of(context).dividerTheme.color),
             itemBuilder: (context, index) {
               final project = projects[index];
               return _ProjectTableRow(
@@ -54,28 +54,16 @@ class ProjectTable extends StatelessWidget {
 class _ProjectTableHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow.withAlpha(150),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-      ),
+      color: Theme.of(context).colorScheme.surfaceContainer,
       child: Row(
         children: [
-          _HeaderCell('NAME', width: 250, text: text, colors: colors),
-          _HeaderCell('DESCRIPTION', flex: 1, text: text, colors: colors),
-          _HeaderCell('ID', width: 80, text: text, colors: colors),
-          _HeaderCell('CREATED', width: 140, text: text, colors: colors),
-          _HeaderCell(
-            'ACTIONS',
-            width: 100,
-            text: text,
-            colors: colors,
-            center: true,
-          ),
+          _HeaderCell('NAME', width: 250),
+          _HeaderCell('DESCRIPTION', flex: 1),
+          _HeaderCell('ID', width: 80),
+          _HeaderCell('CREATED', width: 140),
+          _HeaderCell('ACTIONS', width: 100, center: true),
         ],
       ),
     );
@@ -86,26 +74,18 @@ class _HeaderCell extends StatelessWidget {
   final String label;
   final double? width;
   final int? flex;
-  final TextTheme text;
-  final ColorScheme colors;
   final bool center;
 
-  const _HeaderCell(
-    this.label, {
-    this.width,
-    this.flex,
-    required this.text,
-    required this.colors,
-    this.center = false,
-  });
+  const _HeaderCell(this.label, {this.width, this.flex, this.center = false});
 
   @override
   Widget build(BuildContext context) {
     final widget = Text(
       label,
       textAlign: center ? TextAlign.center : TextAlign.start,
-      style: text.labelSmall?.copyWith(
-        color: colors.onSurfaceVariant,
+      style: const TextStyle(
+        color: Color(0xFF98989D),
+        fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
       ),
@@ -138,16 +118,15 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: InkWell(
+      child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
-          color: _isHovered ? colors.surfaceContainerLow : Colors.transparent,
+          color: _isHovered
+              ? Theme.of(context).colorScheme.onSurface.withOpacity(0.05)
+              : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           child: Row(
             children: [
@@ -160,8 +139,9 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
                     Expanded(
                       child: Text(
                         widget.project.name,
-                        style: text.bodyMedium?.copyWith(
-                          color: colors.onSurface,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -174,8 +154,9 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
               Expanded(
                 child: Text(
                   widget.project.description,
-                  style: text.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
+                  style: const TextStyle(
+                    color: Color(0xFF98989D),
+                    fontSize: 13,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -189,17 +170,17 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _ActionButton(
-                      icon: Icons.edit_outlined,
+                      icon: CupertinoIcons.pencil,
                       tooltip: 'Edit',
                       onPressed: widget.onEdit,
-                      color: colors.onSurfaceVariant,
+                      color: const Color(0xFF007AFF),
                     ),
                     const SizedBox(width: 8),
                     _ActionButton(
-                      icon: Icons.delete_outline,
+                      icon: CupertinoIcons.trash,
                       tooltip: 'Delete',
                       onPressed: widget.onDelete,
-                      color: colors.error.withAlpha(200),
+                      color: const Color(0xFFFF453A),
                     ),
                   ],
                 ),
@@ -249,27 +230,23 @@ class _ProjectAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-
-    
     final color = _getColorForString(name);
 
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: color.withAlpha(30), 
+        color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: color.withAlpha(100),
-        ), 
+        border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : 'P',
-          style: text.labelMedium?.copyWith(
-            color: color, 
+          style: TextStyle(
+            color: color,
             fontWeight: FontWeight.bold,
+            fontSize: 14,
           ),
         ),
       ),
@@ -279,19 +256,17 @@ class _ProjectAvatar extends StatelessWidget {
   Color _getColorForString(String text) {
     if (text.isEmpty) return Colors.grey;
 
-    
     const colors = [
-      Colors.blue,
-      Colors.red,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-      Colors.pink,
-      Colors.indigo,
+      Color(0xFF0A84FF), // Blue
+      Color(0xFFFF453A), // Red
+      Color(0xFF30D158), // Green
+      Color(0xFFFF9F0A), // Orange
+      Color(0xFFBF5AF2), // Purple
+      Color(0xFF64D2FF), // Cyan/Teal
+      Color(0xFFFF375F), // Pink
+      Color(0xFF5E5CE6), // Indigo
     ];
 
-    
     return colors[text.hashCode.abs() % colors.length];
   }
 }
@@ -304,14 +279,15 @@ class _TableCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return SizedBox(
       width: width,
       child: Text(
         text,
-        style: textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+        style: const TextStyle(
+          color: Color(0xFF98989D),
+          fontSize: 13,
+          fontFamily: 'JetBrains Mono',
+        ),
       ),
     );
   }

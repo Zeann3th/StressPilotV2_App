@@ -38,7 +38,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor:
+          colors.surface, // Use theme surface (or scaffold background)
       body: Row(
         children: [
           const AppSidebar(),
@@ -170,7 +171,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Future<void> _handleExport() async {
     final provider = context.read<ProjectProvider>();
-    
+
     if (provider.projects.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -181,7 +182,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
       return;
     }
 
-    
     final selectedProject = await showDialog<Project>(
       context: context,
       builder: (context) => AlertDialog(

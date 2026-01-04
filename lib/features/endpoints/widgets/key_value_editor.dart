@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class KeyValueEditor extends StatefulWidget {
@@ -55,10 +56,10 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return ListView.separated(
       itemCount: _controllers.length,
-      separatorBuilder: (c, i) => const Divider(height: 1),
+      separatorBuilder: (c, i) =>
+          Divider(height: 1, color: Theme.of(context).dividerTheme.color),
       itemBuilder: (context, index) {
         final entry = _controllers[index];
         return Row(
@@ -66,12 +67,19 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
             Expanded(
               child: TextField(
                 controller: entry.key,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Key',
+                  hintStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
-                style: const TextStyle(fontSize: 13),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontFamily: 'JetBrains Mono',
+                ),
                 onChanged: (v) {
                   if (index == _controllers.length - 1 && v.isNotEmpty) {
                     setState(() => _addEmptyRow());
@@ -80,21 +88,34 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
                 },
               ),
             ),
-            Container(width: 1, height: 24, color: colors.outlineVariant),
+            Container(
+              width: 1,
+              height: 24,
+              color: Theme.of(context).dividerTheme.color,
+            ),
             Expanded(
               child: TextField(
                 controller: entry.value,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Value',
+                  hintStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
-                style: const TextStyle(fontSize: 13),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontFamily: 'JetBrains Mono',
+                ),
                 onChanged: (v) => _updateData(),
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.close, size: 16),
+              icon: const Icon(CupertinoIcons.minus_circle, size: 16),
+              color: const Color(0xFFFF453A),
+              tooltip: 'Remove',
               onPressed: () {
                 if (index < _controllers.length - 1) {
                   setState(() {

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ProjectTopBar extends StatelessWidget {
@@ -22,133 +23,148 @@ class ProjectTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: colors.outline, width: 1)),
+        color: Theme.of(context).appBarTheme.backgroundColor,
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).dividerTheme.color!,
+            width: 1,
+          ),
+        ),
       ),
       child: Row(
         children: [
-          
           IconButton(
-            icon: Icon(Icons.refresh, color: colors.onSurfaceVariant, size: 20),
+            icon: const Icon(
+              CupertinoIcons.refresh,
+              color: Color(0xFF98989D),
+              size: 18,
+            ),
             onPressed: onRefresh,
             tooltip: 'Refresh',
             splashRadius: 20,
           ),
           const SizedBox(width: 16),
 
-          
           Expanded(
             child: Container(
               constraints: const BoxConstraints(maxWidth: 400),
               height: 36,
-              child: TextField(
+              child: CupertinoSearchTextField(
                 controller: searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search projects...',
-                  hintStyle: text.bodyMedium?.copyWith(
-                    color: colors.onSurfaceVariant.withAlpha(150),
-                    fontSize: 13,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 18,
-                    color: colors.onSurfaceVariant,
-                  ),
-                  suffixIcon: searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.close,
-                            size: 16,
-                            color: colors.onSurfaceVariant,
-                          ),
-                          onPressed: () {
-                            searchController.clear();
-                            onRefresh();
-                            onSearchChanged();
-                          },
-                          splashRadius: 16,
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: colors.surfaceContainerLow,
-                  
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide
-                        .none, 
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide(
-                      color: colors.primary.withAlpha(100),
-                      width: 1,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 0, 
-                  ),
-                ),
-                style: text.bodyMedium?.copyWith(
-                  color: colors.onSurface,
+                placeholder: 'Search projects',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontFamily: 'Inter', // or default
                   fontSize: 13,
                 ),
                 onChanged: (_) => onSearchChanged(),
                 onSubmitted: onSearchSubmitted,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+                placeholderStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
+                itemColor: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
           const SizedBox(width: 16),
 
-          
-          OutlinedButton.icon(
+          _ActionButton(
+            icon: CupertinoIcons.arrow_down_doc,
+            label: 'Import',
             onPressed: onImport,
-            icon: const Icon(Icons.upload_file, size: 18),
-            label: const Text("Import"),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
           ),
           const SizedBox(width: 8),
-
-          
-          OutlinedButton.icon(
+          _ActionButton(
+            icon: CupertinoIcons.arrow_up_doc,
+            label: 'Export',
             onPressed: onExport,
-            icon: const Icon(Icons.download, size: 18),
-            label: const Text("Export"),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
           ),
           const SizedBox(width: 8),
-
-          
-          FilledButton.icon(
+          _PrimaryButton(
+            icon: CupertinoIcons.plus,
+            label: 'New Project',
             onPressed: onAdd,
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text("New Project"),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Theme.of(context).colorScheme.surfaceContainer,
+      minSize: 32,
+      borderRadius: BorderRadius.circular(8),
+      onPressed: onPressed,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 13,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrimaryButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _PrimaryButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: const Color(0xFF007AFF), // System Blue
+      minSize: 32,
+      borderRadius: BorderRadius.circular(8),
+      onPressed: onPressed,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

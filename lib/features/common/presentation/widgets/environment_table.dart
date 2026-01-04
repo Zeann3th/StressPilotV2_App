@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/features/projects/domain/environment_variable.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
-import '../../domain/environment_variable.dart';
 
 class EnvironmentTable extends StatefulWidget {
   const EnvironmentTable({super.key});
@@ -19,7 +19,6 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
     final variables = provider.variables;
     final colors = Theme.of(context).colorScheme;
 
-    
     final filtered = variables.where((v) {
       final q = _search.toLowerCase();
       return v.key.toLowerCase().contains(q) ||
@@ -28,39 +27,51 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
 
     return Column(
       children: [
-        
         Padding(
           padding: const EdgeInsets.all(24),
           child: Row(
             children: [
-              
               SizedBox(
                 width: 300,
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Search variables...',
-                    prefixIcon: const Icon(Icons.search),
+                    hintStyle: TextStyle(color: colors.onSurfaceVariant),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: colors.onSurfaceVariant,
+                    ),
                     border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: colors.outlineVariant),
+                    ),
+                    enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: colors.outlineVariant),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
+                  style: TextStyle(color: colors.onSurface),
                   onChanged: (v) => setState(() => _search = v),
                 ),
               ),
               const Spacer(),
-              
               FilledButton.icon(
                 onPressed: () => provider.addVariable(),
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add Variable'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
             ],
           ),
         ),
 
-        
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           decoration: BoxDecoration(
@@ -69,35 +80,43 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
           ),
           child: Row(
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 60,
                 child: Text(
                   'Active',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colors.onSurface,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
-              const Expanded(
+              Expanded(
                 flex: 1,
                 child: Text(
                   'Key',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colors.onSurface,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
-              const Expanded(
+              Expanded(
                 flex: 2,
                 child: Text(
                   'Value',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colors.onSurface,
+                  ),
                 ),
               ),
-              const SizedBox(width: 48), 
+              const SizedBox(width: 48), // Action space
             ],
           ),
         ),
 
-        
         Expanded(
           child: provider.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -105,20 +124,14 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                   itemCount: filtered.length,
                   separatorBuilder: (c, i) => Divider(
                     height: 1,
-                    color: colors.outlineVariant.withValues(alpha: 0.5),
+                    color: colors.outlineVariant.withOpacity(0.5),
                   ),
                   itemBuilder: (context, index) {
-                    
-                    
-                    
-                    
                     final v = filtered[index];
                     final realIndex = variables.indexOf(v);
 
                     return _EnvironmentRow(
-                      key: ValueKey(
-                        v.id,
-                      ), 
+                      key: ValueKey(v.id), // Important for tracking
                       variable: v,
                       onChanged: (key, value, isActive) {
                         provider.updateVariable(
@@ -201,6 +214,8 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
             width: 60,
             child: Checkbox(
               value: widget.variable.isActive,
+              activeColor: colors.primary,
+              checkColor: colors.onPrimary,
               onChanged: (v) => widget.onChanged(
                 widget.variable.key,
                 widget.variable.value,
@@ -213,14 +228,18 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
             flex: 1,
             child: TextField(
               controller: _keyCtrl,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'KEY',
+                hintStyle: TextStyle(
+                  color: colors.onSurfaceVariant.withOpacity(0.5),
+                ),
                 border: InputBorder.none,
                 isDense: true,
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'JetBrains Mono',
                 fontWeight: FontWeight.bold,
+                color: colors.onSurface,
               ),
               onChanged: (_) => _notify(),
             ),
@@ -230,12 +249,18 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
             flex: 2,
             child: TextField(
               controller: _valCtrl,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Value',
+                hintStyle: TextStyle(
+                  color: colors.onSurfaceVariant.withOpacity(0.5),
+                ),
                 border: InputBorder.none,
                 isDense: true,
               ),
-              style: const TextStyle(fontFamily: 'JetBrains Mono'),
+              style: TextStyle(
+                fontFamily: 'JetBrains Mono',
+                color: colors.onSurface,
+              ),
               onChanged: (_) => _notify(),
             ),
           ),

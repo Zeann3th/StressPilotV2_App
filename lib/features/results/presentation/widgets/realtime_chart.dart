@@ -18,26 +18,31 @@ class RealtimeChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: const Color(0xFF1C1C1E),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(color: const Color(0xFF38383A)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: theme.textTheme.titleMedium),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF98989D),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 16),
           Expanded(
             child: data.isEmpty
-                ? Center(
+                ? const Center(
                     child: Text(
                       'Waiting for data...',
-                      style: TextStyle(color: theme.colorScheme.outline),
+                      style: TextStyle(color: Color(0xFF48484A)),
                     ),
                   )
                 : LineChart(
@@ -47,9 +52,7 @@ class RealtimeChart extends StatelessWidget {
                         drawVerticalLine: false,
                         getDrawingHorizontalLine: (value) {
                           return FlLine(
-                            color: theme.colorScheme.outlineVariant.withValues(
-                              alpha: 0.5,
-                            ),
+                            color: const Color(0xFF38383A),
                             strokeWidth: 1,
                           );
                         },
@@ -75,8 +78,8 @@ class RealtimeChart extends StatelessWidget {
                               }
                               return Text(
                                 value.toInt().toString(),
-                                style: TextStyle(
-                                  color: theme.colorScheme.outline,
+                                style: const TextStyle(
+                                  color: Color(0xFF636366),
                                   fontSize: 10,
                                 ),
                               );
@@ -98,7 +101,7 @@ class RealtimeChart extends StatelessWidget {
                           dotData: const FlDotData(show: false),
                           belowBarData: BarAreaData(
                             show: true,
-                            color: color.withValues(alpha: 0.1),
+                            color: color.withOpacity(0.1),
                           ),
                         ),
                       ],

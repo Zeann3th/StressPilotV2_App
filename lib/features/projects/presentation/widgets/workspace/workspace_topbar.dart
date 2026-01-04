@@ -33,7 +33,7 @@ class WorkspaceTopBar extends StatelessWidget {
             tooltip: 'Back to Projects',
           ),
           const SizedBox(width: 8),
-          
+
           PopupMenuButton<String>(
             offset: const Offset(0, 48),
             child: Row(
@@ -96,7 +96,27 @@ class WorkspaceTopBar extends StatelessWidget {
 
           const Spacer(),
 
-          
+          OutlinedButton.icon(
+            onPressed: () {
+              if (project != null) {
+                AppNavigator.pushNamed(
+                  AppRouter.projectEndpointsRoute,
+                  arguments: {'project': project},
+                );
+              }
+            },
+            icon: Icon(Icons.http, size: 20, color: colors.onSurface),
+            label: Text("Endpoints", style: TextStyle(color: colors.onSurface)),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: colors.outlineVariant),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            ),
+          ),
+          const SizedBox(width: 8),
+
           OutlinedButton.icon(
             onPressed: () {
               if (project != null) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/core/navigation/app_router.dart';
+
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
@@ -32,7 +32,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final flowProvider = context.watch<FlowProvider>();
-    
+
     final projectProvider = context.watch<ProjectProvider>();
     final projectId = projectProvider.selectedProject?.id ?? 0;
 
@@ -46,7 +46,6 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
       ),
       child: Column(
         children: [
-          
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -76,7 +75,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
               ],
             ),
           ),
-          
+
           Expanded(
             child: widget.sidebarTab == SidebarTab.flows
                 ? WorkspaceFlowList(
@@ -86,28 +85,9 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
                   )
                 : Column(
                     children: [
-                      
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                        child: OutlinedButton(
-                          onPressed: () {
-                            AppNavigator.pushNamed(
-                              AppRouter.projectEndpointsRoute,
-                              arguments: {'projectId': projectId},
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 36),
-                            side: BorderSide(color: colors.outline),
-                          ),
-                          child: const Text("Manage Endpoints (Full Page)"),
-                        ),
-                      ),
-
-                      
                       _buildLogicNodesSection(context),
                       const Divider(height: 1),
-                      
+
                       Expanded(
                         child: WorkspaceEndpointsList(
                           selectedFlow: widget.selectedFlow,

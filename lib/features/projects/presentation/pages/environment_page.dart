@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/environment_table.dart';
+import 'package:stress_pilot/features/common/presentation/widgets/environment_table.dart';
 
 class EnvironmentPage extends StatefulWidget {
   final int environmentId;

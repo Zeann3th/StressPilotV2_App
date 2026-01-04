@@ -25,7 +25,6 @@ class AppTheme extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeManager = getIt<ThemeManager>();
-    const seedColor = Color(0xFF2563EB);
 
     return AnimatedBuilder(
       animation: themeManager,
@@ -38,35 +37,97 @@ class AppTheme extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.light,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: seedColor,
+            scaffoldBackgroundColor: const Color(
+              0xFFF2F2F7,
+            ), // System Gray 6 (Light)
+            colorScheme: const ColorScheme(
               brightness: Brightness.light,
-              surface: Colors.white,
-              surfaceContainer: const Color(0xFFF8FAFC),
-              surfaceContainerLow: const Color(0xFFF1F5F9),
-              onSurface: const Color(0xFF0F172A),
-              onSurfaceVariant: const Color(0xFF64748B),
-              outline: const Color(0xFFE2E8F0),
-              outlineVariant: const Color(0xFFCBD5E1),
+              primary: Color(0xFF007AFF), // System Blue
+              onPrimary: Colors.white,
+              secondary: Color(0xFF5856D6), // System Indigo
+              onSecondary: Colors.white,
+              error: Color(0xFFFF3B30), // System Red
+              onError: Colors.white,
+              surface: Color(0xFFFFFFFF), // White Surface
+              onSurface: Color(0xFF000000), // Black Text
+              surfaceContainer: Color(0xFFFFFFFF), // High
+              surfaceContainerLow: Color(0xFFF2F2F7), // Base
+              outline: Color(0xFFE5E5EA), // System Gray 3 (Light)
+              outlineVariant: Color(0xFFC7C7CC), // System Gray 4 (Light)
             ),
-            scaffoldBackgroundColor: Colors.white,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFFF9F9F9), // Translucent-ish
+              foregroundColor: Colors.black,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              centerTitle: true,
+              titleTextStyle: TextStyle(
+                color: Colors.black,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
+              iconTheme: IconThemeData(color: Color(0xFF007AFF)),
+            ),
+            iconTheme: const IconThemeData(color: Color(0xFF007AFF)),
+            cardTheme: CardThemeData(
+              color: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Color(0xFFE5E5EA)),
+              ),
+            ),
+            dividerTheme: const DividerThemeData(
+              color: Color(0xFFE5E5EA),
+              thickness: 1,
+            ),
           ),
 
           darkTheme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.dark,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: seedColor,
+            scaffoldBackgroundColor: const Color(0xFF000000), // Pure Black
+            colorScheme: const ColorScheme(
               brightness: Brightness.dark,
-              surface: const Color(0xFF0F172A),
-              surfaceContainer: const Color(0xFF1E293B),
-              surfaceContainerLow: const Color(0xFF1E293B),
-              onSurface: const Color(0xFFF8FAFC),
-              onSurfaceVariant: const Color(0xFF94A3B8),
-              outline: const Color(0xFF334155),
-              outlineVariant: const Color(0xFF475569),
+              primary: Color(0xFF0A84FF), // System Blue Dark
+              onPrimary: Colors.white,
+              secondary: Color(0xFF5E5CE6), // System Indigo Dark
+              onSecondary: Colors.white,
+              error: Color(0xFFFF453A), // System Red Dark
+              onError: Colors.white,
+              surface: Color(0xFF1C1C1E), // System Gray 6 (Dark)
+              onSurface: Colors.white,
+              surfaceContainer: Color(0xFF2C2C2E), // System Gray 5 (Dark)
+              surfaceContainerLow: Color(0xFF1C1C1E),
+              outline: Color(0xFF38383A), // Dark Gray Border
+              outlineVariant: Color(0xFF48484A),
             ),
-            scaffoldBackgroundColor: const Color(0xFF0F172A),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF1C1C1E),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              centerTitle: true,
+              titleTextStyle: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
+              iconTheme: IconThemeData(color: Color(0xFF0A84FF)),
+            ),
+            iconTheme: const IconThemeData(color: Color(0xFF0A84FF)),
+            cardTheme: CardThemeData(
+              color: const Color(0xFF1C1C1E),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Color(0xFF38383A)),
+              ),
+            ),
+            dividerTheme: const DividerThemeData(
+              color: Color(0xFF38383A),
+              thickness: 1,
+            ),
           ),
 
           themeMode: themeManager.themeMode,
@@ -105,6 +166,9 @@ class AppProviders extends StatelessWidget {
         ),
         ChangeNotifierProvider<ResultsProvider>(
           create: (_) => getIt<ResultsProvider>(),
+        ),
+        ChangeNotifierProvider<ThemeManager>.value(
+          value: getIt<ThemeManager>(),
         ),
       ],
       child: const AppTheme(),

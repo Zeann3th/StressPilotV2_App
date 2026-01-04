@@ -1,5 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:stress_pilot/core/di/locator.dart';
+import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
 
@@ -8,51 +9,74 @@ class AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeManager = getIt<ThemeManager>();
+    final themeManager = context.watch<ThemeManager>();
     final colors = Theme.of(context).colorScheme;
 
     return Container(
-      width: 60,
-      color: colors.surfaceContainerHighest,
+      width: 70, // Slightly wider for comfort
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      color: colors.surfaceContainer, // Dynamic background
       child: Column(
         children: [
-          const SizedBox(height: 16),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: colors.primary,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              CupertinoIcons.paperplane_fill,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(height: 32),
 
-          _icon(Icons.settings_outlined, 'Settings', () {
+          _icon(context, CupertinoIcons.settings, 'Settings', () {
             AppNavigator.pushNamed(AppRouter.settingsRoute);
           }),
+          const SizedBox(height: 16),
 
-          const SizedBox(height: 8),
-          _icon(Icons.notifications_outlined, 'Notifications', () {}),
+          _icon(context, CupertinoIcons.bell, 'Notifications', () {}),
+          const SizedBox(height: 16),
 
-          const SizedBox(height: 8),
-          _icon(Icons.list_alt_outlined, 'Runs', () {
+          _icon(context, CupertinoIcons.square_list, 'Runs', () {
             AppNavigator.pushNamed(AppRouter.runsRoute);
           }),
 
           const Spacer(),
 
           _icon(
-            themeManager.isDark
-                ? Icons.light_mode_outlined
-                : Icons.dark_mode_outlined,
+            context,
+            themeManager.isDark ? CupertinoIcons.sun_max : CupertinoIcons.moon,
             themeManager.isDark ? 'Light Mode' : 'Dark Mode',
             themeManager.toggleTheme,
           ),
-
           const SizedBox(height: 16),
-          _icon(Icons.account_circle_outlined, 'Profile', () {}),
-
-          const SizedBox(height: 16),
+          _icon(context, CupertinoIcons.person_crop_circle, 'Profile', () {}),
         ],
       ),
     );
   }
 
-  Widget _icon(IconData icon, String tooltip, VoidCallback onTap) {
+  Widget _icon(
+    BuildContext context,
+    IconData icon,
+    String tooltip,
+    VoidCallback onTap,
+  ) {
     return Tooltip(
       message: tooltip,
-      child: IconButton(icon: Icon(icon), onPressed: onTap),
+      child: IconButton(
+        icon: Icon(
+          icon,
+          size: 22,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        onPressed: onTap,
+        padding: const EdgeInsets.all(12),
+      ),
     );
   }
 }
