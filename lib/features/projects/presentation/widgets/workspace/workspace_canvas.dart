@@ -80,7 +80,7 @@ class _CanvasContentState extends State<_CanvasContent> {
           final flow = await flowProvider.getFlow(flowId);
 
           // Merge processor data from backend into canvas nodes
-          if (flow.steps != null && flow.steps.isNotEmpty) {
+          if (flow.steps.isNotEmpty) {
             debugPrint(
               '[Canvas Init] Syncing ${flow.steps.length} steps from backend',
             );
