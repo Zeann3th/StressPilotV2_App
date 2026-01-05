@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/app_root.dart';
 import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/core/system/process_manager.dart';
+import 'package:stress_pilot/core/system/shutdown_handler.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -23,5 +25,10 @@ void main() async {
   });
 
   setupDependencies();
+
+  // Setup shutdown handler
+  final shutdownHandler = ShutdownHandler(getIt<ProcessManager>());
+  shutdownHandler.setup();
+
   runApp(const AppRoot());
 }
