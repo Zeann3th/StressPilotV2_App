@@ -167,90 +167,102 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                 Expanded(
                   child: provider.isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : ListView.builder(
-                          controller: _scrollCtrl,
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          itemCount:
-                              provider.endpoints.length +
-                              (provider.hasMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index >= provider.endpoints.length) {
+                      : RefreshIndicator(
+                          onRefresh: () => provider.refreshEndpoints(
+                            projectId: widget.project.id,
+                          ),
+                          child: ListView.builder(
+                            controller: _scrollCtrl,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount:
+                                provider.endpoints.length +
+                                (provider.hasMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index >= provider.endpoints.length) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  child: Center(
+                                    child: provider.isLoadingMore
+                                        ? const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const SizedBox.shrink(),
+                                  ),
+                                );
+                              }
+
+                              final ep = provider.endpoints[index];
+                              final isSelected = _selectedEndpoint?.id == ep.id;
+
                               return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                child: Center(
-                                  child: provider.isLoadingMore
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const SizedBox.shrink(),
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: InkWell(
+                                  onTap: () =>
+                                      setState(() => _selectedEndpoint = ep),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(
+                                              0xFF007AFF,
+                                            ) // System Blue
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            EndpointTypeBadge(
+                                              type: ep.type,
+                                              compact: true,
+                                              inverse: isSelected,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Tooltip(
+                                                message: ep.url,
+                                                child: Text(
+                                                  ep.name,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: isSelected
+                                                        ? FontWeight.w600
+                                                        : FontWeight.normal,
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                        : Theme.of(context)
+                                                              .colorScheme
+                                                              .onSurface,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               );
-                            }
-
-                            final ep = provider.endpoints[index];
-                            final isSelected = _selectedEndpoint?.id == ep.id;
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: InkWell(
-                                onTap: () =>
-                                    setState(() => _selectedEndpoint = ep),
-                                borderRadius: BorderRadius.circular(6),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? const Color(0xFF007AFF) // System Blue
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          EndpointTypeBadge(
-                                            type: ep.type,
-                                            compact: true,
-                                            inverse: isSelected,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              ep.name,
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.w600
-                                                    : FontWeight.normal,
-                                                color: isSelected
-                                                    ? Colors.white
-                                                    : Theme.of(
-                                                        context,
-                                                      ).colorScheme.onSurface,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+                            },
+                          ),
                         ),
                 ),
               ],

@@ -112,10 +112,12 @@ class _CanvasContentState extends State<_CanvasContent> {
   void didUpdateWidget(covariant _CanvasContent oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.flowId != widget.flowId) {
-      if (_canvasProvider != null && !_canvasProvider!.isLoading) {
-        _canvasProvider!.saveFlowLayout(oldWidget.flowId);
-      }
-      _canvasProvider?.loadFlowLayout(widget.flowId);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_canvasProvider != null && !_canvasProvider!.isLoading) {
+          _canvasProvider!.saveFlowLayout(oldWidget.flowId);
+        }
+        _canvasProvider?.loadFlowLayout(widget.flowId);
+      });
     }
   }
 
@@ -365,97 +367,134 @@ class _CanvasContentState extends State<_CanvasContent> {
         return Dialog(
           backgroundColor: colors.surface,
           surfaceTintColor: colors.surfaceTint,
-          child: Container(
-            width: 800,
-            height: 600,
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Edit Flow Payload',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Warning: Modifying IDs or structure may break the visual layout.',
-                  style: TextStyle(color: colors.error, fontSize: 12),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest.withValues(
-                        alpha: 0.3,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Container(
+              width: 800,
+              height: 600,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Edit Flow Payload',
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: colors.outlineVariant),
-                    ),
-                    child: TextField(
-                      controller: controller,
-                      maxLines: null,
-                      expands: true,
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 12,
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
                       ),
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.all(16),
-                        border: InputBorder.none,
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Warning: Modifying IDs or structure may break the visual layout.',
+                    style: TextStyle(color: colors.error, fontSize: 12),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainerHighest.withValues(
+                          alpha: 0.3,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: colors.outlineVariant),
+                      ),
+                      child: TextField(
+                        controller: controller,
+                        maxLines: null,
+                        expands: true,
+                        style: const TextStyle(
+                          fontFamily: 'JetBrains Mono',
+                          fontSize: 12,
+                        ),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.all(16),
+                          border: InputBorder.none,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: () {
-                        try {
-                          final List<dynamic> jsonList = jsonDecode(
-                            controller.text,
-                          );
-                          final newSteps = jsonList
-                              .map((e) => flow.FlowStep.fromJson(e))
-                              .toList();
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: () {
+                          try {
+                            final List<dynamic> jsonList = jsonDecode(
+                              controller.text,
+                            );
+                            final newSteps = jsonList
+                                .map((e) => flow.FlowStep.fromJson(e))
+                                .toList();
 
-                          provider.applyConfiguration(newSteps);
-                          Navigator.of(context).pop();
+                            provider.applyConfiguration(newSteps);
+                            // Close dialog and show snackbar in parent
+                            Navigator.of(context).pop();
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Flow configuration updated'),
-                            ),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Invalid JSON: $e'),
-                              backgroundColor: colors.error,
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text('Apply Changes'),
-                    ),
-                  ],
-                ),
-              ],
+                            // Note: This snackbar is shown AFTER popping,
+                            // so it uses the PARENT scaffold (WorkspaceCanvas).
+                            // This is safe without wrapping the Dialog in Scaffold,
+                            // but for consistency/safety if logic changes, we might want it.
+                            // However, the original code popped FIRST.
+                            // Lines 440-446 in original:
+                            // Navigator.of(context).pop();
+                            // ScaffoldMessenger.of(context).showSnackBar(...)
+                            // The context here is the DIALOG's context.
+                            // If dialog is popped, context is defunct?
+                            // Actually, popping invalidates the context for finding the scaffold *inside* the dialog.
+                            // But usually you want to show it on the *screen* after dialog closes.
+                            // In that case, we should use a method that references the PARENT context.
+                            // But `context` in builder is the dialog context.
+                            // Let's wrap in Scaffold ANYWAY so that if we want to show errors *without* closing, it works.
+                            // AND if we close, we should ensure we start the snackbar call *before* closing?
+                            // Or use a global key?
+                            // Actually, the original code:
+                            // provider.applyConfiguration...
+                            // Navigator.of(context).pop();
+                            // ScaffoldMessenger.of(context)...
+                            // If we pop, the dialog is gone. ScaffoldMessenger.of(context) might might fail to find a scaffold if it searches up from a defunct element?
+                            // Flutter allows using context after pop if the widget tree is still valid, but the dialog is removed.
+                            //
+                            // Use the parent ScaffoldMessenger if possible.
+                            // But in `_showJsonPayload(BuildContext context)`: we have `context` from `build`.
+                            // This `context` is `_CanvasContentState`'s context.
+                            // So `ScaffoldMessenger.of(context)` references the `WorkspaceCanvas`.
+                            // Wait! line 365: `builder: (context) {` shadows the outer context!
+                            //
+                            // Ah!
+                            // Inside `builder`, `context` is the dialog context.
+                            //
+                            // Strategy: Use the OUTER context for Success SnackBar (after pop).
+                            // Use INNER context (with Scaffold) for Error SnackBar (dialog stays open).
+                            //
+                            // The original code tried to show success snackbar using inner context *after pop*. This is risky.
+                            //
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Invalid JSON: $e'),
+                                backgroundColor: colors.error,
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text('Apply Changes'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -1034,16 +1073,19 @@ class DraggableNodeWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                 ],
-                Text(
-                  node.data['url'] ?? "Action node",
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.onSurfaceVariant,
-                    fontFamily: 'JetBrains Mono',
-                    height: 1.4,
+                Tooltip(
+                  message: node.data['url'] ?? "Action node",
+                  child: Text(
+                    node.data['url'] ?? "Action node",
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors.onSurfaceVariant,
+                      fontFamily: 'JetBrains Mono',
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

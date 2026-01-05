@@ -1,6 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
+import 'dart:math' as math;
 
 class RealtimeChart extends StatelessWidget {
   final String title;
@@ -19,6 +21,25 @@ class RealtimeChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+
+    // --- OPTIMIZATION: Stabilize Axis Calculation ---
+    double minX = 0;
+    double maxX = 0;
+    double xInterval = 1000; // Default 1 second
+
+    if (data.isNotEmpty) {
+      // Lock the start of the chart to the first data point
+      minX = data.first.x;
+      // Lock the end of the chart to the latest data point
+      maxX = data.last.x;
+
+      // Prevent crash if only 1 data point exists
+      if (maxX <= minX) maxX = minX + 1000;
+
+      // Calculate interval to show exactly 5 labels
+      xInterval = (maxX - minX) / 5;
+      if (xInterval <= 0) xInterval = 1000;
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -51,12 +72,16 @@ class RealtimeChart extends StatelessWidget {
                   )
                 : LineChart(
                     LineChartData(
+                      // Explicitly set min/max to stop "jumping"
+                      minX: minX,
+                      maxX: maxX,
+
                       gridData: FlGridData(
                         show: true,
                         drawVerticalLine: false,
                         getDrawingHorizontalLine: (value) {
                           return FlLine(
-                            color: colors.outlineVariant,
+                            color: colors.outlineVariant.withValues(alpha: 0.5),
                             strokeWidth: 1,
                           );
                         },
@@ -69,13 +94,37 @@ class RealtimeChart extends StatelessWidget {
                         topTitles: const AxisTitles(
                           sideTitles: SideTitles(showTitles: false),
                         ),
-                        bottomTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 30,
+                            interval: xInterval,
+                            getTitlesWidget: (value, meta) {
+                              // Hide labels that fall outside our fixed range
+                              if (value < minX || value > maxX)
+                                return const SizedBox.shrink();
+
+                              final date = DateTime.fromMillisecondsSinceEpoch(
+                                value.toInt(),
+                              );
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  DateFormat('HH:mm:ss').format(date),
+                                  style: TextStyle(
+                                    color: colors.onSurfaceVariant,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 40,
+                            interval: _calculateYInterval(),
                             getTitlesWidget: (value, meta) {
                               if (isYAxisInteger && value % 1 != 0) {
                                 return const SizedBox.shrink();
@@ -92,28 +141,43 @@ class RealtimeChart extends StatelessWidget {
                         ),
                       ),
                       borderData: FlBorderData(show: false),
-                      minX: data.isNotEmpty ? data.first.x : 0,
-                      maxX: data.isNotEmpty ? data.last.x : 0,
-                      minY: 0,
                       lineBarsData: [
                         LineChartBarData(
                           spots: data.map((e) => FlSpot(e.x, e.y)).toList(),
                           isCurved: true,
+                          curveSmoothness:
+                              0.2, // Lower smoothness = higher performance
                           color: color,
                           barWidth: 2,
                           isStrokeCapRound: true,
                           dotData: const FlDotData(show: false),
                           belowBarData: BarAreaData(
                             show: true,
-                            color: color.withValues(alpha: 0.1),
+                            gradient: LinearGradient(
+                              colors: [
+                                color.withValues(alpha: 0.3),
+                                color.withValues(alpha: 0.0),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
                           ),
                         ),
                       ],
                     ),
+                    duration: const Duration(milliseconds: 250),
                   ),
           ),
         ],
       ),
     );
+  }
+
+  double? _calculateYInterval() {
+    if (data.isEmpty) return null;
+    double maxY = data.map((e) => e.y).reduce(math.max);
+    if (maxY == 0) return 1;
+    // Divide by 4 to get ~4 horizontal grid lines
+    return maxY / 4;
   }
 }

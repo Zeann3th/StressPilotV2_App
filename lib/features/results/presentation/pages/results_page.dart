@@ -35,11 +35,13 @@ class _ResultsPageState extends State<ResultsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _loadRun();
       if (_currentRun != null && mounted) {
-        context.read<ResultsProvider>().initialize(_currentRun!.flowId);
+        // Provider initialization is now handled inside _loadRun to support async isCompleted check
         _startTimers();
       }
     });
   }
+
+  bool _aggressivePolling = false;
 
   void _startTimers() {
     _pollTimer?.cancel();
@@ -55,9 +57,20 @@ class _ResultsPageState extends State<ResultsPage> {
     );
   }
 
+  void _startAggressivePolling() {
+    if (_aggressivePolling) return;
+    _aggressivePolling = true;
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => _refreshRun(),
+    );
+  }
+
   void _stopTimers() {
     _pollTimer?.cancel();
     _tickTimer?.cancel();
+    _aggressivePolling = false;
   }
 
   Future<void> _updateElapsed() async {
@@ -65,9 +78,17 @@ class _ResultsPageState extends State<ResultsPage> {
 
     try {
       final created = _currentRun!.startedAt;
+      final newElapsed = DateTime.now().toUtc().difference(created.toUtc());
       setState(() {
-        _elapsed = DateTime.now().toUtc().difference(created.toUtc());
+        _elapsed = newElapsed;
       });
+
+      // Smart Polling: If elapsed time exceeds expected duration, poll aggressively
+      if (!_aggressivePolling &&
+          !_isTerminalStatus(_currentRun!.status) &&
+          newElapsed.inSeconds >= (_currentRun!.duration + 1)) {
+        _startAggressivePolling();
+      }
     } catch (_) {
       setState(() {
         _elapsed = _elapsed + const Duration(seconds: 1);
@@ -80,6 +101,17 @@ class _ResultsPageState extends State<ResultsPage> {
     try {
       final svc = getIt<RunService>();
       final run = await svc.getRun(widget.runId);
+      final isTerminal = _isTerminalStatus(run.status);
+
+      if (mounted) {
+        // Pass completion status to provider
+        context.read<ResultsProvider>().setRun(
+          run.id,
+          run.flowId,
+          isCompleted: isTerminal,
+        );
+      }
+
       setState(() {
         _currentRun = run;
         try {
@@ -89,6 +121,10 @@ class _ResultsPageState extends State<ResultsPage> {
           _elapsed = Duration.zero;
         }
       });
+
+      if (isTerminal) {
+        _stopTimers();
+      }
     } catch (e) {
       debugPrint('Failed to load run: $e');
       if (mounted) {
@@ -111,6 +147,9 @@ class _ResultsPageState extends State<ResultsPage> {
 
       if (_currentRun != null && _isTerminalStatus(_currentRun!.status)) {
         _stopTimers();
+        if (mounted) {
+          context.read<ResultsProvider>().stopChart();
+        }
       }
     } catch (e) {
       debugPrint('Run refresh failed: $e');

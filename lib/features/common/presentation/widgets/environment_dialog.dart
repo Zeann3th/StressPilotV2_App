@@ -59,49 +59,52 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-          ),
-          child: Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Environment Variables',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: colors.onSurface,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+            ),
+            child: Row(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Environment Variables',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: colors.onSurface,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Project: ${widget.projectName}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.onSurfaceVariant,
+                    const SizedBox(height: 4),
+                    Text(
+                      'Project: ${widget.projectName}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              _SaveButton(environmentId: widget.environmentId),
-              const SizedBox(width: 16),
-              IconButton(
-                icon: Icon(Icons.close, color: colors.onSurface),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
+                  ],
+                ),
+                const Spacer(),
+                _SaveButton(environmentId: widget.environmentId),
+                const SizedBox(width: 16),
+                IconButton(
+                  icon: Icon(Icons.close, color: colors.onSurface),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
           ),
-        ),
 
-        const Expanded(child: EnvironmentTable()),
-      ],
+          const Expanded(child: EnvironmentTable()),
+        ],
+      ),
     );
   }
 }

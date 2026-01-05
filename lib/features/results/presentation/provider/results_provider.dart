@@ -37,7 +37,22 @@ class ResultsProvider extends ChangeNotifier {
   Timer? _refreshTimer;
   DateTime _lastNotifyTime = DateTime.fromMillisecondsSinceEpoch(0);
 
-  ResultsProvider(this._repository, this._flowService);
+  int? _currentRunId;
+
+  // Track the last second we have successfully plotted
+  int _lastPlottedSecond = -1;
+
+  ResultsProvider(this._repository, this._flowService) {
+    // Start listening immediately on creation (App Startup)
+    _repository.connect();
+    _subscription = _repository.logStream.listen(_onNewLogs);
+
+    // Start the chart ticker immediately or wait for first log?
+    // Better to have it running to clear old data if needed, but let's sync it with data presence.
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateChartAndNotify();
+    });
+  }
 
   // Getters
   List<RequestLog> get logs => _filteredLogs;
@@ -50,22 +65,44 @@ class ResultsProvider extends ChangeNotifier {
   List<FlSpotData> get responseTimePoints => _responseTimePoints;
   List<FlSpotData> get rpsPoints => _rpsPoints;
 
-  void initialize(int flowId) async {
+  void setRun(int runId, int flowId, {bool isCompleted = false}) async {
+    // If we are already tracking this run, don't reset.
+    if (_currentRunId == runId) {
+      if (isCompleted) {
+        stopChart();
+      }
+      return;
+    }
+
+    _currentRunId = runId;
+
+    // Reset Data for new run
     _allLogs.clear();
     _filteredLogs.clear();
     _rpsBuckets.clear();
     _rtBuckets.clear();
     _resetMetrics();
+    _lastPlottedSecond = -1;
 
     await _loadFlowDetails(flowId);
+    notifyListeners();
 
-    _repository.connect();
-    _subscription = _repository.logStream.listen(_onNewLogs);
+    if (isCompleted) {
+      stopChart();
+    } else {
+      // Ensure timer is running if not completed
+      if (_refreshTimer == null || !_refreshTimer!.isActive) {
+        _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          _updateChartAndNotify();
+        });
+      }
+    }
+  }
 
-    // This timer ensures the chart "slides" forward even if no new logs arrive
-    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateChartAndNotify();
-    });
+  void stopChart() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+    notifyListeners();
   }
 
   Future<void> _loadFlowDetails(int flowId) async {
@@ -85,6 +122,10 @@ class ResultsProvider extends ChangeNotifier {
 
   void _onNewLogs(List<RequestLog> newLogs) {
     _allLogs.addAll(newLogs);
+    // Limit memory usage: keep last 50,000 logs
+    if (_allLogs.length > 50000) {
+      _allLogs.removeRange(0, _allLogs.length - 50000);
+    }
     _applyFilter(newLogsOnly: newLogs);
   }
 
@@ -92,8 +133,6 @@ class ResultsProvider extends ChangeNotifier {
     List<RequestLog> processingLogs;
 
     if (newLogsOnly != null) {
-      // Optimization: If we are just adding new logs and filter didn't change,
-      // only process the new ones into the buckets.
       if (_selectedEndpointId == null) {
         processingLogs = newLogsOnly;
         _filteredLogs.addAll(newLogsOnly);
@@ -104,9 +143,16 @@ class ResultsProvider extends ChangeNotifier {
         _filteredLogs.addAll(processingLogs);
       }
     } else {
-      // Re-applying filter to all logs
+      // Re-apply filter to all logs - this might be heavy but necessary if filter changes
+      // NOTE: This does NOT affect the persistent buckets for the chart unless we clear them.
+      // But _rpsBuckets ARE the source of truth for the chart.
+      // If we change filter, we MUST rebuild buckets.
       _rpsBuckets.clear();
       _rtBuckets.clear();
+      _lastPlottedSecond = -1; // Force chart rebuild on filter change
+      _rpsPoints.clear();
+      _responseTimePoints.clear();
+
       if (_selectedEndpointId == null) {
         _filteredLogs = List.from(_allLogs);
       } else {
@@ -118,11 +164,9 @@ class ResultsProvider extends ChangeNotifier {
     }
 
     for (var log in processingLogs) {
-      // 1. Determine which second bucket this log belongs to
       DateTime timestamp;
       if (log.createdAt != null) {
         try {
-          // Assuming UTC or generic ISO8601 string
           timestamp = DateTime.parse(log.createdAt!);
         } catch (e) {
           timestamp = DateTime.now();
@@ -133,10 +177,9 @@ class ResultsProvider extends ChangeNotifier {
 
       final second = timestamp.millisecondsSinceEpoch ~/ 1000;
 
-      // 2. Update RPS bucket
+      // Update buckets
       _rpsBuckets[second] = (_rpsBuckets[second] ?? 0) + 1;
 
-      // 3. Update Response Time bucket
       if (log.responseTime != null) {
         _rtBuckets
             .putIfAbsent(second, () => [])
@@ -145,13 +188,14 @@ class ResultsProvider extends ChangeNotifier {
     }
 
     _recalculateTotals();
-    _updateChartAndNotify();
+    // Don't update chart here, let the timer do it for smoothness
+    // unless it's a filter change (handled by clearing above)
   }
 
   void setEndpointFilter(int? endpointId) {
     if (_selectedEndpointId != endpointId) {
       _selectedEndpointId = endpointId;
-      _applyFilter(); // Will clear buckets and re-process all filtered logs
+      _applyFilter();
     }
   }
 
@@ -176,33 +220,52 @@ class ResultsProvider extends ChangeNotifier {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final nowSecond = nowMs ~/ 1000;
 
-    _rpsPoints.clear();
-    _responseTimePoints.clear();
+    // Stability Fix: Only plot up to nowSecond - 1 (last fully completed second)
+    final lastCompletedSecond = nowSecond - 1;
 
-    // Generate a sliding window for the last 60 seconds
-    for (int i = nowSecond - 60; i <= nowSecond; i++) {
-      final double xValue = i * 1000.0;
+    // Initialize logic if fresh
+    if (_lastPlottedSecond == -1) {
+      _lastPlottedSecond = lastCompletedSecond - 61;
+      // Start with empty or pre-filled? logic below handles fill
+    }
 
-      // Pull from buckets (even if they were updated "in the past" by a batch)
-      final rps = (_rpsBuckets[i] ?? 0).toDouble();
+    bool addedNewPoints = false;
+
+    // Append new seconds (filling gaps)
+    for (int s = _lastPlottedSecond + 1; s <= lastCompletedSecond; s++) {
+      final double xValue = s * 1000.0;
+
+      // Get finalized bucket data
+      // Note: "The past is the past" - we take the value AS IS now and never update it again for the chart.
+      final rps = (_rpsBuckets[s] ?? 0).toDouble();
       _rpsPoints.add(FlSpotData(x: xValue, y: rps));
 
-      final latencies = _rtBuckets[i] ?? [];
+      final latencies = _rtBuckets[s] ?? [];
       double avgRt = latencies.isEmpty
           ? 0
           : latencies.reduce((a, b) => a + b) / latencies.length;
       _responseTimePoints.add(FlSpotData(x: xValue, y: avgRt));
+
+      _lastPlottedSecond = s;
+      addedNewPoints = true;
     }
 
-    // Update the live RPS readout - use the current second's bucket
-    // or you might prefer a rolling average of the last few seconds.
-    // For now, let's use the last complete second (nowSecond - 1) to be stable,
-    // or just the current accumulating second.
-    _requestsPerSecond = (_rpsBuckets[nowSecond] ?? 0).toDouble();
+    // Remove old points (Performance + Sliding Effect)
+    // Keep 60 seconds of history
+    final cutoffX = (lastCompletedSecond - 60) * 1000.0;
 
-    // Throttled notification for UI performance
+    // Efficient removal from start only if needed (assuming ordered)
+    // But removeWhere is safer for correctness
+    _rpsPoints.removeWhere((p) => p.x < cutoffX);
+    _responseTimePoints.removeWhere((p) => p.x < cutoffX);
+
+    // Consistency Fix: Update live text to match the last plotted point
+    _requestsPerSecond = (_rpsBuckets[lastCompletedSecond] ?? 0).toDouble();
+
+    // Throttled notification
     final now = DateTime.now();
-    if (now.difference(_lastNotifyTime).inMilliseconds > 250) {
+    if (addedNewPoints ||
+        now.difference(_lastNotifyTime).inMilliseconds > 250) {
       _lastNotifyTime = now;
       notifyListeners();
       _cleanupOldBuckets(nowSecond);
@@ -223,6 +286,7 @@ class ResultsProvider extends ChangeNotifier {
     _errorCount = 0;
     _rpsPoints.clear();
     _responseTimePoints.clear();
+    _lastPlottedSecond = -1;
   }
 
   @override
