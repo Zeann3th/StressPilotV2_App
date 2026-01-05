@@ -339,9 +339,13 @@ class _EmptyState extends StatelessWidget {
   }
 
   void _showCreateDialog(BuildContext context) async {
+    final endpointProvider = context.read<EndpointProvider>();
     final result = await showDialog(
       context: context,
-      builder: (ctx) => CreateEndpointDialog(projectId: projectId),
+      builder: (ctx) => ChangeNotifierProvider.value(
+        value: endpointProvider,
+        child: CreateEndpointDialog(projectId: projectId),
+      ),
     );
 
     if (result != null && result is Endpoint) {

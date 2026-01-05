@@ -98,144 +98,147 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       child: Container(
         width: 800,
         constraints: const BoxConstraints(maxHeight: 900),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Text(
-                    'New Endpoint',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Text(
+                      'New Endpoint',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: TextFormField(
-                              controller: _nameCtrl,
-                              decoration: const InputDecoration(
-                                labelText: 'Name *',
-                                border: OutlineInputBorder(),
+              const Divider(height: 1),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                controller: _nameCtrl,
+                                decoration: const InputDecoration(
+                                  labelText: 'Name *',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (v) =>
+                                    v?.isEmpty == true ? 'Required' : null,
                               ),
-                              validator: (v) =>
-                                  v?.isEmpty == true ? 'Required' : null,
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            flex: 1,
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _selectedType,
-                              decoration: const InputDecoration(
-                                labelText: 'Type *',
-                                border: OutlineInputBorder(),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 1,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: _selectedType,
+                                decoration: const InputDecoration(
+                                  labelText: 'Type *',
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: ['HTTP', 'GRPC', 'JDBC', 'JS', 'TCP']
+                                    .map(
+                                      (t) => DropdownMenuItem(
+                                        value: t,
+                                        child: Text(t),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (v) =>
+                                    setState(() => _selectedType = v!),
                               ),
-                              items: ['HTTP', 'GRPC', 'JDBC', 'JS', 'TCP']
-                                  .map(
-                                    (t) => DropdownMenuItem(
-                                      value: t,
-                                      child: Text(t),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (v) =>
-                                  setState(() => _selectedType = v!),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _urlCtrl,
-                        decoration: InputDecoration(
-                          labelText: _getUrlLabel(),
-                          border: const OutlineInputBorder(),
-                          helperText: _getUrlHelper(),
+                          ],
                         ),
-                        validator: (v) {
-                          if (_selectedType == 'JS') {
-                            return null;
-                          } // Optional for JS
-                          if (v == null || v.isEmpty) return 'Required';
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _urlCtrl,
+                          decoration: InputDecoration(
+                            labelText: _getUrlLabel(),
+                            border: const OutlineInputBorder(),
+                            helperText: _getUrlHelper(),
+                          ),
+                          validator: (v) {
+                            if (_selectedType == 'JS') {
+                              return null;
+                            } // Optional for JS
+                            if (v == null || v.isEmpty) return 'Required';
 
-                          if (_selectedType == 'JDBC' &&
-                              !v.startsWith('jdbc:')) {
-                            return 'Must start with "jdbc:"';
-                          }
-                          if (_selectedType == 'TCP' && !v.contains(':')) {
-                            return 'Must be in "host:port" format';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          border: OutlineInputBorder(),
+                            if (_selectedType == 'JDBC' &&
+                                !v.startsWith('jdbc:')) {
+                              return 'Must start with "jdbc:"';
+                            }
+                            if (_selectedType == 'TCP' && !v.contains(':')) {
+                              return 'Must be in "host:port" format';
+                            }
+                            return null;
+                          },
                         ),
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 24),
-                      const Divider(),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Protocol Details',
-                        style: TextStyle(
-                          color: colors.primary,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _descCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Description',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 2,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (_selectedType == 'HTTP') _buildHttpFields(colors),
-                      if (_selectedType == 'GRPC') _buildGrpcFields(),
-                      if (_selectedType == 'JDBC') _buildJdbcFields(),
-                      if (_selectedType == 'JS') _buildJsFields(),
-                      if (_selectedType == 'TCP') _buildTcpFields(),
-                    ],
+                        const SizedBox(height: 24),
+                        const Divider(),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Protocol Details',
+                          style: TextStyle(
+                            color: colors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (_selectedType == 'HTTP') _buildHttpFields(colors),
+                        if (_selectedType == 'GRPC') _buildGrpcFields(),
+                        if (_selectedType == 'JDBC') _buildJdbcFields(),
+                        if (_selectedType == 'JS') _buildJsFields(),
+                        if (_selectedType == 'TCP') _buildTcpFields(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: _create,
-                    child: const Text('Create Endpoint'),
-                  ),
-                ],
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: _create,
+                      child: const Text('Create Endpoint'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

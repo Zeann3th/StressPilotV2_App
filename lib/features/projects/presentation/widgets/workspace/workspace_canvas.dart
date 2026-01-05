@@ -73,6 +73,8 @@ class _CanvasContentState extends State<_CanvasContent> {
       if (mounted) {
         await _canvasProvider?.loadFlowLayout(widget.flowId);
 
+        if (!mounted) return;
+
         // Load flow configuration from backend to get processor data
         final flowProvider = context.read<FlowProvider>();
         try {
