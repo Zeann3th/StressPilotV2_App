@@ -13,6 +13,7 @@ class Endpoint {
   final String? grpcStubPath;
   final String? graphqlOperationType;
   final Map<String, dynamic>? graphqlVariables;
+  final String? successCondition;
   final int projectId;
 
   Endpoint({
@@ -30,6 +31,7 @@ class Endpoint {
     this.grpcStubPath,
     this.graphqlOperationType,
     this.graphqlVariables,
+    this.successCondition,
     required this.projectId,
   });
 
@@ -48,6 +50,7 @@ class Endpoint {
     grpcStubPath: json['grpcStubPath'],
     graphqlOperationType: json['graphqlOperationType'],
     graphqlVariables: json['graphqlVariables'] as Map<String, dynamic>?,
+    successCondition: json['successCondition'],
     projectId: json['projectId'],
   );
 }

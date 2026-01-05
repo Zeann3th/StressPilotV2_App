@@ -7,6 +7,7 @@ import '../../common/domain/endpoint.dart';
 import '../../common/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/common/presentation/widgets/environment_dialog.dart';
 import 'package:stress_pilot/features/common/presentation/widgets/endpoint_type_badge.dart';
+import 'package:stress_pilot/features/common/presentation/widgets/json_viewer.dart';
 import 'package:stress_pilot/features/projects/domain/project.dart';
 
 import '../widgets/key_value_editor.dart';
@@ -379,6 +380,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   late String _method;
 
   late TextEditingController _bodyCtrl;
+  late TextEditingController _successConditionCtrl;
   Map<String, String> _headers = {};
   Map<String, String> _params = {};
   Map<String, String> _variables = {};
@@ -387,6 +389,8 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   bool _isLoading = false;
   int? _statusCode;
   int? _responseTime;
+
+  bool? _isSuccess;
 
   late TabController _reqTabCtrl;
   late TabController _resTabCtrl;
@@ -409,6 +413,9 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       }
     }
     _bodyCtrl = TextEditingController(text: bodyText);
+    _successConditionCtrl = TextEditingController(
+      text: widget.endpoint.successCondition ?? '',
+    );
 
     if (widget.endpoint.httpHeaders != null) {
       widget.endpoint.httpHeaders!.forEach(
@@ -430,6 +437,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     _urlCtrl.dispose();
     _nameCtrl.dispose();
     _bodyCtrl.dispose();
+    _successConditionCtrl.dispose();
     _reqTabCtrl.dispose();
     _resTabCtrl.dispose();
     super.dispose();
@@ -452,6 +460,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         'body': bodyPayload,
         'httpHeaders': _headers,
         'httpParameters': _params,
+        'successCondition': _successConditionCtrl.text,
         'projectId': widget.projectId,
       };
 
@@ -479,6 +488,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       _isLoading = true;
       _response = null;
       _statusCode = null;
+      _isSuccess = null;
     });
 
     try {
@@ -498,12 +508,16 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
             'httpHeaders': _headers,
             'httpParameters': _params,
             'variables': _variables,
+            'successCondition': _successConditionCtrl.text,
           });
 
       setState(() {
         _response = result;
         _statusCode = result['statusCode'];
         _responseTime = result['responseTimeMs'];
+        if (result.containsKey('success')) {
+          _isSuccess = result['success'] as bool?;
+        }
       });
     } catch (e) {
       setState(() {
@@ -738,8 +752,8 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                             tabs: const [
                               'Params',
                               'Headers',
-                              'Variables',
                               'Body',
+                              'Configuration',
                             ],
                           ),
                         ),
@@ -773,13 +787,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: KeyValueEditor(
-                                  data: _variables,
-                                  onChanged: (d) => _variables = d,
-                                ),
-                              ),
-                              Padding(
                                 padding: const EdgeInsets.all(1),
                                 child: TextField(
                                   controller: _bodyCtrl,
@@ -803,6 +810,58 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                     contentPadding: const EdgeInsets.all(16),
                                   ),
                                 ),
+                              ),
+                              ListView(
+                                padding: const EdgeInsets.all(16),
+                                children: [
+                                  Text(
+                                    'Success Condition (SpEL)',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: _successConditionCtrl,
+                                    decoration: const InputDecoration(
+                                      hintText:
+                                          'e.g., #statusCode == 200 && #body.status == "OK"',
+                                      border: OutlineInputBorder(),
+                                      helperText:
+                                          'Available variables: #statusCode, #body, #headers, #responseTime',
+                                    ),
+                                    minLines: 1,
+                                    maxLines: 3,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Text(
+                                    'Variables',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    constraints: const BoxConstraints(
+                                      minHeight: 100,
+                                      maxHeight: 300,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).dividerTheme.color!,
+                                      ),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: KeyValueEditor(
+                                      data: _variables,
+                                      onChanged: (d) => _variables = d,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -847,9 +906,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color:
-                                      (_statusCode! >= 200 &&
-                                          _statusCode! < 300)
+                                  color: (_isSuccess == true)
                                       ? const Color(
                                           0xFF30D158,
                                         ).withValues(alpha: 0.2)
@@ -859,11 +916,11 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  'Status: $_statusCode',
+                                  _isSuccess == true
+                                      ? 'SUCCESS (${_statusCode ?? '-'})'
+                                      : 'FAILED (${_statusCode ?? '-'})',
                                   style: TextStyle(
-                                    color:
-                                        (_statusCode! >= 200 &&
-                                            _statusCode! < 300)
+                                    color: (_isSuccess == true)
                                         ? const Color(0xFF30D158)
                                         : const Color(0xFFFF453A),
                                     fontWeight: FontWeight.bold,
@@ -900,15 +957,47 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                               )
                             : SingleChildScrollView(
                                 padding: const EdgeInsets.all(16),
-                                child: SelectableText(
-                                  _getResponseBody(_response),
-                                  style: TextStyle(
-                                    fontFamily: 'JetBrains Mono',
-                                    fontSize: 12,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                  ),
+                                child: JsonViewer(
+                                  json: () {
+                                    final r = Map<String, dynamic>.from(
+                                      _response!,
+                                    );
+                                    // Keep only message and data/body if they exist, or show filtered view
+                                    final filtered = <String, dynamic>{};
+                                    if (r.containsKey('message'))
+                                      filtered['message'] = r['message'];
+                                    if (r.containsKey('data')) {
+                                      filtered['data'] = r['data'];
+                                    } else if (r.containsKey('body')) {
+                                      filtered['data'] = r['body'];
+                                    } else {
+                                      // If neither, maybe just show everything except technical fields?
+                                      // For now, let's respect the user's request strictly but fallback safely
+                                      // If strictly message and data are requested, what if they don't exist?
+                                      // The user said "by then response only need message and data pls"
+                                      // I'll try to find them. If map is empty after filter, maybe show original?
+                                      // Or maybe the user implies the backend response structure has these.
+                                      // Let's filter for them.
+                                      if (r.containsKey('error'))
+                                        filtered['error'] = r['error'];
+                                    }
+
+                                    // If we found nothing relevant, just show everything minus metadata
+                                    if (filtered.isEmpty) {
+                                      final metadataKeys = [
+                                        'statusCode',
+                                        'success',
+                                        'responseTimeMs',
+                                        'timestamp',
+                                        'headers',
+                                      ];
+                                      r.removeWhere(
+                                        (k, v) => metadataKeys.contains(k),
+                                      );
+                                      return r;
+                                    }
+                                    return filtered;
+                                  }(),
                                 ),
                               ),
                       ),
@@ -921,24 +1010,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         ],
       ),
     );
-  }
-
-  String _getResponseBody(Map<String, dynamic>? response) {
-    if (response == null) return '';
-    if (response.containsKey('error') && response.length == 1) {
-      return response['error'].toString();
-    }
-    if (response['success'] == false && response.containsKey('message')) {
-      return response['message'].toString();
-    }
-    if (response.containsKey('body')) {
-      final body = response['body'];
-      if (body is Map || body is List) {
-        return const JsonEncoder.withIndent('  ').convert(body);
-      }
-      return body.toString();
-    }
-    return const JsonEncoder.withIndent('  ').convert(response);
   }
 }
 
