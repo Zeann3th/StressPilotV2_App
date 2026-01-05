@@ -54,4 +54,6 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => NexusService());
   getIt.registerLazySingleton(() => PluginService());
   getIt.registerLazySingleton(() => MarketplaceProvider());
+
+  getIt<ResultsProvider>();
 }
