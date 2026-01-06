@@ -976,8 +976,9 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                     );
                                     // Keep only message and data/body if they exist, or show filtered view
                                     final filtered = <String, dynamic>{};
-                                    if (r.containsKey('message'))
+                                    if (r.containsKey('message')) {
                                       filtered['message'] = r['message'];
+                                    }
                                     if (r.containsKey('data')) {
                                       filtered['data'] = r['data'];
                                     } else if (r.containsKey('body')) {
@@ -990,8 +991,9 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                       // I'll try to find them. If map is empty after filter, maybe show original?
                                       // Or maybe the user implies the backend response structure has these.
                                       // Let's filter for them.
-                                      if (r.containsKey('error'))
+                                      if (r.containsKey('error')) {
                                         filtered['error'] = r['error'];
+                                      }
                                     }
 
                                     // If we found nothing relevant, just show everything minus metadata

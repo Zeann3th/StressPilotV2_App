@@ -101,8 +101,9 @@ class RealtimeChart extends StatelessWidget {
                             interval: xInterval,
                             getTitlesWidget: (value, meta) {
                               // Hide labels that fall outside our fixed range
-                              if (value < minX || value > maxX)
+                              if (value < minX || value > maxX) {
                                 return const SizedBox.shrink();
+                              }
 
                               final date = DateTime.fromMillisecondsSinceEpoch(
                                 value.toInt(),
