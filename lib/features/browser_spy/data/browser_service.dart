@@ -1,5 +1,6 @@
 import 'package:stress_pilot/core/system/logger.dart';
 import 'dart:async';
+import 'dart:io' show Platform, File;
 import 'package:puppeteer/puppeteer.dart';
 import '../domain/request_entry.dart';
 
@@ -19,8 +20,35 @@ class BrowserService {
     AppLogger.info('Attempting to launch browser...', name: 'BrowserSpy');
 
     try {
+      // Determine Chrome executable path based on platform
+      String? chromePath;
+      if (Platform.isWindows) {
+        // Common Chrome paths on Windows
+        final possiblePaths = [
+          r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+          r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+        ];
+        for (final path in possiblePaths) {
+          final file = File(path);
+          if (await file.exists()) {
+            chromePath = path;
+            break;
+          }
+        }
+      } else if (Platform.isLinux) {
+        chromePath = '/usr/bin/google-chrome';
+      } else if (Platform.isMacOS) {
+        chromePath =
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+      }
+
+      AppLogger.info(
+        'Using Chrome path: ${chromePath ?? "auto-detect"}',
+        name: 'BrowserSpy',
+      );
+
       _browser = await puppeteer.launch(
-        executablePath: '/usr/bin/google-chrome',
+        executablePath: chromePath, // Let Puppeteer auto-detect if null
         headless: false,
         defaultViewport: null,
         args: [

@@ -55,15 +55,15 @@ class _ProjectTableHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: Theme.of(context).colorScheme.surfaceContainer,
       child: Row(
         children: [
-          _HeaderCell('NAME', width: 250),
+          _HeaderCell('NAME', width: 200),
           _HeaderCell('DESCRIPTION', flex: 1),
-          _HeaderCell('ID', width: 80),
-          _HeaderCell('CREATED', width: 140),
-          _HeaderCell('ACTIONS', width: 100, center: true),
+          _HeaderCell('ID', width: 70),
+          _HeaderCell('CREATED', width: 120),
+          _HeaderCell('ACTIONS', width: 90, center: true),
         ],
       ),
     );
@@ -127,11 +127,11 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
           color: _isHovered
               ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)
               : Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
               SizedBox(
-                width: 250,
+                width: 200,
                 child: Row(
                   children: [
                     _ProjectAvatar(name: widget.project.name),
@@ -162,10 +162,10 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              _TableCell('#${widget.project.id}', width: 80),
-              _TableCell(_formatDate(widget.project.createdAt), width: 140),
+              _TableCell('#${widget.project.id}', width: 70),
+              _TableCell(_formatDate(widget.project.createdAt), width: 120),
               SizedBox(
-                width: 100,
+                width: 90,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
