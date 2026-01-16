@@ -43,6 +43,8 @@ dependencies:
   window_manager: ^0.5.1
   intl: ^0.20.2
   cupertino_icons: ^1.0.8
+  webview_flutter: ^4.2.2
+  puppeteer: ^3.6.0
 
 
 dev_dependencies:

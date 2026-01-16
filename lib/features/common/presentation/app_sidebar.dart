@@ -44,6 +44,11 @@ class AppSidebar extends StatelessWidget {
           _icon(context, CupertinoIcons.square_list, 'Runs', () {
             AppNavigator.pushNamed(AppRouter.runsRoute);
           }),
+          const SizedBox(height: 16),
+
+          _icon(context, CupertinoIcons.globe, 'Browser Spy', () {
+            AppNavigator.pushNamed(AppRouter.browserSpyRoute);
+          }),
 
           const Spacer(),
 

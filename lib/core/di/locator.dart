@@ -1,3 +1,4 @@
+import 'package:stress_pilot/features/browser_spy/presentation/manager/browser_spy_provider.dart';
 import 'package:get_it/get_it.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
@@ -54,6 +55,7 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => NexusService());
   getIt.registerLazySingleton(() => PluginService());
   getIt.registerLazySingleton(() => MarketplaceProvider());
+  getIt.registerLazySingleton(() => BrowserSpyProvider());
 
   getIt<ResultsProvider>();
 }

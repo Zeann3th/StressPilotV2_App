@@ -47,98 +47,23 @@ class _MarketplaceViewState extends State<_MarketplaceView> {
       backgroundColor: colors.surface,
       body: Column(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              border: Border(
-                bottom: BorderSide(
-                  color: colors.outlineVariant.withValues(alpha: 0.3),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.arrow_back, color: colors.onSurface),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        CupertinoIcons.cart_fill,
-                        size: 20,
-                        color: colors.primary,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Plugin Marketplace',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colors.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: SizedBox(
-                      width: 400,
-                      child: TextField(
-                        controller: _searchController,
-                        onSubmitted: (query) => provider.searchPlugins(query),
-                        decoration: InputDecoration(
-                          hintText: 'Search plugins...',
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: colors.outlineVariant,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: colors.surfaceContainerHighest.withValues(
-                            alpha: 0.3,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 0,
-                            horizontal: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const Expanded(child: SizedBox()),
-              ],
-            ),
-          ),
-
-          // Content
+          _buildHeader(context),
+          Divider(height: 1, color: Theme.of(context).dividerTheme.color),
+          _buildFilterBar(context, provider),
+          Divider(height: 1, color: Theme.of(context).dividerTheme.color),
           Expanded(
             child: provider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : provider.artifacts.isEmpty
-                ? Center(
-                    child: Text(
-                      provider.statusMessage.isNotEmpty
-                          ? provider.statusMessage
-                          : 'No plugins found',
-                      style: TextStyle(color: colors.onSurfaceVariant),
-                    ),
-                  )
+                ? _buildEmptyState(context, provider)
                 : GridView.builder(
-                    padding: const EdgeInsets.all(32),
+                    padding: const EdgeInsets.all(24),
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 400,
-                          mainAxisExtent: 220,
-                          crossAxisSpacing: 24,
-                          mainAxisSpacing: 24,
+                          mainAxisExtent: 180, // slightly more compact
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
                         ),
                     itemCount: provider.artifacts.length,
                     itemBuilder: (context, index) {
@@ -151,6 +76,93 @@ class _MarketplaceViewState extends State<_MarketplaceView> {
                       );
                     },
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(CupertinoIcons.arrow_left),
+            tooltip: 'Back',
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          const SizedBox(width: 8),
+          Icon(
+            CupertinoIcons.cart_fill,
+            size: 20,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Plugin Marketplace',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterBar(BuildContext context, MarketplaceProvider provider) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      color: Theme.of(context).colorScheme.surface,
+      child: Row(
+        children: [
+          Expanded(
+            child: CupertinoSearchTextField(
+              controller: _searchController,
+              placeholder: 'Search plugins...',
+              onChanged: (query) => provider.searchPlugins(query),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, MarketplaceProvider provider) {
+    final colors = Theme.of(context).colorScheme;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              CupertinoIcons.cube_box,
+              size: 64,
+              color: colors.primary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            provider.statusMessage.isNotEmpty
+                ? provider.statusMessage
+                : 'No plugins found',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your search terms.',
+            style: TextStyle(color: colors.onSurfaceVariant),
           ),
         ],
       ),
@@ -176,16 +188,16 @@ class _PluginCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colors.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -193,39 +205,40 @@ class _PluginCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: colors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.extension_rounded,
                   color: colors.primary,
-                  size: 24,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       artifact.artifactId,
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: const TextStyle(
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: colors.onSurface,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       artifact.groupId,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: colors.onSurfaceVariant,
                       ),
                       maxLines: 1,
@@ -237,23 +250,27 @@ class _PluginCard extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              'v${artifact.version}',
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 11,
-                color: colors.onSurfaceVariant,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'v${artifact.version}',
+                  style: TextStyle(
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 10,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
               ),
-            ),
+              const Spacer(),
+              _buildActionButton(context),
+            ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: _buildActionButton(context)),
         ],
       ),
     );
@@ -262,22 +279,30 @@ class _PluginCard extends StatelessWidget {
   Widget _buildActionButton(BuildContext context) {
     switch (status) {
       case PluginStatus.installed:
-        return OutlinedButton.icon(
-          onPressed: null, // Disabled
-          icon: const Icon(Icons.check_circle, size: 18),
-          label: const Text('Installed'),
+        return Icon(
+          Icons.check_circle,
+          size: 20,
+          color: Theme.of(context).colorScheme.primary,
         );
       case PluginStatus.updateAvailable:
         return FilledButton.icon(
           onPressed: onInstall,
-          icon: const Icon(Icons.system_update_alt, size: 18),
-          label: const Text('Update'),
+          icon: const Icon(Icons.system_update_alt, size: 14),
+          label: const Text('Update', style: TextStyle(fontSize: 12)),
+          style: FilledButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
         );
       case PluginStatus.notInstalled:
         return FilledButton.icon(
           onPressed: onInstall,
-          icon: const Icon(Icons.download_rounded, size: 18),
-          label: const Text('Install'),
+          icon: const Icon(Icons.download_rounded, size: 14),
+          label: const Text('Install', style: TextStyle(fontSize: 12)),
+          style: FilledButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
         );
     }
   }

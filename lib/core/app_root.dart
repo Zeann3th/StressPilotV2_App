@@ -1,3 +1,4 @@
+import 'package:stress_pilot/features/browser_spy/presentation/manager/browser_spy_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -169,6 +170,9 @@ class AppProviders extends StatelessWidget {
         ),
         ChangeNotifierProvider<ThemeManager>.value(
           value: getIt<ThemeManager>(),
+        ),
+        ChangeNotifierProvider<BrowserSpyProvider>.value(
+          value: getIt<BrowserSpyProvider>(),
         ),
       ],
       child: const AppTheme(),

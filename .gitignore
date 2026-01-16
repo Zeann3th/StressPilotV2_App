@@ -46,3 +46,5 @@ app.*.map.json
 
 # Core binary
 assets/core/
+
+/.local-chrome/

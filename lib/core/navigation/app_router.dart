@@ -1,3 +1,4 @@
+import 'package:stress_pilot/features/browser_spy/presentation/pages/browser_spy_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/endpoints/pages/endpoints_page.dart';
@@ -20,6 +21,7 @@ class AppRouter {
   static const String resultsRoute = '/results';
   static const String runsRoute = '/runs';
   static const String marketplaceRoute = '/marketplace';
+  static const String browserSpyRoute = '/browser_spy';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     MaterialPageRoute<T> buildRoute<T>(Widget widget) {
@@ -64,6 +66,8 @@ class AppRouter {
         return buildRoute(RunsListPage(flowId: args?['flowId']));
       case marketplaceRoute:
         return buildRoute(const MarketplacePage());
+      case browserSpyRoute:
+        return buildRoute(const BrowserSpyPage());
       default:
         return buildRoute(
           Scaffold(
