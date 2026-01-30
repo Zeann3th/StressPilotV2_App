@@ -279,7 +279,13 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                     key: ValueKey(_selectedEndpoint!.id),
                     endpoint: _selectedEndpoint!,
                     projectId: widget.project.id,
-                    onDeleted: () => setState(() => _selectedEndpoint = null),
+                    onDeleted: () async {
+                      await context.read<EndpointProvider>().deleteEndpoint(
+                            _selectedEndpoint!.id,
+                            widget.project.id,
+                          );
+                      setState(() => _selectedEndpoint = null);
+                    },
                     onUpdated: (updated) =>
                         setState(() => _selectedEndpoint = updated),
                   ),

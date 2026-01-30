@@ -124,17 +124,69 @@ class WorkspaceFlowList extends StatelessWidget {
                                 ),
                               ),
                               if (isSelected)
-                                GestureDetector(
-                                  onTap: () => _showOptions(
-                                    context,
-                                    flowItem,
-                                    flowProvider,
-                                  ),
-                                  child: Icon(
+                                PopupMenuButton<String>(
+                                  icon: Icon(
                                     Icons.more_horiz,
                                     size: 16,
                                     color: colors.onSurfaceVariant,
                                   ),
+                                  tooltip: 'Flow Options',
+                                  onSelected: (value) {
+                                    if (value == 'edit') {
+                                      FlowDialog.showEditDialog(
+                                        context,
+                                        flow: flowItem,
+                                        onUpdate: (id, name, desc) =>
+                                            flowProvider.updateFlow(
+                                          flowId: id,
+                                          name: name,
+                                          description: desc,
+                                        ),
+                                      );
+                                    } else if (value == 'delete') {
+                                      FlowDialog.showDeleteDialog(
+                                        context,
+                                        flow: flowItem,
+                                        onDelete: (id) =>
+                                            flowProvider.deleteFlow(id),
+                                      );
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.edit,
+                                            size: 18,
+                                            color: colors.onSurface,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Text('Edit'),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.delete,
+                                            size: 18,
+                                            color: colors.error,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Delete',
+                                            style: TextStyle(
+                                              color: colors.error,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                             ],
                           ),
@@ -148,9 +200,4 @@ class WorkspaceFlowList extends StatelessWidget {
     );
   }
 
-  void _showOptions(
-    BuildContext context,
-    flow.Flow flowItem,
-    FlowProvider provider,
-  ) {}
 }
