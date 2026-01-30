@@ -48,3 +48,4 @@ app.*.map.json
 assets/core/
 
 /.local-chrome/
+dist/
