@@ -73,6 +73,22 @@ class ShortcutParser {
     '.': LogicalKeyboardKey.period,
   };
 
+  static SingleActivator? parseActivator(String shortcut) {
+    if (shortcut.isEmpty) return null;
+    final parts = shortcut.split('+');
+    final keyLabel = parts.last;
+    final logicalKey = parseKey(keyLabel);
+    if (logicalKey == null) return null;
+
+    return SingleActivator(
+      logicalKey,
+      control: parts.contains('Control'),
+      shift: parts.contains('Shift'),
+      alt: parts.contains('Alt'),
+      meta: parts.contains('Meta'),
+    );
+  }
+
   static LogicalKeyboardKey? parseKey(String label) {
     // Handle single character alphanumerics manually if needed, but the map covers standard ASCII.
     return _keyMap[label] ?? _keyMap[label.toUpperCase()];

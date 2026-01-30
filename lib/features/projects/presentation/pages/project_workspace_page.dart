@@ -22,6 +22,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   SidebarTab _sidebarTab = SidebarTab.flows;
   int? _lastLoadedProjectId; 
   double _expandedWidth = 280.0; 
+  double? _dragWidth; 
 
   @override
   void initState() {
@@ -86,7 +87,10 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                     children: [
                       Consumer<ProjectProvider>(
                         builder: (context, projectProvider, child) {
-                          final width = projectProvider.isSidebarCollapsed ? 60.0 : _expandedWidth;
+                          // If dragging, use drag width. Else use state width.
+                          final currentWidth = projectProvider.isSidebarCollapsed ? 60.0 : _expandedWidth;
+                          final width = _dragWidth ?? currentWidth;
+                          
                           return SizedBox(
                             width: width,
                             child: WorkspaceSidebar(
@@ -96,7 +100,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                               selectedFlow: _selectedFlow,
                               onFlowSelected: (flow) =>
                                   setState(() => _selectedFlow = flow),
-                              isCollapsed: projectProvider.isSidebarCollapsed,
+                              isCollapsed: width < 180,
                             ),
                           );
                         }
@@ -105,23 +109,32 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                         cursor: SystemMouseCursors.resizeColumn,
                         child: GestureDetector(
                           behavior: HitTestBehavior.translucent,
-                          onHorizontalDragUpdate: (details) {
+                          onHorizontalDragStart: (details) {
                             final projectProvider = context.read<ProjectProvider>();
-                            final currentWidth = projectProvider.isSidebarCollapsed ? 60.0 : _expandedWidth;
-                            final newWidth = currentWidth + details.delta.dx;
-                            
-                            if (newWidth < 180) {
-                              if (!projectProvider.isSidebarCollapsed) {
-                                projectProvider.setSidebarCollapsed(true);
-                              }
-                            } else {
-                              if (projectProvider.isSidebarCollapsed) {
-                                projectProvider.setSidebarCollapsed(false);
-                              }
-                               setState(() {
-                                _expandedWidth = newWidth.clamp(180.0, 600.0);
-                              });
+                            setState(() {
+                              _dragWidth = projectProvider.isSidebarCollapsed ? 60.0 : _expandedWidth;
+                            });
+                          },
+                          onHorizontalDragUpdate: (details) {
+                            setState(() {
+                              if (_dragWidth == null) return;
+                              // Allow dragging bigger, min 60. Max 600.
+                              _dragWidth = (_dragWidth! + details.delta.dx).clamp(60.0, 600.0);
+                            });
+                          },
+                          onHorizontalDragEnd: (details) {
+                            final projectProvider = context.read<ProjectProvider>();
+                            if (_dragWidth != null) {
+                                if (_dragWidth! < 180) {
+                                  projectProvider.setSidebarCollapsed(true);
+                                } else {
+                                  projectProvider.setSidebarCollapsed(false);
+                                  _expandedWidth = _dragWidth!;
+                                }
                             }
+                            setState(() {
+                              _dragWidth = null;
+                            });
                           },
                           child: Container(
                             width: 8,

@@ -42,15 +42,11 @@ class _GlobalShortcutListenerState extends State<GlobalShortcutListener> {
     
     // But let's proceed with simple matching first.
     
-    final provider = getIt<KeymapProvider>(); // Access via locator as we might be outside context or matching is easier
-    final keymap = provider.keymap;
-
-    for (final entry in keymap.entries) {
-      final actionId = entry.key;
-      final shortcut = entry.value;
-
-      if (ShortcutParser.isMatch(event, shortcut)) {
-        return _performAction(actionId);
+    final provider = getIt<KeymapProvider>(); 
+    // Use cached activators for performance
+    for (final entry in provider.cachedActivators) {
+      if (entry.key.accepts(event, HardwareKeyboard.instance)) {
+        return _performAction(entry.value);
       }
     }
 
