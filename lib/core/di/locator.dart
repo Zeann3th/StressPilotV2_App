@@ -15,6 +15,7 @@ import 'package:stress_pilot/features/settings/presentation/provider/setting_pro
 import 'package:stress_pilot/features/marketplace/data/nexus_service.dart';
 import 'package:stress_pilot/features/marketplace/data/plugin_service.dart';
 import 'package:stress_pilot/features/marketplace/presentation/provider/marketplace_provider.dart';
+import 'package:stress_pilot/core/input/keymap_provider.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/results/data/results_repository.dart';
@@ -39,6 +40,7 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => SettingService());
   getIt.registerLazySingleton(() => SettingProvider());
+  getIt.registerLazySingleton(() => KeymapProvider());
 
   getIt.registerLazySingleton(() => EndpointProvider());
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
+import 'package:stress_pilot/features/settings/presentation/widgets/keymap_settings_table.dart';
 import 'settings_row.dart';
 
 class SettingsTable extends StatefulWidget {
@@ -58,10 +59,13 @@ class _SettingsTableState extends State<SettingsTable> {
       grouped.putIfAbsent(category, () => []).add(entry);
     }
     final categories = grouped.keys.toList()..sort();
+    categories.add('SHORTCUTS'); // Add Shortcuts category explicitly
 
     // Initialize keys and selection
     for (var cat in categories) {
-      _categoryKeys.putIfAbsent(cat, () => GlobalKey());
+      if (cat != 'SHORTCUTS') {
+        _categoryKeys.putIfAbsent(cat, () => GlobalKey());
+      }
     }
     if (_selectedCategory == null && categories.isNotEmpty) {
       _selectedCategory = categories.first;
@@ -128,7 +132,7 @@ class _SettingsTableState extends State<SettingsTable> {
                     final cat = categories[index];
                     final isSelected = cat == _selectedCategory;
                     return InkWell(
-                      onTap: () => _scrollToCategory(cat),
+                      onTap: () => setState(() => _selectedCategory = cat),
                       borderRadius: BorderRadius.circular(6),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -160,7 +164,12 @@ class _SettingsTableState extends State<SettingsTable> {
 
               // Content Area
               Expanded(
-                child: filteredEntries.isEmpty
+                child: _selectedCategory == 'SHORTCUTS'
+                ? const SingleChildScrollView(
+                    padding: EdgeInsets.all(32),
+                    child: KeymapSettingsTable(),
+                  )
+                : filteredEntries.isEmpty
                     ? Center(
                         child: Text(
                           "No matching settings found.",
@@ -177,6 +186,7 @@ class _SettingsTableState extends State<SettingsTable> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 for (var category in categories) ...[
+                                  if (category != 'SHORTCUTS' && (grouped[category] != null))
                                   Container(
                                     key: _categoryKeys[category],
                                     margin: const EdgeInsets.only(bottom: 32),

@@ -13,7 +13,9 @@ import 'package:stress_pilot/core/system/session_manager.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
+import 'package:stress_pilot/core/input/keymap_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/core/input/global_shortcut_listener.dart';
 import 'package:stress_pilot/features/common/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
@@ -153,6 +155,9 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider<SettingProvider>.value(
           value: getIt<SettingProvider>(),
         ),
+        ChangeNotifierProvider<KeymapProvider>.value(
+          value: getIt<KeymapProvider>(),
+        ),
         ChangeNotifierProvider<FlowProvider>.value(
           value: getIt<FlowProvider>(),
         ),
@@ -175,7 +180,9 @@ class AppProviders extends StatelessWidget {
           value: getIt<BrowserSpyProvider>(),
         ),
       ],
-      child: const AppTheme(),
+      child: const GlobalShortcutListener(
+        child: AppTheme(),
+      ),
     );
   }
 }
@@ -221,6 +228,7 @@ class _AppRootState extends State<AppRoot> {
 
       await getIt<SessionManager>().initializeSession();
       await getIt<ProjectProvider>().initialize();
+      await getIt<KeymapProvider>().initialize();
 
       await _expandWindow();
 

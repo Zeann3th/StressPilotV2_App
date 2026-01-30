@@ -21,6 +21,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   flow.Flow? _selectedFlow;
   SidebarTab _sidebarTab = SidebarTab.flows;
   int? _lastLoadedProjectId; 
+  double _expandedWidth = 280.0; 
 
   @override
   void initState() {
@@ -81,14 +82,57 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                 const WorkspaceTopBar(),
                 Expanded(
                   child: Row(
+// Keep existing code
                     children: [
-                      WorkspaceSidebar(
-                        sidebarTab: _sidebarTab,
-                        onTabChanged: (tab) =>
-                            setState(() => _sidebarTab = tab),
-                        selectedFlow: _selectedFlow,
-                        onFlowSelected: (flow) =>
-                            setState(() => _selectedFlow = flow),
+                      Consumer<ProjectProvider>(
+                        builder: (context, projectProvider, child) {
+                          final width = projectProvider.isSidebarCollapsed ? 60.0 : _expandedWidth;
+                          return SizedBox(
+                            width: width,
+                            child: WorkspaceSidebar(
+                              sidebarTab: _sidebarTab,
+                              onTabChanged: (tab) =>
+                                  setState(() => _sidebarTab = tab),
+                              selectedFlow: _selectedFlow,
+                              onFlowSelected: (flow) =>
+                                  setState(() => _selectedFlow = flow),
+                              isCollapsed: projectProvider.isSidebarCollapsed,
+                            ),
+                          );
+                        }
+                      ),
+                      MouseRegion(
+                        cursor: SystemMouseCursors.resizeColumn,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onHorizontalDragUpdate: (details) {
+                            final projectProvider = context.read<ProjectProvider>();
+                            final currentWidth = projectProvider.isSidebarCollapsed ? 60.0 : _expandedWidth;
+                            final newWidth = currentWidth + details.delta.dx;
+                            
+                            if (newWidth < 180) {
+                              if (!projectProvider.isSidebarCollapsed) {
+                                projectProvider.setSidebarCollapsed(true);
+                              }
+                            } else {
+                              if (projectProvider.isSidebarCollapsed) {
+                                projectProvider.setSidebarCollapsed(false);
+                              }
+                               setState(() {
+                                _expandedWidth = newWidth.clamp(180.0, 600.0);
+                              });
+                            }
+                          },
+                          child: Container(
+                            width: 8,
+                            color: Colors.transparent,
+                            alignment: Alignment.center,
+                            child: Container(
+                              width: 1,
+                              color: Theme.of(context).colorScheme.outlineVariant,
+                            ),
+                          ),
+                        ),
                       ),
                       Expanded(
                         child: WorkspaceCanvas(selectedFlow: _selectedFlow),

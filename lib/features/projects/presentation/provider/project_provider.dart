@@ -14,16 +14,29 @@ class ProjectProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  bool _isSidebarCollapsed = false;
+
   List<Project> get projects => _projects;
   Project? get selectedProject => _selectedProject;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasSelectedProject => _selectedProject != null;
+  bool get isSidebarCollapsed => _isSidebarCollapsed;
 
   static const String _selectedProjectKey = 'selected_project_json';
 
   Future<void> initialize() async {
     await _loadSelectedProject();
+  }
+  
+  void toggleSidebar() {
+    _isSidebarCollapsed = !_isSidebarCollapsed;
+    notifyListeners();
+  }
+
+  void setSidebarCollapsed(bool value) {
+    _isSidebarCollapsed = value;
+    notifyListeners();
   }
 
   Future<void> loadProjects({String? searchName}) async {

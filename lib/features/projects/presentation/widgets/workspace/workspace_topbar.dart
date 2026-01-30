@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/core/input/keymap_provider.dart';
 import 'package:stress_pilot/features/common/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
@@ -15,6 +16,9 @@ class WorkspaceTopBar extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final provider = context.watch<ProjectProvider>();
     final project = provider.selectedProject;
+    final keymap = context.watch<KeymapProvider>();
+
+    String tool(String base, String id) => '$base (${keymap.getShortcut(id) ?? ''})'.replaceAll(' ()', '');
 
     return Container(
       height: 64,
@@ -30,7 +34,7 @@ class WorkspaceTopBar extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.arrow_back, color: colors.onSurface),
             onPressed: () => _handleViewAllProjects(context),
-            tooltip: 'Back to Projects',
+            tooltip: tool('Back to Projects', 'project.view_all'),
           ),
           const SizedBox(width: 8),
 
@@ -96,54 +100,60 @@ class WorkspaceTopBar extends StatelessWidget {
 
           const Spacer(),
 
-          OutlinedButton.icon(
-            onPressed: () {
-              if (project != null) {
-                AppNavigator.pushNamed(
-                  AppRouter.projectEndpointsRoute,
-                  arguments: {'project': project},
-                );
-              }
-            },
-            icon: Icon(Icons.http, size: 20, color: colors.onSurface),
-            label: Text("Endpoints", style: TextStyle(color: colors.onSurface)),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: colors.outlineVariant),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+          Tooltip(
+            message: tool('Endpoints', 'project.endpoints'),
+            child: OutlinedButton.icon(
+              onPressed: () {
+                if (project != null) {
+                  AppNavigator.pushNamed(
+                    AppRouter.projectEndpointsRoute,
+                    arguments: {'project': project},
+                  );
+                }
+              },
+              icon: Icon(Icons.http, size: 20, color: colors.onSurface),
+              label: Text("Endpoints", style: TextStyle(color: colors.onSurface)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: colors.outlineVariant),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             ),
           ),
           const SizedBox(width: 8),
 
-          OutlinedButton.icon(
-            onPressed: () {
-              if (project != null) {
-                AppNavigator.pushNamed(
-                  AppRouter.projectEnvironmentRoute,
-                  arguments: {
-                    'environmentId': project.environmentId,
-                    'projectName': project.name,
-                  },
-                );
-              }
-            },
-            icon: Icon(
-              Icons.settings_applications_outlined,
-              size: 18,
-              color: colors.onSurface,
-            ),
-            label: Text(
-              "Environment",
-              style: TextStyle(color: colors.onSurface),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: colors.outlineVariant),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+          Tooltip(
+            message: tool('Environment', 'project.environment'),
+            child: OutlinedButton.icon(
+              onPressed: () {
+                if (project != null) {
+                  AppNavigator.pushNamed(
+                    AppRouter.projectEnvironmentRoute,
+                    arguments: {
+                      'environmentId': project.environmentId,
+                      'projectName': project.name,
+                    },
+                  );
+                }
+              },
+              icon: Icon(
+                Icons.settings_applications_outlined,
+                size: 18,
+                color: colors.onSurface,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              label: Text(
+                "Environment",
+                style: TextStyle(color: colors.onSurface),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: colors.outlineVariant),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              ),
             ),
           ),
         ],

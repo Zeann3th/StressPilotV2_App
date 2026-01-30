@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
+import 'package:stress_pilot/core/input/keymap_provider.dart';
 
 class AppSidebar extends StatelessWidget {
   const AppSidebar({super.key});
@@ -11,6 +12,7 @@ class AppSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeManager = context.watch<ThemeManager>();
     final colors = Theme.of(context).colorScheme;
+    final keymap = context.watch<KeymapProvider>();
 
     return Container(
       width: 70, // Slightly wider for comfort
@@ -33,20 +35,20 @@ class AppSidebar extends StatelessWidget {
           ),
           const SizedBox(height: 32),
 
-          _icon(context, CupertinoIcons.settings, 'Settings', () {
+          _icon(context, CupertinoIcons.settings, 'Settings (${keymap.getShortcut('app.settings') ?? ''})', () {
             AppNavigator.pushNamed(AppRouter.settingsRoute);
           }),
           const SizedBox(height: 16),
 
-          _icon(context, CupertinoIcons.bell, 'Notifications', () {}),
+          _icon(context, CupertinoIcons.bell, 'Notifications (${keymap.getShortcut('nav.notifications') ?? ''})', () {}),
           const SizedBox(height: 16),
 
-          _icon(context, CupertinoIcons.square_list, 'Runs', () {
+          _icon(context, CupertinoIcons.square_list, 'Runs (${keymap.getShortcut('nav.runs') ?? ''})', () {
             AppNavigator.pushNamed(AppRouter.runsRoute);
           }),
           const SizedBox(height: 16),
 
-          _icon(context, CupertinoIcons.globe, 'Browser Spy', () {
+          _icon(context, CupertinoIcons.globe, 'Browser Spy (${keymap.getShortcut('nav.browser_spy') ?? ''})', () {
             AppNavigator.pushNamed(AppRouter.browserSpyRoute);
           }),
 
@@ -55,11 +57,11 @@ class AppSidebar extends StatelessWidget {
           _icon(
             context,
             themeManager.isDark ? CupertinoIcons.sun_max : CupertinoIcons.moon,
-            themeManager.isDark ? 'Light Mode' : 'Dark Mode',
+            themeManager.isDark ? 'Light Mode (${keymap.getShortcut('theme.toggle') ?? ''})' : 'Dark Mode (${keymap.getShortcut('theme.toggle') ?? ''})',
             themeManager.toggleTheme,
           ),
           const SizedBox(height: 16),
-          _icon(context, CupertinoIcons.cart, 'Marketplace', () {
+          _icon(context, CupertinoIcons.cart, 'Marketplace (${keymap.getShortcut('nav.marketplace') ?? ''})', () {
             AppNavigator.pushNamed(AppRouter.marketplaceRoute);
           }),
           const SizedBox(height: 16),
@@ -75,8 +77,11 @@ class AppSidebar extends StatelessWidget {
     String tooltip,
     VoidCallback onTap,
   ) {
+    // Clean up tooltip if shortcut is missing
+    final cleanTooltip = tooltip.replaceAll(' ()', '');
+    
     return Tooltip(
-      message: tooltip,
+      message: cleanTooltip,
       child: IconButton(
         icon: Icon(
           icon,

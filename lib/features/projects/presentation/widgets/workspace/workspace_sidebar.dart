@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/core/input/keymap_provider.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_flow_list.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_endpoints_list.dart';
@@ -14,6 +15,7 @@ class WorkspaceSidebar extends StatefulWidget {
   final ValueChanged<SidebarTab> onTabChanged;
   final flow.Flow? selectedFlow;
   final ValueChanged<flow.Flow?> onFlowSelected;
+  final bool isCollapsed;
 
   const WorkspaceSidebar({
     super.key,
@@ -21,6 +23,7 @@ class WorkspaceSidebar extends StatefulWidget {
     required this.onTabChanged,
     required this.selectedFlow,
     required this.onFlowSelected,
+    this.isCollapsed = false,
   });
 
   @override
@@ -35,9 +38,38 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
 
     final projectProvider = context.watch<ProjectProvider>();
     final projectId = projectProvider.selectedProject?.id ?? 0;
+    final keymapProvider = context.watch<KeymapProvider>();
+
+    if (widget.isCollapsed) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLow,
+          border: Border(
+            right: BorderSide(color: colors.outlineVariant, width: 1),
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            _buildIconTab(
+              icon: Icons.alt_route,
+              isActive: widget.sidebarTab == SidebarTab.flows,
+              onTap: () => widget.onTabChanged(SidebarTab.flows),
+              tooltip: 'Flows (${keymapProvider.getShortcut('sidebar.tab.flows') ?? ''})',
+            ),
+            const SizedBox(height: 12),
+            _buildIconTab(
+              icon: Icons.dns_outlined,
+              isActive: widget.sidebarTab == SidebarTab.endpoints,
+              onTap: () => widget.onTabChanged(SidebarTab.endpoints),
+              tooltip: 'Nodes (${keymapProvider.getShortcut('sidebar.tab.nodes') ?? ''})',
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
-      width: 280,
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         border: Border(
@@ -98,6 +130,36 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIconTab({
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onTap,
+    required String tooltip,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: isActive ? colors.primaryContainer : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Tooltip(
+          message: tooltip,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            child: Icon(
+              icon,
+              size: 20,
+              color: isActive
+                  ? colors.onPrimaryContainer
+                  : colors.onSurfaceVariant,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -223,14 +285,17 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
                     : colors.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                  color: isActive
-                      ? colors.onPrimaryContainer
-                      : colors.onSurfaceVariant,
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: isActive
+                        ? colors.onPrimaryContainer
+                        : colors.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
