@@ -135,7 +135,7 @@ class SessionManager {
         );
 
         if (response.statusCode == 200) {
-          _sessionId = response.data['sessionId'];
+          _sessionId = response.data;
           AppLogger.info('Session ID: $_sessionId', name: _logName);
 
           try {
