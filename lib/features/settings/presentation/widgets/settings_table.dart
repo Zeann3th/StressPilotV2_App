@@ -23,19 +23,6 @@ class _SettingsTableState extends State<SettingsTable> {
     super.dispose();
   }
 
-  void _scrollToCategory(String category) {
-    setState(() => _selectedCategory = category);
-    final key = _categoryKeys[category];
-    if (key != null) {
-      Scrollable.ensureVisible(
-        key.currentContext!,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        alignment: 0.0,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<SettingProvider>();
@@ -165,11 +152,11 @@ class _SettingsTableState extends State<SettingsTable> {
               // Content Area
               Expanded(
                 child: _selectedCategory == 'SHORTCUTS'
-                ? const SingleChildScrollView(
-                    padding: EdgeInsets.all(32),
-                    child: KeymapSettingsTable(),
-                  )
-                : filteredEntries.isEmpty
+                    ? const SingleChildScrollView(
+                        padding: EdgeInsets.all(32),
+                        child: KeymapSettingsTable(),
+                      )
+                    : filteredEntries.isEmpty
                     ? Center(
                         child: Text(
                           "No matching settings found.",
@@ -186,92 +173,96 @@ class _SettingsTableState extends State<SettingsTable> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 for (var category in categories) ...[
-                                  if (category != 'SHORTCUTS' && (grouped[category] != null))
-                                  Container(
-                                    key: _categoryKeys[category],
-                                    margin: const EdgeInsets.only(bottom: 32),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          category,
-                                          style: text.titleMedium?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: colors.onSurface,
+                                  if (category != 'SHORTCUTS' &&
+                                      (grouped[category] != null))
+                                    Container(
+                                      key: _categoryKeys[category],
+                                      margin: const EdgeInsets.only(bottom: 32),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            category,
+                                            style: text.titleMedium?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: colors.onSurface,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: colors.surface,
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                            border: Border.all(
-                                              color: colors.outlineVariant
-                                                  .withValues(alpha: 0.5),
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(
-                                                  alpha: 0.03,
-                                                ),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 2),
+                                          const SizedBox(height: 12),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: colors.surface,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: colors.outlineVariant
+                                                    .withValues(alpha: 0.5),
                                               ),
-                                            ],
-                                          ),
-                                          clipBehavior: Clip.antiAlias,
-                                          child: Column(
-                                            children: [
-                                              for (
-                                                int i = 0;
-                                                i < grouped[category]!.length;
-                                                i++
-                                              ) ...[
-                                                if (i > 0)
-                                                  Divider(
-                                                    height: 1,
-                                                    thickness: 1,
-                                                    color: colors.outlineVariant
-                                                        .withValues(alpha: 0.3),
-                                                    indent: 16,
-                                                  ),
-                                                SettingsRow(
-                                                  keyName:
-                                                      grouped[category]![i].key,
-                                                  value: grouped[category]![i]
-                                                      .value,
-                                                  onSave: (val) async {
-                                                    await provider.setConfig(
-                                                      grouped[category]![i].key,
-                                                      val,
-                                                    );
-                                                    if (context.mounted) {
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        const SnackBar(
-                                                          content: Text(
-                                                            "Setting saved",
-                                                          ),
-                                                          behavior:
-                                                              SnackBarBehavior
-                                                                  .floating,
-                                                          width: 200,
-                                                        ),
-                                                      );
-                                                    }
-                                                  },
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.03),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, 2),
                                                 ),
                                               ],
-                                            ],
+                                            ),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: Column(
+                                              children: [
+                                                for (
+                                                  int i = 0;
+                                                  i < grouped[category]!.length;
+                                                  i++
+                                                ) ...[
+                                                  if (i > 0)
+                                                    Divider(
+                                                      height: 1,
+                                                      thickness: 1,
+                                                      color: colors
+                                                          .outlineVariant
+                                                          .withValues(
+                                                            alpha: 0.3,
+                                                          ),
+                                                      indent: 16,
+                                                    ),
+                                                  SettingsRow(
+                                                    keyName:
+                                                        grouped[category]![i]
+                                                            .key,
+                                                    value: grouped[category]![i]
+                                                        .value,
+                                                    onSave: (val) async {
+                                                      await provider.setConfig(
+                                                        grouped[category]![i]
+                                                            .key,
+                                                        val,
+                                                      );
+                                                      if (context.mounted) {
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                              "Setting saved",
+                                                            ),
+                                                            behavior:
+                                                                SnackBarBehavior
+                                                                    .floating,
+                                                            width: 200,
+                                                          ),
+                                                        );
+                                                      }
+                                                    },
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ],
                             ),

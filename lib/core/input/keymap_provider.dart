@@ -6,7 +6,7 @@ import 'package:stress_pilot/core/input/shortcut_parser.dart';
 class KeymapProvider extends ChangeNotifier {
   final KeymapService _service = KeymapService();
   Map<String, String> _keymap = {};
-  List<MapEntry<SingleActivator, String>> _cachedActivators = [];
+  final List<MapEntry<SingleActivator, String>> _cachedActivators = [];
   bool _isLoading = false;
 
   Map<String, String> get keymap => _keymap;

@@ -19,7 +19,6 @@ class SessionManager {
 
   bool get isRefreshing => _isRefreshing;
 
-  
   void startAutoRefresh({Duration? interval}) {
     _keepAliveInterval = interval ?? _keepAliveInterval;
     _keepAliveTimer?.cancel();
@@ -31,17 +30,18 @@ class SessionManager {
         AppLogger.warning('Auto-refresh failed: $e', name: _logName);
       }
     });
-    AppLogger.info('Session auto-refresh started (every ${_keepAliveInterval.inMinutes}m)', name: _logName);
+    AppLogger.info(
+      'Session auto-refresh started (every ${_keepAliveInterval.inMinutes}m)',
+      name: _logName,
+    );
   }
 
-  
   void stopAutoRefresh() {
     _keepAliveTimer?.cancel();
     _keepAliveTimer = null;
     AppLogger.info('Session auto-refresh stopped', name: _logName);
   }
 
-  
   void dispose() {
     stopAutoRefresh();
   }
@@ -63,7 +63,7 @@ class SessionManager {
 
       try {
         final response = await _dio.get(
-          '/api/v1/utilities/healthz',
+          '/actuator/health',
           options: Options(
             sendTimeout: const Duration(seconds: 3),
             receiveTimeout: const Duration(seconds: 3),
@@ -76,7 +76,9 @@ class SessionManager {
           name: _logName,
         );
 
-        if (response.statusCode == 200 && response.data == 'OK') {
+        if (response.statusCode == 200 &&
+            response.data is Map &&
+            response.data['status'] == 'UP') {
           AppLogger.info('Backend is ready!', name: _logName);
           return true;
         } else {
@@ -157,7 +159,6 @@ class SessionManager {
             );
           }
 
-          
           try {
             startAutoRefresh();
           } catch (e) {

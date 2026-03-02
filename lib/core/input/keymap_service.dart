@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
+
+import 'package:stress_pilot/core/system/logger.dart';
 
 class KeymapService {
   static const String _dirName = '.pilot';
@@ -11,7 +11,7 @@ class KeymapService {
   Future<File> get _file async {
     final String home = Platform.environment['HOME'] ?? '/';
     final dir = Directory('$home/$_dirName/$_subDirName');
-    
+
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
@@ -24,35 +24,41 @@ class KeymapService {
       if (await file.exists()) {
         final content = await file.readAsString();
         final Map<String, dynamic> json = jsonDecode(content);
-        final loaded = json.map((key, value) => MapEntry(key, value.toString()));
-        
+        final loaded = json.map(
+          (key, value) => MapEntry(key, value.toString()),
+        );
+
         // Merge defaults with loaded config (loaded takes precedence)
         final merged = Map<String, String>.from(defaultKeymaps)..addAll(loaded);
-        
+
         // If we added new keys, save the updated config back to disk
         if (merged.length > loaded.length) {
           await saveKeymap(merged);
         }
-        
+
         return merged;
       } else {
         return _createDefaultKeymap(file);
       }
     } catch (e) {
-      print('Error loading keymap: $e');
+      AppLogger.warning('Error loading keymap: $e', name: 'KeymapService');
       return defaultKeymaps;
     }
   }
 
   Future<Map<String, String>> _createDefaultKeymap(File file) async {
     final defaults = defaultKeymaps;
-    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(defaults));
+    await file.writeAsString(
+      const JsonEncoder.withIndent('  ').convert(defaults),
+    );
     return defaults;
   }
 
   Future<void> saveKeymap(Map<String, String> keymap) async {
     final file = await _file;
-    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(keymap));
+    await file.writeAsString(
+      const JsonEncoder.withIndent('  ').convert(keymap),
+    );
   }
 
   Map<String, String> get defaultKeymaps => {

@@ -1,9 +1,25 @@
+import 'dart:convert';
+
 class Flow {
   final int id;
   final String name;
   final String? description;
   final int projectId;
   final List<FlowStep> steps;
+
+  static Map<String, dynamic>? _parseProcessor(dynamic value) {
+    if (value == null) return null;
+    if (value is Map<String, dynamic>) return value;
+    if (value is String) {
+      if (value.isEmpty) return null;
+      try {
+        return jsonDecode(value) as Map<String, dynamic>;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
 
   Flow({
     required this.id,
@@ -73,8 +89,8 @@ class FlowStep {
       nextIfTrue: json['nextIfTrue'],
       nextIfFalse: json['nextIfFalse'],
       condition: json['condition'],
-      preProcessor: json['preProcessor'],
-      postProcessor: json['postProcessor'],
+      preProcessor: Flow._parseProcessor(json['preProcessor']),
+      postProcessor: Flow._parseProcessor(json['postProcessor']),
     );
   }
 
