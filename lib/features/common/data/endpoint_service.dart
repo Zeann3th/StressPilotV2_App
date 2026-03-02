@@ -116,6 +116,9 @@ class EndpointService {
       data: requestBody,
     );
     if (response.statusCode == 200) {
+      if (response.extra.containsKey('rawWrapper')) {
+        return response.extra['rawWrapper'] as Map<String, dynamic>;
+      }
       return response.data as Map<String, dynamic>;
     } else {
       throw Exception('Failed to execute endpoint');

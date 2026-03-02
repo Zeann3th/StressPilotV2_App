@@ -33,6 +33,28 @@ class HttpClient {
 
     dio.interceptors.add(
       InterceptorsWrapper(
+        onResponse: (response, handler) {
+          if (response.data is Map<String, dynamic>) {
+            final data = response.data as Map<String, dynamic>;
+            if (data.containsKey('errorType')) {
+              if (data['errorType'] == 'FAILURE') {
+                return handler.reject(
+                  DioException(
+                    requestOptions: response.requestOptions,
+                    response: response,
+                    type: DioExceptionType.badResponse,
+                    message: data['message']?.toString() ?? 'API Error',
+                  ),
+                );
+              }
+              if (data.containsKey('data')) {
+                response.extra['rawWrapper'] = data;
+                response.data = data['data'];
+              }
+            }
+          }
+          return handler.next(response);
+        },
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
             AppLogger.warning(

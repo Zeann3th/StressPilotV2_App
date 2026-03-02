@@ -531,10 +531,15 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
       setState(() {
         _response = result;
-        _statusCode = result['statusCode'];
-        _responseTime = result['responseTimeMs'];
-        if (result.containsKey('success')) {
-          _isSuccess = result['success'] as bool?;
+        
+        final responseData = result.containsKey('data') && result['data'] is Map 
+            ? result['data'] as Map<String, dynamic> 
+            : result;
+
+        _statusCode = responseData['statusCode'];
+        _responseTime = responseData['responseTimeMs'];
+        if (responseData.containsKey('success')) {
+          _isSuccess = responseData['success'] as bool?;
         }
       });
     } catch (e) {
