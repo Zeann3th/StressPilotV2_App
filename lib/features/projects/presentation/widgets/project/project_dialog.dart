@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:stress_pilot/core/design/components.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
 import 'package:stress_pilot/features/projects/domain/project.dart';
 
 class ProjectDialogs {
@@ -9,155 +11,124 @@ class ProjectDialogs {
     final nameController = TextEditingController();
     final descController = TextEditingController();
 
-    showDialog(
+    PilotDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Create New Project'),
-        content: SizedBox(
-          width: 600,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Project Name',
-                  border: OutlineInputBorder(),
-                ),
-                autofocus: true,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-            ],
+      title: 'New Project',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _FieldLabel('Project Name'),
+          const SizedBox(height: 6),
+          PilotInput(
+            controller: nameController,
+            placeholder: 'My Load Test',
+            autofocus: true,
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a project name')),
-                );
-                return;
-              }
-
-              try {
-                await onCreate(
-                  nameController.text.trim(),
-                  descController.text.trim(),
-                );
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Project created successfully'),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              }
-            },
-            child: const Text('Create'),
+          const SizedBox(height: 16),
+          _FieldLabel('Description'),
+          const SizedBox(height: 6),
+          PilotInput(
+            controller: descController,
+            placeholder: 'Optional description...',
+            maxLines: 3,
           ),
         ],
       ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        ),
+        PilotButton.primary(
+          label: 'Create',
+          onPressed: () async {
+            if (nameController.text.trim().isEmpty) {
+              PilotToast.show(context, 'Please enter a project name', isError: true);
+              return;
+            }
+            try {
+              await onCreate(
+                nameController.text.trim(),
+                descController.text.trim(),
+              );
+              if (context.mounted) {
+                Navigator.of(context, rootNavigator: true).pop();
+                PilotToast.show(context, 'Project created');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                PilotToast.show(context, 'Error: $e', isError: true);
+              }
+            }
+          },
+        ),
+      ],
     );
   }
 
   static void showEditDialog(
     BuildContext context, {
     required Project project,
-    required Future<void> Function(int id, String name, String description)
-    onUpdate,
+    required Future<void> Function(int id, String name, String description) onUpdate,
   }) {
     final nameController = TextEditingController(text: project.name);
     final descController = TextEditingController(text: project.description);
 
-    showDialog(
+    PilotDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit Project'),
-        content: SizedBox(
-          width: 600,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Project Name',
-                  border: OutlineInputBorder(),
-                ),
-                autofocus: true,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-            ],
+      title: 'Edit Project',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _FieldLabel('Project Name'),
+          const SizedBox(height: 6),
+          PilotInput(
+            controller: nameController,
+            placeholder: 'My Load Test',
+            autofocus: true,
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a project name')),
-                );
-                return;
-              }
-
-              try {
-                await onUpdate(
-                  project.id,
-                  nameController.text.trim(),
-                  descController.text.trim(),
-                );
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Project updated successfully'),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              }
-            },
-            child: const Text('Update'),
+          const SizedBox(height: 16),
+          _FieldLabel('Description'),
+          const SizedBox(height: 6),
+          PilotInput(
+            controller: descController,
+            placeholder: 'Optional description...',
+            maxLines: 3,
           ),
         ],
       ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        ),
+        PilotButton.primary(
+          label: 'Save',
+          onPressed: () async {
+            if (nameController.text.trim().isEmpty) {
+              PilotToast.show(context, 'Please enter a project name', isError: true);
+              return;
+            }
+            try {
+              await onUpdate(
+                project.id,
+                nameController.text.trim(),
+                descController.text.trim(),
+              );
+              if (context.mounted) {
+                Navigator.of(context, rootNavigator: true).pop();
+                PilotToast.show(context, 'Project updated');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                PilotToast.show(context, 'Error: $e', isError: true);
+              }
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -166,41 +137,67 @@ class ProjectDialogs {
     required Project project,
     required Future<void> Function(int id) onDelete,
   }) {
-    showDialog(
+    PilotDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Project'),
-        content: Text('Are you sure you want to delete "${project.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+      title: 'Delete Project',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Are you sure you want to delete',
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+          const SizedBox(height: 4),
+          Text(
+            '"${project.name}"?',
+            style: AppTypography.bodyLg.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
             ),
-            onPressed: () async {
-              try {
-                await onDelete(project.id);
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Project deleted')),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              }
-            },
-            child: const Text('Delete'),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This action cannot be undone.',
+            style: AppTypography.caption.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        ),
+        PilotButton.danger(
+          label: 'Delete',
+          onPressed: () async {
+            try {
+              await onDelete(project.id);
+              if (context.mounted) {
+                Navigator.of(context, rootNavigator: true).pop();
+                PilotToast.show(context, 'Project deleted');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                PilotToast.show(context, 'Error: $e', isError: true);
+              }
+            }
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: AppTypography.label.copyWith(color: AppColors.textSecondary),
     );
   }
 }

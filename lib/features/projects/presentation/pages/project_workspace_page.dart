@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'package:stress_pilot/core/design/tokens.dart';
 import 'package:stress_pilot/features/common/presentation/app_sidebar.dart';
+import 'package:stress_pilot/features/projects/domain/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/common/presentation/provider/endpoint_provider.dart';
-import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
-import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_topbar.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_sidebar.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_command_bar.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_flow_tabs.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_node_library.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_canvas.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_flow_list.dart';
 
 class ProjectWorkspacePage extends StatefulWidget {
   const ProjectWorkspacePage({super.key});
@@ -18,135 +20,102 @@ class ProjectWorkspacePage extends StatefulWidget {
 }
 
 class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
-  flow.Flow? _selectedFlow;
-  SidebarTab _sidebarTab = SidebarTab.flows;
-  int? _lastLoadedProjectId; 
-  double _expandedWidth = 280.0; 
-  double? _dragWidth; 
+  flow_domain.Flow? _selectedFlow;
+  int? _lastLoadedProjectId;
+  bool _libraryCollapsed = false;
 
   @override
   void initState() {
     super.initState();
-    
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return; 
-      context.read<ProjectProvider>().loadProjects();
+      if (mounted) context.read<ProjectProvider>().loadProjects();
     });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    
-    
-    
     final project = context.watch<ProjectProvider>().selectedProject;
 
-    
     if (project != null && project.id != _lastLoadedProjectId) {
       _lastLoadedProjectId = project.id;
-      _resetWorkspaceState();
+      _selectedFlow = null;
 
-      
-      
-      final flowProvider = context.read<FlowProvider>();
-      final endpointProvider = context.read<EndpointProvider>();
-
-      
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        flowProvider.loadFlows(projectId: project.id);
-        endpointProvider.loadEndpoints(projectId: project.id);
+        context.read<FlowProvider>().loadFlows(projectId: project.id);
+        context.read<EndpointProvider>().loadEndpoints(projectId: project.id);
       });
     }
   }
 
-  void _resetWorkspaceState() {
-    
-    _selectedFlow = null;
-    _sidebarTab = SidebarTab.flows;
+  // Auto-select the first flow when the list loads and nothing is selected
+  void _maybeAutoSelect(List<flow_domain.Flow> flows) {
+    if (_selectedFlow == null && flows.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _selectedFlow = flows.first);
+        context.read<FlowProvider>().selectFlow(flows.first);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final project = context.watch<ProjectProvider>().selectedProject;
+
+    // Trigger auto-select whenever flows change
+    final flows = context.watch<FlowProvider>().flows;
+    _maybeAutoSelect(flows);
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: bg,
       body: Row(
         children: [
+          // ── Global app sidebar ───────────────────────────
           const AppSidebar(),
+
+          // ── Main workspace column ────────────────────────
           Expanded(
             child: Column(
               children: [
-                const WorkspaceTopBar(),
+                // Breadcrumb command bar
+                const WorkspaceCommandBar(),
+
+                // Flow tab strip
+                WorkspaceFlowTabs(
+                  selectedFlow: _selectedFlow,
+                  onFlowSelected: (f) => setState(() => _selectedFlow = f),
+                ),
+
+                // Canvas + node library row
                 Expanded(
                   child: Row(
-// Keep existing code
                     children: [
-                      Consumer<ProjectProvider>(
-                        builder: (context, projectProvider, child) {
-                          // If dragging, use drag width. Else use state width.
-                          final currentWidth = projectProvider.isSidebarCollapsed ? 60.0 : _expandedWidth;
-                          final width = _dragWidth ?? currentWidth;
-                          
-                          return SizedBox(
-                            width: width,
-                            child: WorkspaceSidebar(
-                              sidebarTab: _sidebarTab,
-                              onTabChanged: (tab) =>
-                                  setState(() => _sidebarTab = tab),
-                              selectedFlow: _selectedFlow,
-                              onFlowSelected: (flow) =>
-                                  setState(() => _selectedFlow = flow),
-                              isCollapsed: width < 180,
-                            ),
-                          );
-                        }
+                      // Node library (collapsible)
+                      AnimatedSize(
+                        duration: AppDurations.short,
+                        curve: Curves.easeInOut,
+                        child: _libraryCollapsed
+                            ? const SizedBox.shrink()
+                            : WorkspaceNodeLibrary(
+                                projectId: project?.id ?? 0,
+                                selectedFlow: _selectedFlow,
+                              ),
                       ),
-                      MouseRegion(
-                        cursor: SystemMouseCursors.resizeColumn,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          onHorizontalDragStart: (details) {
-                            final projectProvider = context.read<ProjectProvider>();
-                            setState(() {
-                              _dragWidth = projectProvider.isSidebarCollapsed ? 60.0 : _expandedWidth;
-                            });
-                          },
-                          onHorizontalDragUpdate: (details) {
-                            setState(() {
-                              if (_dragWidth == null) return;
-                              // Allow dragging bigger, min 60. Max 600.
-                              _dragWidth = (_dragWidth! + details.delta.dx).clamp(60.0, 600.0);
-                            });
-                          },
-                          onHorizontalDragEnd: (details) {
-                            final projectProvider = context.read<ProjectProvider>();
-                            if (_dragWidth != null) {
-                                if (_dragWidth! < 180) {
-                                  projectProvider.setSidebarCollapsed(true);
-                                } else {
-                                  projectProvider.setSidebarCollapsed(false);
-                                  _expandedWidth = _dragWidth!;
-                                }
-                            }
-                            setState(() {
-                              _dragWidth = null;
-                            });
-                          },
-                          child: Container(
-                            width: 8,
-                            color: Colors.transparent,
-                            alignment: Alignment.center,
-                            child: Container(
-                              width: 1,
-                              color: Theme.of(context).colorScheme.outlineVariant,
-                            ),
-                          ),
-                        ),
+
+                      // Collapse toggle handle
+                      _LibraryHandle(
+                        collapsed: _libraryCollapsed,
+                        onToggle: () =>
+                            setState(() => _libraryCollapsed = !_libraryCollapsed),
+                        border: border,
                       ),
+
+                      // Canvas fills the rest
                       Expanded(
                         child: WorkspaceCanvas(selectedFlow: _selectedFlow),
                       ),
@@ -157,6 +126,66 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Slim collapse handle between library and canvas ─────────────────────────
+
+class _LibraryHandle extends StatefulWidget {
+  final bool collapsed;
+  final VoidCallback onToggle;
+  final Color border;
+
+  const _LibraryHandle({
+    required this.collapsed,
+    required this.onToggle,
+    required this.border,
+  });
+
+  @override
+  State<_LibraryHandle> createState() => _LibraryHandleState();
+}
+
+class _LibraryHandleState extends State<_LibraryHandle> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onToggle,
+        child: AnimatedContainer(
+          duration: AppDurations.micro,
+          width: 16,
+          decoration: BoxDecoration(
+            color: _hovered
+                ? AppColors.accent.withValues(alpha: 0.06)
+                : Colors.transparent,
+            border: Border(
+              left: BorderSide(color: widget.border, width: 1),
+            ),
+          ),
+          child: Center(
+            child: AnimatedRotation(
+              turns: widget.collapsed ? 0.0 : 0.5,
+              duration: AppDurations.short,
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 14,
+                color: _hovered
+                    ? AppColors.accent
+                    : (isDark ? AppColors.textMuted : AppColors.textSecondary),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

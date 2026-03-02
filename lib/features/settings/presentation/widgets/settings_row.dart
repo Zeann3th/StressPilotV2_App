@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/design/components.dart';
 
 class SettingsRow extends StatefulWidget {
   final String keyName;
@@ -49,52 +51,38 @@ class _SettingsRowState extends State<SettingsRow> {
       return;
     }
 
-    final shouldSave = await showDialog<bool>(
+    final shouldSave = await PilotDialog.show<bool>(
       context: context,
-      builder: (context) {
-        final colors = Theme.of(context).colorScheme;
-        return AlertDialog(
-          backgroundColor: colors.surface,
-          surfaceTintColor: colors.surfaceTint,
-          title: const Text('Change Setting?'),
-          content: const Text(
-            'This change will only be applied after the next app restart.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-              ),
-              child: const Text('Confirm'),
-            ),
-          ],
-        );
-      },
+      title: 'Change Setting?',
+      content: Text(
+        'This change will only be applied after the next app restart.',
+        style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+      ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
+        ),
+        PilotButton.primary(
+          label: 'Confirm',
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
+        ),
+      ],
     );
 
     if (shouldSave == true) {
       await widget.onSave(newValue);
-      if (mounted) {
-        setState(() => _isEditing = false);
-      }
+      if (mounted) setState(() => _isEditing = false);
     } else {
       _controller.text = widget.value;
-      if (mounted) {
-        setState(() => _isEditing = false);
-      }
+      if (mounted) setState(() => _isEditing = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -104,11 +92,12 @@ class _SettingsRowState extends State<SettingsRow> {
         onTap: () {
           if (!_isEditing) setState(() => _isEditing = true);
         },
-        child: Container(
-          color: _isHovered
-              ? colors.primary.withValues(alpha: 0.05)
+        child: AnimatedContainer(
+          duration: AppDurations.micro,
+          color: _isHovered && !_isEditing
+              ? AppColors.accent.withValues(alpha: 0.04)
               : Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -116,8 +105,8 @@ class _SettingsRowState extends State<SettingsRow> {
                 flex: 4,
                 child: Text(
                   widget.keyName.replaceAll('_', ' '),
-                  style: text.bodyMedium?.copyWith(
-                    color: colors.onSurface,
+                  style: AppTypography.body.copyWith(
+                    color: textColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -130,28 +119,10 @@ class _SettingsRowState extends State<SettingsRow> {
                         onFocusChange: (hasFocus) {
                           if (!hasFocus) _handleSubmission();
                         },
-                        child: TextField(
+                        child: PilotInput(
                           controller: _controller,
                           autofocus: true,
                           onSubmitted: (_) => _handleSubmission(),
-                          style: text.bodyMedium?.copyWith(
-                            color: colors.onSurface,
-                            fontFamily: 'JetBrains Mono',
-                          ),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: colors.surfaceContainerHighest
-                                .withValues(alpha: 0.5),
-                          ),
                         ),
                       )
                     : Row(
@@ -159,14 +130,11 @@ class _SettingsRowState extends State<SettingsRow> {
                         children: [
                           Flexible(
                             child: Text(
-                              widget.value.isEmpty ? 'Not Set' : widget.value,
-                              style: text.bodyMedium?.copyWith(
+                              widget.value.isEmpty ? 'Not set' : widget.value,
+                              style: AppTypography.body.copyWith(
                                 color: widget.value.isEmpty
-                                    ? colors.onSurfaceVariant.withValues(
-                                        alpha: 0.7,
-                                      )
-                                    : colors.onSurfaceVariant,
-                                fontFamily: 'JetBrains Mono',
+                                    ? AppColors.textMuted
+                                    : AppColors.textSecondary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -174,13 +142,11 @@ class _SettingsRowState extends State<SettingsRow> {
                             ),
                           ),
                           if (_isHovered) ...[
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.chevron_right,
-                              size: 16,
-                              color: colors.onSurfaceVariant.withValues(
-                                alpha: 0.5,
-                              ),
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              size: 14,
+                              color: AppColors.textMuted,
                             ),
                           ],
                         ],

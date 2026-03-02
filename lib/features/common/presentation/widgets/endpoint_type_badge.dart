@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stress_pilot/core/design/components.dart';
 
 class EndpointTypeBadge extends StatelessWidget {
   final String type;
@@ -12,58 +13,45 @@ class EndpointTypeBadge extends StatelessWidget {
     this.inverse = false,
   });
 
-  Color _getTypeColor(String type) {
+  Color _colorForType(String type) {
     switch (type.toUpperCase()) {
       case 'HTTP':
-        return Colors.blue;
+        return const Color(0xFF3B82F6);
       case 'GRPC':
-        return Colors.teal;
+        return const Color(0xFF06B6D4);
       case 'WSS':
       case 'WS':
       case 'WEBSOCKET':
-        return Colors.orange;
+        return const Color(0xFFF59E0B);
       case 'GRAPHQL':
-        return Colors.pink;
+        return const Color(0xFFEC4899);
       case 'JDBC':
       case 'SQL':
-        return Colors.indigo;
+        return const Color(0xFF6366F1);
       case 'JS':
       case 'JAVASCRIPT':
-        return Colors.amber.shade700;
+        return const Color(0xFFF59E0B);
       default:
-        final int hash = type.hashCode;
         return HSLColor.fromAHSL(
           1.0,
-          (hash % 360).toDouble(),
-          0.7,
-          0.5,
+          (type.hashCode.abs() % 360).toDouble(),
+          0.65,
+          0.55,
         ).toColor();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _getTypeColor(type);
+    final color = _colorForType(type);
+    final label = type.toUpperCase().length > 4 && compact
+        ? type.toUpperCase().substring(0, 4)
+        : type.toUpperCase();
 
-    final textColor = inverse ? Colors.white : color;
-    final bgColor = inverse
-        ? Colors.white.withValues(alpha: 0.25)
-        : color.withValues(alpha: 0.1);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        type.toUpperCase().substring(0, compact && type.length > 4 ? 4 : null),
-        style: TextStyle(
-          fontSize: compact ? 10 : 11,
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
-      ),
+    return PilotBadge(
+      label: label,
+      color: inverse ? Colors.white : color,
+      compact: compact,
     );
   }
 }

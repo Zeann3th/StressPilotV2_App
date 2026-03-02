@@ -1,5 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/design/components.dart';
 
 class ProjectTopBar extends StatelessWidget {
   final TextEditingController searchController;
@@ -23,71 +24,60 @@ class ProjectTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: Theme.of(context).appBarTheme.backgroundColor,
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).dividerTheme.color!,
-            width: 1,
-          ),
-        ),
+        color: bg,
+        border: Border(bottom: BorderSide(color: border, width: 1)),
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(
-              CupertinoIcons.refresh,
-              color: Color(0xFF98989D),
-              size: 18,
+          Tooltip(
+            message: 'Refresh',
+            child: _HoverIconButton(
+              icon: Icons.refresh_rounded,
+              onTap: onRefresh,
             ),
-            onPressed: onRefresh,
-            tooltip: 'Refresh',
-            splashRadius: 20,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
 
           Expanded(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
-              height: 36,
-              child: CupertinoSearchTextField(
-                controller: searchController,
-                placeholder: 'Search projects',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontFamily: 'Inter', // or default
-                  fontSize: 13,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: SizedBox(
+                height: 34,
+                child: PilotInput(
+                  controller: searchController,
+                  placeholder: 'Search projects...',
+                  prefixIcon: Icons.search_rounded,
+                  onChanged: (_) => onSearchChanged(),
+                  onSubmitted: onSearchSubmitted,
                 ),
-                onChanged: (_) => onSearchChanged(),
-                onSubmitted: onSearchSubmitted,
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-                placeholderStyle: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 13,
-                ),
-                itemColor: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
-          const SizedBox(width: 16),
 
-          _ActionButton(
-            icon: CupertinoIcons.arrow_down_doc,
+          const SizedBox(width: 12),
+
+          PilotButton.ghost(
+            icon: Icons.download_rounded,
             label: 'Import',
             onPressed: onImport,
           ),
           const SizedBox(width: 8),
-          _ActionButton(
-            icon: CupertinoIcons.arrow_up_doc,
+          PilotButton.ghost(
+            icon: Icons.upload_rounded,
             label: 'Export',
             onPressed: onExport,
           ),
           const SizedBox(width: 8),
-          _PrimaryButton(
-            icon: CupertinoIcons.plus,
+          PilotButton.primary(
+            icon: Icons.add_rounded,
             label: 'New Project',
             onPressed: onAdd,
           ),
@@ -97,77 +87,43 @@ class ProjectTopBar extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+class _HoverIconButton extends StatefulWidget {
   final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
+  final VoidCallback onTap;
 
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
+  const _HoverIconButton({required this.icon, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
-    return CupertinoButton(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      minimumSize: const Size(0, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      borderRadius: BorderRadius.circular(8),
-      onPressed: onPressed,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 13,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  State<_HoverIconButton> createState() => _HoverIconButtonState();
 }
 
-class _PrimaryButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-
-  const _PrimaryButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
+class _HoverIconButtonState extends State<_HoverIconButton> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoButton(
-      color: const Color(0xFF007AFF),
-      minimumSize: const Size(0, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      borderRadius: BorderRadius.circular(8),
-      onPressed: onPressed,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.white),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: AppDurations.micro,
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: _hovered
+                ? AppColors.accent.withValues(alpha: 0.10)
+                : Colors.transparent,
+            borderRadius: AppRadius.br8,
           ),
-        ],
+          child: Icon(
+            widget.icon,
+            size: 16,
+            color: _hovered ? AppColors.accent : AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }

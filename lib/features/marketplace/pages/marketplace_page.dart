@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/design/components.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/marketplace/domain/models/nexus_artifact.dart';
 import 'package:stress_pilot/features/marketplace/presentation/provider/marketplace_provider.dart';
@@ -30,7 +31,6 @@ class _MarketplaceViewState extends State<_MarketplaceView> {
   @override
   void initState() {
     super.initState();
-    // Initial load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<MarketplaceProvider>();
       provider.loadInstalledPlugins();
@@ -39,31 +39,94 @@ class _MarketplaceViewState extends State<_MarketplaceView> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
     final provider = context.watch<MarketplaceProvider>();
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: bg,
       body: Column(
         children: [
-          _buildHeader(context),
-          Divider(height: 1, color: Theme.of(context).dividerTheme.color),
-          _buildFilterBar(context, provider),
-          Divider(height: 1, color: Theme.of(context).dividerTheme.color),
+          // Header
+          Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: surface,
+              border: Border(bottom: BorderSide(color: border, width: 1)),
+            ),
+            child: Row(
+              children: [
+                PilotButton.ghost(
+                  icon: Icons.arrow_back_rounded,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                const SizedBox(width: 12),
+                Icon(Icons.storefront_rounded, size: 18, color: AppColors.accent),
+                const SizedBox(width: 8),
+                Text(
+                  'Plugin Marketplace',
+                  style: AppTypography.heading.copyWith(color: textColor),
+                ),
+              ],
+            ),
+          ),
+
+          // Search bar
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+            color: surface,
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 34,
+                    child: PilotInput(
+                      controller: _searchController,
+                      placeholder: 'Search plugins...',
+                      prefixIcon: Icons.search_rounded,
+                      onChanged: (query) => provider.searchPlugins(query),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: border),
+
+          // Content
           Expanded(
             child: provider.isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  )
                 : provider.artifacts.isEmpty
                 ? _buildEmptyState(context, provider)
                 : GridView.builder(
                     padding: const EdgeInsets.all(24),
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 400,
-                          mainAxisExtent: 180, // slightly more compact
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
+                          maxCrossAxisExtent: 380,
+                          mainAxisExtent: 170,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
                         ),
                     itemCount: provider.artifacts.length,
                     itemBuilder: (context, index) {
@@ -82,87 +145,39 @@ class _MarketplaceViewState extends State<_MarketplaceView> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(CupertinoIcons.arrow_left),
-            tooltip: 'Back',
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          const SizedBox(width: 8),
-          Icon(
-            CupertinoIcons.cart_fill,
-            size: 20,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Plugin Marketplace',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterBar(BuildContext context, MarketplaceProvider provider) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      color: Theme.of(context).colorScheme.surface,
-      child: Row(
-        children: [
-          Expanded(
-            child: CupertinoSearchTextField(
-              controller: _searchController,
-              placeholder: 'Search plugins...',
-              onChanged: (query) => provider.searchPlugins(query),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEmptyState(BuildContext context, MarketplaceProvider provider) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(32),
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
-              color: colors.surfaceContainer,
-              shape: BoxShape.circle,
+              color: AppColors.accent.withValues(alpha: 0.10),
+              borderRadius: AppRadius.br12,
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
             ),
-            child: Icon(
-              CupertinoIcons.cube_box,
-              size: 64,
-              color: colors.primary,
+            child: const Icon(
+              Icons.extension_rounded,
+              size: 36,
+              color: AppColors.accent,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Text(
             provider.statusMessage.isNotEmpty
                 ? provider.statusMessage
                 : 'No plugins found',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: AppTypography.heading.copyWith(color: textColor),
           ),
           const SizedBox(height: 8),
           Text(
             'Try adjusting your search terms.',
-            style: TextStyle(color: colors.onSurfaceVariant),
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -172,7 +187,7 @@ class _MarketplaceViewState extends State<_MarketplaceView> {
 
 enum PluginStatus { notInstalled, installed, updateAvailable }
 
-class _PluginCard extends StatelessWidget {
+class _PluginCard extends StatefulWidget {
   final NexusArtifact artifact;
   final PluginStatus status;
   final VoidCallback onInstall;
@@ -184,125 +199,145 @@ class _PluginCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+  State<_PluginCard> createState() => _PluginCardState();
+}
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+class _PluginCardState extends State<_PluginCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: AppDurations.short,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: AppRadius.br12,
+          border: Border.all(
+            color: _hovered
+                ? AppColors.accent.withValues(alpha: 0.4)
+                : border,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.extension_rounded,
-                  color: colors.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      artifact.artifactId,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+          boxShadow: _hovered
+              ? [
+                  BoxShadow(
+                    color: AppColors.accent.withValues(alpha: 0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
+        ),
+        transform: Matrix4.translationValues(0, _hovered ? -2.0 : 0.0, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.10),
+                    borderRadius: AppRadius.br8,
+                    border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.2),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      artifact.groupId,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: colors.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  'v${artifact.version}',
-                  style: TextStyle(
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: 10,
-                    color: colors.onSurfaceVariant,
+                  ),
+                  child: const Icon(
+                    Icons.extension_rounded,
+                    color: AppColors.accent,
+                    size: 18,
                   ),
                 ),
-              ),
-              const Spacer(),
-              _buildActionButton(context),
-            ],
-          ),
-        ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.artifact.artifactId,
+                        style: AppTypography.bodyLg.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.artifact.groupId,
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkElevated,
+                    borderRadius: AppRadius.br4,
+                  ),
+                  child: Text(
+                    'v${widget.artifact.version}',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                _buildAction(),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildActionButton(BuildContext context) {
-    switch (status) {
+  Widget _buildAction() {
+    switch (widget.status) {
       case PluginStatus.installed:
-        return Icon(
-          Icons.check_circle,
-          size: 20,
-          color: Theme.of(context).colorScheme.primary,
+        return const Icon(
+          Icons.check_circle_rounded,
+          size: 18,
+          color: AppColors.accent,
         );
       case PluginStatus.updateAvailable:
-        return FilledButton.icon(
-          onPressed: onInstall,
-          icon: const Icon(Icons.system_update_alt, size: 14),
-          label: const Text('Update', style: TextStyle(fontSize: 12)),
-          style: FilledButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
+        return PilotButton.primary(
+          icon: Icons.system_update_alt_rounded,
+          label: 'Update',
+          compact: true,
+          onPressed: widget.onInstall,
         );
       case PluginStatus.notInstalled:
-        return FilledButton.icon(
-          onPressed: onInstall,
-          icon: const Icon(Icons.download_rounded, size: 14),
-          label: const Text('Install', style: TextStyle(fontSize: 12)),
-          style: FilledButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
+        return PilotButton.ghost(
+          icon: Icons.download_rounded,
+          label: 'Install',
+          compact: true,
+          onPressed: widget.onInstall,
         );
     }
   }

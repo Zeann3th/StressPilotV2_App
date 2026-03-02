@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
 
 class MetricsCard extends StatelessWidget {
   final String title;
@@ -16,48 +17,59 @@ class MetricsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colors.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.outlineVariant),
+        color: surface,
+        borderRadius: AppRadius.br12,
+        border: Border(left: BorderSide(color: color, width: 3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withValues(alpha: 0.20),
+                  color.withValues(alpha: 0.08),
+                ],
+              ),
+              borderRadius: AppRadius.br8,
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: colors.onSurfaceVariant,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  color: colors.onSurface,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'JetBrains Mono',
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: AppTypography.title.copyWith(color: textColor),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

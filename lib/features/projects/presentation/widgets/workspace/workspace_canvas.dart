@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
@@ -19,18 +20,45 @@ class WorkspaceCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
     if (selectedFlow == null) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.touch_app_outlined, size: 64, color: colors.outline),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.br12,
+                border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  width: 1,
+                ),
+                color: isDark
+                    ? AppColors.darkElevated
+                    : AppColors.lightElevated,
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.account_tree_outlined,
+                  size: 28,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
             Text(
-              'Select a flow to start designing',
-              style: TextStyle(color: colors.onSurfaceVariant),
+              'No flow selected',
+              style: AppTypography.bodyLg.copyWith(
+                color: isDark ? AppColors.textPrimary : AppColors.textLight,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Pick a flow tab above or create a new one',
+              style: AppTypography.body.copyWith(color: AppColors.textMuted),
             ),
           ],
         ),
@@ -662,24 +690,26 @@ class _CanvasContentState extends State<_CanvasContent> {
     ColorScheme colors,
     CanvasProvider provider,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(32),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: colors.surface.withValues(alpha: 0.9),
+            color: surfaceColor.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: colors.outlineVariant.withValues(alpha: 0.5),
-            ),
+            border: Border.all(color: borderColor, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -687,124 +717,82 @@ class _CanvasContentState extends State<_CanvasContent> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // --- Interaction Modes ---
-              _buildModeButton(
-                context,
-                provider,
-                CanvasMode.move,
-                Icons.pan_tool_rounded,
-                'Pan',
-              ),
-              const SizedBox(width: 8),
-              _buildModeButton(
-                context,
-                provider,
-                CanvasMode.connect,
-                Icons.cable_rounded,
-                'Link',
-              ),
+              _buildModeButton(context, provider, CanvasMode.move, Icons.pan_tool_rounded, 'Pan'),
+              const SizedBox(width: 6),
+              _buildModeButton(context, provider, CanvasMode.connect, Icons.cable_rounded, 'Link'),
 
-              Container(
-                width: 1,
-                height: 24,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                color: colors.outlineVariant,
-              ),
+              _ToolbarDivider(borderColor: borderColor),
 
               // --- View Controls ---
-              IconButton(
+              _ToolbarIcon(
                 tooltip: _isLocked ? 'Unlock Canvas' : 'Lock Canvas',
-                onPressed: _toggleLock,
-                icon: Icon(
-                  _isLocked ? Icons.lock : Icons.lock_open,
-                  color: _isLocked ? colors.primary : colors.onSurfaceVariant,
-                ),
+                onTap: _toggleLock,
+                icon: _isLocked ? Icons.lock : Icons.lock_open,
+                color: _isLocked ? AppColors.accent : AppColors.textMuted,
               ),
-              IconButton(
+              _ToolbarIcon(
                 tooltip: 'Zoom Out',
-                onPressed: () => _zoom(0.9),
-                icon: Icon(Icons.remove, color: colors.onSurface),
+                onTap: () => _zoom(0.9),
+                icon: Icons.remove_rounded,
+                color: AppColors.textSecondary,
               ),
-              IconButton(
+              _ToolbarIcon(
                 tooltip: 'Zoom In',
-                onPressed: () => _zoom(1.1),
-                icon: Icon(Icons.add, color: colors.onSurface),
+                onTap: () => _zoom(1.1),
+                icon: Icons.add_rounded,
+                color: AppColors.textSecondary,
               ),
-              IconButton(
+              _ToolbarIcon(
                 tooltip: 'Reset View',
-                onPressed: _centerCanvas,
-                icon: Icon(Icons.center_focus_strong, color: colors.onSurface),
+                onTap: _centerCanvas,
+                icon: Icons.center_focus_strong_rounded,
+                color: AppColors.textSecondary,
               ),
 
-              Container(
-                width: 1,
-                height: 24,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                color: colors.outlineVariant,
-              ),
+              _ToolbarDivider(borderColor: borderColor),
 
               // --- Actions ---
-              IconButton(
+              _ToolbarIcon(
                 tooltip: 'Show JSON',
-                onPressed: () => _showJsonPayload(context),
-                icon: Icon(Icons.code_rounded, color: colors.onSurfaceVariant),
+                onTap: () => _showJsonPayload(context),
+                icon: Icons.code_rounded,
+                color: AppColors.textMuted,
               ),
-              IconButton(
-                onPressed: () => _showClearConfirmation(context, provider),
-                icon: Icon(Icons.delete_sweep_outlined, color: colors.error),
+              _ToolbarIcon(
                 tooltip: 'Clear Canvas',
+                onTap: () => _showClearConfirmation(context, provider),
+                icon: Icons.delete_sweep_outlined,
+                color: AppColors.error,
               ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: provider.isSaving
+              _ToolbarIcon(
+                tooltip: 'Save Flow',
+                onTap: provider.isSaving
                     ? null
                     : () async {
                         final flowId = int.parse(widget.flowId);
                         final flowProvider = context.read<FlowProvider>();
-
                         try {
-                          await provider.saveFlowConfiguration(
-                            flowId,
-                            flowProvider,
-                          );
+                          await provider.saveFlowConfiguration(flowId, flowProvider);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Flow saved successfully!"),
-                              ),
+                              const SnackBar(content: Text('Flow saved.')),
                             );
                           }
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Error saving flow: $e")),
+                              SnackBar(content: Text('Error saving: $e')),
                             );
                           }
                         }
                       },
-                icon: provider.isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(Icons.save_outlined, color: colors.onSurface),
-                tooltip: 'Save Flow',
+                icon: Icons.save_outlined,
+                color: provider.isSaving ? AppColors.textMuted : AppColors.textSecondary,
+                loading: provider.isSaving,
               ),
-              const SizedBox(width: 12),
-              FilledButton.icon(
-                onPressed: () => _showRunDialog(context),
-                icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                label: const Text("Run"),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-              ),
+              const SizedBox(width: 8),
+              // Run button
+              _RunButton(onTap: () => _showRunDialog(context)),
             ],
           ),
         ),
@@ -820,40 +808,42 @@ class _CanvasContentState extends State<_CanvasContent> {
     String label,
   ) {
     final isSelected = provider.canvasMode == mode;
-    final colors = Theme.of(context).colorScheme;
 
-    return InkWell(
+    return GestureDetector(
       onTap: () => provider.setCanvasMode(mode),
-      borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        duration: AppDurations.micro,
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 12 : 10,
+          vertical: 7,
+        ),
         decoration: BoxDecoration(
           color: isSelected
-              ? colors.primary
-              : Colors.transparent, // High contrast active fill
-          borderRadius: BorderRadius.circular(24),
-          border: isSelected
-              ? null
-              : Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
+              ? AppColors.accent.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: AppRadius.br8,
+          border: Border.all(
+            color: isSelected
+                ? AppColors.accent.withValues(alpha: 0.5)
+                : Colors.transparent,
+            width: 1,
+          ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 20,
-              color: isSelected
-                  ? colors.onPrimary
-                  : colors.onSurface, // White icon on active
+              size: 16,
+              color: isSelected ? AppColors.accent : AppColors.textMuted,
             ),
             if (isSelected) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 14,
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.accent,
                   fontWeight: FontWeight.w600,
-                  color: colors.onPrimary, // White text on active
                 ),
               ),
             ],
@@ -1402,5 +1392,141 @@ class DraggableNodeWidget extends StatelessWidget {
           0.5, // Lightness
         ).toColor();
     }
+  }
+}
+
+// ─── Toolbar helpers ─────────────────────────────────────────────────────────
+
+class _ToolbarDivider extends StatelessWidget {
+  final Color borderColor;
+  const _ToolbarDivider({required this.borderColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 20,
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      color: borderColor,
+    );
+  }
+}
+
+class _ToolbarIcon extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final bool loading;
+
+  const _ToolbarIcon({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onTap,
+    this.loading = false,
+  });
+
+  @override
+  State<_ToolbarIcon> createState() => _ToolbarIconState();
+}
+
+class _ToolbarIconState extends State<_ToolbarIcon> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: widget.tooltip,
+      waitDuration: const Duration(milliseconds: 500),
+      child: MouseRegion(
+        cursor: widget.onTap != null
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: AppDurations.micro,
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: _hovered && widget.onTap != null
+                  ? widget.color.withValues(alpha: 0.1)
+                  : Colors.transparent,
+              borderRadius: AppRadius.br8,
+            ),
+            child: Center(
+              child: widget.loading
+                  ? SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        color: AppColors.textMuted,
+                      ),
+                    )
+                  : Icon(widget.icon, size: 16, color: widget.color),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RunButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _RunButton({required this.onTap});
+
+  @override
+  State<_RunButton> createState() => _RunButtonState();
+}
+
+class _RunButtonState extends State<_RunButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: AppDurations.micro,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: _hovered ? AppColors.accentHover : AppColors.accent,
+            borderRadius: AppRadius.br8,
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.play_arrow_rounded, size: 15, color: Colors.white),
+              const SizedBox(width: 5),
+              Text(
+                'Run',
+                style: AppTypography.caption.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

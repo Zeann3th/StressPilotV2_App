@@ -1,8 +1,9 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/design/components.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/results/data/run_service.dart';
@@ -21,7 +22,6 @@ class _RunsListPageState extends State<RunsListPage> {
   final _runService = getIt<RunService>();
   List<Run>? _runs;
   bool _isLoading = false;
-
   final Set<int> _exportingRunIds = {};
 
   @override
@@ -38,9 +38,7 @@ class _RunsListPageState extends State<RunsListPage> {
       setState(() => _runs = runs);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load runs: $e')));
+        PilotToast.show(context, 'Failed to load runs: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -49,248 +47,273 @@ class _RunsListPageState extends State<RunsListPage> {
 
   Future<void> _exportRun(Run run) async {
     if (_exportingRunIds.contains(run.id)) return;
-
-    setState(() {
-      _exportingRunIds.add(run.id);
-    });
-
+    setState(() => _exportingRunIds.add(run.id));
     try {
       final File? file = await _runService.exportRun(run);
       if (mounted) {
         if (file == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Export returned empty')),
-          );
+          PilotToast.show(context, 'Export returned empty', isError: true);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Export saved to ${file.path}')),
-          );
+          PilotToast.show(context, 'Exported to ${file.path}');
         }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
-      }
+      if (mounted) PilotToast.show(context, 'Export failed: $e', isError: true);
     } finally {
-      if (mounted) {
-        setState(() {
-          _exportingRunIds.remove(run.id);
-        });
-      }
+      if (mounted) setState(() => _exportingRunIds.remove(run.id));
     }
   }
 
   void _handleRunTap(Run run) {
-    if (run.status.toUpperCase() == 'RUNNING') {
+    final status = run.status.toUpperCase();
+    if (status == 'RUNNING') {
       Navigator.pushNamed(
         context,
         AppRouter.resultsRoute,
         arguments: {'runId': run.id},
       ).then((_) => _loadRuns());
-    } else if (run.status.toUpperCase() == 'COMPLETED') {
+    } else if (status == 'COMPLETED') {
       _exportRun(run);
-    } else {
-      if ([
-        'FAILED',
-        'ABORTED',
-        'CANCELED',
-      ].contains(run.status.toUpperCase())) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Run is ${run.status}. Cannot view live dashboard.'),
-          ),
-        );
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          widget.flowId != null ? 'Flow Runs' : 'All Runs',
-          style: TextStyle(
-            color: Theme.of(context).appBarTheme.foregroundColor,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF007AFF)),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: Theme.of(context).dividerTheme.color,
-            height: 1,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.refresh),
-            onPressed: _loadRuns,
-            color: const Color(0xFF007AFF),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CupertinoActivityIndicator())
-          : _runs == null
-          ? const Center(
-              child: Text(
-                'Failed to load runs',
-                style: TextStyle(color: Color(0xFF98989D)),
-              ),
-            )
-          : _runs!.isEmpty
-          ? const Center(
-              child: Text(
-                'No runs found',
-                style: TextStyle(color: Color(0xFF98989D)),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadRuns,
-              color: const Color(0xFF007AFF),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              child: ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: _runs!.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final run = _runs![index];
-                  return _buildRunTile(run);
-                },
-              ),
+      backgroundColor: bg,
+      body: Column(
+        children: [
+          // Topbar
+          Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: surface,
+              border: Border(bottom: BorderSide(color: border, width: 1)),
             ),
-    );
-  }
-
-  Widget _buildRunTile(Run run) {
-    final status = run.status.toUpperCase();
-    Color statusColor;
-    IconData statusIcon;
-
-    switch (status) {
-      case 'RUNNING':
-        statusColor = const Color(0xFF007AFF); // Blue
-        statusIcon = CupertinoIcons.play_circle;
-        break;
-      case 'COMPLETED':
-        statusColor = const Color(0xFF30D158); // Green
-        statusIcon = CupertinoIcons.check_mark_circled;
-        break;
-      case 'FAILED':
-        statusColor = const Color(0xFFFF453A); // Red
-        statusIcon = CupertinoIcons.exclamationmark_circle;
-        break;
-      default:
-        statusColor = const Color(0xFF8E8E93); // Gray
-        statusIcon = CupertinoIcons.question_circle;
-    }
-
-    final isExporting = _exportingRunIds.contains(run.id);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _handleRunTap(run),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(statusIcon, color: statusColor, size: 28),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Run #${run.id}',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              status,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Flow ID: ${run.flowId}',
-                        style: const TextStyle(
-                          color: Color(0xFF98989D),
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        DateFormat(
-                          'yyyy-MM-dd HH:mm:ss',
-                        ).format(run.startedAt.toLocal()),
-                        style: const TextStyle(
-                          color: Color(0xFF98989D),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+                PilotButton.ghost(
+                  icon: Icons.arrow_back_rounded,
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
-                if (status == 'RUNNING')
-                  const Icon(
-                    CupertinoIcons.chevron_right,
-                    size: 16,
-                    color: Color(0xFF636366),
-                  ),
-                if (status == 'COMPLETED')
-                  isExporting
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CupertinoActivityIndicator(radius: 10),
-                        )
-                      : const Icon(
-                          CupertinoIcons.arrow_down_doc,
-                          color: Color(0xFF007AFF),
-                        ),
+                const SizedBox(width: 12),
+                Text(
+                  widget.flowId != null ? 'Flow Runs' : 'All Runs',
+                  style: AppTypography.heading.copyWith(color: textColor),
+                ),
+                const Spacer(),
+                PilotButton.ghost(
+                  icon: Icons.refresh_rounded,
+                  onPressed: _loadRuns,
+                ),
               ],
             ),
           ),
+
+          Expanded(
+            child: _isLoading
+                ? Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  )
+                : _runs == null
+                ? Center(
+                    child: Text(
+                      'Failed to load runs',
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  )
+                : _runs!.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            borderRadius: AppRadius.br12,
+                            border: Border.all(color: border),
+                          ),
+                          child: const Icon(
+                            Icons.play_disabled_rounded,
+                            size: 32,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No runs found',
+                          style: AppTypography.heading.copyWith(
+                            color: textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadRuns,
+                    color: AppColors.accent,
+                    backgroundColor: surface,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _runs!.length,
+                      separatorBuilder: (context, _) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) =>
+                          _RunTile(
+                            run: _runs![index],
+                            isExporting: _exportingRunIds.contains(_runs![index].id),
+                            onTap: () => _handleRunTap(_runs![index]),
+                          ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RunTile extends StatefulWidget {
+  final Run run;
+  final bool isExporting;
+  final VoidCallback onTap;
+
+  const _RunTile({
+    required this.run,
+    required this.isExporting,
+    required this.onTap,
+  });
+
+  @override
+  State<_RunTile> createState() => _RunTileState();
+}
+
+class _RunTileState extends State<_RunTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+
+    final status = widget.run.status.toUpperCase();
+    final (statusColor, statusIcon) = _statusAppearance(status);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: AppDurations.micro,
+          decoration: BoxDecoration(
+            color: _hovered
+                ? AppColors.accent.withValues(alpha: 0.04)
+                : surface,
+            borderRadius: AppRadius.br12,
+            border: Border.all(
+              color: _hovered
+                  ? AppColors.accent.withValues(alpha: 0.25)
+                  : border,
+            ),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(statusIcon, color: statusColor, size: 24),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Run #${widget.run.id}',
+                          style: AppTypography.bodyLg.copyWith(
+                            color: textColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        PilotBadge(label: status, color: statusColor),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Flow ID: ${widget.run.flowId}',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('yyyy-MM-dd HH:mm:ss')
+                          .format(widget.run.startedAt.toLocal()),
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (status == 'RUNNING')
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: AppColors.textMuted,
+                ),
+              if (status == 'COMPLETED')
+                widget.isExporting
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.accent,
+                        ),
+                      )
+                    : Icon(
+                        Icons.download_rounded,
+                        color: AppColors.accent,
+                        size: 18,
+                      ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  (Color, IconData) _statusAppearance(String status) {
+    switch (status) {
+      case 'RUNNING':
+        return (const Color(0xFF3B82F6), Icons.play_circle_outline_rounded);
+      case 'COMPLETED':
+        return (AppColors.accent, Icons.check_circle_outline_rounded);
+      case 'FAILED':
+        return (AppColors.error, Icons.error_outline_rounded);
+      default:
+        return (AppColors.textMuted, Icons.help_outline_rounded);
+    }
   }
 }

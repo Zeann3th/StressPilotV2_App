@@ -75,7 +75,6 @@ class KeymapService {
     'project.view_all': 'Control+Shift+P',
     'nav.notifications': 'Control+Shift+N',
     'nav.runs': 'Control+R',
-    'nav.browser_spy': 'Control+Shift+B',
     'nav.marketplace': 'Control+Shift+M',
     'theme.toggle': 'Control+Shift+T',
   };

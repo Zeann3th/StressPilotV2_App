@@ -62,9 +62,6 @@ class _GlobalShortcutListenerState extends State<GlobalShortcutListener> {
       case 'nav.runs':
         AppNavigator.pushNamed(AppRouter.runsRoute);
         return true;
-      case 'nav.browser_spy':
-        AppNavigator.pushNamed(AppRouter.browserSpyRoute);
-        return true;
       case 'nav.marketplace':
         AppNavigator.pushNamed(AppRouter.marketplaceRoute);
         return true;
