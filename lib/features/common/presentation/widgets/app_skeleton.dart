@@ -50,128 +50,152 @@ class _AppSkeletonState extends State<AppSkeleton>
           // Real AppTopBar
           const AppTopBar(),
 
-          // Main split layout mirroring ProjectsPage
+          // Main unified container mirroring the new look
           Expanded(
-            child: Column(
-              children: [
-                // Upper half: Projects Area
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: surface,
-                        border: Border.all(color: border),
-                        borderRadius: AppRadius.br16,
-                      ),
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: AppRadius.br16,
+                border: Border.all(color: border.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: AppRadius.br16,
+                child: Column(
+                  children: [
+                    // Upper half: Projects Area
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Fake ProjectTopBar controls
-                          Row(
-                            children: [
-                              _ShimmerBox(ctrl: _shimmerCtrl, w: 240, h: 36, r: 8, base: shimmerBase, highlight: shimmerHighlight),
-                              const Spacer(),
-                              _ShimmerBox(ctrl: _shimmerCtrl, w: 90, h: 36, r: 8, base: shimmerBase, highlight: shimmerHighlight),
-                              const SizedBox(width: 8),
-                              _ShimmerBox(ctrl: _shimmerCtrl, w: 120, h: 36, r: 8, base: shimmerBase, highlight: shimmerHighlight),
-                            ],
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                _ShimmerBox(ctrl: _shimmerCtrl, w: 240, h: 36, r: 8, base: shimmerBase, highlight: shimmerHighlight),
+                                const Spacer(),
+                                _ShimmerBox(ctrl: _shimmerCtrl, w: 90, h: 36, r: 8, base: shimmerBase, highlight: shimmerHighlight),
+                                const SizedBox(width: 8),
+                                _ShimmerBox(ctrl: _shimmerCtrl, w: 120, h: 36, r: 8, base: shimmerBase, highlight: shimmerHighlight),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 8),
                           // Fake Table Header
-                          _ShimmerBox(ctrl: _shimmerCtrl, w: double.infinity, h: 24, r: 4, base: shimmerBase, highlight: shimmerHighlight),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _ShimmerBox(ctrl: _shimmerCtrl, w: double.infinity, h: 24, r: 4, base: shimmerBase, highlight: shimmerHighlight),
+                          ),
                           const SizedBox(height: 16),
                           // Fake Table Rows
-                          for (int i = 0; i < 4; i++) ...[
-                            _ShimmerBox(ctrl: _shimmerCtrl, w: double.infinity, h: 56, r: 8, base: shimmerBase, highlight: shimmerHighlight),
-                            const SizedBox(height: 12),
-                          ],
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Column(
+                                children: [
+                                  for (int i = 0; i < 4; i++) ...[
+                                    _ShimmerBox(ctrl: _shimmerCtrl, w: double.infinity, h: 56, r: 8, base: shimmerBase, highlight: shimmerHighlight),
+                                    const SizedBox(height: 12),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                ),
 
-                // Lower half: Left (Runs) and Right (Analytics)
-                Container(
-                  height: MediaQuery.of(context).size.height * 0.4,
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      // Left: Runs panel
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: surface,
-                            border: Border.all(color: border),
-                            borderRadius: AppRadius.br16,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Title
-                              _ShimmerBox(ctrl: _shimmerCtrl, w: 140, h: 24, r: 4, base: shimmerBase, highlight: shimmerHighlight),
-                              const SizedBox(height: 16),
-                              // Horizontal list of runs
-                              Expanded(
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: 3,
-                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                                  itemBuilder: (context, index) => _ShimmerBox(
-                                    ctrl: _shimmerCtrl,
-                                    w: 280,
-                                    h: double.infinity,
-                                    r: 8,
-                                    base: shimmerBase,
-                                    highlight: shimmerHighlight,
+                    // Lower half: Left (Runs) and Right (Analytics)
+                    Container(
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: border.withValues(alpha: 0.3))),
+                      ),
+                      child: Row(
+                        children: [
+                          // Left: Runs panel
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1A332D) : const Color(0xFFF8FAFC),
+                                border: Border.all(color: border),
+                                borderRadius: AppRadius.br12,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Title
+                                  _ShimmerBox(ctrl: _shimmerCtrl, w: 140, h: 24, r: 4, base: shimmerBase, highlight: shimmerHighlight),
+                                  const SizedBox(height: 16),
+                                  Expanded(
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: 3,
+                                      separatorBuilder: (context, index) => const SizedBox(width: 12),
+                                      itemBuilder: (context, index) => _ShimmerBox(
+                                        ctrl: _shimmerCtrl,
+                                        w: 280,
+                                        h: double.infinity,
+                                        r: 8,
+                                        base: shimmerBase,
+                                        highlight: shimmerHighlight,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                      
-                      const SizedBox(width: 16),
+                          
+                          const SizedBox(width: 16),
 
-                      // Right: Analytics panel
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: surface,
-                            border: Border.all(color: border),
-                            borderRadius: AppRadius.br16,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Title
-                              _ShimmerBox(ctrl: _shimmerCtrl, w: 100, h: 24, r: 4, base: shimmerBase, highlight: shimmerHighlight),
-                              const SizedBox(height: 24),
-                              // Big chart area
-                              Expanded(
-                                child: _ShimmerBox(
-                                  ctrl: _shimmerCtrl,
-                                  w: double.infinity,
-                                  h: double.infinity,
-                                  r: 12,
-                                  base: shimmerBase,
-                                  highlight: shimmerHighlight,
-                                ),
+                          // Right: Analytics panel
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1A332D) : const Color(0xFFF8FAFC),
+                                border: Border.all(color: border),
+                                borderRadius: AppRadius.br12,
                               ),
-                            ],
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Title
+                                  _ShimmerBox(ctrl: _shimmerCtrl, w: 100, h: 24, r: 4, base: shimmerBase, highlight: shimmerHighlight),
+                                  const SizedBox(height: 24),
+                                  // Big chart area
+                                  Expanded(
+                                    child: _ShimmerBox(
+                                      ctrl: _shimmerCtrl,
+                                      w: double.infinity,
+                                      h: double.infinity,
+                                      r: 12,
+                                      base: shimmerBase,
+                                      highlight: shimmerHighlight,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],

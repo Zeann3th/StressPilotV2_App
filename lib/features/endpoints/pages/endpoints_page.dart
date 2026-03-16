@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 
+import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 import '../domain/endpoint.dart';
 import '../presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_dialog.dart';
@@ -75,236 +76,254 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
 
     return Scaffold(
       backgroundColor: bg,
-      body: Row(
+      body: Column(
         children: [
-          // ── Sidebar ──
-          Container(
-            width: 300,
-            decoration: BoxDecoration(
-              color: surface,
-              border: Border(
-                right: BorderSide(
-                  color: border,
-                ),
+          const AppTopBar(),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: AppRadius.br16,
+                border: Border.all(color: border.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  offset: const Offset(2, 0),
-                  blurRadius: 8,
-                )
-              ],
-            ),
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                  child: Row(
-                    children: [
-                      Material(
-                        color: colors.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: () => Navigator.of(context).pop(),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Icon(LucideIcons.arrowLeft, size: 16, color: colors.onSurfaceVariant),
+              child: ClipRRect(
+                borderRadius: AppRadius.br16,
+                child: Row(
+                  children: [
+                    // ── Sidebar ──
+                    Container(
+                      width: 300,
+                      decoration: BoxDecoration(
+                        color: surface,
+                        border: Border(
+                          right: BorderSide(
+                            color: border.withValues(alpha: 0.3),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          widget.project.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: colors.onSurface,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Material(
-                        color: colors.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: () => EnvironmentManagerDialog.show(
-                            context,
-                            widget.project.environmentId,
-                            widget.project.name,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Icon(LucideIcons.layers, size: 16, color: colors.primary),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Search bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    height: 40,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search endpoints...',
-                        hintStyle: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
-                        prefixIcon: Icon(LucideIcons.search, size: 16, color: colors.onSurfaceVariant),
-                        filled: true,
-                        fillColor: isDark ? colors.surfaceContainerHighest : const Color(0xFFF0F0F5),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                        isDense: true,
-                      ),
-                      style: const TextStyle(fontSize: 13),
-                      onChanged: (value) {},
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // List header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 16, 8),
-                  child: Row(
-                    children: [
-                      Text(
-                        'ENDPOINTS',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.8,
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                      const Spacer(),
-                      Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(6),
-                          onTap: _createNewEndpoint,
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(LucideIcons.plus, size: 16, color: colors.onSurfaceVariant),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Endpoint list
-                Expanded(
-                  child: provider.isLoading
-                      ? Center(
-                          child: SizedBox(
-                            width: 20, height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: () => provider.refreshEndpoints(projectId: widget.project.id),
-                          child: ListView.builder(
-                            controller: _scrollCtrl,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: provider.endpoints.length + (provider.hasMore ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (index >= provider.endpoints.length) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  child: Center(
-                                    child: provider.isLoadingMore
-                                        ? SizedBox(
-                                            width: 16, height: 16,
-                                            child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
-                                          )
-                                        : const SizedBox.shrink(),
-                                  ),
-                                );
-                              }
-
-                              final ep = provider.endpoints[index];
-                              final isSelected = _selectedEndpoint?.id == ep.id;
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 2),
-                                child: Material(
-                                  color: isSelected
-                                      ? (isDark ? colors.primary.withValues(alpha: 0.15) : colors.primary.withValues(alpha: 0.08))
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(10),
+                      child: Column(
+                        children: [
+                          // Header
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                            child: Row(
+                              children: [
+                                Material(
+                                  color: colors.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(8),
                                   child: InkWell(
-                                    onTap: () => setState(() => _selectedEndpoint = ep),
-                                    borderRadius: BorderRadius.circular(10),
-                                    hoverColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                      decoration: isSelected ? BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 1),
-                                      ) : null,
-                                      child: Row(
-                                        children: [
-                                          EndpointTypeBadge(type: ep.type, compact: true, inverse: false),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              ep.name,
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                                color: isSelected ? colors.primary : colors.onSurface,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    onTap: () => Navigator.of(context).pop(),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Icon(LucideIcons.arrowLeft, size: 16, color: colors.onSurfaceVariant),
                                     ),
                                   ),
                                 ),
-                              );
-                            },
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    widget.project.name,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                      color: colors.onSurface,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Material(
+                                  color: colors.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(8),
+                                    onTap: () => EnvironmentManagerDialog.show(
+                                      context,
+                                      widget.project.environmentId,
+                                      widget.project.name,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Icon(LucideIcons.layers, size: 16, color: colors.primary),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                ),
-              ],
-            ),
-          ),
 
-          Expanded(
-            child: _selectedEndpoint == null
-                ? _EmptyState(
-                    projectId: widget.project.id,
-                    onCreated: (ep) => setState(() => _selectedEndpoint = ep),
-                  )
-                : _EndpointWorkspace(
-                    key: ValueKey(_selectedEndpoint!.id),
-                    endpoint: _selectedEndpoint!,
-                    projectId: widget.project.id,
-                    onDeleted: () async {
-                      await context.read<EndpointProvider>().deleteEndpoint(
-                            _selectedEndpoint!.id,
-                            widget.project.id,
-                          );
-                      setState(() => _selectedEndpoint = null);
-                    },
-                    onUpdated: (updated) =>
-                        setState(() => _selectedEndpoint = updated),
-                  ),
+                          // Search bar
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: SizedBox(
+                              height: 40,
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Search endpoints...',
+                                  hintStyle: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
+                                  prefixIcon: Icon(LucideIcons.search, size: 16, color: colors.onSurfaceVariant),
+                                  filled: true,
+                                  fillColor: isDark ? colors.surfaceContainerHighest : const Color(0xFFF0F0F5),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                  isDense: true,
+                                ),
+                                style: const TextStyle(fontSize: 13),
+                                onChanged: (value) {},
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // List header
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 16, 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'ENDPOINTS',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.8,
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Material(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(6),
+                                    onTap: _createNewEndpoint,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4),
+                                      child: Icon(LucideIcons.plus, size: 16, color: colors.onSurfaceVariant),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Endpoint list
+                          Expanded(
+                            child: provider.isLoading
+                                ? Center(
+                                    child: SizedBox(
+                                      width: 20, height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
+                                    ),
+                                  )
+                                : RefreshIndicator(
+                                    onRefresh: () => provider.refreshEndpoints(projectId: widget.project.id),
+                                    child: ListView.builder(
+                                      controller: _scrollCtrl,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      itemCount: provider.endpoints.length + (provider.hasMore ? 1 : 0),
+                                      itemBuilder: (context, index) {
+                                        if (index >= provider.endpoints.length) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            child: Center(
+                                              child: provider.isLoadingMore
+                                                  ? SizedBox(
+                                                      width: 16, height: 16,
+                                                      child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
+                                                    )
+                                                  : const SizedBox.shrink(),
+                                            ),
+                                          );
+                                        }
+
+                                        final ep = provider.endpoints[index];
+                                        final isSelected = _selectedEndpoint?.id == ep.id;
+
+                                        return Padding(
+                                          padding: const EdgeInsets.only(bottom: 2),
+                                          child: Material(
+                                            color: isSelected
+                                                ? (isDark ? colors.primary.withValues(alpha: 0.15) : colors.primary.withValues(alpha: 0.08))
+                                                : Colors.transparent,
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: InkWell(
+                                              onTap: () => setState(() => _selectedEndpoint = ep),
+                                              borderRadius: BorderRadius.circular(10),
+                                              hoverColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                                decoration: isSelected ? BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 1),
+                                                ) : null,
+                                                child: Row(
+                                                  children: [
+                                                    EndpointTypeBadge(type: ep.type, compact: true, inverse: false),
+                                                    const SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: Text(
+                                                        ep.name,
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                                          color: isSelected ? colors.primary : colors.onSurface,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Expanded(
+                      child: _selectedEndpoint == null
+                          ? _EmptyState(
+                              projectId: widget.project.id,
+                              onCreated: (ep) => setState(() => _selectedEndpoint = ep),
+                            )
+                          : _EndpointWorkspace(
+                              key: ValueKey(_selectedEndpoint!.id),
+                              endpoint: _selectedEndpoint!,
+                              projectId: widget.project.id,
+                              onDeleted: () async {
+                                await context.read<EndpointProvider>().deleteEndpoint(
+                                      _selectedEndpoint!.id,
+                                      widget.project.id,
+                                    );
+                                setState(() => _selectedEndpoint = null);
+                              },
+                              onUpdated: (updated) =>
+                                  setState(() => _selectedEndpoint = updated),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -15,11 +15,19 @@ class Project {
     required this.updatedAt,
   });
 
+  static int _toInt(dynamic value, [int defaultValue = 0]) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? defaultValue;
+    return defaultValue;
+  }
+
   factory Project.fromJson(Map<String, dynamic> json) => Project(
-    id: json['id'] ?? 0,
+    id: _toInt(json['id']),
     name: json['name'] ?? '',
     description: json['description'] ?? '',
-    environmentId: json['environmentId'] ?? json['environment_id'] ?? 0,
+    environmentId: _toInt(json['environmentId'] ?? json['environment_id']),
     createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
     updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
   );

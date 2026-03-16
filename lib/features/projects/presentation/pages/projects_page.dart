@@ -42,10 +42,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: bg,
       body: Column(
         children: [
           // Top global topbar
@@ -54,109 +56,102 @@ class _ProjectsPageState extends State<ProjectsPage> {
             onSearchSubmitted: _handleSearch,
           ),
 
-          // Split screen: upper half projects, lower half split into left (runs list) and right (analytics)
+          // Main content container with padding and rounded corners
           Expanded(
-            child: Column(
-              children: [
-                // Upper half: projects area
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkSurface
-                            : AppColors.lightSurface,
-                        border: Border.all(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.darkBorder.withValues(alpha: 0.3)
-                                : AppColors.lightBorder),
-                        borderRadius: AppRadius.br16,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: AppRadius.br16,
-                        child: Column(
-                          children: [
-                            // Project topbar controls (import/export/add/refresh)
-                            ProjectTopBar(
-                              searchController: _searchController,
-                              onRefresh: _handleRefresh,
-                              onAdd: _handleCreate,
-                              onImport: _handleImport,
-                              onExport: _handleExport,
-                              onSearchSubmitted: _handleSearch,
-                              onSearchChanged: () => setState(() {}),
-                            ),
-                            Expanded(child: _buildMainContent()),
-                          ],
-                        ),
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                borderRadius: AppRadius.br16,
+                border: Border.all(color: border.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: AppRadius.br16,
+                child: Column(
+                  children: [
+                    // Upper half: projects area
+                    Expanded(
+                      child: Column(
+                        children: [
+                          // Project topbar controls (import/export/add/refresh)
+                          ProjectTopBar(
+                            searchController: _searchController,
+                            onRefresh: _handleRefresh,
+                            onAdd: _handleCreate,
+                            onImport: _handleImport,
+                            onExport: _handleExport,
+                            onSearchSubmitted: _handleSearch,
+                            onSearchChanged: () => setState(() {}),
+                          ),
+                          Expanded(child: _buildMainContent()),
+                        ],
                       ),
                     ),
-                  ),
-                ),
 
-                // Lower half: left=recent runs / project details, right=analytics mock
-                Container(
-                  height: MediaQuery.of(context).size.height * 0.4,
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      // Left: Runs / project details (half width)
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.darkSurface
-                                : AppColors.lightSurface,
-                            border: Border.all(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? AppColors.darkBorder.withValues(alpha: 0.3)
-                                    : AppColors.lightBorder),
-                            borderRadius: AppRadius.br16,
-                          ),
-                          child: _RunsPanel(initialFlowId: widget.initialFlowId),
-                        ),
+                    // Lower half: left=recent runs / project details, right=analytics mock
+                    Container(
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: border.withValues(alpha: 0.3))),
                       ),
-
-                      const SizedBox(width: 16),
-
-                      // Right: Analytics / charts (mocked)
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.darkSurface
-                                : AppColors.lightSurface,
-                            border: Border.all(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? AppColors.darkBorder.withValues(alpha: 0.3)
-                                    : AppColors.lightBorder),
-                            borderRadius: AppRadius.br16,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Analytics', style: AppTypography.heading),
-                              const SizedBox(height: 12),
-                              Expanded(
-                                child: Center(
-                                  child: Text(
-                                    'Charts and KPIs will appear here (mock)',
-                                    style: AppTypography.body.copyWith(
-                                        color: AppColors.textSecondary),
-                                  ),
-                                ),
+                      child: Row(
+                        children: [
+                          // Left: Runs / project details (half width)
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkElevated : Colors.white,
+                                border: Border.all(color: border.withValues(alpha: 0.3)),
+                                borderRadius: AppRadius.br12,
                               ),
-                            ],
+                              child: _RunsPanel(initialFlowId: widget.initialFlowId),
+                            ),
                           ),
-                        ),
+
+                          const SizedBox(width: 16),
+
+                          // Right: Analytics / charts (mocked)
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkElevated : Colors.white,
+                                border: Border.all(color: border.withValues(alpha: 0.3)),
+                                borderRadius: AppRadius.br12,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Analytics', style: AppTypography.heading),
+                                  const SizedBox(height: 12),
+                                  Expanded(
+                                    child: Center(
+                                      child: Text(
+                                        'Charts and KPIs will appear here (mock)',
+                                        style: AppTypography.body.copyWith(
+                                            color: AppColors.textSecondary),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],

@@ -5,6 +5,8 @@ import 'package:stress_pilot/features/environments/presentation/provider/environ
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
 import 'package:stress_pilot/core/design/tokens.dart';
 
+import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
+
 class EnvironmentPage extends StatefulWidget {
   final int environmentId;
   final String projectName;
@@ -38,32 +40,59 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: surface,
-        scrolledUnderElevation: 0,
-        elevation: 4,
-        shadowColor: Colors.black.withValues(alpha: 0.2),
-        title: Text(
-          "Environment: ${widget.projectName}",
-          style: AppTypography.heading.copyWith(
-            color: textCol,
+      body: Column(
+        children: [
+          const AppTopBar(),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: AppRadius.br16,
+                border: Border.all(color: border.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: AppRadius.br16,
+                child: Column(
+                  children: [
+                    // Custom Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: surface,
+                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.arrow_back, color: textCol),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Environment: ${widget.projectName}",
+                            style: AppTypography.heading.copyWith(color: textCol),
+                          ),
+                          const Spacer(),
+                          _SaveButton(environmentId: widget.environmentId),
+                        ],
+                      ),
+                    ),
+                    const Expanded(child: EnvironmentTable()),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        centerTitle: false,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textCol),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, color: border),
-        ),
-        actions: [
-          _SaveButton(environmentId: widget.environmentId),
-          const SizedBox(width: 16),
         ],
       ),
-      body: const EnvironmentTable(),
     );
   }
 }

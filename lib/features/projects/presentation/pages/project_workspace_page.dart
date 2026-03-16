@@ -80,54 +80,72 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
 
           // Main workspace column
           Expanded(
-            child: Column(
-              children: [
-                // Breadcrumb command bar
-                const WorkspaceCommandBar(),
-
-                // Flow tab strip
-                WorkspaceFlowTabs(
-                  selectedFlow: selectedFlow,
-                  onFlowSelected: (f) {
-                    if (f != null) {
-                      context.read<FlowProvider>().selectFlow(f);
-                    }
-                  },
-                ),
-
-                // Canvas + node library row
-                Expanded(
-                  child: Row(
-                    children: [
-                      // Node library (collapsible)
-                      AnimatedSize(
-                        duration: AppDurations.short,
-                        curve: Curves.easeInOut,
-                        child: _libraryCollapsed
-                            ? const SizedBox.shrink()
-                            : WorkspaceNodeLibrary(
-                                projectId: project?.id ?? 0,
-                                selectedFlow: selectedFlow,
-                              ),
-                      ),
-
-                      // Collapse toggle handle
-                      _LibraryHandle(
-                        collapsed: _libraryCollapsed,
-                        onToggle: () => setState(
-                          () => _libraryCollapsed = !_libraryCollapsed,
-                        ),
-                        border: border,
-                      ),
-
-                      // Canvas fills the rest
-                      Expanded(
-                        child: WorkspaceCanvas(selectedFlow: selectedFlow),
-                      ),
-                    ],
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                borderRadius: AppRadius.br16,
+                border: Border.all(color: border.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
                   ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: AppRadius.br16,
+                child: Column(
+                  children: [
+                    // Breadcrumb command bar
+                    const WorkspaceCommandBar(),
+
+                    // Flow tab strip
+                    WorkspaceFlowTabs(
+                      selectedFlow: selectedFlow,
+                      onFlowSelected: (f) {
+                        if (f != null) {
+                          context.read<FlowProvider>().selectFlow(f);
+                        }
+                      },
+                    ),
+
+                    // Canvas + node library row
+                    Expanded(
+                      child: Row(
+                        children: [
+                          // Node library (collapsible)
+                          AnimatedSize(
+                            duration: AppDurations.short,
+                            curve: Curves.easeInOut,
+                            child: _libraryCollapsed
+                                ? const SizedBox.shrink()
+                                : WorkspaceNodeLibrary(
+                                    projectId: project?.id ?? 0,
+                                    selectedFlow: selectedFlow,
+                                  ),
+                          ),
+
+                          // Collapse toggle handle
+                          _LibraryHandle(
+                            collapsed: _libraryCollapsed,
+                            onToggle: () => setState(
+                              () => _libraryCollapsed = !_libraryCollapsed,
+                            ),
+                            border: border,
+                          ),
+
+                          // Canvas fills the rest
+                          Expanded(
+                            child: WorkspaceCanvas(selectedFlow: selectedFlow),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOutCubic),
           ),
         ],

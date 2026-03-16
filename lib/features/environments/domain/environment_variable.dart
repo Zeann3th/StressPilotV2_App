@@ -13,12 +13,20 @@ class EnvironmentVariable {
     required this.isActive,
   });
 
+  static int _toInt(dynamic value, [int defaultValue = 0]) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? defaultValue;
+    return defaultValue;
+  }
+
   factory EnvironmentVariable.fromJson(Map<String, dynamic> json) {
     return EnvironmentVariable(
-      id: json['id'],
-      environmentId: json['environmentId'],
-      key: json['key'],
-      value: json['value'],
+      id: _toInt(json['id']),
+      environmentId: _toInt(json['environmentId'] ?? json['environment_id']),
+      key: json['key'] ?? '',
+      value: json['value'] ?? '',
       isActive: json['isActive'] ?? true,
     );
   }

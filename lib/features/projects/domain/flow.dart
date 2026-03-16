@@ -9,11 +9,12 @@ class Flow {
 
   static Map<String, dynamic>? _parseProcessor(dynamic value) {
     if (value == null) return null;
-    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
     if (value is String) {
       if (value.isEmpty) return null;
       try {
-        return jsonDecode(value) as Map<String, dynamic>;
+        final decoded = jsonDecode(value);
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
       } catch (e) {
         return null;
       }
@@ -29,12 +30,20 @@ class Flow {
     this.steps = const [],
   });
 
+  static int _toInt(dynamic value, [int defaultValue = 0]) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? defaultValue;
+    return defaultValue;
+  }
+
   factory Flow.fromJson(Map<String, dynamic> json) {
     return Flow(
-      id: json['id'] ?? 0,
+      id: _toInt(json['id']),
       name: json['name'] ?? '',
       description: json['description'],
-      projectId: json['projectId'] ?? json['project_id'] ?? 0,
+      projectId: _toInt(json['projectId'] ?? json['project_id']),
       steps:
           (json['steps'] as List?)?.map((e) => FlowStep.fromJson(e)).toList() ??
           [],

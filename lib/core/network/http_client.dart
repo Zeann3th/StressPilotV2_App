@@ -3,7 +3,6 @@ import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:stress_pilot/core/config/app_config.dart';
-import 'package:stress_pilot/core/network/cache_interceptor.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 
@@ -31,8 +30,6 @@ class HttpClient {
     final jar = CookieJar();
 
     dio.interceptors.add(CookieManager(jar));
-
-    dio.interceptors.add(CacheInterceptor(ttl: const Duration(minutes: 5)));
 
     dio.interceptors.add(
       InterceptorsWrapper(

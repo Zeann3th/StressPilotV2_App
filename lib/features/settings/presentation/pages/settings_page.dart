@@ -5,6 +5,8 @@ import 'package:stress_pilot/core/design/components.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/settings_table.dart';
 
+import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -34,29 +36,54 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: bg,
       body: Column(
         children: [
-          // Custom topbar
-          Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: surface,
-              border: Border(bottom: BorderSide(color: border, width: 1)),
-            ),
-            child: Row(
-              children: [
-                PilotButton.ghost(
-                  icon: Icons.arrow_back_rounded,
-                  onPressed: () => Navigator.of(context).pop(),
+          const AppTopBar(),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: AppRadius.br16,
+                border: Border.all(color: border.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: AppRadius.br16,
+                child: Column(
+                  children: [
+                    // Custom topbar
+                    Container(
+                      height: 60,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: surface,
+                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3), width: 1)),
+                      ),
+                      child: Row(
+                        children: [
+                          PilotButton.ghost(
+                            icon: Icons.arrow_back_rounded,
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Settings',
+                            style: AppTypography.heading.copyWith(color: textColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Expanded(child: SettingsTable()),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  'Settings',
-                  style: AppTypography.heading.copyWith(color: textColor),
-                ),
-              ],
+              ),
             ),
           ),
-          const Expanded(child: SettingsTable()),
         ],
       ),
     );

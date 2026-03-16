@@ -9,6 +9,8 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/results/data/run_service.dart';
 import 'package:stress_pilot/features/results/domain/models/run.dart';
 
+import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
+
 class RunsListPage extends StatefulWidget {
   final int? flowId;
 
@@ -89,105 +91,124 @@ class _RunsListPageState extends State<RunsListPage> {
       backgroundColor: bg,
       body: Column(
         children: [
-          Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: surface,
-              border: Border(bottom: BorderSide(color: border, width: 1)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  offset: const Offset(0, 1),
-                  blurRadius: 4,
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                PilotButton.ghost(
-                  icon: Icons.arrow_back_rounded,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  widget.flowId != null ? 'Flow Runs' : 'All Runs',
-                  style: AppTypography.heading.copyWith(color: textColor),
-                ),
-                const Spacer(),
-                PilotButton.ghost(
-                  icon: Icons.refresh_rounded,
-                  onPressed: _loadRuns,
-                ),
-              ],
-            ),
-          ),
-
+          const AppTopBar(),
           Expanded(
-            child: _isLoading
-                ? Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.accent,
-                      ),
-                    ),
-                  )
-                : _runs == null
-                ? Center(
-                    child: Text(
-                      'Failed to load runs',
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  )
-                : _runs!.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            borderRadius: AppRadius.br12,
-                            border: Border.all(color: border),
-                          ),
-                          child: const Icon(
-                            Icons.play_disabled_rounded,
-                            size: 32,
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No runs found',
-                          style: AppTypography.heading.copyWith(
-                            color: textColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _loadRuns,
-                    color: AppColors.accent,
-                    backgroundColor: surface,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _runs!.length,
-                      separatorBuilder: (context, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) =>
-                          _RunTile(
-                            run: _runs![index],
-                            isExporting: _exportingRunIds.contains(_runs![index].id),
-                            onTap: () => _handleRunTap(_runs![index]),
-                          ),
-                    ),
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: AppRadius.br16,
+                border: Border.all(color: border.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
                   ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: AppRadius.br16,
+                child: Column(
+                  children: [
+                    // Custom inner topbar
+                    Container(
+                      height: 60,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: surface,
+                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3), width: 1)),
+                      ),
+                      child: Row(
+                        children: [
+                          PilotButton.ghost(
+                            icon: Icons.arrow_back_rounded,
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            widget.flowId != null ? 'Flow Runs' : 'All Runs',
+                            style: AppTypography.heading.copyWith(color: textColor),
+                          ),
+                          const Spacer(),
+                          PilotButton.ghost(
+                            icon: Icons.refresh_rounded,
+                            onPressed: _loadRuns,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Expanded(
+                      child: _isLoading
+                          ? Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            )
+                          : _runs == null
+                          ? Center(
+                              child: Text(
+                                'Failed to load runs',
+                                style: AppTypography.body.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            )
+                          : _runs!.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 72,
+                                    height: 72,
+                                    decoration: BoxDecoration(
+                                      borderRadius: AppRadius.br12,
+                                      border: Border.all(color: border),
+                                    ),
+                                    child: const Icon(
+                                      Icons.play_disabled_rounded,
+                                      size: 32,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No runs found',
+                                    style: AppTypography.heading.copyWith(
+                                      color: textColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _loadRuns,
+                              color: AppColors.accent,
+                              backgroundColor: surface,
+                              child: ListView.separated(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _runs!.length,
+                                separatorBuilder: (context, _) => const SizedBox(height: 8),
+                                itemBuilder: (context, index) =>
+                                    _RunTile(
+                                      run: _runs![index],
+                                      isExporting: _exportingRunIds.contains(_runs![index].id),
+                                      onTap: () => _handleRunTap(_runs![index]),
+                                    ),
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
