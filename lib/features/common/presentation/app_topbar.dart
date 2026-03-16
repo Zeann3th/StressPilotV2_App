@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/design/components.dart';
 import 'dart:io';
 
 import 'package:stress_pilot/core/di/locator.dart';
@@ -21,30 +22,7 @@ class AppTopBar extends StatefulWidget {
   State<AppTopBar> createState() => _AppTopBarState();
 }
 
-class _AppTopBarState extends State<AppTopBar>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseCtrl;
-  late Animation<double> _pulseAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
-    _pulseAnim = Tween<double>(
-      begin: 0.4,
-      end: 0.9,
-    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _pulseCtrl.dispose();
-    super.dispose();
-  }
-
+class _AppTopBarState extends State<AppTopBar> {
   @override
   Widget build(BuildContext context) {
     final themeManager = context.watch<ThemeManager>();
@@ -54,67 +32,42 @@ class _AppTopBarState extends State<AppTopBar>
     final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return Container(
-      height: 64,
+      height: 60,
+      margin: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: bg,
-        border: Border(bottom: BorderSide(color: border, width: 1)),
+        borderRadius: AppRadius.br16,
+        border: Border.all(color: border.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+          ),
+        ],
       ),
       child: Row(
         children: [
-          // Logo
-          AnimatedBuilder(
-            animation: _pulseAnim,
-            builder: (context, _) {
-              return Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: AppRadius.br8,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accent.withValues(
-                        alpha: _pulseAnim.value * 0.45,
-                      ),
-                      blurRadius: 12,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  LucideIcons.send,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              );
-            },
-          ),
+          // Spacer to push the search bar to the center
+          const Spacer(),
 
-          const SizedBox(width: 16),
-
-          // Global search (flexible center)
-          Expanded(
-            child: MouseRegion(
-              cursor: SystemMouseCursors.text,
-              child: TextField(
+          // Global search (fixed width, centered)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 350),
+            child: SizedBox(
+              height: 36,
+              child: PilotInput(
                 controller: widget.searchController,
                 onSubmitted: widget.onSearchSubmitted,
-                decoration: InputDecoration(
-                  hintText: 'Search projects, flows, runs...',
-                  isDense: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: border),
-                  ),
-                ),
+                placeholder: 'Search projects, endpoints...',
+                prefixIcon: Icons.search_rounded,
               ),
             ),
           ),
 
-          const SizedBox(width: 12),
+          // Spacer to push action icons to the right
+          const Spacer(),
 
           // Action icons (no text; tooltip on hover)
           _TopBarIcon(
@@ -216,4 +169,3 @@ class _TopBarIconState extends State<_TopBarIcon> {
     );
   }
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 
@@ -20,9 +21,9 @@ class FlowDialog {
     final projectId = projectProvider.selectedProject?.id;
 
     if (projectId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No project selected')));
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(content: Text('No project selected')),
+      );
       return;
     }
 
@@ -85,19 +86,15 @@ class FlowDialog {
                     projectId,
                   );
 
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Flow created successfully'),
-                      ),
-                    );
-                  }
+                  AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                    const SnackBar(
+                      content: Text('Flow created successfully'),
+                    ),
+                  );
                 } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: ${e.toString()}')),
-                    );
-                  }
+                  AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
                 }
               }
             },
@@ -179,19 +176,15 @@ class FlowDialog {
                         : descriptionController.text.trim(),
                   );
 
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Flow updated successfully'),
-                      ),
-                    );
-                  }
+                  AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                    const SnackBar(
+                      content: Text('Flow updated successfully'),
+                    ),
+                  );
                 } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: ${e.toString()}')),
-                    );
-                  }
+                  AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
                 }
               }
             },
@@ -230,17 +223,13 @@ class FlowDialog {
               try {
                 await onDelete(flow.id);
 
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Flow deleted successfully')),
-                  );
-                }
+                AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                  const SnackBar(content: Text('Flow deleted successfully')),
+                );
               } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: ${e.toString()}')),
-                  );
-                }
+                AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                  SnackBar(content: Text('Error: ${e.toString()}')),
+                );
               }
             },
             child: const Text('Delete'),

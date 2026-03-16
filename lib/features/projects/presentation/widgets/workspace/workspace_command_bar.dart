@@ -6,6 +6,7 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/environments/presentation/widgets/environment_dialog.dart';
 
 class WorkspaceCommandBar extends StatelessWidget {
   const WorkspaceCommandBar({super.key});
@@ -25,6 +26,13 @@ class WorkspaceCommandBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         border: Border(bottom: BorderSide(color: border, width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, 1),
+            blurRadius: 4,
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -58,37 +66,39 @@ class WorkspaceCommandBar extends StatelessWidget {
           const Spacer(),
 
           // Endpoints button
-          PilotButton.ghost(
-            icon: LucideIcons.network,
-            label: 'Endpoints',
-            compact: true,
-            onPressed: () {
-              if (project != null) {
-                AppNavigator.pushNamed(
-                  AppRouter.projectEndpointsRoute,
-                  arguments: {'project': project},
-                );
-              }
-            },
+          Tooltip(
+            message: 'Endpoints',
+            child: PilotButton.ghost(
+              icon: LucideIcons.network,
+              compact: true,
+              onPressed: () {
+                if (project != null) {
+                  AppNavigator.pushNamed(
+                    AppRouter.projectEndpointsRoute,
+                    arguments: {'project': project},
+                  );
+                }
+              },
+            ),
           ),
           const SizedBox(width: 6),
 
           // Environment button
-          PilotButton.ghost(
-            icon: LucideIcons.settings2,
-            label: 'Environment',
-            compact: true,
-            onPressed: () {
-              if (project != null) {
-                AppNavigator.pushNamed(
-                  AppRouter.projectEnvironmentRoute,
-                  arguments: {
-                    'environmentId': project.environmentId,
-                    'projectName': project.name,
-                  },
-                );
-              }
-            },
+          Tooltip(
+            message: 'Environment',
+            child: PilotButton.ghost(
+              icon: LucideIcons.settings2,
+              compact: true,
+              onPressed: () {
+                if (project != null) {
+                  EnvironmentManagerDialog.show(
+                    context,
+                    project.environmentId,
+                    project.name,
+                  );
+                }
+              },
+            ),
           ),
         ],
       ),

@@ -54,6 +54,7 @@ class PilotButton extends StatefulWidget {
 class _PilotButtonState extends State<PilotButton> {
   bool _isHovered = false;
   bool _isPressed = false;
+  bool _isFocused = false;
 
   @override
   Widget build(BuildContext context) {
@@ -67,54 +68,57 @@ class _PilotButtonState extends State<PilotButton> {
       case PilotButtonVariant.primary:
         if (_isPressed) {
           bgColor = AppColors.accentActive;
-        } else if (_isHovered) {
+        } else if (_isHovered || _isFocused) {
           bgColor = AppColors.accentHover;
         } else {
           bgColor = AppColors.accent;
         }
         textColor = Colors.white;
-        borderColor = Colors.transparent;
+        borderColor = _isFocused
+            ? Colors.white.withValues(alpha: 0.5)
+            : Colors.transparent;
         break;
 
       case PilotButtonVariant.ghost:
         if (_isPressed) {
           bgColor = AppColors.accent.withValues(alpha: 0.15);
-        } else if (_isHovered) {
+        } else if (_isHovered || _isFocused) {
           bgColor = AppColors.accent.withValues(alpha: 0.08);
         } else {
           bgColor = Colors.transparent;
         }
-        textColor = _isHovered
+        textColor = (_isHovered || _isFocused)
             ? AppColors.accentHover
             : (isDark ? AppColors.textPrimary : AppColors.textLight);
-        borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+        borderColor = _isFocused
+            ? AppColors.accent
+            : (isDark ? AppColors.darkBorder : AppColors.lightBorder);
         break;
 
       case PilotButtonVariant.danger:
         if (_isPressed) {
           bgColor = AppColors.error.withValues(alpha: 0.25);
-        } else if (_isHovered) {
+        } else if (_isHovered || _isFocused) {
           bgColor = AppColors.error.withValues(alpha: 0.12);
         } else {
           bgColor = Colors.transparent;
         }
         textColor = AppColors.error;
-        borderColor = AppColors.error.withValues(alpha: 0.4);
+        borderColor = _isFocused
+            ? AppColors.error
+            : AppColors.error.withValues(alpha: 0.4);
         break;
     }
 
     final vPad = widget.compact ? 6.0 : 8.0;
     final hPad = widget.compact ? 10.0 : 16.0;
 
-    return MouseRegion(
-      cursor: widget.onPressed != null
+    return FocusableActionDetector(
+      mouseCursor: widget.onPressed != null
           ? SystemMouseCursors.click
           : SystemMouseCursors.forbidden,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() {
-        _isHovered = false;
-        _isPressed = false;
-      }),
+      onShowFocusHighlight: (hasFocus) => setState(() => _isFocused = hasFocus),
+      onShowHoverHighlight: (hasHover) => setState(() => _isHovered = hasHover),
       child: GestureDetector(
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) {
@@ -123,12 +127,22 @@ class _PilotButtonState extends State<PilotButton> {
         },
         onTapCancel: () => setState(() => _isPressed = false),
         child: AnimatedContainer(
-          duration: AppDurations.micro,
+          key: ValueKey(isDark),
+          duration: AppDurations.short,
           padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: AppRadius.br8,
-            border: Border.all(color: borderColor, width: 1),
+            border: Border.all(color: borderColor, width: _isFocused ? 2 : 1),
+            boxShadow: _isFocused
+                ? [
+                    BoxShadow(
+                      color: borderColor.withValues(alpha: 0.3),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : [],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -228,36 +242,52 @@ class _PilotInputState extends State<PilotInput> {
         : (isDark ? AppColors.darkBorder : AppColors.lightBorder);
 
     return AnimatedContainer(
+      key: ValueKey(isDark),
       duration: AppDurations.short,
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: AppRadius.br8,
-        border: Border.all(color: borderColor, width: 1),
+        border: Border.all(
+          color: borderColor,
+          width: _isFocused && !widget.borderless ? 2 : 1,
+        ),
+        boxShadow: _isFocused && !widget.borderless
+            ? [
+                BoxShadow(
+                  color: AppColors.accent.withValues(alpha: 0.2),
+                  blurRadius: 4,
+                  spreadRadius: 1,
+                ),
+              ]
+            : [],
       ),
-      child: TextField(
-        controller: widget.controller,
-        focusNode: _focusNode,
-        autofocus: widget.autofocus,
-        maxLines: widget.maxLines,
-        onChanged: widget.onChanged,
-        onSubmitted: widget.onSubmitted,
-        style: (widget.style ?? AppTypography.body).copyWith(
-          color: isDark ? AppColors.textPrimary : AppColors.textLight,
-        ),
-        decoration: InputDecoration(
-          hintText: widget.placeholder,
-          hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
-          prefixIcon: widget.prefixIcon != null
-              ? Icon(widget.prefixIcon, size: 16, color: AppColors.textMuted)
-              : null,
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: widget.prefixIcon != null ? 4 : 12,
-            vertical: 10,
+      child: Padding(
+        padding: EdgeInsets.all(_isFocused && !widget.borderless ? 0.0 : 1.0),
+        child: TextField(
+          controller: widget.controller,
+          focusNode: _focusNode,
+          autofocus: widget.autofocus,
+          maxLines: widget.maxLines,
+          onChanged: widget.onChanged,
+          onSubmitted: widget.onSubmitted,
+          style: (widget.style ?? AppTypography.body).copyWith(
+            color: isDark ? AppColors.textPrimary : AppColors.textLight,
           ),
+          decoration: InputDecoration(
+            hintText: widget.placeholder,
+            hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
+            prefixIcon: widget.prefixIcon != null
+                ? Icon(widget.prefixIcon, size: 16, color: AppColors.textMuted)
+                : null,
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: widget.prefixIcon != null ? 4 : 12,
+              vertical: 10,
+            ),
+          ),
+          cursorColor: AppColors.accent,
         ),
-        cursorColor: AppColors.accent,
       ),
     );
   }
@@ -398,10 +428,7 @@ class PilotDialog extends StatelessWidget {
                   ),
                 ),
                 Divider(height: 1, color: border),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: content,
-                ),
+                Padding(padding: const EdgeInsets.all(24), child: content),
                 Divider(height: 1, color: border),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
@@ -436,10 +463,7 @@ class PilotToast {
   }) {
     final overlay = Overlay.of(context);
     final entry = OverlayEntry(
-      builder: (ctx) => _PilotToastWidget(
-        message: message,
-        isError: isError,
-      ),
+      builder: (ctx) => _PilotToastWidget(message: message, isError: isError),
     );
     overlay.insert(entry);
     Future.delayed(const Duration(seconds: 3), entry.remove);
@@ -464,10 +488,7 @@ class _PilotToastWidgetState extends State<_PilotToastWidget>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: AppDurations.short,
-    );
+    _ctrl = AnimationController(vsync: this, duration: AppDurations.short);
     _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
     _ctrl.forward();
     Future.delayed(const Duration(milliseconds: 2600), () {

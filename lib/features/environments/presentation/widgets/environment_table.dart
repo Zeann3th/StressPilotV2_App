@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/features/projects/domain/environment_variable.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
+import 'package:stress_pilot/features/environments/domain/environment_variable.dart';
+import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 
 class EnvironmentTable extends StatefulWidget {
   const EnvironmentTable({super.key});

@@ -16,14 +16,64 @@ import 'package:stress_pilot/features/settings/presentation/provider/setting_pro
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/core/input/global_shortcut_listener.dart';
-import 'package:stress_pilot/features/common/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
+import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
 import 'package:stress_pilot/features/common/presentation/layout.dart';
 
-class AppProviders extends StatelessWidget {
-  const AppProviders({super.key});
+class AppRoot extends StatefulWidget {
+  const AppRoot({super.key});
+
+  @override
+  State<AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<AppRoot> {
+  bool _initialized = false;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    try {
+      AppLogger.info('Starting application initialization', name: 'AppRoot');
+
+      await getIt<ProcessManager>().startBackend(attachLogs: kDebugMode);
+
+      AppLogger.info('Backend initialization complete.', name: 'AppRoot');
+
+      await getIt<SessionManager>().initializeSession();
+      await getIt<ThemeManager>().initialize();
+      await getIt<ProjectProvider>().initialize();
+      await getIt<KeymapProvider>().initialize();
+      await getIt<PluginCapabilityService>().initialize();
+
+      if (mounted) {
+        setState(() {
+          _initialized = true;
+        });
+      }
+
+      AppLogger.info('Application initialized successfully', name: 'AppRoot');
+    } catch (e, st) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+        });
+      }
+      AppLogger.critical(
+        'Application initialization failed',
+        name: 'AppRoot',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +107,33 @@ class AppProviders extends StatelessWidget {
           value: getIt<ThemeManager>(),
         ),
       ],
-      child: const GlobalShortcutListener(
-        child: _AppTheme(),
-      ),
+      child: _initialized && !_hasError
+          ? const GlobalShortcutListener(
+              child: _AppTheme(),
+            )
+          : const _AppLoadingTheme(),
+    );
+  }
+
+  @override
+  void dispose() {
+    getIt<ProcessManager>().forceKill().then((_) {});
+    try {
+      getIt<SessionManager>().dispose();
+    } catch (_) {}
+    super.dispose();
+  }
+}
+
+class _AppLoadingTheme extends StatelessWidget {
+  const _AppLoadingTheme();
+
+  @override
+  Widget build(BuildContext context) {
+    return ShadApp(
+      title: 'Stress Pilot',
+      debugShowCheckedModeBanner: false,
+      home: const AppSkeleton(),
     );
   }
 }
@@ -91,76 +165,12 @@ class _AppTheme extends StatelessWidget {
       darkTheme: themeManager.currentShadTheme ?? defaultShadTheme,
       onGenerateRoute: AppRouter.generateRoute,
       initialRoute: AppRouter.projectsRoute,
+      builder: (context, child) {
+        return ScaffoldMessenger(
+          key: AppNavigator.scaffoldMessengerKey,
+          child: child!,
+        );
+      },
     );
-  }
-}
-
-class AppRoot extends StatefulWidget {
-  const AppRoot({super.key});
-
-  @override
-  State<AppRoot> createState() => _AppRootState();
-}
-
-class _AppRootState extends State<AppRoot> {
-  bool _initialized = false;
-  bool _hasError = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _init();
-  }
-
-  Future<void> _init() async {
-    try {
-      AppLogger.info('Starting application initialization', name: 'AppRoot');
-
-      await getIt<ProcessManager>().startBackend(attachLogs: kDebugMode);
-
-      AppLogger.info('Backend initialization complete.', name: 'AppRoot');
-
-      await getIt<SessionManager>().initializeSession();
-      await getIt<ThemeManager>().initialize();
-      await getIt<ProjectProvider>().initialize();
-      await getIt<KeymapProvider>().initialize();
-      await getIt<PluginCapabilityService>().initialize();
-
-      setState(() {
-        _initialized = true;
-      });
-
-      AppLogger.info('Application initialized successfully', name: 'AppRoot');
-    } catch (e, st) {
-      _hasError = true;
-      AppLogger.critical(
-        'Application initialization failed',
-        name: 'AppRoot',
-        error: e,
-        stackTrace: st,
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_initialized && !_hasError) {
-      return const AppProviders();
-    }
-
-    return ShadApp(
-      title: 'Stress Pilot',
-      debugShowCheckedModeBanner: false,
-      home: const AppSkeleton(),
-    );
-  }
-
-  @override
-  void dispose() {
-    getIt<ProcessManager>().forceKill().then((_) {});
-    try {
-      getIt<SessionManager>().dispose();
-    } catch (_) {}
-    super.dispose();
   }
 }

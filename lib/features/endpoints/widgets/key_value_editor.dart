@@ -25,6 +25,14 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
     _initControllers();
   }
 
+  @override
+  void didUpdateWidget(KeyValueEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.data != oldWidget.data) {
+      _initControllers();
+    }
+  }
+
   void _initControllers() {
     _controllers = widget.data.entries
         .map(

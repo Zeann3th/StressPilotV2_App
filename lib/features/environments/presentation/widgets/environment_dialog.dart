@@ -1,8 +1,12 @@
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/environment_table.dart';
+import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
+import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/design/components.dart';
+
+import 'package:stress_pilot/core/navigation/app_router.dart';
 
 class EnvironmentManagerDialog extends StatefulWidget {
   final int environmentId;
@@ -20,21 +24,30 @@ class EnvironmentManagerDialog extends StatefulWidget {
     String projectName,
   ) {
     final provider = Provider.of<EnvironmentProvider>(context, listen: false);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return showDialog(
       context: context,
       builder: (context) => ChangeNotifierProvider.value(
         value: provider,
         child: Dialog(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
           surfaceTintColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(48), // Large dialog
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppRadius.br12,
+            side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
           ),
-          child: EnvironmentManagerDialog(
-            environmentId: environmentId,
-            projectName: projectName,
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+              borderRadius: AppRadius.br12,
+              border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            ),
+            child: EnvironmentManagerDialog(
+              environmentId: environmentId,
+              projectName: projectName,
+            ),
           ),
         ),
       ),
@@ -57,7 +70,7 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -66,7 +79,9 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              border: Border(bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder)),
             ),
             child: Row(
               children: [
@@ -75,18 +90,15 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
                   children: [
                     Text(
                       'Environment Variables',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: colors.onSurface,
+                      style: AppTypography.heading.copyWith(
+                        color: isDark ? AppColors.textPrimary : AppColors.textLight,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Project: ${widget.projectName}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colors.onSurfaceVariant,
+                      style: AppTypography.body.copyWith(
+                        color: isDark ? AppColors.textSecondary : AppColors.textLightSecondary,
                       ),
                     ),
                   ],
@@ -94,9 +106,10 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
                 const Spacer(),
                 _SaveButton(environmentId: widget.environmentId),
                 const SizedBox(width: 16),
-                IconButton(
-                  icon: Icon(Icons.close, color: colors.onSurface),
+                PilotButton.ghost(
+                  icon: LucideIcons.x,
                   onPressed: () => Navigator.of(context).pop(),
+                  compact: true,
                 ),
               ],
             ),
@@ -117,45 +130,30 @@ class _SaveButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<EnvironmentProvider>();
     final hasChanges = provider.hasChanges;
-    final colors = Theme.of(context).colorScheme;
 
-    return FilledButton.icon(
+    return PilotButton.primary(
+      icon: LucideIcons.save,
+      label: provider.isLoading ? 'Saving...' : 'Save Changes',
       onPressed: hasChanges && !provider.isLoading
           ? () async {
               try {
                 await provider.saveChanges(environmentId);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Changes saved successfully')),
-                  );
-                }
+                AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                  const SnackBar(
+                    content: Text('Changes saved successfully'),
+                    backgroundColor: AppColors.accent,
+                  ),
+                );
               } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: colors.error,
-                    ),
-                  );
-                }
+                AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
               }
             }
           : null,
-      icon: provider.isLoading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-          : const Icon(LucideIcons.save, size: 18),
-      label: const Text('Save Changes'),
-      style: FilledButton.styleFrom(
-        backgroundColor: colors.primary,
-        foregroundColor: colors.onPrimary,
-      ),
     );
   }
 }

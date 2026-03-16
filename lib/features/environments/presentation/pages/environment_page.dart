@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/environment_table.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
+import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
+import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
 
 class EnvironmentPage extends StatefulWidget {
   final int environmentId;
@@ -28,29 +30,33 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final textCol = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: colors.surface,
+        backgroundColor: surface,
         scrolledUnderElevation: 0,
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.2),
         title: Text(
           "Environment: ${widget.projectName}",
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-            color: colors.onSurface,
+          style: AppTypography.heading.copyWith(
+            color: textCol,
           ),
         ),
         centerTitle: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.onSurface),
+          icon: Icon(Icons.arrow_back, color: textCol),
           onPressed: () => Navigator.of(context).pop(),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, color: colors.outlineVariant),
+          child: Divider(height: 1, color: border),
         ),
         actions: [
           _SaveButton(environmentId: widget.environmentId),
@@ -76,20 +82,16 @@ class _SaveButton extends StatelessWidget {
           ? () async {
               try {
                 await provider.saveChanges(environmentId);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Changes saved successfully')),
-                  );
-                }
+                AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                  const SnackBar(content: Text('Changes saved successfully')),
+                );
               } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             }
           : null,

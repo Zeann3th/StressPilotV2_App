@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -168,48 +166,19 @@ class CanvasProvider extends ChangeNotifier {
   }
 
   Future<void> saveFlowLayout(String flowId, {bool silent = false}) async {
-    _isSaving = true;
-    if (!silent) notifyListeners();
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final layoutData = {
-        'nodes': _nodes.map((n) => n.toJson()).toList(),
-        'connections': _connections.map((c) => c.toJson()).toList(),
-      };
-      await prefs.setString('flow_layout_$flowId', jsonEncode(layoutData));
-    } finally {
-      _isSaving = false;
-      if (!silent) notifyListeners();
-    }
+    // Feature cancelled as per user request - we now load from DB every time
+    return;
   }
 
   Future<void> loadFlowLayout(String flowId) async {
     _isLoading = true;
+    _nodes = [];
+    _connections = [];
     notifyListeners();
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString('flow_layout_$flowId');
-
-      if (jsonString != null) {
-        final data = jsonDecode(jsonString);
-        _nodes = (data['nodes'] as List)
-            .map((e) => CanvasNode.fromJson(e))
-            .toList();
-        _connections = (data['connections'] as List)
-            .map((e) => CanvasConnection.fromJson(e))
-            .toList();
-      } else {
-        _nodes = [];
-        _connections = [];
-      }
-    } catch (e) {
-      debugPrint("Error loading layout: $e");
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    
+    // We don't load from SharedPreferences anymore
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> saveFlowConfiguration(
@@ -221,12 +190,10 @@ class CanvasProvider extends ChangeNotifier {
 
     try {
       final steps = generateFlowConfiguration();
-
       final updatedSteps = await flowProvider.configureFlow(flowId, steps);
-
-      syncWithBackend(updatedSteps);
-
-      await saveFlowLayout(flowId.toString(), silent: true);
+      
+      // After saving configuration to backend, we rebuild to ensure sync
+      rebuildFromSteps(updatedSteps);
     } finally {
       _isSaving = false;
       notifyListeners();
@@ -274,90 +241,111 @@ class CanvasProvider extends ChangeNotifier {
       if (node.data['preProcessor'] != null) {
         preProcessor = Map<String, dynamic>.from(node.data['preProcessor']);
       }
+      // Keep _temp_sync_id for backend syncing if needed, though we rebuild now
       preProcessor['_temp_sync_id'] = node.id;
 
       return FlowStep(
         id: node.id,
-
         type: type,
         endpointId: endpointId,
         nextIfTrue: nextIfTrue,
         nextIfFalse: nextIfFalse,
         condition: condition,
         preProcessor: preProcessor,
-
         postProcessor: node.data['postProcessor'],
       );
     }).toList();
   }
 
-  void syncWithBackend(List<FlowStep> responseSteps) {
-    debugPrint('[syncWithBackend] Syncing ${responseSteps.length} steps');
-    Map<String, String> idMap = {};
-    Map<String, FlowStep> stepMap = {}; // Map to quickly find steps by ID
+  void rebuildFromSteps(List<FlowStep> steps) {
+    _nodes.clear();
+    _connections.clear();
 
-    // Build ID mapping (temp ID -> real ID) and step lookup
-    for (var step in responseSteps) {
-      final oldId = step.preProcessor?['_temp_sync_id'];
-      if (oldId != null && oldId is String) {
-        idMap[oldId] = step.id;
-      }
-      stepMap[step.id] = step; // Always store step by its real ID
+    if (steps.isEmpty) {
+      notifyListeners();
+      return;
     }
 
-    // Update nodes with new IDs and merge processor data from backend
-    for (int i = 0; i < _nodes.length; i++) {
-      final nodeId = _nodes[i].id;
+    // Simple layout: Place nodes in a row or grid
+    double startX = 2500.0;
+    double startY = 2500.0;
+    double spacingX = 250.0;
+    double spacingY = 150.0;
 
-      // Try to find the backend step either by:
-      // 1. Mapping from temp ID to real ID (for newly created nodes)
-      // 2. Direct ID match (for nodes loaded from backend)
-      final newId = idMap[nodeId] ?? nodeId;
-      final backendStep = stepMap[newId];
-
-      if (backendStep != null) {
-        debugPrint('[syncWithBackend] Merging data for node $nodeId -> $newId');
-
-        final Map<String, dynamic> updatedData = Map.from(_nodes[i].data);
-
-        // Merge preProcessor from backend if it exists (excluding temp sync ID)
-        if (backendStep.preProcessor != null) {
-          final pre = Map<String, dynamic>.from(backendStep.preProcessor!);
-          pre.remove('_temp_sync_id');
-          updatedData['preProcessor'] = pre;
-        }
-
-        // Merge postProcessor from backend if it exists
-        if (backendStep.postProcessor != null) {
-          debugPrint(
-            '[syncWithBackend] Merging postProcessor: ${backendStep.postProcessor}',
-          );
-          updatedData['postProcessor'] = Map<String, dynamic>.from(
-            backendStep.postProcessor!,
-          );
-        }
-
-        _nodes[i] = _nodes[i].copyWith(id: newId, data: updatedData);
+    // First, create all nodes
+    for (int i = 0; i < steps.length; i++) {
+      final step = steps[i];
+      FlowNodeType type;
+      switch (step.type) {
+        case 'START':
+          type = FlowNodeType.start;
+          break;
+        case 'BRANCH':
+          type = FlowNodeType.branch;
+          break;
+        default:
+          type = FlowNodeType.endpoint;
       }
+
+      // Basic grid layout logic
+      double x = startX + (i % 5) * spacingX;
+      double y = startY + (i ~/ 5) * spacingY;
+
+      final node = CanvasNode(
+        id: step.id,
+        type: type,
+        position: Offset(x, y),
+        data: {
+          if (step.endpointId != null) 'id': step.endpointId,
+          if (step.condition != null) 'condition': step.condition,
+          if (step.preProcessor != null) 'preProcessor': step.preProcessor,
+          if (step.postProcessor != null) 'postProcessor': step.postProcessor,
+        },
+      );
+      _nodes.add(node);
     }
 
-    for (int i = 0; i < _connections.length; i++) {
-      final conn = _connections[i];
-      final newSource = idMap[conn.sourceNodeId] ?? conn.sourceNodeId;
-      final newTarget = idMap[conn.targetNodeId] ?? conn.targetNodeId;
+    // Then, create all connections
+    for (var step in steps) {
+      if (step.nextIfTrue != null) {
+        String? sourceHandle;
+        if (step.type == 'BRANCH') {
+          sourceHandle = 'true';
+        }
 
-      if (newSource != conn.sourceNodeId || newTarget != conn.targetNodeId) {
-        _connections[i] = CanvasConnection(
-          id: conn.id,
-          sourceNodeId: newSource,
-          targetNodeId: newTarget,
-          sourceHandle: conn.sourceHandle,
-          targetHandle: conn.targetHandle,
-        );
+        if (_nodes.any((n) => n.id == step.nextIfTrue)) {
+          _connections.add(
+            CanvasConnection(
+              id: const Uuid().v4(),
+              sourceNodeId: step.id,
+              targetNodeId: step.nextIfTrue!,
+              sourceHandle: sourceHandle,
+            ),
+          );
+        }
+      }
+
+      if (step.nextIfFalse != null && step.type == 'BRANCH') {
+        if (_nodes.any((n) => n.id == step.nextIfFalse)) {
+          _connections.add(
+            CanvasConnection(
+              id: const Uuid().v4(),
+              sourceNodeId: step.id,
+              targetNodeId: step.nextIfFalse!,
+              sourceHandle: 'false',
+            ),
+          );
+        }
       }
     }
 
     notifyListeners();
+  }
+
+  void syncWithBackend(List<FlowStep> responseSteps) {
+    // Since we now want to load everything from DB and draw nodes, 
+    // we use rebuildFromSteps instead of merging.
+    rebuildFromSteps(responseSteps);
   }
 
   void applyConfiguration(List<FlowStep> steps) {

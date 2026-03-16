@@ -31,10 +31,10 @@ class Flow {
 
   factory Flow.fromJson(Map<String, dynamic> json) {
     return Flow(
-      id: json['id'],
-      name: json['name'],
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
       description: json['description'],
-      projectId: json['projectId'],
+      projectId: json['projectId'] ?? json['project_id'] ?? 0,
       steps:
           (json['steps'] as List?)?.map((e) => FlowStep.fromJson(e)).toList() ??
           [],
@@ -83,14 +83,14 @@ class FlowStep {
 
   factory FlowStep.fromJson(Map<String, dynamic> json) {
     return FlowStep(
-      id: json['id'],
-      type: json['type'],
-      endpointId: json['endpointId'],
-      nextIfTrue: json['nextIfTrue'],
-      nextIfFalse: json['nextIfFalse'],
+      id: json['id'] ?? '',
+      type: json['type'] ?? 'ENDPOINT',
+      endpointId: json['endpointId'] ?? json['endpoint_id'],
+      nextIfTrue: json['nextIfTrue'] ?? json['next_if_true'],
+      nextIfFalse: json['nextIfFalse'] ?? json['next_if_false'],
       condition: json['condition'],
-      preProcessor: Flow._parseProcessor(json['preProcessor']),
-      postProcessor: Flow._parseProcessor(json['postProcessor']),
+      preProcessor: Flow._parseProcessor(json['preProcessor'] ?? json['pre_processor']),
+      postProcessor: Flow._parseProcessor(json['postProcessor'] ?? json['post_processor']),
     );
   }
 

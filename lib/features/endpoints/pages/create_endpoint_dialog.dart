@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../common/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
+import '../presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/marketplace/data/plugin_capability_service.dart';
 import '../widgets/key_value_editor.dart';
@@ -84,11 +85,9 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
         Navigator.pop(context, ep);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -176,6 +175,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                             border: const OutlineInputBorder(),
                             helperText: _getUrlHelper(),
                           ),
+                          onChanged: _handleUrlChanged,
                           validator: (v) {
                             if (_selectedType == 'JS') {
                               return null;
@@ -264,6 +264,50 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       return 'Can be left empty if script is self-contained';
     }
     return null;
+  }
+
+  void _handleUrlChanged(String value) {
+    if (value.trim().toLowerCase().startsWith('curl ')) {
+      _parseCurlCommand(value);
+    }
+  }
+
+  void _parseCurlCommand(String curlCommand) {
+    String method = 'GET';
+    String url = '';
+    Map<String, String> headers = {};
+    String body = '';
+
+    final urlMatch = RegExp(r'''['"]?(https?://[^'"\s]+)['"]?''').firstMatch(curlCommand);
+    if (urlMatch != null) {
+      url = urlMatch.group(1)!;
+    }
+
+    final methodMatch = RegExp(r'''-X\s+(['"]?)([A-Z]+)\1''').firstMatch(curlCommand);
+    if (methodMatch != null) {
+      method = methodMatch.group(2)!;
+    } else if (curlCommand.contains('-d') || curlCommand.contains('--data')) {
+      method = 'POST';
+    }
+
+    final headerRegExp = RegExp(r'''(?:-H|--header)\s+['"]([^:]+):\s*(.*?)['"]''');
+    for (final match in headerRegExp.allMatches(curlCommand)) {
+      headers[match.group(1)!.trim()] = match.group(2)!.trim();
+    }
+
+    final dataRegExp = RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+('([^']*)'|"([^"]*)")''');
+    final dataMatch = dataRegExp.firstMatch(curlCommand);
+    if (dataMatch != null) {
+      body = dataMatch.group(2) ?? dataMatch.group(3) ?? '';
+    }
+
+    setState(() {
+      _urlCtrl.text = url;
+      _selectedType = 'HTTP';
+      _httpMethod = method;
+      _headers = {...headers};
+      _bodyCtrl.text = body;
+    });
   }
 
   Widget _buildHttpFields(ColorScheme colors) {

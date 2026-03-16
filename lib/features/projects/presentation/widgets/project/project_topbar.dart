@@ -33,7 +33,7 @@ class ProjectTopBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: bg,
-        border: Border(bottom: BorderSide(color: border, width: 1)),
+        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3), width: 1)),
       ),
       child: Row(
         children: [
@@ -44,42 +44,31 @@ class ProjectTopBar extends StatelessWidget {
               onTap: onRefresh,
             ),
           ),
-          const SizedBox(width: 12),
+          
+          const Spacer(),
 
-          Expanded(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 380),
-              child: SizedBox(
-                height: 34,
-                child: PilotInput(
-                  controller: searchController,
-                  placeholder: 'Search projects...',
-                  prefixIcon: Icons.search_rounded,
-                  onChanged: (_) => onSearchChanged(),
-                  onSubmitted: onSearchSubmitted,
-                ),
-              ),
+          Tooltip(
+            message: 'Import',
+            child: PilotButton.ghost(
+              icon: Icons.download_rounded,
+              onPressed: onImport,
             ),
           ),
-
-          const SizedBox(width: 12),
-
-          PilotButton.ghost(
-            icon: Icons.download_rounded,
-            label: 'Import',
-            onPressed: onImport,
+          const SizedBox(width: 8),
+          Tooltip(
+            message: 'Export',
+            child: PilotButton.ghost(
+              icon: Icons.upload_rounded,
+              onPressed: onExport,
+            ),
           ),
           const SizedBox(width: 8),
-          PilotButton.ghost(
-            icon: Icons.upload_rounded,
-            label: 'Export',
-            onPressed: onExport,
-          ),
-          const SizedBox(width: 8),
-          PilotButton.primary(
-            icon: Icons.add_rounded,
-            label: 'New Project',
-            onPressed: onAdd,
+          Tooltip(
+            message: 'New Project',
+            child: PilotButton.primary(
+              icon: Icons.add_rounded,
+              onPressed: onAdd,
+            ),
           ),
         ],
       ),

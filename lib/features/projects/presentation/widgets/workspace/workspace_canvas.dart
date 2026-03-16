@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/design/tokens.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
@@ -509,7 +510,7 @@ class _CanvasContentState extends State<_CanvasContent> {
                             // The original code tried to show success snackbar using inner context *after pop*. This is risky.
                             //
                           } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
                               SnackBar(
                                 content: Text('Invalid JSON: $e'),
                                 backgroundColor: colors.error,
@@ -544,24 +545,22 @@ class _CanvasContentState extends State<_CanvasContent> {
       canvasProvider.updateNodeData(node.id, result);
 
       // Auto-save to backend
+      final errorColor = Theme.of(context).colorScheme.error;
       try {
         final flowId = int.parse(widget.flowId);
         await canvasProvider.saveFlowConfiguration(flowId, flowProvider);
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node configuration saved')),
-          );
-        }
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(content: Text('Node configuration saved')),
+        );
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to save configuration: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        }
+        // We use the captured errorColor here to avoid using context after async gap
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text('Failed to save configuration: $e'),
+            backgroundColor: errorColor,
+          ),
+        );
       }
     }
   }
@@ -773,17 +772,13 @@ class _CanvasContentState extends State<_CanvasContent> {
                         final flowProvider = context.read<FlowProvider>();
                         try {
                           await provider.saveFlowConfiguration(flowId, flowProvider);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Flow saved.')),
-                            );
-                          }
+                          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                            const SnackBar(content: Text('Flow saved.')),
+                          );
                         } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error saving: $e')),
-                            );
-                          }
+                          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+                            SnackBar(content: Text('Error saving: $e')),
+                          );
                         }
                       },
                 icon: Icons.save_outlined,

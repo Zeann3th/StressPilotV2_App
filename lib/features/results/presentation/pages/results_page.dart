@@ -10,6 +10,8 @@ import 'package:stress_pilot/features/results/domain/models/run.dart';
 import 'package:stress_pilot/features/results/presentation/widgets/metrics_card.dart';
 import 'package:stress_pilot/features/results/presentation/widgets/realtime_chart.dart';
 import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
 
 class ResultsPage extends StatefulWidget {
   final int runId;
@@ -128,9 +130,9 @@ class _ResultsPageState extends State<ResultsPage> {
     } catch (e) {
       debugPrint('Failed to load run: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load run: $e')));
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(content: Text('Failed to load run: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _loadingRun = false);
@@ -171,25 +173,19 @@ class _ResultsPageState extends State<ResultsPage> {
       final svc = getIt<RunService>();
       final File? file = await svc.exportRun(_currentRun!);
       if (file == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Export returned empty')),
-          );
-        }
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(content: Text('Export returned empty')),
+        );
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Export saved to ${file.path}')),
-          );
-        }
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(content: Text('Export saved to ${file.path}')),
+        );
       }
     } catch (e) {
       debugPrint('Export failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
     } finally {
       setState(() => _exporting = false);
     }
@@ -204,27 +200,31 @@ class _ResultsPageState extends State<ResultsPage> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResultsProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final textCol = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: bg,
       appBar: AppBar(
         title: Text(
           'Live Run Dashboard',
-          style: TextStyle(
-            color: Theme.of(context).appBarTheme.foregroundColor,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
+          style: AppTypography.heading.copyWith(
+            color: textCol,
           ),
         ),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        iconTheme: const IconThemeData(
-          color: Color(0xFF007AFF),
-        ), // Back button blue
+        backgroundColor: surface,
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.2),
+        iconTheme: IconThemeData(
+          color: AppColors.accent,
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
-            color: Theme.of(context).colorScheme.outlineVariant,
+            color: border,
             height: 1,
           ),
         ),
@@ -274,27 +274,29 @@ class _ResultsPageState extends State<ResultsPage> {
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: IconButton(
-              icon: _exporting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+            child: Tooltip(
+              message: 'Export',
+              child: IconButton(
+                icon: _exporting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        LucideIcons.fileDown,
+                        color: Color(0xFF007AFF),
                       ),
-                    )
-                  : const Icon(
-                      LucideIcons.fileDown,
-                      color: Color(0xFF007AFF),
-                    ),
-              tooltip: 'Export Run',
-              onPressed:
-                  (_currentRun != null &&
-                      _currentRun!.status.toUpperCase() == 'COMPLETED' &&
-                      !_exporting)
-                  ? () => _exportRun()
-                  : null,
+                onPressed:
+                    (_currentRun != null &&
+                        _currentRun!.status.toUpperCase() == 'COMPLETED' &&
+                        !_exporting)
+                    ? () => _exportRun()
+                    : null,
+              ),
             ),
           ),
         ],
@@ -425,12 +427,24 @@ class _ResultsPageState extends State<ResultsPage> {
         ? Colors.green
         : (status == 'FAILED' ? Colors.red : Colors.blue);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textCol = isDark ? AppColors.textPrimary : AppColors.textLight;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
+        border: Border.all(color: border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 6,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,10 +455,8 @@ class _ResultsPageState extends State<ResultsPage> {
             children: [
               Text(
                 'Run #${_currentRun!.id}',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                style: AppTypography.heading.copyWith(
+                  color: textCol,
                 ),
               ),
               Container(

@@ -61,22 +61,36 @@ class _ProjectsPageState extends State<ProjectsPage> {
                 // Upper half: projects area
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        // Project topbar controls (import/export/add/refresh)
-                        ProjectTopBar(
-                          searchController: _searchController,
-                          onRefresh: _handleRefresh,
-                          onAdd: _handleCreate,
-                          onImport: _handleImport,
-                          onExport: _handleExport,
-                          onSearchSubmitted: _handleSearch,
-                          onSearchChanged: () => setState(() {}),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurface,
+                        border: Border.all(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkBorder.withValues(alpha: 0.3)
+                                : AppColors.lightBorder),
+                        borderRadius: AppRadius.br16,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: AppRadius.br16,
+                        child: Column(
+                          children: [
+                            // Project topbar controls (import/export/add/refresh)
+                            ProjectTopBar(
+                              searchController: _searchController,
+                              onRefresh: _handleRefresh,
+                              onAdd: _handleCreate,
+                              onImport: _handleImport,
+                              onExport: _handleExport,
+                              onSearchSubmitted: _handleSearch,
+                              onSearchChanged: () => setState(() {}),
+                            ),
+                            Expanded(child: _buildMainContent()),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        Expanded(child: _buildMainContent()),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -90,36 +104,36 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       // Left: Runs / project details (half width)
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Theme.of(context).brightness == Brightness.dark
                                 ? AppColors.darkSurface
                                 : AppColors.lightSurface,
                             border: Border.all(
                                 color: Theme.of(context).brightness == Brightness.dark
-                                    ? AppColors.darkBorder
+                                    ? AppColors.darkBorder.withValues(alpha: 0.3)
                                     : AppColors.lightBorder),
-                            borderRadius: AppRadius.br12,
+                            borderRadius: AppRadius.br16,
                           ),
                           child: _RunsPanel(initialFlowId: widget.initialFlowId),
                         ),
                       ),
 
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
 
                       // Right: Analytics / charts (mocked)
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Theme.of(context).brightness == Brightness.dark
                                 ? AppColors.darkSurface
                                 : AppColors.lightSurface,
                             border: Border.all(
                                 color: Theme.of(context).brightness == Brightness.dark
-                                    ? AppColors.darkBorder
+                                    ? AppColors.darkBorder.withValues(alpha: 0.3)
                                     : AppColors.lightBorder),
-                            borderRadius: AppRadius.br12,
+                            borderRadius: AppRadius.br16,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,23 +249,19 @@ class _ProjectsPageState extends State<ProjectsPage> {
   Future<void> _handleImport() async {
     try {
       await context.read<ProjectProvider>().importProject();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Project imported successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text('Project imported successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to import project: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text('Failed to import project: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -259,7 +269,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
     final provider = context.read<ProjectProvider>();
 
     if (provider.projects.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
         const SnackBar(
           content: Text('No projects available to export'),
           backgroundColor: Colors.orange,
@@ -301,23 +311,19 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
     try {
       await provider.exportProject(selectedProject.id, selectedProject.name);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Project exported successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text('Project exported successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to export project: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text('Failed to export project: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }
@@ -364,11 +370,9 @@ class _RunsPanelState extends State<_RunsPanel>
       if (mounted) setState(() => _runs = filtered);
       _ctrl.forward();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load runs: $e')),
-        );
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text('Failed to load runs: $e')),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -387,22 +391,18 @@ class _RunsPanelState extends State<_RunsPanel>
   Future<void> _exportRun(run_model.Run run) async {
     try {
       final file = await _runService.exportRun(run);
-      if (mounted) {
-        if (file == null) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Export returned empty'),
-              backgroundColor: Colors.orange));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Exported to ${file.path}'),
-              backgroundColor: Colors.green));
-        }
+      if (file == null) {
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(const SnackBar(
+            content: Text('Export returned empty'),
+            backgroundColor: Colors.orange));
+      } else {
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(SnackBar(
+            content: Text('Exported to ${file.path}'),
+            backgroundColor: Colors.green));
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Export failed: $e'), backgroundColor: Colors.red));
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(SnackBar(
+        content: Text('Export failed: $e'), backgroundColor: Colors.red));
     }
   }
 

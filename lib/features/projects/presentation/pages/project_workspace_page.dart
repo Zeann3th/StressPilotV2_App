@@ -7,7 +7,7 @@ import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
-import 'package:stress_pilot/features/common/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_command_bar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_flow_tabs.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_node_library.dart';
@@ -21,7 +21,6 @@ class ProjectWorkspacePage extends StatefulWidget {
 }
 
 class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
-  flow_domain.Flow? _selectedFlow;
   int? _lastLoadedProjectId;
   bool _libraryCollapsed = false;
 
@@ -40,10 +39,10 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
 
     if (project != null && project.id != _lastLoadedProjectId) {
       _lastLoadedProjectId = project.id;
-      _selectedFlow = null;
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        context.read<FlowProvider>().clearFlow();
         context.read<FlowProvider>().loadFlows(projectId: project.id);
         context.read<EndpointProvider>().loadEndpoints(projectId: project.id);
       });
@@ -51,11 +50,10 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   }
 
   // Auto-select the first flow when the list loads and nothing is selected
-  void _maybeAutoSelect(List<flow_domain.Flow> flows) {
-    if (_selectedFlow == null && flows.isNotEmpty) {
+  void _maybeAutoSelect(List<flow_domain.Flow> flows, flow_domain.Flow? selectedFlow) {
+    if (selectedFlow == null && flows.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        setState(() => _selectedFlow = flows.first);
         context.read<FlowProvider>().selectFlow(flows.first);
       });
     }
@@ -70,7 +68,8 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
 
     // Trigger auto-select whenever flows change
     final flows = context.watch<FlowProvider>().flows;
-    _maybeAutoSelect(flows);
+    final selectedFlow = context.watch<FlowProvider>().selectedFlow;
+    _maybeAutoSelect(flows, selectedFlow);
 
     return Scaffold(
       backgroundColor: bg,
@@ -88,8 +87,12 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
 
                 // Flow tab strip
                 WorkspaceFlowTabs(
-                  selectedFlow: _selectedFlow,
-                  onFlowSelected: (f) => setState(() => _selectedFlow = f),
+                  selectedFlow: selectedFlow,
+                  onFlowSelected: (f) {
+                    if (f != null) {
+                      context.read<FlowProvider>().selectFlow(f);
+                    }
+                  },
                 ),
 
                 // Canvas + node library row
@@ -104,7 +107,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                             ? const SizedBox.shrink()
                             : WorkspaceNodeLibrary(
                                 projectId: project?.id ?? 0,
-                                selectedFlow: _selectedFlow,
+                                selectedFlow: selectedFlow,
                               ),
                       ),
 
@@ -119,7 +122,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
 
                       // Canvas fills the rest
                       Expanded(
-                        child: WorkspaceCanvas(selectedFlow: _selectedFlow),
+                        child: WorkspaceCanvas(selectedFlow: selectedFlow),
                       ),
                     ],
                   ),

@@ -87,7 +87,7 @@ class FlowProvider extends ChangeNotifier {
     try {
       final created = await _flowService.createFlow(request);
       _flows.insert(0, created);
-      notifyListeners();
+      await selectFlow(created);
       return created;
     } catch (e) {
       _error = e.toString();
@@ -130,14 +130,27 @@ class FlowProvider extends ChangeNotifier {
 
   Future<void> deleteFlow(int flowId) async {
     try {
+      final isDeletingSelected = _selectedFlow?.id == flowId;
+      
       await _flowService.deleteFlow(flowId);
       _flows.removeWhere((f) => f.id == flowId);
 
-      if (_selectedFlow?.id == flowId) {
-        await clearFlow();
+      if (isDeletingSelected) {
+        if (_flows.isNotEmpty) {
+          _selectedFlow = _flows.first;
+          final prefs = await SharedPreferences.getInstance();
+          final jsonString = jsonEncode(_selectedFlow!.toJson());
+          await prefs.setString(_selectedFlowKey, jsonString);
+        } else {
+          _selectedFlow = null;
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove(_selectedFlowKey);
+        }
+        // Notify immediately after changing selection to let UI react
+        notifyListeners();
+      } else {
+        notifyListeners();
       }
-
-      notifyListeners();
     } catch (e) {
       _error = e.toString();
       notifyListeners();

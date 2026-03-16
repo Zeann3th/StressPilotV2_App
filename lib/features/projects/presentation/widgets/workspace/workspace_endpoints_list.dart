@@ -1,12 +1,13 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
-import 'package:stress_pilot/features/common/domain/endpoint.dart'
+import 'package:stress_pilot/features/endpoints/domain/endpoint.dart'
     as domain_endpoint;
-import 'package:stress_pilot/features/common/presentation/widgets/endpoint_type_badge.dart';
+import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_type_badge.dart';
 import '../../../domain/canvas.dart';
-import '../../../../common/presentation/provider/endpoint_provider.dart';
+import '../../../../endpoints/presentation/provider/endpoint_provider.dart';
 
 class WorkspaceEndpointsList extends StatefulWidget {
   final flow.Flow? selectedFlow;
@@ -56,11 +57,9 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
       if (result != null && result.files.single.path != null) {
         final filePath = result.files.single.path!;
 
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Uploading endpoints...')),
-          );
-        }
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(content: Text('Uploading endpoints...')),
+        );
 
         if (!context.mounted) return;
 
@@ -69,21 +68,17 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
           projectId: widget.projectId,
         );
 
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Endpoints uploaded successfully')),
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Upload failed: $e'),
-            backgroundColor: Colors.red,
-          ),
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(content: Text('Endpoints uploaded successfully')),
         );
       }
+    } catch (e) {
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text('Upload failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

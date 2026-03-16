@@ -16,12 +16,12 @@ class Project {
   });
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
-    id: json['id'],
-    name: json['name'],
-    description: json['description'],
-    environmentId: json['environmentId'],
-    createdAt: DateTime.parse(json['createdAt']),
-    updatedAt: DateTime.parse(json['updatedAt']),
+    id: json['id'] ?? 0,
+    name: json['name'] ?? '',
+    description: json['description'] ?? '',
+    environmentId: json['environmentId'] ?? json['environment_id'] ?? 0,
+    createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+    updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
   );
 
   Map<String, dynamic> toJson() => {

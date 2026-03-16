@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/endpoints/pages/endpoints_page.dart';
 import 'package:stress_pilot/features/projects/domain/project.dart';
-import 'package:stress_pilot/features/projects/presentation/pages/environment_page.dart';
+import 'package:stress_pilot/features/environments/presentation/pages/environment_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
@@ -75,6 +75,9 @@ class AppNavigator {
 
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
+
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
   static Future<T?> pushNamed<T extends Object?>(
     String routeName, {

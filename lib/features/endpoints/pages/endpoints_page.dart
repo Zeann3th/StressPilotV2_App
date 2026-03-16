@@ -2,16 +2,18 @@ import 'dart:convert';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 
-import '../../common/domain/endpoint.dart';
-import '../../common/presentation/provider/endpoint_provider.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/environment_dialog.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/endpoint_type_badge.dart';
+import '../domain/endpoint.dart';
+import '../presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/environments/presentation/widgets/environment_dialog.dart';
+import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_type_badge.dart';
 import 'package:stress_pilot/features/common/presentation/widgets/json_viewer.dart';
 import 'package:stress_pilot/features/projects/domain/project.dart';
 
 import '../widgets/key_value_editor.dart';
 import 'create_endpoint_dialog.dart';
+import 'package:stress_pilot/core/design/tokens.dart';
 
 class ProjectEndpointsPage extends StatefulWidget {
   final Project project;
@@ -67,21 +69,31 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
 
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return Scaffold(
-      backgroundColor: isDark ? colors.surface : const Color(0xFFF5F5F7),
+      backgroundColor: bg,
       body: Row(
         children: [
           // ── Sidebar ──
           Container(
             width: 300,
             decoration: BoxDecoration(
-              color: colors.surface,
+              color: surface,
               border: Border(
                 right: BorderSide(
-                  color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED),
+                  color: border,
                 ),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  offset: const Offset(2, 0),
+                  blurRadius: 8,
+                )
+              ],
             ),
             child: Column(
               children: [
@@ -465,6 +477,49 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     super.dispose();
   }
 
+  void _handleUrlChanged(String value) {
+    if (value.trim().toLowerCase().startsWith('curl ')) {
+      _parseCurlCommand(value);
+    }
+  }
+
+  void _parseCurlCommand(String curlCommand) {
+    String method = 'GET';
+    String url = '';
+    Map<String, String> headers = {};
+    String body = '';
+
+    final urlMatch = RegExp(r'''['"]?(https?://[^'"\s]+)['"]?''').firstMatch(curlCommand);
+    if (urlMatch != null) {
+      url = urlMatch.group(1)!;
+    }
+
+    final methodMatch = RegExp(r'''-X\s+(['"]?)([A-Z]+)\1''').firstMatch(curlCommand);
+    if (methodMatch != null) {
+      method = methodMatch.group(2)!;
+    } else if (curlCommand.contains('-d') || curlCommand.contains('--data')) {
+      method = 'POST';
+    }
+
+    final headerRegExp = RegExp(r'''(?:-H|--header)\s+['"]([^:]+):\s*(.*?)['"]''');
+    for (final match in headerRegExp.allMatches(curlCommand)) {
+      headers[match.group(1)!.trim()] = match.group(2)!.trim();
+    }
+
+    final dataRegExp = RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+('([^']*)'|"([^"]*)")''');
+    final dataMatch = dataRegExp.firstMatch(curlCommand);
+    if (dataMatch != null) {
+      body = dataMatch.group(2) ?? dataMatch.group(3) ?? '';
+    }
+
+    setState(() {
+      _urlCtrl.text = url;
+      _method = method;
+      _headers = {...headers};
+      _bodyCtrl.text = body;
+    });
+  }
+
   Future<void> _save() async {
     try {
       dynamic bodyPayload = _bodyCtrl.text;
@@ -491,17 +546,13 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         data,
       );
       widget.onUpdated(updated);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Saved')));
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(content: Text('Saved')),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -695,6 +746,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                   ),
                                   style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: colors.onSurface),
                                   textAlignVertical: TextAlignVertical.center,
+                                  onChanged: _handleUrlChanged,
                                 ),
                               ),
                               // Send button

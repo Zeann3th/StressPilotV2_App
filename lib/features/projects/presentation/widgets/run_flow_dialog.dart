@@ -109,34 +109,28 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       if (!mounted) return;
 
       final navigator = Navigator.of(context);
-      final messenger = ScaffoldMessenger.of(context);
 
       navigator.pop(); // Close dialog
 
       await Future.delayed(const Duration(milliseconds: 300));
 
       try {
-        messenger.showSnackBar(
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(content: Text('Flow execution started')),
         );
       } catch (e) {
         // Ignored
       }
 
-      await _pollForRun(messenger, navigator);
+      await _pollForRun(navigator);
     } catch (e) {
-      if (mounted) {
-        try {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-          );
-        } catch (_) {}
-      }
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
   Future<void> _pollForRun(
-    ScaffoldMessengerState messenger,
     NavigatorState navigator,
   ) async {
     final startTime = DateTime.now().toUtc();

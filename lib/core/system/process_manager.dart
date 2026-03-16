@@ -125,53 +125,57 @@ class ProcessManager {
   }
 
   Future<void> forceKill() async {
-    if (_process == null) {
-      AppLogger.debug('No backend process running to kill', name: _logName);
-      return;
+    AppLogger.info('Attempting to force kill backend...', name: _logName);
+    
+    if (_process != null) {
+      final int pid = _process!.pid;
+      AppLogger.info('Attempting to kill backend pid=$pid', name: _logName);
+
+      try {
+        await _stdoutSub?.cancel();
+      } catch (_) {}
+      try {
+        await _stderrSub?.cancel();
+      } catch (_) {}
+      _stdoutSub = null;
+      _stderrSub = null;
+
+      try {
+        _process!.kill();
+      } catch (e) {
+        AppLogger.warning('Failed to kill _process: $e', name: _logName);
+      } finally {
+        _process = null;
+      }
     }
 
-    final int pid = _process!.pid;
-    AppLogger.info('Attempting to kill backend pid=$pid', name: _logName);
-
+    // Always attempt to kill by port to catch orphaned processes
     try {
-      await _stdoutSub?.cancel();
-    } catch (_) {}
-    try {
-      await _stderrSub?.cancel();
-    } catch (_) {}
-    _stdoutSub = null;
-    _stderrSub = null;
-
-    try {
-      final bool sent = _process!.kill();
-      AppLogger.debug('Sent kill signal: $sent', name: _logName);
-
-      final exitFuture = _process!.exitCode;
-      final exited = await exitFuture.timeout(const Duration(seconds: 2), onTimeout: () => -1);
-
-      if (exited != -1) {
-        AppLogger.info('Backend exited with code $exited', name: _logName);
-      } else {
-        if (Platform.isWindows) {
-          try {
-            await Process.run('taskkill', ['/PID', pid.toString(), '/F', '/T']);
-            AppLogger.info('taskkill invoked for pid $pid', name: _logName);
-          } catch (e) {
-            AppLogger.warning('taskkill failed: $e', name: _logName);
+      if (Platform.isWindows) {
+        final result = await Process.run('cmd', ['/c', 'netstat -ano | findstr :52000']);
+        final lines = result.stdout.toString().split('\n');
+        for (var line in lines) {
+          if (line.contains('LISTENING')) {
+            final parts = line.trim().split(RegExp(r'\s+'));
+            if (parts.isNotEmpty) {
+              final pid = parts.last;
+              await Process.run('taskkill', ['/F', '/PID', pid, '/T']);
+              AppLogger.info('taskkill invoked for port 52000 pid $pid', name: _logName);
+            }
           }
-        } else {
-          try {
-            _process!.kill(ProcessSignal.sigkill);
-            AppLogger.info('Sent SIGKILL to pid $pid', name: _logName);
-          } catch (e) {
-            AppLogger.warning('SIGKILL failed: $e', name: _logName);
+        }
+      } else {
+        final result = await Process.run('sh', ['-c', 'lsof -t -i:52000']);
+        final pids = result.stdout.toString().trim().split('\n');
+        for (var pid in pids) {
+          if (pid.isNotEmpty) {
+            await Process.run('kill', ['-9', pid]);
+            AppLogger.info('kill -9 invoked for port 52000 pid $pid', name: _logName);
           }
         }
       }
     } catch (e) {
-      AppLogger.warning('Failed to kill backend: $e', name: _logName);
-    } finally {
-      _process = null;
+      AppLogger.warning('Failed to kill backend by port: $e', name: _logName);
     }
   }
 }

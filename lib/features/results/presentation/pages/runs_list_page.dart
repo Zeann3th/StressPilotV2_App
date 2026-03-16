@@ -89,13 +89,19 @@ class _RunsListPageState extends State<RunsListPage> {
       backgroundColor: bg,
       body: Column(
         children: [
-          // Topbar
           Container(
             height: 60,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: surface,
               border: Border(bottom: BorderSide(color: border, width: 1)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  offset: const Offset(0, 1),
+                  blurRadius: 4,
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -235,6 +241,13 @@ class _RunTileState extends State<_RunTile> {
                   ? AppColors.accent.withValues(alpha: 0.25)
                   : border,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                offset: const Offset(0, 2),
+                blurRadius: 6,
+              )
+            ],
           ),
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -283,20 +296,23 @@ class _RunTileState extends State<_RunTile> {
                   color: AppColors.textMuted,
                 ),
               if (status == 'COMPLETED')
-                widget.isExporting
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
+                Tooltip(
+                  message: 'Export',
+                  child: widget.isExporting
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.accent,
+                          ),
+                        )
+                      : Icon(
+                          Icons.download_rounded,
                           color: AppColors.accent,
+                          size: 18,
                         ),
-                      )
-                    : Icon(
-                        Icons.download_rounded,
-                        color: AppColors.accent,
-                        size: 18,
-                      ),
+                ),
             ],
           ),
         ),
