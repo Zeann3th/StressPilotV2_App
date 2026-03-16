@@ -502,40 +502,112 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     }
   }
 
+  void _showCurlPasteDialog() {
+    final curlCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Paste cURL Command'),
+        content: SizedBox(
+          width: 600,
+          child: TextField(
+            controller: curlCtrl,
+            maxLines: 10,
+            decoration: const InputDecoration(
+              hintText: 'curl -X POST https://api.example.com...',
+              border: OutlineInputBorder(),
+            ),
+            style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (curlCtrl.text.isNotEmpty) {
+                _parseCurlCommand(curlCtrl.text);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Parse & Fill'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _parseCurlCommand(String curlCommand) {
+    // Basic cleanup: remove backslashes at end of lines
+    final cleanCommand =
+        curlCommand.replaceAll('\\\n', ' ').replaceAll('\\\r\n', ' ');
+
     String method = 'GET';
     String url = '';
     Map<String, String> headers = {};
     String body = '';
 
-    final urlMatch = RegExp(r'''['"]?(https?://[^'"\s]+)['"]?''').firstMatch(curlCommand);
+    // Improved Regex for URL: handle various quote types or no quotes
+    final urlMatch =
+        RegExp(r'''(?:curl\s+)?(?:['"]?)(https?://[^'"\s]+)(?:['"]?)''')
+            .firstMatch(cleanCommand);
     if (urlMatch != null) {
       url = urlMatch.group(1)!;
     }
 
-    final methodMatch = RegExp(r'''-X\s+(['"]?)([A-Z]+)\1''').firstMatch(curlCommand);
+    // Method: check -X or --request
+    final methodMatch =
+        RegExp(r'''(?:-X|--request)\s+(['"]?)([A-Z]+)\1''')
+            .firstMatch(cleanCommand);
     if (methodMatch != null) {
       method = methodMatch.group(2)!;
-    } else if (curlCommand.contains('-d') || curlCommand.contains('--data')) {
+    } else if (cleanCommand.contains('-d') ||
+        cleanCommand.contains('--data') ||
+        cleanCommand.contains('--data-raw')) {
       method = 'POST';
     }
 
-    final headerRegExp = RegExp(r'''(?:-H|--header)\s+['"]([^:]+):\s*(.*?)['"]''');
-    for (final match in headerRegExp.allMatches(curlCommand)) {
-      headers[match.group(1)!.trim()] = match.group(2)!.trim();
+    // Headers: handle -H or --header
+    final headerRegExp =
+        RegExp(r'''(?:-H|--header)\s+(['"])([^:]+):\s*(.*?)\1''');
+    for (final match in headerRegExp.allMatches(cleanCommand)) {
+      headers[match.group(2)!.trim()] = match.group(3)!.trim();
+    }
+    // Also try without quotes if the above fails for some headers
+    final headerNoQuoteRegExp =
+        RegExp(r'''(?:-H|--header)\s+([^'"\s]+):\s*([^'"\s]+)''');
+    for (final match in headerNoQuoteRegExp.allMatches(cleanCommand)) {
+      final key = match.group(1)!.trim();
+      if (!headers.containsKey(key)) {
+        headers[key] = match.group(2)!.trim();
+      }
     }
 
-    final dataRegExp = RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+('([^']*)'|"([^"]*)")''');
-    final dataMatch = dataRegExp.firstMatch(curlCommand);
+    // Body: handle -d, --data, --data-raw, --data-binary
+    final dataRegExp = RegExp(
+      r'''(?:-d|--data(?:-raw|-binary)?)\s+(['"])(.*?)\1''',
+      dotAll: true,
+    );
+    final dataMatch = dataRegExp.firstMatch(cleanCommand);
     if (dataMatch != null) {
-      body = dataMatch.group(2) ?? dataMatch.group(3) ?? '';
+      body = dataMatch.group(2) ?? '';
+    } else {
+      // Try without quotes if body is a single word or simple
+      final dataNoQuoteRegExp =
+          RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+([^{'"\s][^\s]*)''');
+      final dataNoQuoteMatch = dataNoQuoteRegExp.firstMatch(cleanCommand);
+      if (dataNoQuoteMatch != null) {
+        body = dataNoQuoteMatch.group(1) ?? '';
+      }
     }
 
     setState(() {
-      _urlCtrl.text = url;
+      if (url.isNotEmpty) _urlCtrl.text = url;
       _method = method;
       _headers = {...headers};
-      _bodyCtrl.text = body;
+      if (body.isNotEmpty) _bodyCtrl.text = body;
     });
   }
 
@@ -663,6 +735,16 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                       fontWeight: FontWeight.w700,
                       color: colors.onSurface,
                     ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                TextButton.icon(
+                  onPressed: _showCurlPasteDialog,
+                  icon: const Icon(LucideIcons.terminal, size: 16),
+                  label: const Text('Paste cURL'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.primary,
+                    textStyle: const TextStyle(fontSize: 13),
                   ),
                 ),
                 const SizedBox(width: 16),
