@@ -276,7 +276,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
               ),
               const SizedBox(height: 2),
               Text(
-                endpoint.url,
+                endpoint.url ?? '—',
                 style: TextStyle(
                   fontSize: 11,
                   color: colors.onSurfaceVariant,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'package:stress_pilot/core/design/tokens.dart';
-import 'package:stress_pilot/features/common/presentation/app_sidebar.dart';
+import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
@@ -73,12 +74,12 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
 
     return Scaffold(
       backgroundColor: bg,
-      body: Row(
+      body: Column(
         children: [
-          // ── Global app sidebar ───────────────────────────
-          const AppSidebar(),
+          // Topbar
+          const AppTopBar(),
 
-          // ── Main workspace column ────────────────────────
+          // Main workspace column
           Expanded(
             child: Column(
               children: [
@@ -110,8 +111,9 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                       // Collapse toggle handle
                       _LibraryHandle(
                         collapsed: _libraryCollapsed,
-                        onToggle: () =>
-                            setState(() => _libraryCollapsed = !_libraryCollapsed),
+                        onToggle: () => setState(
+                          () => _libraryCollapsed = !_libraryCollapsed,
+                        ),
                         border: border,
                       ),
 
@@ -123,7 +125,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                   ),
                 ),
               ],
-            ),
+            ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOutCubic),
           ),
         ],
       ),
@@ -168,16 +170,14 @@ class _LibraryHandleState extends State<_LibraryHandle> {
             color: _hovered
                 ? AppColors.accent.withValues(alpha: 0.06)
                 : Colors.transparent,
-            border: Border(
-              left: BorderSide(color: widget.border, width: 1),
-            ),
+            border: Border(left: BorderSide(color: widget.border, width: 1)),
           ),
           child: Center(
             child: AnimatedRotation(
               turns: widget.collapsed ? 0.0 : 0.5,
               duration: AppDurations.short,
               child: Icon(
-                Icons.chevron_right_rounded,
+                LucideIcons.chevronRight,
                 size: 14,
                 color: _hovered
                     ? AppColors.accent

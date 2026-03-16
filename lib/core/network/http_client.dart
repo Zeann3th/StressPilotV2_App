@@ -3,6 +3,7 @@ import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:stress_pilot/core/config/app_config.dart';
+import 'package:stress_pilot/core/network/cache_interceptor.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 
@@ -31,13 +32,15 @@ class HttpClient {
 
     dio.interceptors.add(CookieManager(jar));
 
+    dio.interceptors.add(CacheInterceptor(ttl: const Duration(minutes: 5)));
+
     dio.interceptors.add(
       InterceptorsWrapper(
         onResponse: (response, handler) {
           if (response.data is Map<String, dynamic>) {
             final data = response.data as Map<String, dynamic>;
             if (data.containsKey('errorType')) {
-              if (data['errorType'] == 'FAILURE') {
+              if (data['errorType'] != 'SUCCESS') {
                 return handler.reject(
                   DioException(
                     requestOptions: response.requestOptions,
@@ -46,10 +49,6 @@ class HttpClient {
                     message: data['message']?.toString() ?? 'API Error',
                   ),
                 );
-              }
-              if (data.containsKey('data')) {
-                response.extra['rawWrapper'] = data;
-                response.data = data['data'];
               }
             }
           }

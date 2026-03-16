@@ -3,6 +3,7 @@ import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
+import 'package:stress_pilot/core/config/settings_manager.dart';
 import 'package:stress_pilot/features/projects/data/flow_service.dart';
 import 'package:stress_pilot/features/projects/data/project_service.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
@@ -11,9 +12,8 @@ import 'package:stress_pilot/features/projects/presentation/provider/flow_provid
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/settings/data/setting_service.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
-import 'package:stress_pilot/features/marketplace/data/nexus_service.dart';
 import 'package:stress_pilot/features/marketplace/data/plugin_service.dart';
-import 'package:stress_pilot/features/marketplace/presentation/provider/marketplace_provider.dart';
+import 'package:stress_pilot/features/marketplace/data/plugin_capability_service.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
@@ -39,6 +39,8 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => SettingService());
   getIt.registerLazySingleton(() => SettingProvider());
+  
+  getIt.registerLazySingleton(() => SettingsManager());
   getIt.registerLazySingleton(() => KeymapProvider());
 
   getIt.registerLazySingleton(() => EndpointProvider());
@@ -53,8 +55,7 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => RunService());
 
-  getIt.registerLazySingleton(() => NexusService());
   getIt.registerLazySingleton(() => PluginService());
-  getIt.registerLazySingleton(() => MarketplaceProvider());
+  getIt.registerLazySingleton(() => PluginCapabilityService());
   getIt<ResultsProvider>();
 }

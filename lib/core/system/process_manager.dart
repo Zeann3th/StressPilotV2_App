@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
@@ -8,6 +9,8 @@ import 'package:stress_pilot/core/system/logger.dart';
 class ProcessManager {
   static const _logName = 'ProcessManager';
   Process? _process;
+  StreamSubscription<String>? _stdoutSub;
+  StreamSubscription<String>? _stderrSub;
   final Dio _dio;
 
   ProcessManager()
@@ -65,18 +68,15 @@ class ProcessManager {
       );
 
       if (attachLogs) {
-        _process!.stdout
+        _stdoutSub = _process!.stdout
             .transform(SystemEncoding().decoder)
-            .listen(
-              (data) => AppLogger.info(data.trim(), name: '$_logName.stdout'),
-            );
+            .listen((data) => AppLogger.info(data.trim(), name: '$_logName.stdout'));
 
-        _process!.stderr
+        _stderrSub = _process!.stderr
             .transform(SystemEncoding().decoder)
-            .listen(
-              (data) => AppLogger.error(data.trim(), name: '$_logName.stderr'),
-            );
+            .listen((data) => AppLogger.error(data.trim(), name: '$_logName.stderr'));
       } else {
+        // Drain streams to avoid backpressure but no logging subscription
         _process!.stdout.drain();
         _process!.stderr.drain();
       }
@@ -124,52 +124,54 @@ class ProcessManager {
     );
   }
 
-  Future<void> stopBackend() async {
+  Future<void> forceKill() async {
     if (_process == null) {
-      AppLogger.debug('No backend process running to stop', name: _logName);
+      AppLogger.debug('No backend process running to kill', name: _logName);
       return;
     }
 
-    AppLogger.info('Stopping backend...', name: _logName);
+    final int pid = _process!.pid;
+    AppLogger.info('Attempting to kill backend pid=$pid', name: _logName);
 
     try {
-      AppLogger.info(
-        'Attempting graceful shutdown via /actuator/shutdown',
-        name: _logName,
-      );
-      await _dio.post('/actuator/shutdown');
-      await Future.delayed(const Duration(milliseconds: 2000));
-    } catch (e) {
-      AppLogger.warning(
-        'Graceful shutdown failed, forcing kill.',
-        name: _logName,
-      );
-    }
+      await _stdoutSub?.cancel();
+    } catch (_) {}
+    try {
+      await _stderrSub?.cancel();
+    } catch (_) {}
+    _stdoutSub = null;
+    _stderrSub = null;
 
     try {
-      _process!.kill();
-      AppLogger.info('Backend process killed', name: _logName);
+      final bool sent = _process!.kill();
+      AppLogger.debug('Sent kill signal: $sent', name: _logName);
+
+      final exitFuture = _process!.exitCode;
+      final exited = await exitFuture.timeout(const Duration(seconds: 2), onTimeout: () => -1);
+
+      if (exited != -1) {
+        AppLogger.info('Backend exited with code $exited', name: _logName);
+      } else {
+        if (Platform.isWindows) {
+          try {
+            await Process.run('taskkill', ['/PID', pid.toString(), '/F', '/T']);
+            AppLogger.info('taskkill invoked for pid $pid', name: _logName);
+          } catch (e) {
+            AppLogger.warning('taskkill failed: $e', name: _logName);
+          }
+        } else {
+          try {
+            _process!.kill(ProcessSignal.sigkill);
+            AppLogger.info('Sent SIGKILL to pid $pid', name: _logName);
+          } catch (e) {
+            AppLogger.warning('SIGKILL failed: $e', name: _logName);
+          }
+        }
+      }
     } catch (e) {
-      // Ignored
+      AppLogger.warning('Failed to kill backend: $e', name: _logName);
     } finally {
       _process = null;
     }
-  }
-
-  Future<void> performColdSwap(Future<void> Function() fileAction) async {
-    AppLogger.info('Initiating Cold Swap...', name: _logName);
-    await stopBackend();
-    try {
-      await fileAction();
-    } catch (e, st) {
-      AppLogger.critical(
-        'Swap action failed.',
-        name: _logName,
-        error: e,
-        stackTrace: st,
-      );
-      rethrow;
-    }
-    await startBackend();
   }
 }

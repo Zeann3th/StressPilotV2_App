@@ -10,7 +10,7 @@ class EnvironmentService {
       '/api/v1/environments/$environmentId/variables',
     );
     if (response.statusCode == 200) {
-      final List data = response.data;
+      final List data = response.data['data'];
       return data.map((e) => EnvironmentVariable.fromJson(e)).toList();
     } else {
       throw Exception('Failed to load environment variables');

@@ -13,7 +13,7 @@ class RunService {
       '/api/v1/runs/last',
       queryParameters: {'flowId': flowId},
     );
-    return Run.fromJson(response.data);
+    return Run.fromJson(response.data['data']);
   }
 
   Future<List<Run>> getRuns({int? flowId}) async {
@@ -21,21 +21,18 @@ class RunService {
       '/api/v1/runs',
       queryParameters: {if (flowId != null) 'flowId': flowId},
     );
-    return (response.data as List).map((e) => Run.fromJson(e)).toList();
+    return (response.data['data'] as List).map((e) => Run.fromJson(e)).toList();
   }
 
   Future<Run> getRun(int runId) async {
     final response = await _dio.get('/api/v1/runs/$runId');
-    return Run.fromJson(response.data);
+    return Run.fromJson(response.data['data']);
   }
 
-  
-  
   Future<File?> exportRun(Run run) async {
     try {
       final response = await _dio.get<List<int>>(
         '/api/v1/runs/${run.id}/export',
-        
         options: Options(
           responseType: ResponseType.bytes,
           receiveTimeout: const Duration(minutes: 2),
@@ -75,5 +72,9 @@ class RunService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<void> interruptRun(int runId) async {
+    await _dio.delete('/api/v1/runs/$runId');
   }
 }

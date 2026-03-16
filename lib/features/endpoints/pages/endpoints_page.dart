@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -65,133 +65,158 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
   Widget build(BuildContext context) {
     final provider = context.watch<EndpointProvider>();
 
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? colors.surface : const Color(0xFFF5F5F7),
       body: Row(
         children: [
+          // ── Sidebar ──
           Container(
-            width: 280,
+            width: 300,
             decoration: BoxDecoration(
+              color: colors.surface,
               border: Border(
-                right: BorderSide(color: Theme.of(context).dividerTheme.color!),
+                right: BorderSide(
+                  color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED),
+                ),
               ),
-              color: Theme.of(context).colorScheme.surface,
             ),
             child: Column(
               children: [
-                Container(
-                  height: 56, // Standard app bar height
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Theme.of(context).dividerTheme.color!,
-                      ),
-                    ),
-                  ),
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                   child: Row(
                     children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(CupertinoIcons.arrow_left, size: 20),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        tooltip: 'Back to Projects',
-                        color: Theme.of(context).colorScheme.onSurface,
+                      Material(
+                        color: colors.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Icon(LucideIcons.arrowLeft, size: 16, color: colors.onSurfaceVariant),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           widget.project.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: colors.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {
-                          EnvironmentManagerDialog.show(
+                      Material(
+                        color: colors.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () => EnvironmentManagerDialog.show(
                             context,
                             widget.project.environmentId,
                             widget.project.name,
-                          );
-                        },
-                        icon: const Icon(CupertinoIcons.layers_alt, size: 20),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        tooltip: 'Environment',
-                        color: Theme.of(context).colorScheme.primary,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Icon(LucideIcons.layers, size: 16, color: colors.primary),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
 
+                // Search bar
                 Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: CupertinoSearchTextField(
-                    placeholder: 'Search Endpoints',
-                    onChanged: (value) {},
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    height: 40,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search endpoints...',
+                        hintStyle: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
+                        prefixIcon: Icon(LucideIcons.search, size: 16, color: colors.onSurfaceVariant),
+                        filled: true,
+                        fillColor: isDark ? colors.surfaceContainerHighest : const Color(0xFFF0F0F5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                        isDense: true,
+                      ),
+                      style: const TextStyle(fontSize: 13),
+                      onChanged: (value) {},
+                    ),
                   ),
                 ),
 
+                const SizedBox(height: 20),
+
+                // List header
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 16, 8),
                   child: Row(
                     children: [
-                      const Text(
-                        'Endpoints',
+                      Text(
+                        'ENDPOINTS',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF98989D), // Secondary Label
+                          letterSpacing: 0.8,
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                       const Spacer(),
-                      IconButton(
-                        onPressed: _createNewEndpoint,
-                        icon: const Icon(Icons.add, size: 18),
-                        color: const Color(0xFF98989D),
-                        tooltip: 'New Endpoint',
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        style: const ButtonStyle(
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(6),
+                          onTap: _createNewEndpoint,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(LucideIcons.plus, size: 16, color: colors.onSurfaceVariant),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
 
+                // Endpoint list
                 Expanded(
                   child: provider.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : RefreshIndicator(
-                          onRefresh: () => provider.refreshEndpoints(
-                            projectId: widget.project.id,
+                      ? Center(
+                          child: SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
                           ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () => provider.refreshEndpoints(projectId: widget.project.id),
                           child: ListView.builder(
                             controller: _scrollCtrl,
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount:
-                                provider.endpoints.length +
-                                (provider.hasMore ? 1 : 0),
+                            itemCount: provider.endpoints.length + (provider.hasMore ? 1 : 0),
                             itemBuilder: (context, index) {
                               if (index >= provider.endpoints.length) {
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                   child: Center(
                                     child: provider.isLoadingMore
-                                        ? const SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
+                                        ? SizedBox(
+                                            width: 16, height: 16,
+                                            child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
                                           )
                                         : const SizedBox.shrink(),
                                   ),
@@ -202,61 +227,40 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                               final isSelected = _selectedEndpoint?.id == ep.id;
 
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: InkWell(
-                                  onTap: () =>
-                                      setState(() => _selectedEndpoint = ep),
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? const Color(
-                                              0xFF007AFF,
-                                            ) // System Blue
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            EndpointTypeBadge(
-                                              type: ep.type,
-                                              compact: true,
-                                              inverse: isSelected,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Tooltip(
-                                                message: ep.url,
-                                                child: Text(
-                                                  ep.name,
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: isSelected
-                                                        ? FontWeight.w600
-                                                        : FontWeight.normal,
-                                                    color: isSelected
-                                                        ? Colors.white
-                                                        : Theme.of(context)
-                                                              .colorScheme
-                                                              .onSurface,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: Material(
+                                  color: isSelected
+                                      ? (isDark ? colors.primary.withValues(alpha: 0.15) : colors.primary.withValues(alpha: 0.08))
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: InkWell(
+                                    onTap: () => setState(() => _selectedEndpoint = ep),
+                                    borderRadius: BorderRadius.circular(10),
+                                    hoverColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                      decoration: isSelected ? BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 1),
+                                      ) : null,
+                                      child: Row(
+                                        children: [
+                                          EndpointTypeBadge(type: ep.type, compact: true, inverse: false),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              ep.name,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                                color: isSelected ? colors.primary : colors.onSurface,
                                               ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                          ],
-                                        ),
-                                      ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -316,7 +320,7 @@ class _EmptyState extends StatelessWidget {
               border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
             child: Icon(
-              CupertinoIcons.cube_box,
+              LucideIcons.box,
               size: 48,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -416,7 +420,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   @override
   void initState() {
     super.initState();
-    _urlCtrl = TextEditingController(text: widget.endpoint.url);
+    _urlCtrl = TextEditingController(text: widget.endpoint.url ?? '');
     _nameCtrl = TextEditingController(text: widget.endpoint.name);
     _method = widget.endpoint.httpMethod ?? 'GET';
 
@@ -553,13 +557,25 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: isDark ? colors.surface : const Color(0xFFF5F5F7),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+          // ── Header ──
+          Container(
+            padding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED),
+                ),
+              ),
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -568,202 +584,142 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText: 'Endpoint Name',
-                      hintStyle: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      hintStyle: TextStyle(color: colors.onSurfaceVariant),
                       contentPadding: EdgeInsets.zero,
                       isDense: true,
                     ),
                     style: TextStyle(
-                      fontSize: 20, // Slightly smaller for dense feel
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
                     ),
                   ),
                 ),
-                IconButton(
+                const SizedBox(width: 16),
+                FilledButton.icon(
                   onPressed: _save,
-                  icon: const Icon(CupertinoIcons.floppy_disk),
-                  color: Theme.of(context).colorScheme.primary,
-                  tooltip: 'Save',
+                  icon: const Icon(LucideIcons.save, size: 16),
+                  label: const Text('Save'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
                 ),
-                IconButton(
-                  onPressed: widget.onDeleted,
-                  icon: const Icon(CupertinoIcons.trash),
-                  color: Theme.of(context).colorScheme.error,
-                  iconSize: 20,
-                  tooltip: 'Delete',
+                const SizedBox(width: 8),
+                Material(
+                  color: isDark ? colors.surfaceContainerHighest : const Color(0xFFF0F0F5),
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: widget.onDeleted,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(LucideIcons.trash2, size: 18, color: colors.error),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          Divider(height: 1, color: Theme.of(context).dividerTheme.color),
 
           Expanded(
-            child: Column(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // ── Request Panel ──
                 Expanded(
                   flex: 3,
-                  child: Column(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED)),
+                      boxShadow: isDark ? [] : [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+                      ],
+                    ),
+                    child: Column(
                     children: [
+                      // URL bar
                       Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Container(
-                              height: 36,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainer,
-                                borderRadius: const BorderRadius.horizontal(
-                                  left: Radius.circular(8),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                        child: Container(
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: isDark ? colors.surfaceContainerHighest : const Color(0xFFF5F5F7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: isDark ? colors.outlineVariant : const Color(0xFFE0E0E5)),
+                          ),
+                          child: Row(
+                            children: [
+                              // Method selector
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  border: Border(right: BorderSide(color: isDark ? colors.outlineVariant : const Color(0xFFE0E0E5))),
                                 ),
-                                border: Border.all(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                              ),
-                              child: Center(
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     value: _method,
-                                    dropdownColor: Theme.of(
-                                      context,
-                                    ).colorScheme.surfaceContainer,
-                                    icon: Icon(
-                                      CupertinoIcons.chevron_down,
-                                      size: 12,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                                    items:
-                                        [
-                                          'GET',
-                                          'POST',
-                                          'PUT',
-                                          'DELETE',
-                                          'PATCH',
-                                        ].map((m) {
-                                          return DropdownMenuItem(
-                                            value: m,
-                                            child: Text(
-                                              m,
-                                              style: TextStyle(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.onSurface,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          );
-                                        }).toList(),
-                                    onChanged: (v) =>
-                                        setState(() => _method = v!),
+                                    dropdownColor: colors.surface,
+                                    icon: Icon(LucideIcons.chevronDown, size: 12, color: colors.onSurfaceVariant),
+                                    items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].map((m) {
+                                      final methodColor = {
+                                        'GET': const Color(0xFF10B981),
+                                        'POST': const Color(0xFF3B82F6),
+                                        'PUT': const Color(0xFFF59E0B),
+                                        'DELETE': const Color(0xFFEF4444),
+                                        'PATCH': const Color(0xFF8B5CF6),
+                                      }[m] ?? colors.primary;
+                                      return DropdownMenuItem(value: m, child: Text(m, style: TextStyle(color: methodColor, fontSize: 13, fontWeight: FontWeight.w700)));
+                                    }).toList(),
+                                    onChanged: (v) => setState(() => _method = v!),
                                   ),
                                 ),
                               ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainer,
-                                  border: Border(
-                                    top: BorderSide(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.outline,
-                                    ),
-                                    bottom: BorderSide(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.outline,
-                                    ),
-                                    right: BorderSide(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.outline,
-                                    ),
-                                  ),
-                                  borderRadius: const BorderRadius.horizontal(
-                                    right: Radius.circular(8),
-                                  ),
-                                ),
-                                alignment: Alignment.centerLeft,
+                              // URL input
+                              Expanded(
                                 child: TextField(
                                   controller: _urlCtrl,
                                   decoration: InputDecoration(
-                                    hintText:
-                                        'https://api.example.com/v1/resource',
-                                    hintStyle: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                      fontSize: 13,
-                                    ),
+                                    hintText: 'https://api.example.com/v1/resource',
+                                    hintStyle: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
                                     border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 0,
-                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14),
                                     isDense: true,
                                   ),
-                                  style: TextStyle(
-                                    fontFamily: 'JetBrains Mono',
-                                    fontSize: 13,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                  ),
+                                  style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: colors.onSurface),
                                   textAlignVertical: TextAlignVertical.center,
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            SizedBox(
-                              height: 36,
-                              child: FilledButton.icon(
-                                onPressed: _isLoading ? null : _send,
-                                icon: _isLoading
-                                    ? const SizedBox(
-                                        width: 14,
-                                        height: 14,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(
-                                        CupertinoIcons.play_fill,
-                                        size: 14,
-                                      ),
-                                label: const Text('Send'),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontWeight: FontWeight.w600,
+                              // Send button
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: SizedBox(
+                                  height: 36,
+                                  child: FilledButton.icon(
+                                    onPressed: _isLoading ? null : _send,
+                                    icon: _isLoading
+                                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                        : const Icon(LucideIcons.play, size: 14),
+                                    label: const Text('Send'),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: colors.primary,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                                      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                       Padding(
@@ -892,21 +848,30 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                       ),
                     ],
                   ),
+                  ),
                 ),
-                Divider(height: 1, color: Theme.of(context).dividerTheme.color),
+                const SizedBox(height: 16),
+                // ── Response Panel ──
                 Expanded(
                   flex: 2,
-                  child: Column(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED)),
+                      boxShadow: isDark ? [] : [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+                      ],
+                    ),
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                           border: Border(
-                            bottom: BorderSide(
-                              color: Theme.of(context).dividerTheme.color!,
-                            ),
+                            bottom: BorderSide(color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED)),
                           ),
                         ),
                         child: Row(
@@ -914,29 +879,20 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                             Text(
                               'Response',
                               style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
+                                color: colors.onSurfaceVariant,
                                 fontWeight: FontWeight.w600,
-                                fontSize: 12,
+                                fontSize: 13,
                               ),
                             ),
                             const Spacer(),
                             if (_statusCode != null) ...[
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: (_isSuccess == true)
-                                      ? const Color(
-                                          0xFF30D158,
-                                        ).withValues(alpha: 0.2)
-                                      : const Color(
-                                          0xFFFF453A,
-                                        ).withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(4),
+                                      ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                                      : const Color(0xFFEF4444).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   _isSuccess == true
@@ -944,9 +900,9 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                       : 'FAILED (${_statusCode ?? '-'})',
                                   style: TextStyle(
                                     color: (_isSuccess == true)
-                                        ? const Color(0xFF30D158)
-                                        : const Color(0xFFFF453A),
-                                    fontWeight: FontWeight.bold,
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFEF4444),
+                                    fontWeight: FontWeight.w700,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -955,9 +911,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                               Text(
                                 '${_responseTime}ms',
                                 style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: colors.onSurfaceVariant,
                                   fontSize: 12,
                                   fontFamily: 'JetBrains Mono',
                                 ),
@@ -969,13 +923,16 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                       Expanded(
                         child: _response == null
                             ? Center(
-                                child: Text(
-                                  'Ready to send',
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                  ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(LucideIcons.send, size: 32, color: colors.onSurfaceVariant.withValues(alpha: 0.4)),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Hit Send to execute the request',
+                                      style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
+                                    ),
+                                  ],
                                 ),
                               )
                             : SingleChildScrollView(
@@ -985,7 +942,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                     final r = Map<String, dynamic>.from(
                                       _response!,
                                     );
-                                    // Keep only message and data/body if they exist, or show filtered view
                                     final filtered = <String, dynamic>{};
                                     if (r.containsKey('message')) {
                                       filtered['message'] = r['message'];
@@ -995,19 +951,10 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                     } else if (r.containsKey('body')) {
                                       filtered['data'] = r['body'];
                                     } else {
-                                      // If neither, maybe just show everything except technical fields?
-                                      // For now, let's respect the user's request strictly but fallback safely
-                                      // If strictly message and data are requested, what if they don't exist?
-                                      // The user said "by then response only need message and data pls"
-                                      // I'll try to find them. If map is empty after filter, maybe show original?
-                                      // Or maybe the user implies the backend response structure has these.
-                                      // Let's filter for them.
                                       if (r.containsKey('error')) {
                                         filtered['error'] = r['error'];
                                       }
                                     }
-
-                                    // If we found nothing relevant, just show everything minus metadata
                                     if (filtered.isEmpty) {
                                       final metadataKeys = [
                                         'statusCode',
@@ -1028,8 +975,10 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                       ),
                     ],
                   ),
+                  ),
                 ),
               ],
+            ),
             ),
           ),
         ],

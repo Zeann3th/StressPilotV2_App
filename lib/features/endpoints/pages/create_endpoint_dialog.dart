@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../common/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/features/marketplace/data/plugin_capability_service.dart';
 import '../widgets/key_value_editor.dart';
 
 class CreateEndpointDialog extends StatefulWidget {
@@ -146,23 +148,23 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                             const SizedBox(width: 16),
                             Expanded(
                               flex: 1,
-                              child: DropdownButtonFormField<String>(
-                                initialValue: _selectedType,
-                                decoration: const InputDecoration(
-                                  labelText: 'Type *',
-                                  border: OutlineInputBorder(),
+                                child: DropdownButtonFormField<String>(
+                                  initialValue: _selectedType,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Type *',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: getIt<PluginCapabilityService>().endpointTypes
+                                      .map(
+                                        (t) => DropdownMenuItem(
+                                          value: t.id,
+                                          child: Text(t.name),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (v) =>
+                                      setState(() => _selectedType = v!),
                                 ),
-                                items: ['HTTP', 'GRPC', 'JDBC', 'JS', 'TCP']
-                                    .map(
-                                      (t) => DropdownMenuItem(
-                                        value: t,
-                                        child: Text(t),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (v) =>
-                                    setState(() => _selectedType = v!),
-                              ),
                             ),
                           ],
                         ),

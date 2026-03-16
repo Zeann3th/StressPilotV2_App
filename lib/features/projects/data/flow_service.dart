@@ -24,17 +24,17 @@ class FlowService {
       },
     );
 
-    return PagedResponse.fromJson(response.data, (json) => Flow.fromJson(json));
+    return PagedResponse.fromJson(response.data['data'], (json) => Flow.fromJson(json));
   }
 
   Future<Flow> getFlowDetail(int flowId) async {
     final response = await _dio.get('/api/v1/flows/$flowId');
-    return Flow.fromJson(response.data);
+    return Flow.fromJson(response.data['data']);
   }
 
   Future<Flow> createFlow(CreateFlowRequest request) async {
     final response = await _dio.post('/api/v1/flows', data: request.toJson());
-    return Flow.fromJson(response.data);
+    return Flow.fromJson(response.data['data']);
   }
 
   Future<Flow> updateFlow({
@@ -48,7 +48,7 @@ class FlowService {
     };
 
     final response = await _dio.patch('/api/v1/flows/$flowId', data: body);
-    return Flow.fromJson(response.data);
+    return Flow.fromJson(response.data['data']);
   }
 
   Future<void> deleteFlow(int flowId) async {
@@ -61,7 +61,7 @@ class FlowService {
       '/api/v1/flows/$flowId/configuration',
       data: body,
     );
-    return (response.data as List)
+    return (response.data['data'] as List)
         .map((json) => FlowStep.fromJson(json))
         .toList();
   }

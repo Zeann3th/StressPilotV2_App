@@ -3,7 +3,7 @@ class Endpoint {
   final String name;
   final String? description;
   final String type;
-  final String url;
+  final String? url;
   final String? httpMethod;
   final Map<String, dynamic>? httpHeaders;
   final dynamic body;
@@ -21,7 +21,7 @@ class Endpoint {
     required this.name,
     this.description,
     required this.type,
-    required this.url,
+    this.url,
     this.httpMethod,
     this.httpHeaders,
     this.body,
@@ -37,9 +37,9 @@ class Endpoint {
 
   factory Endpoint.fromJson(Map<String, dynamic> json) => Endpoint(
     id: json['id'],
-    name: json['name'],
+    name: json['name'] ?? '',
     description: json['description'],
-    type: json['type'],
+    type: json['type'] ?? 'HTTP',
     url: json['url'],
     httpMethod: json['httpMethod'],
     httpHeaders: json['httpHeaders'] as Map<String, dynamic>?,

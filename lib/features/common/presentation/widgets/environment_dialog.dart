@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/environment_provider.dart';
@@ -150,7 +150,7 @@ class _SaveButton extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : const Icon(CupertinoIcons.floppy_disk, size: 18),
+          : const Icon(LucideIcons.save, size: 18),
       label: const Text('Save Changes'),
       style: FilledButton.styleFrom(
         backgroundColor: colors.primary,

@@ -4,22 +4,24 @@ import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/shutdown_handler.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:local_notifier/local_notifier.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
+  await localNotifier.setup(appName: 'Stress Pilot', shortcutPolicy: ShortcutPolicy.requireCreate);
 
-  const splashWindow = WindowOptions(
-    size: Size(720, 480),
-    minimumSize: Size(720, 480),
+  const windowOptions = WindowOptions(
+    minimumSize: Size(1280, 720),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.hidden,
+    titleBarStyle: TitleBarStyle.normal,
   );
 
-  await windowManager.waitUntilReadyToShow(splashWindow, () async {
-    await windowManager.setResizable(false);
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.setResizable(true);
+    await windowManager.maximize();
     await windowManager.show();
     await windowManager.focus();
   });

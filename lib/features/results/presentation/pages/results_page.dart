@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
@@ -242,7 +242,7 @@ class _ResultsPageState extends State<ResultsPage> {
               dropdownColor: Theme.of(context).colorScheme.surfaceContainer,
               underline: const SizedBox(),
               icon: const Icon(
-                CupertinoIcons.chevron_down,
+                LucideIcons.chevronDown,
                 size: 14,
                 color: Color(0xFF98989D),
               ),
@@ -285,7 +285,7 @@ class _ResultsPageState extends State<ResultsPage> {
                       ),
                     )
                   : const Icon(
-                      CupertinoIcons.arrow_down_doc,
+                      LucideIcons.fileDown,
                       color: Color(0xFF007AFF),
                     ),
               tooltip: 'Export Run',
@@ -312,7 +312,7 @@ class _ResultsPageState extends State<ResultsPage> {
                   child: MetricsCard(
                     title: 'Total Requests',
                     value: provider.totalRequests.toString(),
-                    icon: CupertinoIcons.number,
+                    icon: LucideIcons.hash,
                     color: Colors.blue,
                   ),
                 ),
@@ -322,7 +322,7 @@ class _ResultsPageState extends State<ResultsPage> {
                   child: MetricsCard(
                     title: 'Avg Response',
                     value: '${provider.avgResponseTime.toStringAsFixed(0)} ms',
-                    icon: CupertinoIcons.timer,
+                    icon: LucideIcons.timer,
                     color: Colors.orange,
                   ),
                 ),
@@ -332,7 +332,7 @@ class _ResultsPageState extends State<ResultsPage> {
                   child: MetricsCard(
                     title: 'Req / Sec',
                     value: provider.requestsPerSecond.toStringAsFixed(1),
-                    icon: CupertinoIcons.speedometer,
+                    icon: LucideIcons.gauge,
                     color: Colors.green,
                   ),
                 ),
@@ -342,7 +342,7 @@ class _ResultsPageState extends State<ResultsPage> {
                   child: MetricsCard(
                     title: 'Errors',
                     value: provider.errorCount.toString(),
-                    icon: CupertinoIcons.exclamationmark_triangle,
+                    icon: LucideIcons.triangleAlert,
                     color: Colors.red,
                   ),
                 ),
@@ -388,8 +388,15 @@ class _ResultsPageState extends State<ResultsPage> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: colors.outlineVariant),
         ),
-        child: Center(
-          child: CupertinoActivityIndicator(color: colors.onSurface),
+          child: Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: colors.onSurface,
+              ),
+            ),
         ),
       );
     }

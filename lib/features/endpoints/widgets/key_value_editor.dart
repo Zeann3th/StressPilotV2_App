@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 
 class KeyValueEditor extends StatefulWidget {
@@ -113,7 +113,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
               ),
             ),
             IconButton(
-              icon: const Icon(CupertinoIcons.minus_circle, size: 16),
+              icon: Icon(LucideIcons.circleMinus, size: 16),
               color: const Color(0xFFFF453A),
               tooltip: 'Remove',
               onPressed: () {

@@ -21,14 +21,14 @@ class ProjectService {
     );
 
     return PagedResponse.fromJson(
-      response.data,
+      response.data['data'],
           (json) => Project.fromJson(json),
     );
   }
 
   Future<Project> getProjectDetail(int projectId) async {
     final response = await _dio.get('/api/v1/projects/$projectId');
-    return Project.fromJson(response.data);
+    return Project.fromJson(response.data['data']);
   }
 
   Future<Project> createProject({
@@ -43,7 +43,7 @@ class ProjectService {
     };
 
     final response = await _dio.post('/api/v1/projects', data: body);
-    return Project.fromJson(response.data);
+    return Project.fromJson(response.data['data']);
   }
 
   Future<Project> updateProject({
@@ -59,7 +59,7 @@ class ProjectService {
     };
 
     final response = await _dio.patch('/api/v1/projects/$projectId', data: body);
-    return Project.fromJson(response.data);
+    return Project.fromJson(response.data['data']);
   }
 
   Future<void> deleteProject(int projectId) async {
@@ -93,6 +93,6 @@ class ProjectService {
       ),
     );
 
-    return Project.fromJson(response.data);
+    return Project.fromJson(response.data['data']);
   }
 }

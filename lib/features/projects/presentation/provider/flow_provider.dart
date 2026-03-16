@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'package:stress_pilot/core/models/paged_response.dart';
 import 'package:stress_pilot/features/projects/data/flow_service.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow_domain;
@@ -203,9 +204,28 @@ class FlowProvider extends ChangeNotifier {
         runFlowRequest: runFlowRequest,
         file: file,
       );
+      
+      try {
+        final notification = LocalNotification(
+          title: 'Stress Test Complete',
+          body: 'Flow ID $flowId has finished successfully.',
+        );
+        await notification.show();
+      } catch (e) {
+        // Ignored
+      }
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      
+      try {
+        final notification = LocalNotification(
+          title: 'Stress Test Failed',
+          body: 'Flow ID $flowId failed to run.',
+        );
+        await notification.show();
+      } catch (_) {}
+      
       rethrow;
     }
   }

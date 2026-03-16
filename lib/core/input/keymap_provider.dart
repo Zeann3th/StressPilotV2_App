@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:stress_pilot/core/input/keymap_service.dart';
+import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/input/shortcut_parser.dart';
+import 'package:stress_pilot/core/config/settings_manager.dart';
 
 class KeymapProvider extends ChangeNotifier {
-  final KeymapService _service = KeymapService();
-  Map<String, String> _keymap = {};
+  final Map<String, String> _keymap = {};
   final List<MapEntry<SingleActivator, String>> _cachedActivators = [];
   bool _isLoading = false;
 
@@ -16,7 +15,28 @@ class KeymapProvider extends ChangeNotifier {
   Future<void> initialize() async {
     _isLoading = true;
     notifyListeners();
-    _keymap = await _service.loadKeymap();
+    
+    final settingsManager = getIt<SettingsManager>();
+    if (!settingsManager.isInitialized) {
+      await settingsManager.initialize();
+    }
+    
+    // Extract keymaps from settings
+    _keymap.clear();
+    final defaultKeymapKeys = [
+      'keymap.sidebar.toggle', 'keymap.app.settings', 'keymap.flow.save', 
+      'keymap.flow.run', 'keymap.flow.new', 'keymap.node.delete', 
+      'keymap.sidebar.tab.flows', 'keymap.sidebar.tab.nodes', 
+      'keymap.project.endpoints', 'keymap.project.environment', 
+      'keymap.project.view_all', 'keymap.nav.notifications', 
+      'keymap.nav.runs', 'keymap.theme.toggle'
+    ];
+    
+    for (var key in defaultKeymapKeys) {
+      final actionId = key.replaceFirst('keymap.', '');
+      _keymap[actionId] = settingsManager.getString(key);
+    }
+    
     _updateCache();
     _isLoading = false;
     notifyListeners();
@@ -30,14 +50,13 @@ class KeymapProvider extends ChangeNotifier {
     _keymap[actionId] = shortcut;
     _updateCache();
     notifyListeners();
-    await _service.saveKeymap(_keymap);
+    await getIt<SettingsManager>().setString('keymap.$actionId', shortcut);
   }
-  
+
   Future<void> resetToDefaults() async {
-    _keymap = _service.defaultKeymaps; 
-    _updateCache();
-    notifyListeners();
-    await _service.saveKeymap(_keymap);
+    final settingsManager = getIt<SettingsManager>();
+    await settingsManager.resetKeymaps();
+    await initialize(); // Re-fetch the keymaps
   }
 
   void _updateCache() {
@@ -50,5 +69,3 @@ class KeymapProvider extends ChangeNotifier {
     }
   }
 }
-// Expose the getter for defaults if needed, simpler to just access via instance or static in service.
-// For now, I'll fix the access issue by making _defaultKeymaps public or exposing a method.

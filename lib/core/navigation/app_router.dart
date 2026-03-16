@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/endpoints/pages/endpoints_page.dart';
-import 'package:stress_pilot/features/marketplace/pages/marketplace_page.dart';
 import 'package:stress_pilot/features/projects/domain/project.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/environment_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
-import 'package:stress_pilot/features/results/presentation/pages/runs_list_page.dart';
+// runs integrated into Projects page - separate runs page removed
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 
 class AppRouter {
@@ -18,8 +17,6 @@ class AppRouter {
   static const String projectEndpointsRoute = '/project/endpoints';
   static const String projectEnvironmentRoute = '/project/environment';
   static const String resultsRoute = '/results';
-  static const String runsRoute = '/runs';
-  static const String marketplaceRoute = '/marketplace';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     MaterialPageRoute<T> buildRoute<T>(Widget widget) {
@@ -38,7 +35,10 @@ class AppRouter {
 
     switch (settings.name) {
       case projectsRoute:
-        return buildRoute(const ProjectsPage());
+        final args = settings.arguments as Map<String, dynamic>?;
+        return buildRoute(
+          ProjectsPage(initialFlowId: args?['initialFlowId'] as int?),
+        );
       case workspaceRoute:
         return buildRoute(const ProjectWorkspacePage());
       case settingsRoute:
@@ -59,11 +59,7 @@ class AppRouter {
       case resultsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         return buildRoute(ResultsPage(runId: args['runId']));
-      case runsRoute:
-        final args = settings.arguments as Map<String, dynamic>?;
-        return buildRoute(RunsListPage(flowId: args?['flowId']));
-      case marketplaceRoute:
-        return buildRoute(const MarketplacePage());
+      // runsRoute removed: runs are shown within the Projects page UI
       default:
         return buildRoute(
           Scaffold(

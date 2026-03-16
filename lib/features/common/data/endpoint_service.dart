@@ -23,7 +23,7 @@ class EndpointService {
 
     if (response.statusCode == 200) {
       return PagedResponse.fromJson(
-        response.data,
+        response.data['data'],
         (json) => Endpoint.fromJson(json),
       );
     } else {
@@ -34,7 +34,7 @@ class EndpointService {
   Future<Endpoint> getEndpointDetail(int endpointId) async {
     final response = await _dio.get('/api/v1/endpoints/$endpointId');
     if (response.statusCode == 200) {
-      return Endpoint.fromJson(response.data);
+      return Endpoint.fromJson(response.data['data']);
     } else {
       throw Exception('Failed to load endpoint detail');
     }
@@ -43,7 +43,7 @@ class EndpointService {
   Future<Endpoint> createEndpoint(Map<String, dynamic> endpointData) async {
     final response = await _dio.post('/api/v1/endpoints', data: endpointData);
     if (response.statusCode == 200) {
-      return Endpoint.fromJson(response.data);
+      return Endpoint.fromJson(response.data['data']);
     } else {
       throw Exception('Failed to create endpoint');
     }
@@ -77,7 +77,7 @@ class EndpointService {
       data: dataToSend,
     );
     if (response.statusCode == 200) {
-      return Endpoint.fromJson(response.data);
+      return Endpoint.fromJson(response.data['data']);
     } else {
       throw Exception('Failed to update endpoint');
     }
@@ -116,12 +116,25 @@ class EndpointService {
       data: requestBody,
     );
     if (response.statusCode == 200) {
-      if (response.extra.containsKey('rawWrapper')) {
-        return response.extra['rawWrapper'] as Map<String, dynamic>;
-      }
       return response.data as Map<String, dynamic>;
     } else {
       throw Exception('Failed to execute endpoint');
+    }
+  }
+
+  Future<Map<String, dynamic>> executeAdhocEndpoint({
+    required int projectId,
+    required Map<String, dynamic> requestBody,
+  }) async {
+    final response = await _dio.post(
+      '/api/v1/endpoints/execute-adhoc',
+      queryParameters: {'projectId': projectId},
+      data: requestBody,
+    );
+    if (response.statusCode == 200) {
+      return response.data as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to execute adhoc endpoint');
     }
   }
 }

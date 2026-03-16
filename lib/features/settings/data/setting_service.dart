@@ -6,7 +6,7 @@ class SettingService {
 
   Future<Map<String, String>> getAllConfigs() async {
     final response = await _dio.get('/api/v1/config');
-    final data = Map<String, dynamic>.from(response.data);
+    final data = Map<String, dynamic>.from(response.data['data']);
 
     return data.map((key, value) => MapEntry(key, value.toString()));
   }
@@ -17,7 +17,7 @@ class SettingService {
         '/api/v1/config/value',
         queryParameters: {"key": key},
       );
-      return response.data.toString();
+      return response.data['data'].toString();
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
       rethrow;

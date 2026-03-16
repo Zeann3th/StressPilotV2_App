@@ -60,16 +60,13 @@ class _GlobalShortcutListenerState extends State<GlobalShortcutListener> {
         AppNavigator.pushNamed(AppRouter.settingsRoute);
         return true;
       case 'nav.runs':
-        AppNavigator.pushNamed(AppRouter.runsRoute);
-        return true;
-      case 'nav.marketplace':
-        AppNavigator.pushNamed(AppRouter.marketplaceRoute);
+        // Open Projects page and show runs panel
+        AppNavigator.pushNamed(AppRouter.projectsRoute);
         return true;
       case 'theme.toggle':
         getIt<ThemeManager>().toggleTheme();
         return true;
       case 'project.view_all':
-         // We might need to clear project too? Mimic UI behavior
         getIt<ProjectProvider>().clearProject();
         AppNavigator.navigatorKey.currentState?.pushReplacementNamed(AppRouter.projectsRoute);
         return true;

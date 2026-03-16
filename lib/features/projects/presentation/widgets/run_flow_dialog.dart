@@ -168,17 +168,17 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
           arguments: {'runId': found.id},
         );
       } else {
-        // Fallback to runs list
+        // Fallback to Projects page showing runs panel filtered by this flow
         navigator.pushNamed(
-          AppRouter.runsRoute,
-          arguments: {'flowId': widget.flowId},
+          AppRouter.projectsRoute,
+          arguments: {'initialFlowId': widget.flowId},
         );
       }
     } catch (e) {
       // General error fallback
       navigator.pushNamed(
-        AppRouter.runsRoute,
-        arguments: {'flowId': widget.flowId},
+        AppRouter.projectsRoute,
+        arguments: {'initialFlowId': widget.flowId},
       );
     }
   }

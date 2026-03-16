@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/design/tokens.dart';
 import 'package:stress_pilot/core/design/components.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 
@@ -58,7 +59,7 @@ class WorkspaceCommandBar extends StatelessWidget {
 
           // Endpoints button
           PilotButton.ghost(
-            icon: Icons.http_rounded,
+            icon: LucideIcons.network,
             label: 'Endpoints',
             compact: true,
             onPressed: () {
@@ -74,7 +75,7 @@ class WorkspaceCommandBar extends StatelessWidget {
 
           // Environment button
           PilotButton.ghost(
-            icon: Icons.tune_rounded,
+            icon: LucideIcons.settings2,
             label: 'Environment',
             compact: true,
             onPressed: () {
@@ -127,7 +128,7 @@ class _BackButtonState extends State<_BackButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.chevron_left_rounded,
+                LucideIcons.chevronLeft,
                 size: 16,
                 color: _hovered ? AppColors.accent : AppColors.textSecondary,
               ),
