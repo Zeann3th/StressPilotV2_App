@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import '../presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/features/marketplace/data/plugin_capability_service.dart';
+import 'package:stress_pilot/features/common/data/utility_service.dart';
 import '../widgets/key_value_editor.dart';
 
 class CreateEndpointDialog extends StatefulWidget {
@@ -32,6 +32,28 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   final _grpcServiceCtrl = TextEditingController();
   final _grpcMethodCtrl = TextEditingController();
   final _grpcStubCtrl = TextEditingController();
+
+  List<String> _availableTypes = ['HTTP', 'GRPC', 'JDBC', 'JS', 'TCP'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCapabilities();
+  }
+
+  Future<void> _loadCapabilities() async {
+    try {
+      final capabilities = await getIt<UtilityService>().getCapabilities();
+      if (capabilities.endpointExecutors.isNotEmpty) {
+        setState(() {
+          _availableTypes = capabilities.endpointExecutors;
+          if (!_availableTypes.contains(_selectedType)) {
+            _selectedType = _availableTypes.first;
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -163,11 +185,11 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                                     labelText: 'Type *',
                                     border: OutlineInputBorder(),
                                   ),
-                                  items: getIt<PluginCapabilityService>().endpointTypes
+                                  items: _availableTypes
                                       .map(
                                         (t) => DropdownMenuItem(
-                                          value: t.id,
-                                          child: Text(t.name),
+                                          value: t,
+                                          child: Text(t),
                                         ),
                                       )
                                       .toList(),
@@ -372,7 +394,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
 
     setState(() {
       if (url.isNotEmpty) _urlCtrl.text = url;
-      _selectedType = 'HTTP';
+      if (_availableTypes.contains('HTTP')) _selectedType = 'HTTP';
       _httpMethod = method;
       _headers = {...headers};
       if (body.isNotEmpty) _bodyCtrl.text = body;

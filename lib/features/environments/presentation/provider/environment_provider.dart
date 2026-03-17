@@ -145,7 +145,10 @@ class EnvironmentProvider extends ChangeNotifier {
 
     
     for (final v in _variables) {
-      final original = _originalVariables.firstWhere((o) => o.id == v.id);
+      final original = _originalVariables.firstWhere(
+        (o) => o.id == v.id,
+        orElse: () => v,
+      );
       if (original.key != v.key ||
           original.value != v.value ||
           original.isActive != v.isActive) {

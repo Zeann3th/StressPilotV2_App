@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:graphview/graphview.dart' as gv;
 
-enum FlowNodeType { start, endpoint, branch }
+enum FlowNodeType { start, endpoint, branch, subflow }
 
 class CanvasNode {
   final String id;
@@ -15,8 +16,8 @@ class CanvasNode {
     required this.type,
     required this.position,
     this.data = const {},
-    this.width = 150,
-    this.height = 80,
+    this.width = 160,
+    this.height = 90,
   });
 
   CanvasNode copyWith({
@@ -37,7 +38,6 @@ class CanvasNode {
     );
   }
 
-  
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -56,63 +56,62 @@ class CanvasNode {
       orElse: () => FlowNodeType.endpoint,
     );
 
-    
-    double defaultWidth = 160;
-    double defaultHeight = 90;
-
-    if (type == FlowNodeType.start) {
-      defaultWidth = 40;
-      defaultHeight = 40;
-    } else if (type == FlowNodeType.branch) {
-      defaultWidth = 80;
-      defaultHeight = 80;
-    }
-
     return CanvasNode(
       id: json['id'],
       type: type,
       position: Offset(
-        json['position']['x'] as double,
-        json['position']['y'] as double,
+        (json['position']['x'] as num).toDouble(),
+        (json['position']['y'] as num).toDouble(),
       ),
       data: json['data'] ?? {},
-      width: (json['width'] as num?)?.toDouble() ?? defaultWidth,
-      height: (json['height'] as num?)?.toDouble() ?? defaultHeight,
+      width: (json['width'] as num?)?.toDouble() ?? 160,
+      height: (json['height'] as num?)?.toDouble() ?? 90,
     );
+  }
+
+  gv.Node toGraphNode() {
+    return gv.Node.Id(id);
   }
 }
 
+enum ConnectionType { defaultType, trueType, falseType }
 
 class CanvasConnection {
   final String id;
   final String sourceNodeId;
   final String targetNodeId;
   final String? sourceHandle;
-  final String? targetHandle;
+  final ConnectionType type;
 
   CanvasConnection({
     required this.id,
     required this.sourceNodeId,
     required this.targetNodeId,
     this.sourceHandle,
-    this.targetHandle,
+    this.type = ConnectionType.defaultType,
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'sourceNodeId': sourceNodeId,
-    'targetNodeId': targetNodeId,
-    'sourceHandle': sourceHandle,
-    'targetHandle': targetHandle,
-  };
+        'id': id,
+        'sourceNodeId': sourceNodeId,
+        'targetNodeId': targetNodeId,
+        'sourceHandle': sourceHandle,
+        'type': type.toString().split('.').last,
+      };
 
   factory CanvasConnection.fromJson(Map<String, dynamic> json) {
+    final typeStr = json['type'];
+    final type = ConnectionType.values.firstWhere(
+      (e) => e.toString().split('.').last == typeStr,
+      orElse: () => ConnectionType.defaultType,
+    );
+
     return CanvasConnection(
       id: json['id'],
       sourceNodeId: json['sourceNodeId'],
       targetNodeId: json['targetNodeId'],
       sourceHandle: json['sourceHandle'],
-      targetHandle: json['targetHandle'],
+      type: type,
     );
   }
 }

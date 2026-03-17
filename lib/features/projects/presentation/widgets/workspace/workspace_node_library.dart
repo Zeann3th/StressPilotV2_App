@@ -38,9 +38,12 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
           _SectionHeader(label: 'LOGIC'),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
-            child: Row(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 100,
                   child: _LogicChip(
                     type: FlowNodeType.start,
                     label: 'Start',
@@ -48,13 +51,22 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
                     color: AppColors.accent,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
+                SizedBox(
+                  width: 100,
                   child: _LogicChip(
                     type: FlowNodeType.branch,
                     label: 'Branch',
                     icon: Icons.call_split_rounded,
                     color: const Color(0xFF8B5CF6),
+                  ),
+                ),
+                SizedBox(
+                  width: 100,
+                  child: _LogicChip(
+                    type: FlowNodeType.subflow,
+                    label: 'Subflow',
+                    icon: Icons.sync_alt_rounded,
+                    color: const Color(0xFF10B981),
                   ),
                 ),
               ],

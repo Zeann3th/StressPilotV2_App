@@ -1,12 +1,15 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Flow;
+import 'package:graphview/graphview.dart' as gv;
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/design/tokens.dart';
 import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/node_configuration_dialog.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/subflow_configuration_dialog.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'dart:ui';
@@ -36,11 +39,9 @@ class WorkspaceCanvas extends StatelessWidget {
                   color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   width: 1,
                 ),
-                color: isDark
-                    ? AppColors.darkElevated
-                    : AppColors.lightElevated,
+                color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
               ),
-              child: Center(
+              child: const Center(
                 child: Icon(
                   Icons.account_tree_outlined,
                   size: 28,
@@ -82,112 +83,69 @@ class _CanvasContent extends StatefulWidget {
   State<_CanvasContent> createState() => _CanvasContentState();
 }
 
-class _CanvasContentState extends State<_CanvasContent> {
-  final GlobalKey _canvasKey = GlobalKey();
-  final TransformationController _transformController =
-      TransformationController();
+class _CanvasContentState extends State<_CanvasContent> with SingleTickerProviderStateMixin {
+  final gv.SugiyamaConfiguration configuration = gv.SugiyamaConfiguration()
+    ..orientation = gv.SugiyamaConfiguration.ORIENTATION_LEFT_RIGHT
+    ..nodeSeparation = 100
+    ..levelSeparation = 150;
 
-  static const double _canvasSize = 5000.0;
-  static const double _initialScale = 1.0;
-
-  DateTime? _lastDropTime;
-  bool _isLocked = false;
+  late AnimationController _animationController;
   CanvasProvider? _canvasProvider;
 
   @override
   void initState() {
     super.initState();
     _canvasProvider = context.read<CanvasProvider>();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         await _canvasProvider?.loadFlowLayout(widget.flowId);
-
         if (!mounted) return;
 
-        // Load flow configuration from backend to get processor data
         final flowProvider = context.read<FlowProvider>();
+        final endpointProvider = context.read<EndpointProvider>();
         try {
           final flowId = int.parse(widget.flowId);
           final flow = await flowProvider.getFlow(flowId);
-
-          // Merge processor data from backend into canvas nodes
           if (flow.steps.isNotEmpty) {
-            debugPrint(
-              '[Canvas Init] Syncing ${flow.steps.length} steps from backend',
+            _canvasProvider?.syncWithBackend(
+              flow.steps,
+              endpointProvider.endpoints,
+              flowProvider.flows,
             );
-            for (var step in flow.steps) {
-              debugPrint(
-                '[Canvas Init] Step ${step.id}: pre=${step.preProcessor}, post=${step.postProcessor}',
-              );
-            }
-            _canvasProvider?.syncWithBackend(flow.steps);
           }
         } catch (e) {
           debugPrint('Failed to load flow configuration: $e');
         }
-
-        _centerCanvas();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _canvasProvider = context.read<CanvasProvider>();
-  }
 
-  @override
-  void didUpdateWidget(covariant _CanvasContent oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.flowId != widget.flowId) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_canvasProvider != null && !_canvasProvider!.isLoading) {
-          _canvasProvider!.saveFlowLayout(oldWidget.flowId);
-        }
-        _canvasProvider?.loadFlowLayout(widget.flowId);
-      });
+    final endpoints = context.watch<EndpointProvider>().endpoints;
+    if (endpoints.isNotEmpty) {
+      _canvasProvider?.syncEndpointsMetadata(endpoints);
     }
-  }
 
-  @override
-  void dispose() {
-    if (_canvasProvider != null && !_canvasProvider!.isLoading) {
-      _canvasProvider!.saveFlowLayout(widget.flowId, silent: true);
+    final flows = context.watch<FlowProvider>().flows;
+    if (flows.isNotEmpty) {
+      _canvasProvider?.syncFlowsMetadata(flows);
     }
-    _transformController.dispose();
-    super.dispose();
-  }
-
-  void _centerCanvas() {
-    if (!mounted) return;
-    final viewportSize = MediaQuery.of(context).size;
-    final x = -(_canvasSize / 2 - viewportSize.width / 2);
-    final y = -(_canvasSize / 2 - viewportSize.height / 2);
-
-    _transformController.value = Matrix4.identity()
-      ..translateByDouble(x, y, 0, 1.0)
-      ..scaleByDouble(_initialScale, _initialScale, _initialScale, 1.0);
-  }
-
-  void _zoom(double factor) {
-    final matrix = _transformController.value.clone();
-
-    final viewportSize = MediaQuery.of(context).size;
-    final center = Offset(viewportSize.width / 2, viewportSize.height / 2);
-
-    matrix.translateByDouble(center.dx, center.dy, 0, 1.0);
-    matrix.scaleByDouble(factor, factor, factor, 1.0);
-    matrix.translateByDouble(-center.dx, -center.dy, 0, 1.0);
-
-    final newScale = matrix.getMaxScaleOnAxis();
-    if (newScale < 0.1 || newScale > 5.0) return;
-
-    _transformController.value = matrix;
-  }
-
-  void _toggleLock() {
-    setState(() => _isLocked = !_isLocked);
   }
 
   @override
@@ -201,154 +159,80 @@ class _CanvasContentState extends State<_CanvasContent> {
 
     return Stack(
       children: [
-        InteractiveViewer(
-          transformationController: _transformController,
-          panEnabled: !_isLocked,
-          scaleEnabled: !_isLocked,
-          minScale: 0.1,
-          maxScale: 5.0,
-          boundaryMargin: const EdgeInsets.all(double.infinity),
-          constrained: false,
+        // Grid background
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: CustomPaint(
+              painter: GridPainter(
+                color: colors.onSurface.withValues(alpha: 0.1),
+                scale: 1.0,
+              ),
+            ),
+          ),
+        ),
+
+        Positioned.fill(
           child: DragTarget<DragData>(
             onAcceptWithDetails: (details) => _handleDrop(details, context),
             builder: (context, candidateData, rejectedData) {
-              return Listener(
-                onPointerMove: (event) {
-                  if (canvasProvider.canvasMode == CanvasMode.connect &&
-                      canvasProvider.selectedSourceNodeId != null) {
-                    final RenderBox box =
-                        _canvasKey.currentContext!.findRenderObject()
-                            as RenderBox;
-                    final localPos = box.globalToLocal(event.position);
-                    canvasProvider.updateCursorPosition(localPos);
-                  }
-                },
-                child: GestureDetector(
-                  onTap: () {
-                    if (canvasProvider.canvasMode == CanvasMode.connect) {
-                      canvasProvider.setCanvasMode(CanvasMode.connect);
-                    }
-                  },
-                  child: Container(
-                    key: _canvasKey,
-                    width: _canvasSize,
-                    height: _canvasSize,
-                    color: colors.surface,
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: RepaintBoundary(
-                            child: CustomPaint(
-                              painter: GridPainter(
-                                color: colors.onSurface.withValues(alpha: 0.1),
-                                scale: 1.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned.fill(
-                          child: RepaintBoundary(
-                            child: CustomPaint(
-                              painter: ConnectionPainter(
-                                connections: canvasProvider.connections,
-                                nodes: canvasProvider.nodes,
-                                tempSourceId:
-                                    canvasProvider.selectedSourceNodeId,
-                                tempSourceHandle:
-                                    canvasProvider.selectedSourceHandle,
-                                tempEndPos: canvasProvider.tempDragPosition,
-                                lineColor: colors.onSurface,
-                                activeColor: colors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        ...canvasProvider.nodes.map((node) {
-                          return Positioned(
-                            left: node.position.dx,
-                            top: node.position.dy,
-                            child: DraggableNodeWidget(
-                              node: node,
-                              canvasKey: _canvasKey,
-                              transformController: _transformController,
-                              onDoubleTap: node.type == FlowNodeType.start
-                                  ? null
-                                  : node.type == FlowNodeType.branch
-                                  ? () => _showBranchConditionDialog(node)
-                                  : () => _showNodeConfiguration(node),
-                            ),
-                          );
-                        }),
-
-                        ...canvasProvider.connections.map((conn) {
-                          final source = canvasProvider.nodes.firstWhere(
-                            (n) => n.id == conn.sourceNodeId,
-                          );
-                          final target = canvasProvider.nodes.firstWhere(
-                            (n) => n.id == conn.targetNodeId,
-                          );
-
-                          Offset start;
-                          if (source.type == FlowNodeType.branch) {
-                            if (conn.sourceHandle == 'true') {
-                              start =
-                                  source.position +
-                                  Offset(source.width, source.height / 2);
-                            } else {
-                              start =
-                                  source.position +
-                                  Offset(source.width / 2, source.height);
-                            }
-                          } else {
-                            start =
-                                source.position +
-                                Offset(source.width, source.height / 2);
-                          }
-
-                          final end =
-                              target.position + Offset(0, target.height / 2);
-
-                          final midX = (start.dx + end.dx) / 2;
-                          final midY = (start.dy + end.dy) / 2;
-
-                          return Positioned(
-                            left: midX - 10,
-                            top: midY - 10,
-                            child: InkWell(
-                              onTap: () =>
-                                  canvasProvider.removeConnection(conn.id),
-                              child: Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  color: colors.surface,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: colors.outlineVariant,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: colors.shadow.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                      blurRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  Icons.close,
-                                  size: 12,
-                                  color: colors.error,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
+              return InteractiveViewer(
+                panEnabled: canvasProvider.canvasMode == CanvasMode.move,
+                boundaryMargin: const EdgeInsets.all(8000),
+                minScale: 0.1,
+                maxScale: 4.0,
+                constrained: false,
+                child: Container(
+                  color: Colors.transparent,
+                  constraints: BoxConstraints(
+                    minWidth: MediaQuery.of(context).size.width,
+                    minHeight: MediaQuery.of(context).size.height,
                   ),
+                  child: Stack(
+                    children: [
+                      if (canvasProvider.graph.nodes.isNotEmpty)
+                      gv.GraphView(
+                        graph: canvasProvider.graph,
+                        algorithm: gv.SugiyamaAlgorithm(configuration),
+                        paint: Paint()
+                          ..color = colors.onSurfaceVariant.withValues(alpha: 0.5)
+                          ..strokeWidth = 2
+                          ..style = PaintingStyle.stroke,
+                        builder: (gv.Node node) {
+                          final nodeId = node.key?.value as String?;
+                          if (nodeId == null) return const SizedBox.shrink();
+
+                          final canvasNode = canvasProvider.nodes
+                              .where((n) => n.id == nodeId)
+                              .firstOrNull;
+
+                          if (canvasNode == null) return const SizedBox.shrink();
+
+                          return _buildNodeWidget(canvasNode, canvasProvider, colors);
+                        },
+                      ),
+                    
+                    if (canvasProvider.graph.nodes.isNotEmpty)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: AnimatedBuilder(
+                            animation: _animationController,
+                            builder: (context, child) {
+                              return CustomPaint(
+                                painter: _EdgeOverlayPainter(
+                                  nodes: canvasProvider.nodes,
+                                  connections: canvasProvider.connections,
+                                  graph: canvasProvider.graph,
+                                  animationOffset: _animationController.value * 14.0,
+                                  colors: colors,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              );
+              ));
             },
           ),
         ),
@@ -365,563 +249,9 @@ class _CanvasContentState extends State<_CanvasContent> {
     );
   }
 
-  void _showRunDialog(BuildContext context) {
-    final flowId = int.parse(widget.flowId);
-
-    final flowProvider = context.read<FlowProvider>();
-
-    showDialog(
-      context: context,
-      builder: (_) {
-        return ChangeNotifierProvider.value(
-          value: flowProvider,
-          child: RunFlowDialog(flowId: flowId),
-        );
-      },
-    );
-  }
-
-  void _showJsonPayload(BuildContext context) {
-    final provider = context.read<CanvasProvider>();
-    final steps = provider.generateFlowConfiguration();
-    final jsonEncoder = const JsonEncoder.withIndent('  ');
-    final controller = TextEditingController(
-      text: jsonEncoder.convert(steps.map((s) => s.toJson()).toList()),
-    );
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        final colors = Theme.of(context).colorScheme;
-        return Dialog(
-          backgroundColor: colors.surface,
-          surfaceTintColor: colors.surfaceTint,
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Container(
-              width: 800,
-              height: 600,
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Edit Flow Payload',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Warning: Modifying IDs or structure may break the visual layout.',
-                    style: TextStyle(color: colors.error, fontSize: 12),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest.withValues(
-                          alpha: 0.3,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: colors.outlineVariant),
-                      ),
-                      child: TextField(
-                        controller: controller,
-                        maxLines: null,
-                        expands: true,
-                        style: const TextStyle(
-                          fontFamily: 'JetBrains Mono',
-                          fontSize: 12,
-                        ),
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.all(16),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: () {
-                          try {
-                            final List<dynamic> jsonList = jsonDecode(
-                              controller.text,
-                            );
-                            final newSteps = jsonList
-                                .map((e) => flow.FlowStep.fromJson(e))
-                                .toList();
-
-                            provider.applyConfiguration(newSteps);
-                            // Close dialog and show snackbar in parent
-                            Navigator.of(context).pop();
-
-                            // Note: This snackbar is shown AFTER popping,
-                            // so it uses the PARENT scaffold (WorkspaceCanvas).
-                            // This is safe without wrapping the Dialog in Scaffold,
-                            // but for consistency/safety if logic changes, we might want it.
-                            // However, the original code popped FIRST.
-                            // Lines 440-446 in original:
-                            // Navigator.of(context).pop();
-                            // ScaffoldMessenger.of(context).showSnackBar(...)
-                            // The context here is the DIALOG's context.
-                            // If dialog is popped, context is defunct?
-                            // Actually, popping invalidates the context for finding the scaffold *inside* the dialog.
-                            // But usually you want to show it on the *screen* after dialog closes.
-                            // In that case, we should use a method that references the PARENT context.
-                            // But `context` in builder is the dialog context.
-                            // Let's wrap in Scaffold ANYWAY so that if we want to show errors *without* closing, it works.
-                            // AND if we close, we should ensure we start the snackbar call *before* closing?
-                            // Or use a global key?
-                            // Actually, the original code:
-                            // provider.applyConfiguration...
-                            // Navigator.of(context).pop();
-                            // ScaffoldMessenger.of(context)...
-                            // If we pop, the dialog is gone. ScaffoldMessenger.of(context) might might fail to find a scaffold if it searches up from a defunct element?
-                            // Flutter allows using context after pop if the widget tree is still valid, but the dialog is removed.
-                            //
-                            // Use the parent ScaffoldMessenger if possible.
-                            // But in `_showJsonPayload(BuildContext context)`: we have `context` from `build`.
-                            // This `context` is `_CanvasContentState`'s context.
-                            // So `ScaffoldMessenger.of(context)` references the `WorkspaceCanvas`.
-                            // Wait! line 365: `builder: (context) {` shadows the outer context!
-                            //
-                            // Ah!
-                            // Inside `builder`, `context` is the dialog context.
-                            //
-                            // Strategy: Use the OUTER context for Success SnackBar (after pop).
-                            // Use INNER context (with Scaffold) for Error SnackBar (dialog stays open).
-                            //
-                            // The original code tried to show success snackbar using inner context *after pop*. This is risky.
-                            //
-                          } catch (e) {
-                            AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                              SnackBar(
-                                content: Text('Invalid JSON: $e'),
-                                backgroundColor: colors.error,
-                              ),
-                            );
-                          }
-                        },
-                        child: const Text('Apply Changes'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showNodeConfiguration(CanvasNode node) async {
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => NodeConfigurationDialog(node: node),
-    );
-
-    if (result != null && mounted) {
-      final canvasProvider = context.read<CanvasProvider>();
-      final flowProvider = context.read<FlowProvider>();
-
-      // Update local state
-      canvasProvider.updateNodeData(node.id, result);
-
-      // Auto-save to backend
-      final errorColor = Theme.of(context).colorScheme.error;
-      try {
-        final flowId = int.parse(widget.flowId);
-        await canvasProvider.saveFlowConfiguration(flowId, flowProvider);
-
-        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(content: Text('Node configuration saved')),
-        );
-      } catch (e) {
-        // We use the captured errorColor here to avoid using context after async gap
-        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text('Failed to save configuration: $e'),
-            backgroundColor: errorColor,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _showBranchConditionDialog(CanvasNode node) async {
-    final initial = node.data['condition']?.toString() ?? 'true';
-    final controller = TextEditingController(text: initial);
-
-    final result = await showDialog<String?>(
-      context: context,
-      builder: (context) {
-        final colors = Theme.of(context).colorScheme;
-        return Dialog(
-          backgroundColor: colors.surface,
-          surfaceTintColor: colors.surfaceTint,
-          child: Container(
-            width: 480,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Edit Condition',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(null),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Provide the expression used to evaluate the branch (e.g. "user.age > 18")',
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: controller,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(null),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: () {
-                        final value = controller.text.trim();
-                        Navigator.of(context).pop(value);
-                      },
-                      child: const Text('Save'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    if (result != null && mounted) {
-      context.read<CanvasProvider>().updateNodeData(node.id, {
-        'condition': result,
-      });
-    }
-  }
-
-  Future<void> _showClearConfirmation(
-    BuildContext context,
-    CanvasProvider provider,
-  ) async {
-    final colors = Theme.of(context).colorScheme;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colors.surface,
-        title: const Text('Clear Canvas?'),
-        content: const Text(
-          'This will remove all nodes and connections. This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: colors.error,
-              foregroundColor: colors.onError,
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      provider.clearCanvas();
-    }
-  }
-
-  Widget _buildUnifiedToolbar(
-    BuildContext context,
-    ColorScheme colors,
-    CanvasProvider provider,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: surfaceColor.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: borderColor, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // --- Interaction Modes ---
-              _buildModeButton(context, provider, CanvasMode.move, Icons.pan_tool_rounded, 'Pan'),
-              const SizedBox(width: 6),
-              _buildModeButton(context, provider, CanvasMode.connect, Icons.cable_rounded, 'Link'),
-
-              _ToolbarDivider(borderColor: borderColor),
-
-              // --- View Controls ---
-              _ToolbarIcon(
-                tooltip: _isLocked ? 'Unlock Canvas' : 'Lock Canvas',
-                onTap: _toggleLock,
-                icon: _isLocked ? Icons.lock : Icons.lock_open,
-                color: _isLocked ? AppColors.accent : AppColors.textMuted,
-              ),
-              _ToolbarIcon(
-                tooltip: 'Zoom Out',
-                onTap: () => _zoom(0.9),
-                icon: Icons.remove_rounded,
-                color: AppColors.textSecondary,
-              ),
-              _ToolbarIcon(
-                tooltip: 'Zoom In',
-                onTap: () => _zoom(1.1),
-                icon: Icons.add_rounded,
-                color: AppColors.textSecondary,
-              ),
-              _ToolbarIcon(
-                tooltip: 'Reset View',
-                onTap: _centerCanvas,
-                icon: Icons.center_focus_strong_rounded,
-                color: AppColors.textSecondary,
-              ),
-
-              _ToolbarDivider(borderColor: borderColor),
-
-              // --- Actions ---
-              _ToolbarIcon(
-                tooltip: 'Show JSON',
-                onTap: () => _showJsonPayload(context),
-                icon: Icons.code_rounded,
-                color: AppColors.textMuted,
-              ),
-              _ToolbarIcon(
-                tooltip: 'Clear Canvas',
-                onTap: () => _showClearConfirmation(context, provider),
-                icon: Icons.delete_sweep_outlined,
-                color: AppColors.error,
-              ),
-              _ToolbarIcon(
-                tooltip: 'Save Flow',
-                onTap: provider.isSaving
-                    ? null
-                    : () async {
-                        final flowId = int.parse(widget.flowId);
-                        final flowProvider = context.read<FlowProvider>();
-                        try {
-                          await provider.saveFlowConfiguration(flowId, flowProvider);
-                          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                            const SnackBar(content: Text('Flow saved.')),
-                          );
-                        } catch (e) {
-                          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                            SnackBar(content: Text('Error saving: $e')),
-                          );
-                        }
-                      },
-                icon: Icons.save_outlined,
-                color: provider.isSaving ? AppColors.textMuted : AppColors.textSecondary,
-                loading: provider.isSaving,
-              ),
-              const SizedBox(width: 8),
-              // Run button
-              _RunButton(onTap: () => _showRunDialog(context)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModeButton(
-    BuildContext context,
-    CanvasProvider provider,
-    CanvasMode mode,
-    IconData icon,
-    String label,
-  ) {
-    final isSelected = provider.canvasMode == mode;
-
+  Widget _buildNodeWidget(CanvasNode node, CanvasProvider provider, ColorScheme colors) {
     return GestureDetector(
-      onTap: () => provider.setCanvasMode(mode),
-      child: AnimatedContainer(
-        duration: AppDurations.micro,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 12 : 10,
-          vertical: 7,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.accent.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: AppRadius.br8,
-          border: Border.all(
-            color: isSelected
-                ? AppColors.accent.withValues(alpha: 0.5)
-                : Colors.transparent,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? AppColors.accent : AppColors.textMuted,
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.accent,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _handleDrop(DragTargetDetails<DragData> details, BuildContext context) {
-    final now = DateTime.now();
-    if (_lastDropTime != null &&
-        now.difference(_lastDropTime!) < const Duration(milliseconds: 300)) {
-      return;
-    }
-    _lastDropTime = now;
-
-    final RenderBox renderBox =
-        _canvasKey.currentContext!.findRenderObject() as RenderBox;
-    final localOffset = renderBox.globalToLocal(details.offset);
-
-    double width = 160;
-    double height = 90;
-    Offset centerOffset = const Offset(80, 45);
-
-    if (details.data.type == FlowNodeType.start) {
-      width = 40;
-      height = 40;
-      centerOffset = const Offset(20, 20);
-    } else if (details.data.type == FlowNodeType.branch) {
-      width = 80;
-      height = 80;
-      centerOffset = const Offset(40, 40);
-    }
-
-    final newNode = CanvasNode(
-      id: const Uuid().v4(),
-      type: details.data.type,
-      position: localOffset - centerOffset,
-      width: width,
-      height: height,
-      data: details.data.payload,
-    );
-
-    context.read<CanvasProvider>().addNode(newNode);
-  }
-}
-
-class DraggableNodeWidget extends StatelessWidget {
-  final CanvasNode node;
-  final GlobalKey canvasKey;
-  final TransformationController transformController;
-  final VoidCallback? onDoubleTap;
-
-  const DraggableNodeWidget({
-    super.key,
-    required this.node,
-    required this.canvasKey,
-    required this.transformController,
-    this.onDoubleTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.read<CanvasProvider>();
-    final colors = Theme.of(context).colorScheme;
-
-    Widget nodeContent;
-    switch (node.type) {
-      case FlowNodeType.start:
-        nodeContent = _buildStartNode(context, provider, colors);
-        break;
-      case FlowNodeType.branch:
-        nodeContent = _buildBranchNode(context, provider, colors);
-        break;
-      case FlowNodeType.endpoint:
-        nodeContent = _buildStandardNode(context, provider, colors);
-        break;
-    }
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onDoubleTap: onDoubleTap,
+      onDoubleTap: () => _handleNodeDoubleTap(node),
       onTap: () {
         if (provider.canvasMode == CanvasMode.connect) {
           if (provider.selectedSourceNodeId != null) {
@@ -931,15 +261,10 @@ class DraggableNodeWidget extends StatelessWidget {
           }
         }
       },
-      onPanUpdate: (details) {
-        if (provider.canvasMode == CanvasMode.move) {
-          provider.updateNodePosition(node.id, node.position + details.delta);
-        }
-      },
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          RepaintBoundary(child: nodeContent),
+          _NodeBody(node: node, provider: provider, colors: colors),
           if (provider.selectedSourceNodeId == node.id)
             Positioned.fill(
               child: Container(
@@ -960,407 +285,425 @@ class DraggableNodeWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildStandardNode(
-    BuildContext context,
-    CanvasProvider provider,
-    ColorScheme colors,
-  ) {
+  void _handleNodeDoubleTap(CanvasNode node) {
+    switch (node.type) {
+      case FlowNodeType.start:
+        break;
+      case FlowNodeType.branch:
+        _showBranchConditionDialog(node);
+        break;
+      case FlowNodeType.subflow:
+        _showSubflowConfiguration(node);
+        break;
+      case FlowNodeType.endpoint:
+        _showNodeConfiguration(node);
+        break;
+    }
+  }
+
+  void _handleDrop(DragTargetDetails<DragData> details, BuildContext context) {
+    final newNode = CanvasNode(
+      id: const Uuid().v4(),
+      type: details.data.type,
+      position: Offset.zero,
+      data: details.data.payload,
+    );
+    context.read<CanvasProvider>().addNode(newNode);
+  }
+
+  void _showNodeConfiguration(CanvasNode node) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => NodeConfigurationDialog(node: node),
+    );
+
+    if (result != null && mounted) {
+      final canvasProvider = context.read<CanvasProvider>();
+      final flowProvider = context.read<FlowProvider>();
+      canvasProvider.updateNodeData(node.id, result);
+      
+      final scaffoldMessenger = AppNavigator.scaffoldMessengerKey.currentState;
+      final theme = Theme.of(context);
+      
+      try {
+        final flowId = int.parse(widget.flowId);
+        await canvasProvider.saveFlowConfiguration(flowId, flowProvider);
+        scaffoldMessenger?.showSnackBar(const SnackBar(content: Text('Node configuration saved')));
+      } catch (e) {
+        scaffoldMessenger?.showSnackBar(SnackBar(content: Text('Failed to save: $e'), backgroundColor: theme.colorScheme.error));
+      }
+    }
+  }
+
+  void _showSubflowConfiguration(CanvasNode node) async {
+    final initialId = node.data['subflowId']?.toString();
+    final result = await showDialog<flow.Flow?>(
+      context: context,
+      builder: (context) => SubflowConfigurationDialog(initialFlowId: initialId),
+    );
+
+    if (result != null && mounted) {
+      final canvasProvider = context.read<CanvasProvider>();
+      final flowProvider = context.read<FlowProvider>();
+      canvasProvider.updateNodeData(node.id, {'subflowId': result.id.toString(), 'flowName': result.name});
+      
+      final scaffoldMessenger = AppNavigator.scaffoldMessengerKey.currentState;
+      final theme = Theme.of(context);
+      
+      try {
+        final flowId = int.parse(widget.flowId);
+        await canvasProvider.saveFlowConfiguration(flowId, flowProvider);
+        scaffoldMessenger?.showSnackBar(const SnackBar(content: Text('Subflow configuration saved')));
+      } catch (e) {
+        scaffoldMessenger?.showSnackBar(SnackBar(content: Text('Failed to save: $e'), backgroundColor: theme.colorScheme.error));
+      }
+    }
+  }
+
+  Future<void> _showBranchConditionDialog(CanvasNode node) async {
+    final initial = node.data['condition']?.toString() ?? 'true';
+    final controller = TextEditingController(text: initial);
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (context) => _BranchDialog(controller: controller),
+    );
+    if (result != null && mounted) {
+      context.read<CanvasProvider>().updateNodeData(node.id, {'condition': result});
+    }
+  }
+
+  void _showJsonPayload(BuildContext context) {
+    final provider = context.read<CanvasProvider>();
+    final steps = provider.generateFlowConfiguration();
+    final jsonEncoder = const JsonEncoder.withIndent('  ');
+    final controller = TextEditingController(text: jsonEncoder.convert(steps.map((s) => s.toJson()).toList()));
+
+    showDialog(
+      context: context,
+      builder: (context) => _JsonPayloadDialog(controller: controller, provider: provider),
+    );
+  }
+
+  void _showRunDialog(BuildContext context) {
+    final flowId = int.parse(widget.flowId);
+    final flowProvider = context.read<FlowProvider>();
+    showDialog(
+      context: context,
+      builder: (_) => ChangeNotifierProvider.value(value: flowProvider, child: RunFlowDialog(flowId: flowId)),
+    );
+  }
+
+  Widget _buildUnifiedToolbar(BuildContext context, ColorScheme colors, CanvasProvider provider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(32),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: surfaceColor.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildModeButton(provider, CanvasMode.move, Icons.pan_tool_rounded, 'Pan'),
+              const SizedBox(width: 6),
+              _buildModeButton(provider, CanvasMode.connect, Icons.cable_rounded, 'Link'),
+              _ToolbarDivider(borderColor: borderColor),
+              _ToolbarIcon(tooltip: 'Show JSON', onTap: () => _showJsonPayload(context), icon: Icons.code_rounded, color: AppColors.textMuted),
+              _ToolbarIcon(
+                tooltip: 'Clear Canvas',
+                onTap: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: colors.surface,
+                      title: const Text('Clear Canvas?'),
+                      content: const Text('This will remove all nodes and connections.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+                        FilledButton(
+                          style: FilledButton.styleFrom(backgroundColor: colors.error, foregroundColor: colors.onError),
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Clear'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) provider.clearCanvas();
+                },
+                icon: Icons.delete_sweep_outlined,
+                color: AppColors.error,
+              ),
+              _ToolbarIcon(
+                tooltip: 'Save Flow',
+                onTap: provider.isSaving
+                    ? null
+                    : () async {
+                        final flowId = int.parse(widget.flowId);
+                        final flowProvider = context.read<FlowProvider>();
+                        final scaffoldMessenger = AppNavigator.scaffoldMessengerKey.currentState;
+                        try {
+                          await provider.saveFlowConfiguration(flowId, flowProvider);
+                          scaffoldMessenger?.showSnackBar(const SnackBar(content: Text('Flow saved.')));
+                        } catch (e) {
+                          scaffoldMessenger?.showSnackBar(SnackBar(content: Text('Error saving: $e')));
+                        }
+                      },
+                icon: Icons.save_outlined,
+                color: provider.isSaving ? AppColors.textMuted : AppColors.textSecondary,
+                loading: provider.isSaving,
+              ),
+              const SizedBox(width: 8),
+              _RunButton(onTap: () => _showRunDialog(context)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeButton(CanvasProvider provider, CanvasMode mode, IconData icon, String label) {
+    final isSelected = provider.canvasMode == mode;
+    return GestureDetector(
+      onTap: () => provider.setCanvasMode(mode),
+      child: AnimatedContainer(
+        duration: AppDurations.micro,
+        padding: EdgeInsets.symmetric(horizontal: isSelected ? 12 : 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accent.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: AppRadius.br8,
+          border: Border.all(color: isSelected ? AppColors.accent.withValues(alpha: 0.5) : Colors.transparent),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isSelected ? AppColors.accent : AppColors.textMuted),
+            if (isSelected) ...[
+              const SizedBox(width: 6),
+              Text(label, style: AppTypography.caption.copyWith(color: AppColors.accent, fontWeight: FontWeight.w600)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EdgeOverlayPainter extends CustomPainter {
+  final List<CanvasNode> nodes;
+  final List<CanvasConnection> connections;
+  final gv.Graph graph;
+  final double animationOffset;
+  final ColorScheme colors;
+
+  _EdgeOverlayPainter({
+    required this.nodes,
+    required this.connections,
+    required this.graph,
+    required this.animationOffset,
+    required this.colors,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = colors.primary.withValues(alpha: 0.8)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    for (final conn in connections) {
+      final sourceGv = graph.nodes.where((n) => n.key?.value == conn.sourceNodeId).firstOrNull;
+      final targetGv = graph.nodes.where((n) => n.key?.value == conn.targetNodeId).firstOrNull;
+      
+      if (sourceGv == null || targetGv == null) continue;
+
+      final sourceNode = nodes.where((n) => n.id == conn.sourceNodeId).firstOrNull;
+      if (sourceNode == null) continue;
+
+      final start = Offset(sourceGv.x, sourceGv.y);
+      final end = Offset(targetGv.x, targetGv.y);
+
+      _drawAnimatedDashes(canvas, start, end, paint);
+
+      if (sourceNode.type == FlowNodeType.branch) {
+        _drawLabel(canvas, start, end, conn.type == ConnectionType.trueType ? 'T' : 'F');
+      }
+    }
+  }
+
+  void _drawAnimatedDashes(Canvas canvas, Offset start, Offset end, Paint paint) {
+    final path = Path();
+    path.moveTo(start.dx, start.dy);
+    path.lineTo(end.dx, end.dy);
+
+    const dashWidth = 8.0;
+    const dashSpace = 6.0;
+    final pathMetrics = path.computeMetrics();
+
+    for (final metric in pathMetrics) {
+      double distance = -animationOffset % (dashWidth + dashSpace);
+      while (distance < metric.length) {
+        final double startDist = distance.clamp(0.0, metric.length);
+        final double endDist = (distance + dashWidth).clamp(0.0, metric.length);
+        if (startDist < endDist) {
+          canvas.drawPath(metric.extractPath(startDist, endDist), paint);
+        }
+        distance += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  void _drawLabel(Canvas canvas, Offset start, Offset end, String text) {
+    final mid = Offset((start.dx * 3 + end.dx) / 4, (start.dy * 3 + end.dy) / 4);
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          color: text == 'T' ? Colors.green : Colors.red,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          backgroundColor: colors.surface.withValues(alpha: 0.8),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, mid - Offset(textPainter.width / 2, textPainter.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(covariant _EdgeOverlayPainter oldDelegate) => true;
+}
+
+class _NodeBody extends StatelessWidget {
+  final CanvasNode node;
+  final CanvasProvider provider;
+  final ColorScheme colors;
+
+  const _NodeBody({required this.node, required this.provider, required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    switch (node.type) {
+      case FlowNodeType.start: return _buildStart(colors);
+      case FlowNodeType.branch: return _buildBranch(colors);
+      case FlowNodeType.subflow: return _buildSubflow(colors);
+      case FlowNodeType.endpoint: return _buildStandard(colors);
+    }
+  }
+
+  Widget _buildStandard(ColorScheme colors) {
     final type = node.data['type'] ?? 'HTTP';
     final methodColor = _getTypeColor(type);
-
     return Container(
       width: node.width,
-      constraints: BoxConstraints(minHeight: node.height),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.6),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.6)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: methodColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                child: Text(type.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: methodColor)),
+              ),
+              IconButton(
+                onPressed: () => provider.removeNode(node.id),
+                icon: const Icon(Icons.close, size: 14),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
           ),
-          BoxShadow(
-            color: methodColor.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
+          const SizedBox(height: 6),
+          Text(node.data['name'] ?? "Endpoint", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(node.data['url'] ?? "Action node", style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant, fontFamily: 'JetBrains Mono'), maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 0,
-            top: 12,
-            bottom: 12,
-            width: 3,
-            child: Container(
-              decoration: BoxDecoration(
-                color: methodColor,
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(3),
-                  bottomRight: Radius.circular(3),
-                ),
-              ),
-            ),
-          ),
+    );
+  }
 
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+  Widget _buildSubflow(ColorScheme colors) {
+    return Container(
+      width: node.width,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.secondary.withValues(alpha: 0.5), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.sync_alt_rounded, size: 16, color: colors.secondary),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: methodColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        type.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: methodColor,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                if (node.data['name'] != null &&
-                    node.data['name'].toString().isNotEmpty) ...[
-                  Tooltip(
-                    message: node.data['name'],
-                    child: Text(
-                      node.data['name'],
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: colors.onSurface,
-                        letterSpacing: -0.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                ],
-                Tooltip(
-                  message: node.data['url'] ?? "Action node",
-                  child: Text(
-                    node.data['url'] ?? "Action node",
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: colors.onSurfaceVariant,
-                      fontFamily: 'JetBrains Mono',
-                      height: 1.4,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+                Text('SUBFLOW', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: colors.secondary)),
+                Text(node.data['flowName'] ?? "Select...", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
-
-          Positioned(
-            top: -6,
-            right: -6,
-            child: InkWell(
-              onTap: () => provider.removeNode(node.id),
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: colors.outlineVariant.withValues(alpha: 0.5),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.close,
-                  size: 12,
-                  color: colors.onSurfaceVariant.withValues(alpha: 0.8),
-                ),
-              ),
-            ),
-          ),
+          IconButton(onPressed: () => provider.removeNode(node.id), icon: const Icon(Icons.close, size: 14), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
         ],
       ),
     );
   }
 
-  Widget _buildStartNode(
-    BuildContext context,
-    CanvasProvider provider,
-    ColorScheme colors,
-  ) {
-    return SizedBox(
-      width: node.width,
-      height: node.height,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [colors.primary, colors.tertiary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: const Icon(
-              Icons.play_arrow_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-
-          Positioned(
-            top: -12,
-            right: 0,
-            child: InkWell(
-              onTap: () => provider.removeNode(node.id),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colors.outlineVariant),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.close,
-                  size: 12,
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-        ],
+  Widget _buildStart(ColorScheme colors) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [colors.primary, colors.tertiary]),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [BoxShadow(color: colors.primary.withValues(alpha: 0.3), blurRadius: 8)],
       ),
+      child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 28),
     );
   }
 
-  Widget _buildBranchNode(
-    BuildContext context,
-    CanvasProvider provider,
-    ColorScheme colors,
-  ) {
-    final size = node.width < node.height ? node.width : node.height;
-    final diamondSize = size * 0.7;
-
-    return SizedBox(
+  Widget _buildBranch(ColorScheme colors) {
+    return Container(
       width: node.width,
-      height: node.height,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.primary.withValues(alpha: 0.5), width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Transform.rotate(
-            angle: 0.785398,
-            child: Container(
-              width: diamondSize,
-              height: diamondSize,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colors.surface,
-                    colors.surfaceContainerHighest.withValues(alpha: 0.5),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: colors.primary.withValues(alpha: 0.5),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.15),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
           const Icon(Icons.call_split_rounded, size: 20, color: Colors.grey),
-
-          Positioned(
-            top: 0,
-            right: 0,
-            child: InkWell(
-              onTap: () => provider.removeNode(node.id),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colors.outlineVariant),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.close,
-                  size: 12,
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-
-          Positioned(
-            right: -8,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () {
-                  if (provider.canvasMode == CanvasMode.connect) {
-                    provider.selectSourceNode(node.id, 'true');
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        provider.selectedSourceNodeId == node.id &&
-                            provider.selectedSourceHandle == 'true'
-                        ? colors.primaryContainer
-                        : colors.surface,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color:
-                          provider.selectedSourceNodeId == node.id &&
-                              provider.selectedSourceHandle == 'true'
-                          ? colors.primary
-                          : colors.primary.withValues(alpha: 0.5),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      if (provider.selectedSourceNodeId == node.id &&
-                          provider.selectedSourceHandle == 'true')
-                        BoxShadow(
-                          color: colors.primary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                        ),
-                    ],
-                  ),
-                  child: Text(
-                    "T",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: colors.primary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          Positioned(
-            bottom: -8,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () {
-                  if (provider.canvasMode == CanvasMode.connect) {
-                    provider.selectSourceNode(node.id, 'false');
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        provider.selectedSourceNodeId == node.id &&
-                            provider.selectedSourceHandle == 'false'
-                        ? colors.errorContainer
-                        : colors.surface,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color:
-                          provider.selectedSourceNodeId == node.id &&
-                              provider.selectedSourceHandle == 'false'
-                          ? colors.error
-                          : colors.error.withValues(alpha: 0.5),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      if (provider.selectedSourceNodeId == node.id &&
-                          provider.selectedSourceHandle == 'false')
-                        BoxShadow(
-                          color: colors.error.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                        ),
-                    ],
-                  ),
-                  child: Text(
-                    "F",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: colors.error,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _BranchHandle(label: 'T', color: Colors.green, isSelected: provider.selectedSourceNodeId == node.id && provider.selectedSourceHandle == 'true', onTap: () => provider.selectSourceNode(node.id, 'true')),
+              _BranchHandle(label: 'F', color: Colors.red, isSelected: provider.selectedSourceNodeId == node.id && provider.selectedSourceHandle == 'false', onTap: () => provider.selectSourceNode(node.id, 'false')),
+            ],
           ),
         ],
       ),
@@ -1369,41 +712,147 @@ class DraggableNodeWidget extends StatelessWidget {
 
   Color _getTypeColor(String type) {
     switch (type.toUpperCase()) {
-      case 'HTTP':
-        return Colors.blue;
-      case 'GRPC':
-        return Colors.teal;
-      case 'TCP':
-        return Colors.orange;
-      case 'JDBC':
-        return Colors.purple;
-      default:
-        // Generate a random but consistent color based on the type name
-        final int hash = type.hashCode;
-        return HSLColor.fromAHSL(
-          1.0,
-          (hash % 360).toDouble(),
-          0.7, // Saturation
-          0.5, // Lightness
-        ).toColor();
+      case 'HTTP': return Colors.blue;
+      case 'GRPC': return Colors.teal;
+      default: return Colors.blueGrey;
     }
   }
 }
 
-// ─── Toolbar helpers ─────────────────────────────────────────────────────────
+class _BranchHandle extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _BranchHandle({required this.label, required this.color, required this.isSelected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
+          border: Border.all(color: isSelected ? color : color.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+      ),
+    );
+  }
+}
+
+class _BranchDialog extends StatelessWidget {
+  final TextEditingController controller;
+  const _BranchDialog({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Dialog(
+      backgroundColor: colors.surface,
+      child: Container(
+        width: 400,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Edit Branch Condition', style: AppTypography.title),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'e.g. response.status == 200',
+                labelText: 'Expression',
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                const SizedBox(width: 12),
+                FilledButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Save')),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JsonPayloadDialog extends StatelessWidget {
+  final TextEditingController controller;
+  final CanvasProvider provider;
+
+  const _JsonPayloadDialog({required this.controller, required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Dialog(
+      backgroundColor: colors.surface,
+      child: Container(
+        width: 800,
+        height: 600,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Edit Flow JSON', style: AppTypography.title),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(border: Border.all(color: colors.outlineVariant), borderRadius: BorderRadius.circular(8)),
+                child: TextField(
+                  controller: controller,
+                  maxLines: null,
+                  expands: true,
+                  style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12),
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(16), border: InputBorder.none),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                const SizedBox(width: 12),
+                FilledButton(
+                  onPressed: () {
+                    try {
+                      final List<dynamic> jsonList = jsonDecode(controller.text);
+                      final newSteps = jsonList.map((e) => flow.FlowStep.fromJson(e)).toList();
+                      provider.applyConfiguration(newSteps);
+                      Navigator.pop(context);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid JSON: $e'), backgroundColor: colors.error));
+                    }
+                  },
+                  child: const Text('Apply'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _ToolbarDivider extends StatelessWidget {
   final Color borderColor;
   const _ToolbarDivider({required this.borderColor});
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 20,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      color: borderColor,
-    );
+    return Container(width: 1, height: 20, margin: const EdgeInsets.symmetric(horizontal: 10), color: borderColor);
   }
 }
 
@@ -1413,57 +862,26 @@ class _ToolbarIcon extends StatefulWidget {
   final String tooltip;
   final VoidCallback? onTap;
   final bool loading;
-
-  const _ToolbarIcon({
-    required this.icon,
-    required this.color,
-    required this.tooltip,
-    required this.onTap,
-    this.loading = false,
-  });
-
+  const _ToolbarIcon({required this.icon, required this.color, required this.tooltip, required this.onTap, this.loading = false});
   @override
   State<_ToolbarIcon> createState() => _ToolbarIconState();
 }
 
 class _ToolbarIconState extends State<_ToolbarIcon> {
   bool _hovered = false;
-
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: widget.tooltip,
-      waitDuration: const Duration(milliseconds: 500),
       child: MouseRegion(
-        cursor: widget.onTap != null
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
         child: GestureDetector(
           onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: AppDurations.micro,
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: _hovered && widget.onTap != null
-                  ? widget.color.withValues(alpha: 0.1)
-                  : Colors.transparent,
-              borderRadius: AppRadius.br8,
-            ),
-            child: Center(
-              child: widget.loading
-                  ? SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.5,
-                        color: AppColors.textMuted,
-                      ),
-                    )
-                  : Icon(widget.icon, size: 16, color: widget.color),
-            ),
+          child: Container(
+            width: 32, height: 32,
+            decoration: BoxDecoration(color: _hovered ? widget.color.withValues(alpha: 0.1) : Colors.transparent, borderRadius: AppRadius.br8),
+            child: widget.loading ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5)) : Icon(widget.icon, size: 16, color: widget.color),
           ),
         ),
       ),
@@ -1471,57 +889,16 @@ class _ToolbarIconState extends State<_ToolbarIcon> {
   }
 }
 
-class _RunButton extends StatefulWidget {
+class _RunButton extends StatelessWidget {
   final VoidCallback onTap;
   const _RunButton({required this.onTap});
-
-  @override
-  State<_RunButton> createState() => _RunButtonState();
-}
-
-class _RunButtonState extends State<_RunButton> {
-  bool _hovered = false;
-
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: AppDurations.micro,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(
-            color: _hovered ? AppColors.accentHover : AppColors.accent,
-            borderRadius: AppRadius.br8,
-            boxShadow: _hovered
-                ? [
-                    BoxShadow(
-                      color: AppColors.accent.withValues(alpha: 0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.play_arrow_rounded, size: 15, color: Colors.white),
-              const SizedBox(width: 5),
-              Text(
-                'Run',
-                style: AppTypography.caption.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: const Icon(Icons.play_arrow_rounded, size: 16),
+      label: const Text('Run'),
+      style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white),
     );
   }
 }

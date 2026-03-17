@@ -4,6 +4,7 @@ class Flow {
   final int id;
   final String name;
   final String? description;
+  final String type;
   final int projectId;
   final List<FlowStep> steps;
 
@@ -26,6 +27,7 @@ class Flow {
     required this.id,
     required this.name,
     this.description,
+    required this.type,
     required this.projectId,
     this.steps = const [],
   });
@@ -43,6 +45,7 @@ class Flow {
       id: _toInt(json['id']),
       name: json['name'] ?? '',
       description: json['description'],
+      type: json['type'] ?? 'DEFAULT',
       projectId: _toInt(json['projectId'] ?? json['project_id']),
       steps:
           (json['steps'] as List?)?.map((e) => FlowStep.fromJson(e)).toList() ??
@@ -54,6 +57,7 @@ class Flow {
     'id': id,
     'name': name,
     'description': description,
+    'type': type,
     'projectId': projectId,
     'steps': steps.map((e) => e.toJson()).toList(),
   };
@@ -63,6 +67,7 @@ class Flow {
       id: id,
       name: name,
       description: description,
+      type: type,
       projectId: projectId,
       steps: steps ?? this.steps,
     );
@@ -121,17 +126,20 @@ class CreateFlowRequest {
   final int projectId;
   final String name;
   final String? description;
+  final String type;
 
   CreateFlowRequest({
     required this.projectId,
     required this.name,
     this.description,
+    required this.type,
   });
 
   Map<String, dynamic> toJson() => {
     'projectId': projectId,
     'name': name,
     'description': description,
+    'type': type,
   };
 }
 

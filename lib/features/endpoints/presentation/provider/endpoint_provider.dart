@@ -168,6 +168,10 @@ class EndpointProvider extends ChangeNotifier {
     }
   }
 
+  Future<Endpoint> getEndpoint(int id) async {
+    return await _service.getEndpointDetail(id);
+  }
+
   
   Future<Map<String, dynamic>> executeEndpoint(
     int endpointId,

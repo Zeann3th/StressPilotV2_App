@@ -46,6 +46,7 @@ dependencies:
   lucide_icons: ^0.257.0
   flutter_animate: ^4.5.2
   local_notifier: ^0.1.6
+  graphview: ^1.5.1
 
 
 dev_dependencies:

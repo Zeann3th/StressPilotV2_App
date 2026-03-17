@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Flow;
+import 'package:graphview/graphview.dart' as gv;
 import 'package:stress_pilot/features/projects/domain/flow.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/endpoints/domain/endpoint.dart' as domain_endpoint;
 import 'package:uuid/uuid.dart';
 
 import '../../domain/canvas.dart';
@@ -10,6 +12,7 @@ enum CanvasMode { move, connect }
 class CanvasProvider extends ChangeNotifier {
   List<CanvasNode> _nodes = [];
   List<CanvasConnection> _connections = [];
+  final gv.Graph graph = gv.Graph();
 
   String? _tempSourceNodeId;
   String? _tempSourceHandle;
@@ -23,12 +26,10 @@ class CanvasProvider extends ChangeNotifier {
   bool _isSaving = false;
 
   List<CanvasNode> get nodes => _nodes;
-
   List<CanvasConnection> get connections => _connections;
 
   String? get tempSourceNodeId => _tempSourceNodeId;
   String? get tempSourceHandle => _tempSourceHandle;
-
   Offset? get tempDragPosition => _tempDragPosition;
 
   CanvasMode get canvasMode => _canvasMode;
@@ -36,12 +37,32 @@ class CanvasProvider extends ChangeNotifier {
   String? get selectedSourceHandle => _selectedSourceHandle;
 
   bool get isLoading => _isLoading;
-
   bool get isSaving => _isSaving;
 
   void addNode(CanvasNode node) {
     _nodes.add(node);
+    _syncGraph();
     notifyListeners();
+  }
+
+  void _syncGraph() {
+    graph.nodes.clear();
+    graph.edges.clear();
+
+    final gvNodes = <String, gv.Node>{};
+    for (final node in _nodes) {
+      final gvNode = node.toGraphNode();
+      gvNodes[node.id] = gvNode;
+      graph.addNode(gvNode);
+    }
+
+    for (final conn in _connections) {
+      final source = gvNodes[conn.sourceNodeId];
+      final target = gvNodes[conn.targetNodeId];
+      if (source != null && target != null) {
+        graph.addEdge(source, target);
+      }
+    }
   }
 
   void updateNodePosition(String id, Offset newPos) {
@@ -67,17 +88,20 @@ class CanvasProvider extends ChangeNotifier {
     _connections.removeWhere(
       (c) => c.sourceNodeId == id || c.targetNodeId == id,
     );
+    _syncGraph();
     notifyListeners();
   }
 
   void removeConnection(String connectionId) {
     _connections.removeWhere((c) => c.id == connectionId);
+    _syncGraph();
     notifyListeners();
   }
 
   void clearCanvas() {
     _nodes.clear();
     _connections.clear();
+    _syncGraph();
     notifyListeners();
   }
 
@@ -105,15 +129,28 @@ class CanvasProvider extends ChangeNotifier {
 
   void connectToTarget(String targetNodeId) {
     if (_canvasMode == CanvasMode.connect && _selectedSourceNodeId != null) {
+      ConnectionType connType = ConnectionType.defaultType;
+      if (_selectedSourceHandle == 'true') connType = ConnectionType.trueType;
+      if (_selectedSourceHandle == 'false') connType = ConnectionType.falseType;
+
+      // Remove existing connection from same handle if any
+      _connections.removeWhere(
+        (c) =>
+            c.sourceNodeId == _selectedSourceNodeId &&
+            c.sourceHandle == _selectedSourceHandle,
+      );
+
       _connections.add(
         CanvasConnection(
           id: const Uuid().v4(),
           sourceNodeId: _selectedSourceNodeId!,
           targetNodeId: targetNodeId,
           sourceHandle: _selectedSourceHandle ?? 'default',
+          type: connType,
         ),
       );
 
+      _syncGraph();
       notifyListeners();
     }
   }
@@ -125,48 +162,7 @@ class CanvasProvider extends ChangeNotifier {
     }
   }
 
-  void startConnection(String nodeId, String handleId, Offset startPos) {
-    _tempSourceNodeId = nodeId;
-    _tempSourceHandle = handleId;
-    _tempDragPosition = startPos;
-    notifyListeners();
-  }
-
-  void updateTempConnection(Offset currentPos) {
-    _tempDragPosition = currentPos;
-    notifyListeners();
-  }
-
-  void endConnection(String targetNodeId) {
-    if (_tempSourceNodeId != null && _tempSourceNodeId != targetNodeId) {
-      _connections.removeWhere(
-        (c) =>
-            c.sourceNodeId == _tempSourceNodeId &&
-            c.sourceHandle == _tempSourceHandle,
-      );
-
-      _connections.add(
-        CanvasConnection(
-          id: const Uuid().v4(),
-          sourceNodeId: _tempSourceNodeId!,
-          sourceHandle: _tempSourceHandle,
-          targetNodeId: targetNodeId,
-        ),
-      );
-    }
-    cancelConnection();
-  }
-
-  void cancelConnection() {
-    _tempSourceNodeId = null;
-    _tempSourceHandle = null;
-    _tempDragPosition = null;
-    _selectedSourceNodeId = null;
-    notifyListeners();
-  }
-
   Future<void> saveFlowLayout(String flowId, {bool silent = false}) async {
-    // Feature cancelled as per user request - we now load from DB every time
     return;
   }
 
@@ -174,9 +170,8 @@ class CanvasProvider extends ChangeNotifier {
     _isLoading = true;
     _nodes = [];
     _connections = [];
+    _syncGraph();
     notifyListeners();
-    
-    // We don't load from SharedPreferences anymore
     _isLoading = false;
     notifyListeners();
   }
@@ -191,8 +186,6 @@ class CanvasProvider extends ChangeNotifier {
     try {
       final steps = generateFlowConfiguration();
       final updatedSteps = await flowProvider.configureFlow(flowId, steps);
-      
-      // After saving configuration to backend, we rebuild to ensure sync
       rebuildFromSteps(updatedSteps);
     } finally {
       _isSaving = false;
@@ -213,6 +206,10 @@ class CanvasProvider extends ChangeNotifier {
         case FlowNodeType.branch:
           type = 'BRANCH';
           condition = node.data['condition']?.toString() ?? 'true';
+          break;
+        case FlowNodeType.subflow:
+          type = 'SUBFLOW';
+          condition = node.data['subflowId']?.toString();
           break;
         case FlowNodeType.endpoint:
           type = 'ENDPOINT';
@@ -241,7 +238,6 @@ class CanvasProvider extends ChangeNotifier {
       if (node.data['preProcessor'] != null) {
         preProcessor = Map<String, dynamic>.from(node.data['preProcessor']);
       }
-      // Keep _temp_sync_id for backend syncing if needed, though we rebuild now
       preProcessor['_temp_sync_id'] = node.id;
 
       return FlowStep(
@@ -257,95 +253,159 @@ class CanvasProvider extends ChangeNotifier {
     }).toList();
   }
 
-  void rebuildFromSteps(List<FlowStep> steps) {
+  void syncEndpointsMetadata(List<domain_endpoint.Endpoint> endpoints) {
+    bool changed = false;
+    for (int i = 0; i < _nodes.length; i++) {
+      if (_nodes[i].type == FlowNodeType.endpoint) {
+        final endpointId = _nodes[i].data['id'];
+        if (endpointId != null) {
+          final endpoint = endpoints.where((e) => e.id == endpointId).firstOrNull;
+          if (endpoint != null) {
+            final newData = Map<String, dynamic>.from(_nodes[i].data);
+            bool localChanged = false;
+            if (newData['name'] != endpoint.name) {
+              newData['name'] = endpoint.name;
+              localChanged = true;
+            }
+            if (newData['url'] != endpoint.url) {
+              newData['url'] = endpoint.url;
+              localChanged = true;
+            }
+            if (newData['type'] != endpoint.type) {
+              newData['type'] = endpoint.type;
+              localChanged = true;
+            }
+            if (newData['method'] != endpoint.httpMethod) {
+              newData['method'] = endpoint.httpMethod;
+              localChanged = true;
+            }
+            if (localChanged) {
+              _nodes[i] = _nodes[i].copyWith(data: newData);
+              changed = true;
+            }
+          }
+        }
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
+  void syncFlowsMetadata(List<Flow> flows) {
+    bool changed = false;
+    for (int i = 0; i < _nodes.length; i++) {
+      if (_nodes[i].type == FlowNodeType.subflow) {
+        final subflowId = _nodes[i].data['subflowId'];
+        if (subflowId != null) {
+          final flow = flows.where((f) => f.id.toString() == subflowId.toString()).firstOrNull;
+          if (flow != null) {
+            final newData = Map<String, dynamic>.from(_nodes[i].data);
+            if (newData['flowName'] != flow.name) {
+              newData['flowName'] = flow.name;
+              _nodes[i] = _nodes[i].copyWith(data: newData);
+              changed = true;
+            }
+          }
+        }
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
+  void rebuildFromSteps(List<FlowStep> steps, [List<domain_endpoint.Endpoint>? endpoints, List<Flow>? flows]) {
     _nodes.clear();
     _connections.clear();
 
     if (steps.isEmpty) {
+      _syncGraph();
       notifyListeners();
       return;
     }
 
-    // Simple layout: Place nodes in a row or grid
-    double startX = 2500.0;
-    double startY = 2500.0;
+    double startX = 100.0;
+    double startY = 100.0;
     double spacingX = 250.0;
     double spacingY = 150.0;
 
-    // First, create all nodes
     for (int i = 0; i < steps.length; i++) {
       final step = steps[i];
       FlowNodeType type;
       switch (step.type) {
-        case 'START':
-          type = FlowNodeType.start;
-          break;
-        case 'BRANCH':
-          type = FlowNodeType.branch;
-          break;
-        default:
-          type = FlowNodeType.endpoint;
+        case 'START': type = FlowNodeType.start; break;
+        case 'BRANCH': type = FlowNodeType.branch; break;
+        case 'SUBFLOW': type = FlowNodeType.subflow; break;
+        default: type = FlowNodeType.endpoint;
       }
 
-      // Basic grid layout logic
-      double x = startX + (i % 5) * spacingX;
-      double y = startY + (i ~/ 5) * spacingY;
+      double x = startX + (i % 4) * spacingX;
+      double y = startY + (i ~/ 4) * spacingY;
+
+      Map<String, dynamic> nodeData = {
+        if (step.endpointId != null) 'id': step.endpointId,
+        if (step.condition != null) 
+          type == FlowNodeType.subflow ? 'subflowId' : 'condition': step.condition,
+        if (step.preProcessor != null) 'preProcessor': step.preProcessor,
+        if (step.postProcessor != null) 'postProcessor': step.postProcessor,
+      };
+
+      if (step.endpointId != null && endpoints != null) {
+        final endpoint = endpoints.where((e) => e.id == step.endpointId).firstOrNull;
+        if (endpoint != null) {
+          nodeData['name'] = endpoint.name;
+          nodeData['url'] = endpoint.url;
+          nodeData['type'] = endpoint.type;
+          nodeData['method'] = endpoint.httpMethod;
+        }
+      }
+
+      if (type == FlowNodeType.subflow && step.condition != null && flows != null) {
+        final flow = flows.where((f) => f.id.toString() == step.condition.toString()).firstOrNull;
+        if (flow != null) {
+          nodeData['flowName'] = flow.name;
+        }
+      }
 
       final node = CanvasNode(
         id: step.id,
         type: type,
         position: Offset(x, y),
-        data: {
-          if (step.endpointId != null) 'id': step.endpointId,
-          if (step.condition != null) 'condition': step.condition,
-          if (step.preProcessor != null) 'preProcessor': step.preProcessor,
-          if (step.postProcessor != null) 'postProcessor': step.postProcessor,
-        },
+        data: nodeData,
+        width: type == FlowNodeType.start ? 48 : (type == FlowNodeType.branch ? 80 : (type == FlowNodeType.subflow ? 180 : 160)),
+        height: type == FlowNodeType.start ? 48 : (type == FlowNodeType.branch ? 80 : (type == FlowNodeType.subflow ? 64 : 90)),
       );
       _nodes.add(node);
     }
 
-    // Then, create all connections
     for (var step in steps) {
       if (step.nextIfTrue != null) {
-        String? sourceHandle;
-        if (step.type == 'BRANCH') {
-          sourceHandle = 'true';
-        }
-
         if (_nodes.any((n) => n.id == step.nextIfTrue)) {
-          _connections.add(
-            CanvasConnection(
-              id: const Uuid().v4(),
-              sourceNodeId: step.id,
-              targetNodeId: step.nextIfTrue!,
-              sourceHandle: sourceHandle,
-            ),
-          );
+          _connections.add(CanvasConnection(
+            id: const Uuid().v4(),
+            sourceNodeId: step.id,
+            targetNodeId: step.nextIfTrue!,
+            sourceHandle: step.type == 'BRANCH' ? 'true' : 'default',
+            type: step.type == 'BRANCH' ? ConnectionType.trueType : ConnectionType.defaultType,
+          ));
         }
       }
-
       if (step.nextIfFalse != null && step.type == 'BRANCH') {
         if (_nodes.any((n) => n.id == step.nextIfFalse)) {
-          _connections.add(
-            CanvasConnection(
-              id: const Uuid().v4(),
-              sourceNodeId: step.id,
-              targetNodeId: step.nextIfFalse!,
-              sourceHandle: 'false',
-            ),
-          );
+          _connections.add(CanvasConnection(
+            id: const Uuid().v4(),
+            sourceNodeId: step.id,
+            targetNodeId: step.nextIfFalse!,
+            sourceHandle: 'false',
+            type: ConnectionType.falseType,
+          ));
         }
       }
     }
 
+    _syncGraph();
     notifyListeners();
   }
 
-  void syncWithBackend(List<FlowStep> responseSteps) {
-    // Since we now want to load everything from DB and draw nodes, 
-    // we use rebuildFromSteps instead of merging.
-    rebuildFromSteps(responseSteps);
+  void syncWithBackend(List<FlowStep> responseSteps, [List<domain_endpoint.Endpoint>? endpoints, List<Flow>? flows]) {
+    rebuildFromSteps(responseSteps, endpoints, flows);
   }
 
   void applyConfiguration(List<FlowStep> steps) {
@@ -354,62 +414,37 @@ class CanvasProvider extends ChangeNotifier {
       if (index != -1) {
         final node = _nodes[index];
         final Map<String, dynamic> newData = Map.from(node.data);
-
-        if (step.preProcessor != null) {
-          newData['preProcessor'] = step.preProcessor;
-        }
-        if (step.postProcessor != null) {
-          newData['postProcessor'] = step.postProcessor;
-        }
-
-        if (node.type == FlowNodeType.branch && step.condition != null) {
-          newData['condition'] = step.condition;
-        }
-
+        if (step.preProcessor != null) newData['preProcessor'] = step.preProcessor;
+        if (step.postProcessor != null) newData['postProcessor'] = step.postProcessor;
+        if (node.type == FlowNodeType.branch && step.condition != null) newData['condition'] = step.condition;
+        if (node.type == FlowNodeType.subflow && step.condition != null) newData['subflowId'] = step.condition;
         _nodes[index] = node.copyWith(data: newData);
       }
     }
 
     _connections.clear();
-
     for (var step in steps) {
-      if (step.nextIfTrue != null) {
-        String? sourceHandle;
-
-        final sourceNode = _nodes.where((n) => n.id == step.id).firstOrNull;
-        if (sourceNode?.type == FlowNodeType.branch) {
-          sourceHandle = 'true';
-        }
-
-        if (_nodes.any((n) => n.id == step.nextIfTrue)) {
-          _connections.add(
-            CanvasConnection(
-              id: const Uuid().v4(),
-              sourceNodeId: step.id,
-              targetNodeId: step.nextIfTrue!,
-              sourceHandle: sourceHandle,
-            ),
-          );
-        }
+      if (step.nextIfTrue != null && _nodes.any((n) => n.id == step.nextIfTrue)) {
+        final isBranch = _nodes.any((n) => n.id == step.id && n.type == FlowNodeType.branch);
+        _connections.add(CanvasConnection(
+          id: const Uuid().v4(),
+          sourceNodeId: step.id,
+          targetNodeId: step.nextIfTrue!,
+          sourceHandle: isBranch ? 'true' : 'default',
+          type: isBranch ? ConnectionType.trueType : ConnectionType.defaultType,
+        ));
       }
-
-      if (step.nextIfFalse != null) {
-        final sourceNode = _nodes.where((n) => n.id == step.id).firstOrNull;
-        if (sourceNode?.type == FlowNodeType.branch) {
-          if (_nodes.any((n) => n.id == step.nextIfFalse)) {
-            _connections.add(
-              CanvasConnection(
-                id: const Uuid().v4(),
-                sourceNodeId: step.id,
-                targetNodeId: step.nextIfFalse!,
-                sourceHandle: 'false',
-              ),
-            );
-          }
-        }
+      if (step.nextIfFalse != null && _nodes.any((n) => n.id == step.nextIfFalse)) {
+        _connections.add(CanvasConnection(
+          id: const Uuid().v4(),
+          sourceNodeId: step.id,
+          targetNodeId: step.nextIfFalse!,
+          sourceHandle: 'false',
+          type: ConnectionType.falseType,
+        ));
       }
     }
-
+    _syncGraph();
     notifyListeners();
   }
 }

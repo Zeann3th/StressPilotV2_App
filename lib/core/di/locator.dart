@@ -14,6 +14,7 @@ import 'package:stress_pilot/features/settings/data/setting_service.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/marketplace/data/plugin_service.dart';
 import 'package:stress_pilot/features/marketplace/data/plugin_capability_service.dart';
+import 'package:stress_pilot/features/common/data/utility_service.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
@@ -26,6 +27,8 @@ final getIt = GetIt.instance;
 void setupDependencies() {
   getIt.registerLazySingleton(() => ProcessManager());
   getIt.registerLazySingleton(() => ThemeManager());
+
+  getIt.registerLazySingleton(() => UtilityService());
 
   getIt.registerLazySingleton(() => HttpClient.getInstance());
   getIt.registerLazySingleton(() => SessionManager(getIt()));

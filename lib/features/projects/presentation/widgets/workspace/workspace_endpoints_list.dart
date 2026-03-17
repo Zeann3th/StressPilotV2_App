@@ -6,6 +6,8 @@ import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
 import 'package:stress_pilot/features/endpoints/domain/endpoint.dart'
     as domain_endpoint;
 import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_type_badge.dart';
+import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/features/common/data/utility_service.dart';
 import '../../../domain/canvas.dart';
 import '../../../../endpoints/presentation/provider/endpoint_provider.dart';
 
@@ -49,14 +51,16 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
 
   Future<void> _handleUpload(BuildContext context) async {
     try {
+      final capabilities = await getIt<UtilityService>().getCapabilities();
+      final formats = capabilities.parsers.expand((p) => p.formats).map((e) => e.toLowerCase()).toSet().toList();
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['json', 'yaml', 'yml', 'proto'],
+        allowedExtensions: formats.isEmpty ? ['json', 'yaml', 'yml', 'proto'] : formats,
       );
 
-      if (result != null && result.files.single.path != null) {
-        final filePath = result.files.single.path!;
-
+      final filePath = result?.files.firstOrNull?.path;
+      if (filePath != null) {
         AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(content: Text('Uploading endpoints...')),
         );
@@ -182,22 +186,36 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
                           },
                         ),
                         feedback: Material(
-                          elevation: 8,
-                          borderRadius: BorderRadius.circular(8),
+                          elevation: 12,
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.transparent,
                           child: Container(
                             width: 240,
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
-                              color: colors.secondaryContainer,
-                              borderRadius: BorderRadius.circular(8),
+                              color: colors.surface,
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: colors.outline,
+                                color: colors.primary.withValues(alpha: 0.5),
                                 width: 2,
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colors.primary.withValues(alpha: 0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
                             ),
                             child: _buildEndpointItem(context, endpoint, true),
                           ),
                         ),
+                        dragAnchorStrategy: (draggable, context, position) {
+                          return const Offset(120, 30);
+                        },
                         childWhenDragging: Opacity(
                           opacity: 0.3,
                           child: _buildEndpointCard(context, endpoint),

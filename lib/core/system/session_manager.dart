@@ -143,15 +143,19 @@ class SessionManager {
           try {
             final cookieManager = _dio.interceptors
                 .whereType<CookieManager>()
-                .first;
-            final cookies = await cookieManager.cookieJar.loadForRequest(
-              Uri.parse('${_dio.options.baseUrl}/api/v1/utilities/session'),
-            );
+                .firstOrNull;
+            if (cookieManager == null) {
+              AppLogger.warning('CookieManager not found in interceptors', name: _logName);
+            } else {
+              final cookies = await cookieManager.cookieJar.loadForRequest(
+                Uri.parse('${_dio.options.baseUrl}/api/v1/utilities/session'),
+              );
 
-            AppLogger.debug(
-              'Stored cookies: ${cookies.map((c) => '${c.name}=${c.value}').join(', ')}',
-              name: _logName,
-            );
+              AppLogger.debug(
+                'Stored cookies: ${cookies.map((c) => '${c.name}=${c.value}').join(', ')}',
+                name: _logName,
+              );
+            }
           } catch (e) {
             AppLogger.warning(
               'Could not load cookies for logging',

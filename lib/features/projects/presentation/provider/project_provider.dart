@@ -3,6 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stress_pilot/core/models/paged_response.dart';
+import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/features/common/data/utility_service.dart';
 import 'package:stress_pilot/features/projects/data/project_service.dart';
 import 'package:stress_pilot/features/projects/domain/project.dart';
 
@@ -194,22 +196,19 @@ class ProjectProvider extends ChangeNotifier {
 
   Future<Project> importProject() async {
     try {
+      final capabilities = await getIt<UtilityService>().getCapabilities();
+      final formats = capabilities.parsers.expand((p) => p.formats).map((e) => e.toLowerCase()).toSet().toList();
       
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Import Project',
         type: FileType.custom,
-        allowedExtensions: ['json'],
+        allowedExtensions: formats.isEmpty ? ['json'] : formats,
         allowMultiple: false,
       );
 
-      if (result == null || result.files.isEmpty) {
-        
-        throw Exception('No file selected');
-      }
-
-      final filePath = result.files.first.path;
+      final filePath = result?.files.firstOrNull?.path;
       if (filePath == null) {
-        throw Exception('Invalid file path');
+        throw Exception('Invalid or no file selected');
       }
 
       final project = await _projectService.importProject(filePath);

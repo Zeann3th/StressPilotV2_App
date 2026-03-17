@@ -54,7 +54,10 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
     if (selectedFlow == null && flows.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        context.read<FlowProvider>().selectFlow(flows.first);
+        final latestFlows = context.read<FlowProvider>().flows;
+        if (latestFlows.isNotEmpty) {
+          context.read<FlowProvider>().selectFlow(latestFlows.first);
+        }
       });
     }
   }

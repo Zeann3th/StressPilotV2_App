@@ -10,23 +10,23 @@ class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color
+      ..color = color.withValues(alpha: 0.35) // Increased opacity
       ..strokeWidth = 2.0 / scale
       ..strokeCap = StrokeCap.round;
 
-    const spacing = 20.0;
+    const spacing = 25.0; // Slightly larger spacing for cleaner look
 
     for (double x = 0; x < size.width; x += spacing) {
       for (double y = 0; y < size.height; y += spacing) {
-        if ((x / spacing).round() % 2 == 0 && (y / spacing).round() % 2 == 0) {
-          canvas.drawCircle(Offset(x, y), 1.0 / scale, paint);
-        }
+        // More visible dots
+        canvas.drawCircle(Offset(x, y), 1.2 / scale, paint);
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) =>
+      oldDelegate is! GridPainter || oldDelegate.scale != scale;
 }
 
 class ConnectionPainter extends CustomPainter {
@@ -37,6 +37,7 @@ class ConnectionPainter extends CustomPainter {
   final Offset? tempEndPos;
   final Color lineColor;
   final Color activeColor;
+  final double animationOffset; // For moving dashed lines
 
   ConnectionPainter({
     required this.connections,
@@ -46,17 +47,20 @@ class ConnectionPainter extends CustomPainter {
     this.tempEndPos,
     required this.lineColor,
     required this.activeColor,
+    this.animationOffset = 0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = lineColor
+      ..color = lineColor.withValues(alpha: 0.8)
       ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
     final activePaint = Paint()
       ..color = activeColor
-      ..strokeWidth = 2
+      ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
@@ -67,7 +71,14 @@ class ConnectionPainter extends CustomPainter {
       final target = nodeMap[conn.targetNodeId];
       if (source == null || target == null) continue;
 
-      _drawSmartConnection(canvas, source, target, conn.sourceHandle, paint);
+      _drawSmartConnection(
+        canvas,
+        source,
+        target,
+        conn.sourceHandle,
+        paint,
+        source.type == FlowNodeType.branch,
+      );
     }
 
     if (tempSourceId != null && tempEndPos != null) {
@@ -89,8 +100,9 @@ class ConnectionPainter extends CustomPainter {
     CanvasNode source,
     CanvasNode target,
     String? sourceHandle,
-    Paint paint,
-  ) {
+    Paint paint, [
+    bool isBranchSource = false,
+  ]) {
     final (startPos, startDir) = _getStartPoint(
       source,
       sourceHandle,
@@ -99,7 +111,15 @@ class ConnectionPainter extends CustomPainter {
 
     final (endPos, endDir) = _getBestEndPoint(target, startPos);
 
-    _drawOrthogonalLine(canvas, startPos, endPos, startDir, endDir, paint);
+    _drawOrthogonalLine(
+      canvas,
+      startPos,
+      endPos,
+      startDir,
+      endDir,
+      paint,
+      isBranchSource ? sourceHandle : null,
+    );
   }
 
   void _drawSmartLiveConnection(
@@ -199,8 +219,9 @@ class ConnectionPainter extends CustomPainter {
     Offset end,
     AxisDirection startDir,
     AxisDirection endDir,
-    Paint paint,
-  ) {
+    Paint paint, [
+    String? label,
+  ]) {
     final path = Path();
     path.moveTo(start.dx, start.dy);
 
@@ -213,7 +234,60 @@ class ConnectionPainter extends CustomPainter {
       path.lineTo(end.dx, end.dy);
     }
 
-    canvas.drawPath(path, paint);
+    // Draw dashed line with animation offset
+    const dashWidth = 8.0;
+    const dashSpace = 6.0;
+    final pathMetrics = path.computeMetrics();
+    
+    for (final metric in pathMetrics) {
+      double distance = -animationOffset % (dashWidth + dashSpace);
+      while (distance < metric.length) {
+        final double startDist = distance.clamp(0.0, metric.length);
+        final double endDist = (distance + dashWidth).clamp(0.0, metric.length);
+        
+        if (startDist < endDist) {
+          canvas.drawPath(
+            metric.extractPath(startDist, endDist),
+            paint,
+          );
+        }
+        distance += dashWidth + dashSpace;
+      }
+    }
+
+    if (label != null) {
+      final labelText = label == 'true' ? 'T' : 'F';
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: labelText,
+          style: TextStyle(
+            color: label == 'true' ? Colors.green : Colors.red,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+
+      // Position label slightly away from the start point
+      Offset labelPos;
+      switch (startDir) {
+        case AxisDirection.right:
+          labelPos = start + const Offset(10, -15);
+          break;
+        case AxisDirection.down:
+          labelPos = start + const Offset(5, 10);
+          break;
+        case AxisDirection.left:
+          labelPos = start + const Offset(-15, -15);
+          break;
+        case AxisDirection.up:
+          labelPos = start + const Offset(5, -20);
+          break;
+      }
+      textPainter.paint(canvas, labelPos);
+    }
 
     final prevPoint = points.isNotEmpty ? points.last : start;
     _drawArrowHead(canvas, end, prevPoint, paint.color);
