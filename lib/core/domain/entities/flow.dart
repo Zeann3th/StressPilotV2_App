@@ -46,7 +46,7 @@ class Flow {
       name: json['name'] ?? '',
       description: json['description'],
       type: json['type'] ?? 'DEFAULT',
-      projectId: _toInt(json['projectId'] ?? json['project_id']),
+      projectId: _toInt(json['projectId']),
       steps:
       (json['steps'] as List?)
           ?.map((e) => FlowStep.fromJson(e as Map<String, dynamic>))
@@ -124,11 +124,10 @@ class FlowStep {
       endpointUrl   = endpointObj['url']?.toString();
       endpointType  = endpointObj['type']?.toString();
       endpointMethod = endpointObj['httpMethod']?.toString()
-          ?? endpointObj['http_method']?.toString()
           ?? endpointObj['method']?.toString();
     } else {
 
-      final raw = json['endpointId'] ?? json['endpoint_id'];
+      final raw = json['endpointId'];
       endpointId = raw == null ? null : Flow._toInt(raw);
     }
 
@@ -140,24 +139,43 @@ class FlowStep {
       endpointUrl:    endpointUrl,
       endpointType:   endpointType,
       endpointMethod: endpointMethod,
-      nextIfTrue:     json['nextIfTrue']?.toString()  ?? json['next_if_true']?.toString(),
-      nextIfFalse:    json['nextIfFalse']?.toString() ?? json['next_if_false']?.toString(),
+      nextIfTrue:     json['nextIfTrue']?.toString(),
+      nextIfFalse:    json['nextIfFalse']?.toString(),
       condition:      json['condition']?.toString(),
-      preProcessor:   Flow._parseProcessor(json['preProcessor']  ?? json['pre_processor']),
-      postProcessor:  Flow._parseProcessor(json['postProcessor'] ?? json['post_processor']),
+      preProcessor:   Flow._parseProcessor(json['preProcessor']),
+      postProcessor:  Flow._parseProcessor(json['postProcessor']),
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'id':           id,
-    'type':         type,
-    'endpointId':   endpointId,
-    'nextIfTrue':   nextIfTrue,
-    'nextIfFalse':  nextIfFalse,
-    'condition':    condition,
-    'preProcessor': preProcessor,
-    'postProcessor':postProcessor,
-  };
+  Map<String, dynamic> toJson({bool includeMetadata = true}) {
+    Map<String, dynamic> pre;
+    if (preProcessor == null) {
+      pre = {};
+    } else {
+      pre = Map<String, dynamic>.from(preProcessor!);
+      if (!includeMetadata) {
+        pre.remove('location');
+        pre.remove('_canvas_x');
+        pre.remove('_canvas_y');
+      }
+    }
+
+    final Map<String, dynamic> json = {
+      'id':           id,
+      'type':         type,
+      'endpointId':   endpointId,
+      'nextIfTrue':   nextIfTrue,
+      'nextIfFalse':  nextIfFalse,
+      'condition':    condition,
+      'postProcessor':postProcessor,
+    };
+
+    if (pre.isNotEmpty) {
+      json['preProcessor'] = pre;
+    }
+
+    return json;
+  }
 }
 
 class CreateFlowRequest {

@@ -27,7 +27,7 @@ class Project {
     id: _toInt(json['id']),
     name: json['name'] ?? '',
     description: json['description'] ?? '',
-    environmentId: _toInt(json['environmentId'] ?? json['environment_id']),
+    environmentId: _toInt(json['environmentId']),
     createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
     updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
   );

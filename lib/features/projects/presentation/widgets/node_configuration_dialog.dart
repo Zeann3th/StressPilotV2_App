@@ -350,7 +350,7 @@ class _ProcessorEditor extends StatefulWidget {
 }
 
 class _ProcessorEditorState extends State<_ProcessorEditor> {
-  late TextEditingController _sleepController;
+  late TextEditingController _delayController;
   late TextEditingController _injectController;
   late TextEditingController _extractController;
 
@@ -358,8 +358,8 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
   void initState() {
     super.initState();
 
-    _sleepController = TextEditingController(
-      text: widget.data['sleep']?.toString() ?? '',
+    _delayController = TextEditingController(
+      text: widget.data['delay']?.toString() ?? '',
     );
     _injectController = TextEditingController(
       text: _formatJson(widget.data['inject']),
@@ -379,22 +379,28 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
   }
 
   void _updateData() {
-    final newData = <String, dynamic>{};
+    final newData = Map<String, dynamic>.from(widget.data);
 
-    if (_sleepController.text.isNotEmpty) {
-      newData['sleep'] = int.tryParse(_sleepController.text);
+    if (_delayController.text.isNotEmpty) {
+      newData['delay'] = int.tryParse(_delayController.text);
+    } else {
+      newData.remove('delay');
     }
 
     if (_injectController.text.isNotEmpty) {
       try {
         newData['inject'] = jsonDecode(_injectController.text);
       } catch (_) {}
+    } else {
+      newData.remove('inject');
     }
 
     if (_extractController.text.isNotEmpty) {
       try {
         newData['extract'] = jsonDecode(_extractController.text);
       } catch (_) {}
+    } else {
+      newData.remove('extract');
     }
 
     widget.onChanged(newData);
@@ -402,7 +408,7 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
 
   @override
   void dispose() {
-    _sleepController.dispose();
+    _delayController.dispose();
     _injectController.dispose();
     _extractController.dispose();
     super.dispose();
@@ -414,9 +420,9 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
       children: [
         _buildSection(
           context,
-          'Sleep (ms)',
+          'Delay (ms)',
           'Delay execution by milliseconds',
-          _sleepController,
+          _delayController,
           isNumeric: true,
         ),
         const SizedBox(height: 16),

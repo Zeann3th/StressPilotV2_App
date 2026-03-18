@@ -211,8 +211,10 @@ class CanvasProvider extends ChangeNotifier {
         preProcessor = node.data['preProcessor'] != null
             ? Map<String, dynamic>.from(node.data['preProcessor'])
             : {};
-        preProcessor['_canvas_x'] = node.position.dx;
-        preProcessor['_canvas_y'] = node.position.dy;
+        preProcessor['location'] = {
+          'x': node.position.dx,
+          'y': node.position.dy,
+        };
       }
 
       return FlowStep(
@@ -324,10 +326,17 @@ class CanvasProvider extends ChangeNotifier {
           type = FlowNodeType.endpoint;
       }
 
-      final double? savedX =
-      (step.preProcessor?['_canvas_x'] as num?)?.toDouble();
-      final double? savedY =
-      (step.preProcessor?['_canvas_y'] as num?)?.toDouble();
+      final dynamic loc = step.preProcessor?['location'];
+      double? savedX;
+      double? savedY;
+
+      if (loc is Map) {
+        savedX = (loc['x'] as num?)?.toDouble();
+        savedY = (loc['y'] as num?)?.toDouble();
+      }
+
+      savedX ??= (step.preProcessor?['_canvas_x'] as num?)?.toDouble();
+      savedY ??= (step.preProcessor?['_canvas_y'] as num?)?.toDouble();
 
       final double x = savedX ??
           oldPositions[step.id]?.dx ??
@@ -438,8 +447,16 @@ class CanvasProvider extends ChangeNotifier {
       final node = _nodes[index];
       final newData = Map<String, dynamic>.from(node.data);
 
-      if (step.preProcessor != null) newData['preProcessor'] = step.preProcessor;
-      if (step.postProcessor != null) newData['postProcessor'] = step.postProcessor;
+      if (step.preProcessor != null) {
+        final existingPre = newData['preProcessor'] as Map<String, dynamic>? ?? {};
+        newData['preProcessor'] = Map<String, dynamic>.from(existingPre)
+          ..addAll(step.preProcessor!);
+      }
+      if (step.postProcessor != null) {
+        final existingPost = newData['postProcessor'] as Map<String, dynamic>? ?? {};
+        newData['postProcessor'] = Map<String, dynamic>.from(existingPost)
+          ..addAll(step.postProcessor!);
+      }
       if (node.type == FlowNodeType.branch && step.condition != null) {
         newData['condition'] = step.condition;
       }

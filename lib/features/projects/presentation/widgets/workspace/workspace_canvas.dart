@@ -450,7 +450,7 @@ class _CanvasContentState extends State<_CanvasContent>
     final steps = provider.generateFlowConfiguration();
     final controller = TextEditingController(
       text: const JsonEncoder.withIndent('  ')
-          .convert(steps.map((s) => s.toJson()).toList()),
+          .convert(steps.map((s) => s.toJson(includeMetadata: false)).toList()),
     );
     showDialog(
       context: context,

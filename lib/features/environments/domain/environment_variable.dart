@@ -24,7 +24,7 @@ class EnvironmentVariable {
   factory EnvironmentVariable.fromJson(Map<String, dynamic> json) {
     return EnvironmentVariable(
       id: _toInt(json['id']),
-      environmentId: _toInt(json['environmentId'] ?? json['environment_id']),
+      environmentId: _toInt(json['environmentId']),
       key: json['key'] ?? '',
       value: json['value'] ?? '',
       isActive: json['isActive'] ?? true,
