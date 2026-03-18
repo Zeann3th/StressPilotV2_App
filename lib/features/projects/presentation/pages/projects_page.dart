@@ -8,11 +8,8 @@ import 'package:stress_pilot/core/domain/entities/project.dart';
 import '../provider/project_provider.dart';
 import '../widgets/project/project_table.dart';
 import '../widgets/project/project_empty_states.dart';
-import 'package:stress_pilot/features/results/data/run_service.dart';
-import 'package:stress_pilot/features/results/domain/models/run.dart' as run_model;
-import 'package:intl/intl.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/runs_list_widget.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/core/di/locator.dart';
 
 class ProjectsPage extends StatefulWidget {
   final int? initialFlowId;
@@ -50,12 +47,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
       backgroundColor: bg,
       body: Column(
         children: [
-
           AppTopBar(
             searchController: _searchController,
             onSearchSubmitted: _handleSearch,
           ),
-
           Expanded(
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -75,11 +70,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
                 borderRadius: AppRadius.br16,
                 child: Column(
                   children: [
-
                     Expanded(
                       child: Column(
                         children: [
-
                           ProjectTopBar(
                             searchController: _searchController,
                             onRefresh: _handleRefresh,
@@ -93,7 +86,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
                         ],
                       ),
                     ),
-
                     Container(
                       height: MediaQuery.of(context).size.height * 0.4,
                       padding: const EdgeInsets.all(16),
@@ -102,21 +94,20 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       ),
                       child: Row(
                         children: [
-
                           Expanded(
                             child: Container(
-                              padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: isDark ? AppColors.darkElevated : Colors.white,
                                 border: Border.all(color: border.withValues(alpha: 0.3)),
                                 borderRadius: AppRadius.br12,
                               ),
-                              child: _RunsPanel(initialFlowId: widget.initialFlowId),
+                              child: ClipRRect(
+                                borderRadius: AppRadius.br12,
+                                child: RunsListWidget(flowId: widget.initialFlowId),
+                              ),
                             ),
                           ),
-
                           const SizedBox(width: 16),
-
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.all(16),
@@ -134,8 +125,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                     child: Center(
                                       child: Text(
                                         'Charts and KPIs will appear here (mock)',
-                                        style: AppTypography.body.copyWith(
-                                            color: AppColors.textSecondary),
+                                        style: AppTypography.body.copyWith(color: AppColors.textSecondary),
                                       ),
                                     ),
                                   ),
@@ -272,31 +262,30 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
     final selectedProject = await showDialog<Project>(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Select Project to Export'),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: provider.projects.length,
-                itemBuilder: (context, index) {
-                  final project = provider.projects[index];
-                  return ListTile(
-                    title: Text(project.name),
-                    subtitle: Text(project.description),
-                    onTap: () => Navigator.of(context).pop(project),
-                  );
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Select Project to Export'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: provider.projects.length,
+            itemBuilder: (context, index) {
+              final project = provider.projects[index];
+              return ListTile(
+                title: Text(project.name),
+                subtitle: Text(project.description),
+                onTap: () => Navigator.of(context).pop(project),
+              );
+            },
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
     );
 
     if (selectedProject == null) return;
@@ -319,235 +308,3 @@ class _ProjectsPageState extends State<ProjectsPage> {
     }
   }
 }
-
-class _RunsPanel extends StatefulWidget {
-  final int? initialFlowId;
-
-  const _RunsPanel({this.initialFlowId});
-
-  @override
-  State<_RunsPanel> createState() => _RunsPanelState();
-}
-
-class _RunsPanelState extends State<_RunsPanel>
-    with SingleTickerProviderStateMixin {
-  final _runService = getIt<RunService>();
-  List<run_model.Run>? _runs;
-  bool _isLoading = false;
-  late AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
-    _loadRuns();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadRuns() async {
-    setState(() => _isLoading = true);
-    try {
-      final runs = await _runService.getRuns();
-      runs.sort((a, b) => b.id.compareTo(a.id));
-      final int? filterFlowId = widget.initialFlowId;
-      final List<run_model.Run> filtered = filterFlowId == null
-          ? runs
-          : runs.where((r) => r.flowId == filterFlowId).toList();
-      if (mounted) setState(() => _runs = filtered);
-      _ctrl.forward();
-    } catch (e) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('Failed to load runs: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _handleRunTap(run_model.Run run) {
-    final status = run.status.toUpperCase();
-    if (status == 'RUNNING') {
-      AppNavigator.pushNamed(
-          AppRouter.resultsRoute, arguments: {'runId': run.id});
-    } else if (status == 'COMPLETED') {
-      _exportRun(run);
-    }
-  }
-
-  Future<void> _exportRun(run_model.Run run) async {
-    try {
-      final file = await _runService.exportRun(run);
-      if (file == null) {
-        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(const SnackBar(
-            content: Text('Export returned empty'),
-            backgroundColor: Colors.orange));
-      } else {
-        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(SnackBar(
-            content: Text('Exported to ${file.path}'),
-            backgroundColor: Colors.green));
-      }
-    } catch (e) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(SnackBar(
-        content: Text('Export failed: $e'), backgroundColor: Colors.red));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme
-        .of(context)
-        .brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _ctrl.value,
-          child: child,
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: AppRadius.br12,
-          border: Border.all(color: border),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.06), blurRadius: 12),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text('Recent Runs',
-                    style: AppTypography.heading.copyWith(fontSize: 16)),
-                const Spacer(),
-                IconButton(
-                  onPressed: _loadRuns,
-                  icon: const Icon(Icons.refresh_rounded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : (_runs == null || _runs!.isEmpty)
-                  ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.play_disabled_rounded, size: 28,
-                        color: AppColors.textMuted),
-                    const SizedBox(height: 8),
-                    Text('No runs yet', style: AppTypography.body.copyWith(
-                        color: AppColors.textSecondary)),
-                  ],
-                ),
-              )
-                  : ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _runs!.length,
-                separatorBuilder: (context, _) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  final r = _runs![index];
-                  final status = r.status.toUpperCase();
-                  final (statusColor, statusIcon) = _statusAppearance(status);
-                  return GestureDetector(
-                    onTap: () => _handleRunTap(r),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      width: 300,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkElevated : Colors.white,
-                        borderRadius: AppRadius.br8,
-                        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(statusIcon, color: statusColor),
-                              const SizedBox(width: 8),
-                              Text('Run #${r.id}',
-                                  style: AppTypography.bodyLg.copyWith(
-                                      fontWeight: FontWeight.w600)),
-                              const Spacer(),
-                              Text(status,
-                                  style: AppTypography.caption.copyWith(
-                                      color: AppColors.textSecondary)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text('Flow ${r.flowId}',
-                              style: AppTypography.caption.copyWith(
-                                  color: AppColors.textMuted)),
-                          const Spacer(),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  DateFormat('yyyy-MM-dd HH:mm').format(
-                                      r.startedAt.toLocal()),
-                                  style: AppTypography.caption.copyWith(
-                                      color: AppColors.textMuted),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              if (status == 'COMPLETED')
-                                IconButton(
-                                  onPressed: () => _exportRun(r),
-                                  icon: const Icon(
-                                      Icons.download_rounded, size: 18),
-                                ),
-                              if (status == 'RUNNING')
-                                IconButton(
-                                  onPressed: () =>
-                                      AppNavigator.pushNamed(
-                                      AppRouter.resultsRoute,
-                                      arguments: {'runId': r.id}),
-                                  icon: const Icon(
-                                      Icons.chevron_right_rounded, size: 18),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  (Color, IconData) _statusAppearance(String status) {
-    switch (status) {
-      case 'RUNNING':
-        return (const Color(0xFF3B82F6), Icons.play_circle_outline_rounded);
-      case 'COMPLETED':
-        return (AppColors.accent, Icons.check_circle_outline_rounded);
-      case 'FAILED':
-        return (AppColors.error, Icons.error_outline_rounded);
-      default:
-        return (AppColors.textMuted, Icons.help_outline_rounded);
-    }
-  }
-}
-

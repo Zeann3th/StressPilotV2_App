@@ -3,16 +3,21 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/domain/entities/flow.dart' as flow;
+import 'package:stress_pilot/core/themes/components/buttons/pilot_button.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/node_configuration_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/subflow_configuration_dialog.dart';
+import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 import 'dart:convert';
 import 'dart:ui';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:highlight/languages/json.dart';
+import 'package:flutter_highlight/themes/monokai-sublime.dart';
 
 import '../../../../../core/domain/entities/canvas.dart';
 import 'canvas_painters.dart';
@@ -126,6 +131,10 @@ class _CanvasContentState extends State<_CanvasContent>
         flowProvider,
         endpointProvider.endpoints,
       );
+
+      if (mounted) {
+        context.read<RunProvider>().checkRunStatus(int.parse(widget.flowId));
+      }
     });
   }
 
@@ -180,7 +189,8 @@ class _CanvasContentState extends State<_CanvasContent>
             builder: (context, candidateData, rejectedData) {
               return InteractiveViewer(
                 transformationController: _transformationController,
-                panEnabled: canvasProvider.canvasMode == CanvasMode.move,
+                panEnabled: !canvasProvider.isLocked && canvasProvider.canvasMode == CanvasMode.move,
+                scaleEnabled: !canvasProvider.isLocked,
                 boundaryMargin: const EdgeInsets.all(4000),
                 minScale: 0.1,
                 maxScale: 2.0,
@@ -448,14 +458,12 @@ class _CanvasContentState extends State<_CanvasContent>
   void _showJsonPayload(BuildContext context) {
     final provider = context.read<CanvasProvider>();
     final steps = provider.generateFlowConfiguration();
-    final controller = TextEditingController(
-      text: const JsonEncoder.withIndent('  ')
-          .convert(steps.map((s) => s.toJson(includeMetadata: false)).toList()),
-    );
+    final initialValue = const JsonEncoder.withIndent('  ')
+        .convert(steps.map((s) => s.toJson(includeMetadata: false)).toList());
     showDialog(
       context: context,
       builder: (context) =>
-          _JsonPayloadDialog(controller: controller, provider: provider),
+          _JsonPayloadDialog(initialValue: initialValue, provider: provider),
     );
   }
 
@@ -501,6 +509,31 @@ class _CanvasContentState extends State<_CanvasContent>
               const SizedBox(width: 6),
               _buildModeButton(
                   provider, CanvasMode.connect, Icons.cable_rounded, 'Link'),
+              _ToolbarDivider(borderColor: borderColor),
+              _ToolbarIcon(
+                tooltip: provider.isLocked ? 'Unlock Canvas' : 'Lock Canvas',
+                onTap: () => provider.toggleLock(),
+                icon: provider.isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
+                color: provider.isLocked ? AppColors.accent : AppColors.textMuted,
+              ),
+              _ToolbarIcon(
+                tooltip: 'Focus Graph',
+                onTap: () => _focusGraph(),
+                icon: Icons.filter_center_focus_rounded,
+                color: AppColors.textMuted,
+              ),
+              _ToolbarIcon(
+                tooltip: 'Zoom In',
+                onTap: () => _zoom(1.2),
+                icon: Icons.add_rounded,
+                color: AppColors.textMuted,
+              ),
+              _ToolbarIcon(
+                tooltip: 'Zoom Out',
+                onTap: () => _zoom(0.8),
+                icon: Icons.remove_rounded,
+                color: AppColors.textMuted,
+              ),
               _ToolbarDivider(borderColor: borderColor),
               _ToolbarIcon(
                 tooltip: 'Show JSON',
@@ -581,6 +614,65 @@ class _CanvasContentState extends State<_CanvasContent>
         ),
       ),
     );
+  }
+
+  void _zoom(double factor) {
+    final Matrix4 current = _transformationController.value;
+
+    final Size size = MediaQuery.of(context).size;
+    final Offset center = Offset(size.width / 2, size.height / 2);
+
+    final Matrix4 zoomMatrix = Matrix4.identity()
+      ..translate(center.dx, center.dy)
+      ..scale(factor, factor, 1.0)
+      ..translate(-center.dx, -center.dy);
+
+    final Matrix4 next = zoomMatrix * current;
+
+    final double nextScale = next.getMaxScaleOnAxis();
+    if (nextScale < 0.1 || nextScale > 5.0) return;
+
+    setState(() {
+      _transformationController.value = next;
+    });
+  }
+
+  void _focusGraph() {
+    final provider = context.read<CanvasProvider>();
+    if (provider.nodes.isEmpty) return;
+
+    double minX = double.infinity;
+    double minY = double.infinity;
+    double maxX = double.negativeInfinity;
+    double maxY = double.negativeInfinity;
+
+    for (final node in provider.nodes) {
+      if (node.position.dx < minX) minX = node.position.dx;
+      if (node.position.dy < minY) minY = node.position.dy;
+      if (node.position.dx + node.width > maxX) maxX = node.position.dx + node.width;
+      if (node.position.dy + node.height > maxY) maxY = node.position.dy + node.height;
+    }
+
+    final double graphWidth = maxX - minX;
+    final double graphHeight = maxY - minY;
+    final Offset graphCenter = Offset(minX + graphWidth / 2, minY + graphHeight / 2);
+
+    final Size viewportSize = MediaQuery.of(context).size;
+    final Offset viewportCenter = Offset(viewportSize.width / 2, viewportSize.height / 2);
+
+    final double scaleX = (viewportSize.width * 0.8) / graphWidth;
+    final double scaleY = (viewportSize.height * 0.8) / graphHeight;
+    double scale = scaleX < scaleY ? scaleX : scaleY;
+    scale = scale.clamp(0.2, 1.5);
+
+    final Matrix4 matrix = Matrix4.identity()
+      ..multiply(Matrix4.translationValues(viewportCenter.dx, viewportCenter.dy, 0.0))
+      ..multiply(Matrix4.diagonal3Values(scale, scale, 1.0))
+      ..multiply(Matrix4.translationValues(-graphCenter.dx, -graphCenter.dy, 0.0));
+
+    setState(() {
+      _transformationController.value = matrix;
+    });
   }
 
   Widget _buildModeButton(
@@ -1152,26 +1244,76 @@ class _BranchDialog extends StatelessWidget {
   }
 }
 
-class _JsonPayloadDialog extends StatelessWidget {
-  final TextEditingController controller;
+class _JsonPayloadDialog extends StatefulWidget {
+  final String initialValue;
   final CanvasProvider provider;
 
   const _JsonPayloadDialog(
-      {required this.controller, required this.provider});
+      {required this.initialValue, required this.provider});
+
+  @override
+  State<_JsonPayloadDialog> createState() => _JsonPayloadDialogState();
+}
+
+class _JsonPayloadDialogState extends State<_JsonPayloadDialog> {
+  late CodeController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = CodeController(
+      text: widget.initialValue,
+      language: json,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _formatJson() {
+    try {
+      final obj = jsonDecode(_controller.text);
+      const encoder = JsonEncoder.withIndent('  ');
+      setState(() {
+        _controller.text = encoder.convert(obj);
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Invalid JSON: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final size = MediaQuery.of(context).size;
+
     return Dialog(
       backgroundColor: colors.surface,
       child: Container(
-        width: 800,
-        height: 600,
+        width: size.width * 0.8,
+        height: size.height * 0.8,
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Edit Flow JSON', style: AppTypography.title),
+            Row(
+              children: [
+                Text('Edit Flow JSON', style: AppTypography.title),
+                const Spacer(),
+                PilotButton.ghost(
+                  label: 'Auto Format',
+                  icon: Icons.format_align_left_rounded,
+                  onPressed: _formatJson,
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: Container(
@@ -1179,15 +1321,23 @@ class _JsonPayloadDialog extends StatelessWidget {
                   border: Border.all(color: colors.outlineVariant),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: TextField(
-                  controller: controller,
-                  maxLines: null,
-                  expands: true,
-                  style: const TextStyle(
-                      fontFamily: 'JetBrains Mono', fontSize: 12),
-                  decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(16),
-                      border: InputBorder.none),
+                child: CodeTheme(
+                  data: CodeThemeData(styles: monokaiSublimeTheme),
+                  child: CodeField(
+                    controller: _controller,
+                    expands: true,
+                    maxLines: null,
+                    minLines: null,
+                    gutterStyle: GutterStyle(
+                      showLineNumbers: true,
+                      showFoldingHandles: true,
+                      background: isDark ? AppColors.darkElevated : Colors.grey[100]!,
+                    ),
+                    textStyle: const TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1196,18 +1346,19 @@ class _JsonPayloadDialog extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel')),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
                 const SizedBox(width: 12),
                 FilledButton(
                   onPressed: () {
                     try {
                       final List<dynamic> jsonList =
-                      jsonDecode(controller.text);
+                      jsonDecode(_controller.text);
                       final newSteps = jsonList
                           .map((e) => flow.FlowStep.fromJson(e))
                           .toList();
-                      provider.applyConfiguration(newSteps);
+                      widget.provider.applyConfiguration(newSteps);
                       Navigator.pop(context);
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(

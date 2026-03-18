@@ -8,7 +8,7 @@
 PRODUCT_NAME = stress_pilot
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.stressPilot
+PRODUCT_BUNDLE_IDENTIFIER = dev.zeann3th.stresspilot
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.

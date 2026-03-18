@@ -18,6 +18,7 @@ class CanvasProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isLocked = false;
 
   String? _loadedFlowId;
 
@@ -30,13 +31,21 @@ class CanvasProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
+  bool get isLocked => _isLocked;
+
+  void toggleLock() {
+    _isLocked = !_isLocked;
+    notifyListeners();
+  }
 
   void addNode(CanvasNode node) {
+    if (_isLocked) return;
     _nodes.add(node);
     notifyListeners();
   }
 
   void updateNodePosition(String id, Offset newPos) {
+    if (_isLocked) return;
     final index = _nodes.indexWhere((n) => n.id == id);
     if (index != -1) {
       _nodes[index] = _nodes[index].copyWith(position: newPos);
@@ -45,6 +54,7 @@ class CanvasProvider extends ChangeNotifier {
   }
 
   void updateNodeData(String id, Map<String, dynamic> newData) {
+    if (_isLocked) return;
     final index = _nodes.indexWhere((n) => n.id == id);
     if (index != -1) {
       final merged = Map<String, dynamic>.from(_nodes[index].data)
@@ -55,6 +65,7 @@ class CanvasProvider extends ChangeNotifier {
   }
 
   void removeNode(String id) {
+    if (_isLocked) return;
     _nodes.removeWhere((n) => n.id == id);
     _connections.removeWhere(
             (c) => c.sourceNodeId == id || c.targetNodeId == id);
@@ -62,17 +73,20 @@ class CanvasProvider extends ChangeNotifier {
   }
 
   void removeConnection(String connectionId) {
+    if (_isLocked) return;
     _connections.removeWhere((c) => c.id == connectionId);
     notifyListeners();
   }
 
   void clearCanvas() {
+    if (_isLocked) return;
     _nodes.clear();
     _connections.clear();
     notifyListeners();
   }
 
   void setCanvasMode(CanvasMode mode) {
+    if (_isLocked && mode == CanvasMode.connect) return;
     _canvasMode = mode;
     _selectedSourceNodeId = null;
     _selectedSourceHandle = null;
@@ -80,7 +94,7 @@ class CanvasProvider extends ChangeNotifier {
   }
 
   void selectSourceNode(String nodeId, [String handle = 'default']) {
-    if (_canvasMode != CanvasMode.connect) return;
+    if (_isLocked || _canvasMode != CanvasMode.connect) return;
     if (_selectedSourceNodeId == nodeId && _selectedSourceHandle == handle) {
       _selectedSourceNodeId = null;
       _selectedSourceHandle = null;
@@ -92,7 +106,7 @@ class CanvasProvider extends ChangeNotifier {
   }
 
   void connectToTarget(String targetNodeId) {
-    if (_canvasMode != CanvasMode.connect || _selectedSourceNodeId == null) {
+    if (_isLocked || _canvasMode != CanvasMode.connect || _selectedSourceNodeId == null) {
       return;
     }
 
@@ -207,20 +221,31 @@ class CanvasProvider extends ChangeNotifier {
       }
 
       Map<String, dynamic>? preProcessor;
-      if (node.type != FlowNodeType.start) {
-        preProcessor = node.data['preProcessor'] != null
-            ? Map<String, dynamic>.from(node.data['preProcessor'])
-            : {};
-        preProcessor['location'] = {
-          'x': node.position.dx,
-          'y': node.position.dy,
-        };
+      preProcessor = node.data['preProcessor'] != null
+          ? Map<String, dynamic>.from(node.data['preProcessor'])
+          : {};
+      preProcessor['location'] = {
+        'x': node.position.dx,
+        'y': node.position.dy,
+      };
+      preProcessor['temp_sync_id'] = node.id;
+
+      if (node.type == FlowNodeType.endpoint) {
+        preProcessor['endpoint_id'] = endpointId;
+        preProcessor['endpoint_name'] = node.data['name'];
+        preProcessor['endpoint_url'] = node.data['url'];
+        preProcessor['endpoint_type'] = node.data['type'];
+        preProcessor['endpoint_method'] = node.data['method'];
       }
 
       return FlowStep(
         id: node.id,
         type: type,
         endpointId: endpointId,
+        endpointName: node.data['name'],
+        endpointUrl: node.data['url'],
+        endpointType: node.data['type'],
+        endpointMethod: node.data['method'],
         nextIfTrue: nextIfTrue,
         nextIfFalse: nextIfFalse,
         condition: condition,
@@ -303,8 +328,8 @@ class CanvasProvider extends ChangeNotifier {
       return;
     }
 
-    const double startX = 100.0;
-    const double startY = 100.0;
+    const double startX = 3800.0;
+    const double startY = 3800.0;
     const double spacingX = 250.0;
     const double spacingY = 150.0;
 
@@ -327,6 +352,8 @@ class CanvasProvider extends ChangeNotifier {
       }
 
       final dynamic loc = step.preProcessor?['location'];
+      final String? tempSyncId = step.preProcessor?['temp_sync_id']?.toString();
+
       double? savedX;
       double? savedY;
 
@@ -339,15 +366,19 @@ class CanvasProvider extends ChangeNotifier {
       savedY ??= (step.preProcessor?['_canvas_y'] as num?)?.toDouble();
 
       final double x = savedX ??
+          (tempSyncId != null ? oldPositions[tempSyncId]?.dx : null) ??
           oldPositions[step.id]?.dx ??
           (startX + (i % 4) * spacingX);
       final double y = savedY ??
+          (tempSyncId != null ? oldPositions[tempSyncId]?.dy : null) ??
           oldPositions[step.id]?.dy ??
           (startY + (i ~/ 4) * spacingY);
 
       Map<String, dynamic> nodeData = {};
 
-      if (step.endpointId != null) nodeData['id'] = step.endpointId;
+      if (step.endpointId != null) {
+        nodeData['id'] = step.endpointId;
+      }
       if (step.condition != null) {
         nodeData[type == FlowNodeType.subflow ? 'subflowId' : 'condition'] =
             step.condition;

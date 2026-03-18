@@ -117,6 +117,8 @@ class FlowStep {
     String? endpointType;
     String? endpointMethod;
 
+    final Map<String, dynamic>? pre = Flow._parseProcessor(json['preProcessor']);
+
     if (endpointObj is Map<String, dynamic>) {
 
       endpointId    = Flow._toInt(endpointObj['id']);
@@ -129,6 +131,19 @@ class FlowStep {
 
       final raw = json['endpointId'];
       endpointId = raw == null ? null : Flow._toInt(raw);
+      endpointName = json['endpointName']?.toString();
+      endpointUrl = json['endpointUrl']?.toString();
+      endpointType = json['endpointType']?.toString();
+      endpointMethod = json['endpointMethod']?.toString();
+
+      if (endpointId == null && pre != null) {
+        endpointId = Flow._toInt(pre['endpoint_id'], -1);
+        if (endpointId == -1) endpointId = null;
+      }
+      endpointName ??= pre?['endpoint_name']?.toString();
+      endpointUrl ??= pre?['endpoint_url']?.toString();
+      endpointType ??= pre?['endpoint_type']?.toString();
+      endpointMethod ??= pre?['endpoint_method']?.toString();
     }
 
     return FlowStep(
@@ -142,7 +157,7 @@ class FlowStep {
       nextIfTrue:     json['nextIfTrue']?.toString(),
       nextIfFalse:    json['nextIfFalse']?.toString(),
       condition:      json['condition']?.toString(),
-      preProcessor:   Flow._parseProcessor(json['preProcessor']),
+      preProcessor:   pre,
       postProcessor:  Flow._parseProcessor(json['postProcessor']),
     );
   }
@@ -164,6 +179,10 @@ class FlowStep {
       'id':           id,
       'type':         type,
       'endpointId':   endpointId,
+      'endpointName': endpointName,
+      'endpointUrl':  endpointUrl,
+      'endpointType': endpointType,
+      'endpointMethod': endpointMethod,
       'nextIfTrue':   nextIfTrue,
       'nextIfFalse':  nextIfFalse,
       'condition':    condition,

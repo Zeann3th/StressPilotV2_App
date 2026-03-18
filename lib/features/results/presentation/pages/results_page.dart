@@ -4,9 +4,10 @@ import 'dart:io';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
-import 'package:stress_pilot/features/results/data/run_service.dart';
-import 'package:stress_pilot/features/results/domain/models/run.dart';
+import 'package:stress_pilot/features/common/data/run_service.dart';
+import 'package:stress_pilot/core/domain/entities/run.dart';
 import 'package:stress_pilot/features/results/presentation/widgets/metrics_card.dart';
 import 'package:stress_pilot/features/results/presentation/widgets/realtime_chart.dart';
 import 'package:stress_pilot/core/di/locator.dart';
@@ -290,6 +291,38 @@ class _ResultsPageState extends State<ResultsPage> {
                                 ),
                               ],
                               onChanged: (v) => provider.setEndpointFilter(v),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Consumer<RunProvider>(
+                              builder: (context, runProvider, child) {
+                                final isTerminal = _currentRun == null ||
+                                    _isTerminalStatus(_currentRun!.status);
+                                if (isTerminal) return const SizedBox.shrink();
+
+                                return Tooltip(
+                                  message: 'Abort Run',
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.stop_circle_outlined,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () async {
+                                      try {
+                                        await runProvider.interruptRun(_currentRun!.id);
+                                        _refreshRun();
+                                      } catch (e) {
+                                        if (mounted && context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Failed to abort: $e')),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           Padding(

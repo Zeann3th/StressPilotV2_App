@@ -6,8 +6,9 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/features/results/data/run_service.dart';
-import 'package:stress_pilot/features/results/domain/models/run.dart';
+import 'package:stress_pilot/features/common/data/run_service.dart';
+import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/core/domain/entities/run.dart';
 
 class RunFlowDialog extends StatefulWidget {
   final int flowId;
@@ -119,6 +120,10 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         );
       } catch (e) {
         // Ignored
+      }
+
+      if (mounted) {
+        context.read<RunProvider>().checkRunStatus(widget.flowId);
       }
 
       await _pollForRun(navigator);

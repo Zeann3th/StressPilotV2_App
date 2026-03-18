@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:stress_pilot/core/network/http_client.dart';
-import 'package:stress_pilot/features/results/domain/models/run.dart';
+import 'package:stress_pilot/core/domain/entities/run.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -19,7 +19,7 @@ class RunService {
   Future<List<Run>> getRuns({int? flowId}) async {
     final response = await _dio.get(
       '/api/v1/runs',
-      queryParameters: {'flowId': ?flowId},
+      queryParameters: {'flowId': flowId},
     );
     return (response.data['data'] as List).map((e) => Run.fromJson(e)).toList();
   }
