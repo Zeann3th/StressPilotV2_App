@@ -150,13 +150,15 @@ class ConnectionPainter extends CustomPainter {
   ) {
     if (node.type == FlowNodeType.branch) {
       if (handle == 'true') {
+        // Bottom-left edge
         return (
-          node.position + Offset(node.width, node.height / 2),
-          AxisDirection.right,
+          node.position + Offset(node.width * 0.15, node.height * 0.85),
+          AxisDirection.down,
         );
       } else if (handle == 'false') {
+        // Bottom-right edge
         return (
-          node.position + Offset(node.width / 2, node.height),
+          node.position + Offset(node.width * 0.85, node.height * 0.85),
           AxisDirection.down,
         );
       }

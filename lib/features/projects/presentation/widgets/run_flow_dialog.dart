@@ -9,6 +9,8 @@ import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/common/data/run_service.dart';
 import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/core/domain/entities/run.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class RunFlowDialog extends StatefulWidget {
   final int flowId;
@@ -107,390 +109,219 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
       );
 
       if (!mounted) return;
-
-      final navigator = Navigator.of(context);
-
-      navigator.pop();
-
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      try {
-        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(content: Text('Flow execution started')),
-        );
-      } catch (e) {
-        // Ignored
-      }
-
+      Navigator.of(context).pop();
+      PilotToast.show(context, 'Flow execution started');
+    } catch (e) {
       if (mounted) {
-        context.read<RunProvider>().checkRunStatus(widget.flowId);
+        PilotToast.show(context, 'Error: $e', isError: true);
       }
-
-      await _pollForRun(navigator);
-    } catch (e) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
-    }
-  }
-
-  Future<void> _pollForRun(
-    NavigatorState navigator,
-  ) async {
-    final startTime = DateTime.now().toUtc();
-    try {
-      final runSvc = getIt<RunService>();
-      Run? found;
-      const int maxAttempts = 10;
-      const Duration delay = Duration(milliseconds: 500);
-
-      for (int attempt = 0; attempt < maxAttempts; attempt++) {
-        try {
-          final candidate = await runSvc.getLastRun(widget.flowId);
-          final created = candidate.startedAt.toUtc();
-
-          if (created.isAfter(startTime.subtract(const Duration(seconds: 1)))) {
-            found = candidate;
-            break;
-          }
-        } catch (e) {
-          // Flatten connection errors during polling
-        }
-        await Future.delayed(delay);
-      }
-
-      if (found != null) {
-        navigator.pushNamed(
-          AppRouter.resultsRoute,
-          arguments: {'runId': found.id},
-        );
-      } else {
-
-        navigator.pushNamed(
-          AppRouter.projectsRoute,
-          arguments: {'initialFlowId': widget.flowId},
-        );
-      }
-    } catch (e) {
-
-      navigator.pushNamed(
-        AppRouter.projectsRoute,
-        arguments: {'initialFlowId': widget.flowId},
-      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Dialog(
-      backgroundColor: colorScheme.surface,
-      surfaceTintColor: colorScheme.surfaceTint,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 550),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return PilotDialog(
+      title: 'Run Flow',
+      maxWidth: 600,
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _FieldLabel('PERFORMANCE SETTINGS'),
+            const SizedBox(height: 12),
+            Row(
               children: [
-
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withValues(
-                          alpha: 0.4,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _FieldSubLabel('Threads'),
+                      const SizedBox(height: 6),
+                      PilotInput(
+                        controller: _threadsCtrl,
+                        placeholder: '1',
+                        prefixIcon: Icons.groups_rounded,
                       ),
-                      child: Icon(
-                        Icons.rocket_launch_rounded,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      'Run Flow',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                      tooltip: 'Close',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-
-                        _buildSectionHeader('Performance Settings'),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildIntegerField(
-                                _threadsCtrl,
-                                'Threads',
-                                Icons.groups_rounded,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildIntegerField(
-                                _durationCtrl,
-                                'Duration (s)',
-                                Icons.timer_rounded,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildIntegerField(
-                                _rampUpCtrl,
-                                'Ramp Up (s)',
-                                Icons.trending_up_rounded,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        _buildSectionHeader('Data & Environment'),
-                        const SizedBox(height: 12),
-
-                        InkWell(
-                          onTap: _pickFile,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _selectedFile != null
-                                    ? colorScheme.primary
-                                    : colorScheme.outlineVariant,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _selectedFile != null
-                                      ? Icons.description
-                                      : Icons.upload_file_rounded,
-                                  color: _selectedFile != null
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _selectedFile?.name ??
-                                            'Select Data File (JSON)',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: _selectedFile != null
-                                              ? FontWeight.w600
-                                              : FontWeight.normal,
-                                          color: _selectedFile != null
-                                              ? colorScheme.onSurface
-                                              : colorScheme.onSurfaceVariant,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (_selectedFile == null)
-                                        Text(
-                                          'Optional: Upload CSV or JSON data source',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: colorScheme.onSurfaceVariant
-                                                .withValues(alpha: 0.7),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                if (_selectedFile != null)
-                                  IconButton(
-                                    onPressed: () =>
-                                        setState(() => _selectedFile = null),
-                                    icon: const Icon(Icons.close, size: 18),
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildSectionHeader('Variables'),
-                            TextButton.icon(
-                              onPressed: _addVariable,
-                              icon: const Icon(Icons.add, size: 16),
-                              label: const Text('Add Variable'),
-                              style: TextButton.styleFrom(
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_variables.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text(
-                              'No custom variables defined.',
-                              style: TextStyle(
-                                color: colorScheme.onSurfaceVariant.withValues(
-                                  alpha: 0.5,
-                                ),
-                                fontStyle: FontStyle.italic,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-
-                        ..._variables.asMap().entries.map((entry) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: _buildTextField(
-                                    entry.value.key,
-                                    'Key',
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 3,
-                                  child: _buildTextField(
-                                    entry.value.value,
-                                    'Value',
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => _removeVariable(entry.key),
-                                  icon: Icon(
-                                    Icons.remove_circle_outline,
-                                    color: colorScheme.error.withValues(
-                                      alpha: 0.8,
-                                    ),
-                                    size: 20,
-                                  ),
-                                  splashRadius: 20,
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.icon(
-                      onPressed: _run,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _FieldSubLabel('Duration (s)'),
+                      const SizedBox(height: 6),
+                      PilotInput(
+                        controller: _durationCtrl,
+                        placeholder: '60',
+                        prefixIcon: Icons.timer_rounded,
                       ),
-                      icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                      label: const Text('Start Run'),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _FieldSubLabel('Ramp Up (s)'),
+                      const SizedBox(height: 6),
+                      PilotInput(
+                        controller: _rampUpCtrl,
+                        placeholder: '0',
+                        prefixIcon: Icons.trending_up_rounded,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 24),
+            const _FieldLabel('DATA & ENVIRONMENT'),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: _pickFile,
+              borderRadius: AppRadius.br12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                  borderRadius: AppRadius.br12,
+                  border: Border.all(
+                    color: _selectedFile != null ? AppColors.accent : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _selectedFile != null ? Icons.description : Icons.upload_file_rounded,
+                      color: _selectedFile != null ? AppColors.accent : AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _selectedFile?.name ?? 'Select Data File (JSON)',
+                            style: AppTypography.body.copyWith(
+                              fontWeight: _selectedFile != null ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                          ),
+                          if (_selectedFile == null)
+                            Text(
+                              'Optional: Upload CSV or JSON data source',
+                              style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (_selectedFile != null)
+                      IconButton(
+                        onPressed: () => setState(() => _selectedFile = null),
+                        icon: const Icon(Icons.close, size: 18),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const _FieldLabel('VARIABLES'),
+                PilotButton.ghost(
+                  label: 'Add Variable',
+                  icon: Icons.add,
+                  onPressed: _addVariable,
+                  compact: true,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (_variables.isEmpty)
+              Text(
+                'No custom variables defined.',
+                style: AppTypography.caption.copyWith(fontStyle: FontStyle.italic),
+              ),
+            ..._variables.asMap().entries.map((entry) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: PilotInput(
+                        controller: entry.value.key,
+                        placeholder: 'Key',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 3,
+                      child: PilotInput(
+                        controller: entry.value.value,
+                        placeholder: 'Value',
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _removeVariable(entry.key),
+                      icon: const Icon(Icons.remove_circle_outline, color: AppColors.error, size: 20),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
         ),
       ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        PilotButton.primary(
+          label: 'Start Run',
+          icon: Icons.play_arrow_rounded,
+          onPressed: _run,
+        ),
+      ],
     );
   }
+}
 
-  Widget _buildSectionHeader(String title) {
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
     return Text(
-      title.toUpperCase(),
-      style: TextStyle(
-        fontSize: 11,
+      text,
+      style: AppTypography.label.copyWith(
+        color: AppColors.accent,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.0,
-        color: Theme.of(context).colorScheme.outline,
       ),
     );
   }
+}
 
-  Widget _buildIntegerField(
-    TextEditingController controller,
-    String label,
-    IconData icon,
-  ) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      textAlign: TextAlign.center,
-      decoration: InputDecoration(
-        labelText: label,
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        prefixIcon: Icon(icon, size: 16),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.all(12),
-        isDense: true,
-      ),
-    );
-  }
+class _FieldSubLabel extends StatelessWidget {
+  final String text;
+  const _FieldSubLabel(this.text);
 
-  Widget _buildTextField(TextEditingController controller, String hint) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        hintText: hint,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-        isDense: true,
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: AppTypography.caption.copyWith(
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.w600,
       ),
     );
   }

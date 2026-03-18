@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/domain/entities/canvas.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
@@ -70,105 +71,71 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenHeight = MediaQuery.of(context).size.height;
-        final dialogHeight = (640.0).clamp(0.0, screenHeight * 0.9);
-
-        return Dialog(
-          backgroundColor: colors.surface,
-          surfaceTintColor: colors.surfaceTint,
-          child: Container(
-            width: 800,
-            height: dialogHeight,
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Node Configuration',
-                          style: AppTypography.title.copyWith(fontSize: 18),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'ID: ${widget.node.id}',
-                          style: AppTypography.caption.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TabBar(
-                  controller: _tabController,
-                  tabs: const [
-                    Tab(text: 'Details'),
-                    Tab(text: 'Pre-Processor'),
-                    Tab(text: 'Post-Processor'),
-                  ],
-                  labelColor: colors.primary,
-                  unselectedLabelColor: colors.onSurfaceVariant,
-                  indicatorColor: colors.primary,
-                  labelStyle:
-                      AppTypography.body.copyWith(fontWeight: FontWeight.w600),
-                  unselectedLabelStyle: AppTypography.body,
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildDetailsTab(),
-                      _ProcessorEditor(
-                        key: const ValueKey('pre'),
-                        data: _preProcessor,
-                        onChanged: (data) => _preProcessor = data,
-                      ),
-                      _ProcessorEditor(
-                        key: const ValueKey('post'),
-                        data: _postProcessor,
-                        onChanged: (data) => _postProcessor = data,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 12),
-                    FilledButton(
-                      onPressed: () {
-                        Navigator.of(context).pop({
-                          'preProcessor': _preProcessor,
-                          'postProcessor': _postProcessor,
-                        });
-                      },
-                      child: const Text('Save Changes'),
-                    ),
-                  ],
-                ),
-              ],
+    return PilotDialog(
+      title: 'Node Configuration',
+      maxWidth: 800,
+      content: SizedBox(
+        height: 500,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'ID: ${widget.node.id}',
+              style: AppTypography.caption.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 16),
+            TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Details'),
+                Tab(text: 'Pre-Processor'),
+                Tab(text: 'Post-Processor'),
+              ],
+              labelColor: AppColors.accent,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.accent,
+              labelStyle: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+              unselectedLabelStyle: AppTypography.body,
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildDetailsTab(),
+                  _ProcessorEditor(
+                    key: const ValueKey('pre'),
+                    data: _preProcessor,
+                    onChanged: (data) => _preProcessor = data,
+                  ),
+                  _ProcessorEditor(
+                    key: const ValueKey('post'),
+                    data: _postProcessor,
+                    onChanged: (data) => _postProcessor = data,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        PilotButton.primary(
+          label: 'Save Changes',
+          onPressed: () {
+            Navigator.of(context).pop({
+              'preProcessor': _preProcessor,
+              'postProcessor': _postProcessor,
+            });
+          },
+        ),
+      ],
     );
   }
 
@@ -178,18 +145,21 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
     }
 
     final endpoint = _endpointDetail;
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final secondaryTextColor = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
+    final mutedTextColor = isDark ? AppColors.textMuted : AppColors.textLightMuted;
 
     if (endpoint == null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.info_outline, size: 48, color: colors.onSurfaceVariant),
+            Icon(Icons.info_outline, size: 48, color: mutedTextColor),
             const SizedBox(height: 16),
             Text(
               'Endpoint details not available',
-              style: TextStyle(color: colors.onSurfaceVariant),
+              style: TextStyle(color: mutedTextColor),
             ),
           ],
         ),
@@ -201,50 +171,31 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildDetailSection('Basic Information', [
-            _buildDetailRow('Name', endpoint.name),
-            _buildDetailRow('Type', endpoint.type),
-            _buildDetailRow('URL', endpoint.url ?? '—'),
+            _buildDetailRow('Name', endpoint.name, primaryTextColor, secondaryTextColor),
+            _buildDetailRow('Type', endpoint.type, primaryTextColor, secondaryTextColor),
+            _buildDetailRow('URL', endpoint.url ?? '—', primaryTextColor, secondaryTextColor),
             if (endpoint.httpMethod != null)
-              _buildDetailRow('Method', endpoint.httpMethod!.toUpperCase()),
-            if (endpoint.description != null && endpoint.description!.isNotEmpty)
-              _buildDetailRow('Description', endpoint.description!),
+              _buildDetailRow('Method', endpoint.httpMethod!.toUpperCase(), primaryTextColor, secondaryTextColor),
           ]),
 
           if (endpoint.type == 'GRPC')
             _buildDetailSection('gRPC Configuration', [
-              _buildDetailRow('Service', endpoint.grpcServiceName ?? '—'),
-              _buildDetailRow('Method', endpoint.grpcMethodName ?? '—'),
-              _buildDetailRow('Stub Path', endpoint.grpcStubPath ?? '—'),
-            ]),
-
-          if (endpoint.type == 'GRAPHQL')
-            _buildDetailSection('GraphQL Configuration', [
-              _buildDetailRow('Operation', endpoint.graphqlOperationType ?? '—'),
-            ]),
-
-          if (endpoint.successCondition != null && endpoint.successCondition!.isNotEmpty)
-            _buildDetailSection('Validation', [
-              _buildDetailRow('Success Condition', endpoint.successCondition!),
+              _buildDetailRow('Service', endpoint.grpcServiceName ?? '—', primaryTextColor, secondaryTextColor),
+              _buildDetailRow('Method', endpoint.grpcMethodName ?? '—', primaryTextColor, secondaryTextColor),
             ]),
 
           const SizedBox(height: 8),
           Text(
-            'Data & Payload',
-            style: AppTypography.bodyLg.copyWith(fontWeight: FontWeight.bold, color: colors.primary),
+            'DATA & PAYLOAD',
+            style: AppTypography.label.copyWith(fontWeight: FontWeight.bold, color: AppColors.accent),
           ),
           const Divider(),
 
           if (endpoint.httpHeaders != null && endpoint.httpHeaders!.isNotEmpty)
             _buildCodeBlock('Headers', jsonEncode(endpoint.httpHeaders)),
 
-          if (endpoint.httpParameters != null && endpoint.httpParameters!.isNotEmpty)
-            _buildCodeBlock('Query Parameters', jsonEncode(endpoint.httpParameters)),
-
           if (endpoint.body != null && endpoint.body!.toString().isNotEmpty)
             _buildCodeBlock('Body / Payload', endpoint.body.toString()),
-
-          if (endpoint.graphqlVariables != null && endpoint.graphqlVariables!.isNotEmpty)
-            _buildCodeBlock('GraphQL Variables', jsonEncode(endpoint.graphqlVariables)),
 
           const SizedBox(height: 24),
         ],
@@ -253,13 +204,12 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
   }
 
   Widget _buildDetailSection(String title, List<Widget> children) {
-    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: AppTypography.bodyLg.copyWith(fontWeight: FontWeight.bold, color: colors.primary),
+          title.toUpperCase(),
+          style: AppTypography.label.copyWith(fontWeight: FontWeight.bold, color: AppColors.accent),
         ),
         const Divider(),
         const SizedBox(height: 8),
@@ -269,8 +219,7 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    final colors = Theme.of(context).colorScheme;
+  Widget _buildDetailRow(String label, String value, Color primaryColor, Color secondaryColor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -282,14 +231,14 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
               label,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: colors.onSurfaceVariant,
+                color: secondaryColor,
               ),
             ),
           ),
           Expanded(
             child: SelectableText(
               value,
-              style: TextStyle(color: colors.onSurface),
+              style: TextStyle(color: primaryColor),
             ),
           ),
         ],
@@ -298,7 +247,7 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
   }
 
   Widget _buildCodeBlock(String title, String code) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     String formattedCode = code;
     try {
       final decoded = jsonDecode(code);
@@ -318,9 +267,9 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: colors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: colors.outlineVariant),
+            color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+            borderRadius: AppRadius.br8,
+            border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
           ),
           child: SelectableText(
             formattedCode,
@@ -423,7 +372,6 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
           'Delay (ms)',
           'Delay execution by milliseconds',
           _delayController,
-          isNumeric: true,
         ),
         const SizedBox(height: 16),
         _buildSection(
@@ -450,33 +398,18 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
     String label,
     String hint,
     TextEditingController controller, {
-    bool isNumeric = false,
     bool isMultiline = false,
   }) {
-    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        TextField(
+        PilotInput(
           controller: controller,
+          placeholder: hint,
+          maxLines: isMultiline ? 8 : 1,
           onChanged: (_) => _updateData(),
-          keyboardType: isNumeric
-              ? TextInputType.number
-              : TextInputType.multiline,
-          maxLines: isMultiline ? 10 : 1,
-          minLines: isMultiline ? 5 : 1,
-          decoration: InputDecoration(
-            hintText: hint,
-            fillColor: colors.surfaceContainerLow,
-            filled: true,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: colors.outlineVariant),
-            ),
-            contentPadding: const EdgeInsets.all(12),
-          ),
           style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
         ),
       ],

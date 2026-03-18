@@ -99,7 +99,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                 borderRadius: AppRadius.br16,
                 child: Row(
                   children: [
-                    // Sidebar List
+
                     Container(
                       width: 300,
                       decoration: BoxDecoration(
@@ -196,7 +196,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                     child: SizedBox(
                                       width: 20, height: 20,
                                       child: CircularProgressIndicator(
-                                        strokeWidth: 2, 
+                                        strokeWidth: 2,
                                         color: isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart
                                       ),
                                     ),
@@ -217,7 +217,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                                   ? SizedBox(
                                                       width: 16, height: 16,
                                                       child: CircularProgressIndicator(
-                                                        strokeWidth: 2, 
+                                                        strokeWidth: 2,
                                                         color: isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart
                                                       ),
                                                     )
@@ -680,7 +680,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header: Name + Actions
+
           Container(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
             decoration: BoxDecoration(
@@ -735,7 +735,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
           Expanded(
             child: Column(
               children: [
-                // Request Bar: Method + URL + Send
+
                 Container(
                   padding: const EdgeInsets.all(16),
                   color: surface,
@@ -763,7 +763,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                 'PATCH': const Color(0xFF8B5CF6),
                               }[m] ?? accentColor;
                               return DropdownMenuItem(
-                                value: m, 
+                                value: m,
                                 child: Text(m, style: TextStyle(color: methodColor, fontSize: 13, fontWeight: FontWeight.w700))
                               );
                             }).toList(),
@@ -806,7 +806,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                   ),
                 ),
 
-                // Request Tabs
                 Container(
                   height: 36,
                   color: surface,
@@ -817,7 +816,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                   ),
                 ),
 
-                // Request Body/Config Area
                 Expanded(
                   flex: 3,
                   child: Container(
@@ -859,13 +857,11 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                   ),
                 ),
 
-                // Response Divider
                 Container(
                   height: 1,
                   color: border.withValues(alpha: 0.5),
                 ),
 
-                // Response Area
                 Expanded(
                   flex: 2,
                   child: Container(
@@ -986,7 +982,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     } else if (r.containsKey('error')) {
       filtered['error'] = r['error'];
     }
-    
+
     if (filtered.isEmpty) {
       final metadataKeys = ['statusCode', 'success', 'responseTimeMs', 'timestamp', 'headers'];
       final cleaned = Map<String, dynamic>.from(r);
@@ -1060,7 +1056,7 @@ class _SegmentedTabControlState extends State<_SegmentedTabControl> {
                           ),
                         ]
                       : [],
-                  border: isSelected 
+                  border: isSelected
                     ? Border.all(color: (isDark ? AppColors.darkBorder : AppColors.lightBorder).withValues(alpha: 0.5))
                     : null,
                 ),

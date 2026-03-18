@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart' hide Flow;
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/domain/entities/flow.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
@@ -73,109 +74,84 @@ class _SubflowConfigurationDialogState extends State<SubflowConfigurationDialog>
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Dialog(
-      backgroundColor: colors.surface,
-      surfaceTintColor: colors.surfaceTint,
-      child: Container(
-        width: 480,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Configure Subflow',
-              style: AppTypography.title.copyWith(fontSize: 18),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Select a flow to execute as a subflow.',
-              style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                labelText: 'Search Flow Name',
-                hintText: 'Type flow name...',
-                prefixIcon: const Icon(Icons.search),
-                border: const OutlineInputBorder(),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _selectedFlow = null;
-                            _filteredFlows = [];
-                          });
-                        },
-                      )
-                    : null,
+    return PilotDialog(
+      title: 'Configure Subflow',
+      maxWidth: 480,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select a flow to execute as a subflow.',
+            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 20),
+          PilotInput(
+            controller: _searchController,
+            placeholder: 'Search flow by name...',
+            prefixIcon: Icons.search,
+            onChanged: _onSearchChanged,
+          ),
+          if (_filteredFlows.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                borderRadius: AppRadius.br8,
+                color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
               ),
-            ),
-            if (_filteredFlows.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                constraints: const BoxConstraints(maxHeight: 200),
-                decoration: BoxDecoration(
-                  border: Border.all(color: colors.outlineVariant),
-                  borderRadius: BorderRadius.circular(8),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _filteredFlows.length,
+                separatorBuilder: (context, index) => Divider(
+                  height: 1,
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: _filteredFlows.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final flow = _filteredFlows[index];
-                    return ListTile(
-                      title: Text(flow.name),
-                      onTap: () {
-                        setState(() {
-                          _selectedFlow = flow;
-                          _searchController.text = flow.name;
-                          _filteredFlows = [];
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                if (_selectedFlow != null)
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      context.read<FlowProvider>().selectFlow(_selectedFlow!);
-                      Navigator.of(context).pop();
+                itemBuilder: (context, index) {
+                  final flow = _filteredFlows[index];
+                  return ListTile(
+                    title: Text(flow.name, style: AppTypography.body),
+                    onTap: () {
+                      setState(() {
+                        _selectedFlow = flow;
+                        _searchController.text = flow.name;
+                        _filteredFlows = [];
+                      });
                     },
-                    icon: const Icon(Icons.open_in_new, size: 16),
-                    label: const Text('Navigate to Flow'),
-                  ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(width: 12),
-                FilledButton(
-                  onPressed: _selectedFlow == null
-                      ? null
-                      : () {
-                          Navigator.of(context).pop(_selectedFlow!);
-                        },
-                  child: const Text('Apply'),
-                ),
-              ],
+                    hoverColor: AppColors.accent.withValues(alpha: 0.1),
+                  );
+                },
+              ),
             ),
           ],
-        ),
+        ],
       ),
+      actions: [
+        if (_selectedFlow != null)
+          PilotButton.ghost(
+            label: 'Navigate',
+            icon: Icons.open_in_new,
+            onPressed: () {
+              context.read<FlowProvider>().selectFlow(_selectedFlow!);
+              Navigator.of(context).pop();
+            },
+          ),
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        PilotButton.primary(
+          label: 'Apply',
+          onPressed: _selectedFlow == null
+              ? null
+              : () {
+                  Navigator.of(context).pop(_selectedFlow!);
+                },
+        ),
+      ],
     );
   }
 }

@@ -2,42 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 abstract class AppColors {
-  // Light Mode (Light & Noir)
+
   static const lightBackground  = Color(0xFFFFFFFF);
   static const lightSurface     = Color(0xFFF9FAFB);
   static const lightElevated    = Color(0xFFF3F4F6);
   static const lightBorder      = Color(0xFFE5E7EB);
   static const lightBorderSubtle = Color(0xFFF3F4F6);
-  
-  // Dark Mode (Noir/IDE style)
+
   static const darkBackground   = Color(0xFF0D1117);
   static const darkSurface      = Color(0xFF161B22);
   static const darkElevated     = Color(0xFF21262D);
   static const darkBorder       = Color(0xFF30363D);
   static const darkBorderSubtle = Color(0xFF21262D);
 
-  // Accents (Green Gradient components)
   static const lightGreenStart  = Color(0xFF10B981);
   static const lightGreenEnd    = Color(0xFF059669);
   static const darkGreenStart   = Color(0xFF047857);
   static const darkGreenEnd     = Color(0xFF064E3B);
 
-  // Text Colors
-  static const textPrimary      = Color(0xFFF0F6FC); // Dark mode default
+  static const textPrimary      = Color(0xFFF0F6FC);
   static const textSecondary    = Color(0xFF8B949E);
   static const textMuted        = Color(0xFF484F58);
-  
-  static const textLight        = Color(0xFF111827); // Light mode default
+
+  static const textLight        = Color(0xFF111827);
   static const textLightSecondary = Color(0xFF4B5563);
   static const textLightMuted   = Color(0xFF9CA3AF);
 
-  // Semantic
   static const error   = Color(0xFFF85149);
   static const warning = Color(0xFFD29922);
   static const success = Color(0xFF238636);
   static const info    = Color(0xFF2F81F7);
 
-  // Backward compatibility constants
   static const accent       = darkGreenStart;
   static const accentHover  = Color(0xFF059669);
   static const accentActive = Color(0xFF064E3B);
@@ -47,7 +42,7 @@ abstract class AppGradients {
   static LinearGradient green(bool isDark) => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: isDark 
+    colors: isDark
       ? [AppColors.darkGreenStart, AppColors.darkGreenEnd]
       : [AppColors.lightGreenStart, AppColors.lightGreenEnd],
   );

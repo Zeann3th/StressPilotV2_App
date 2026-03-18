@@ -141,7 +141,7 @@ class _TopBarIconState extends State<_TopBarIcon> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart;
     final accentHover = isDark ? const Color(0xFF059669) : const Color(0xFF34D399);
-    
+
     final iconColor = _isHovered ? accentHover : (isDark ? AppColors.textSecondary : AppColors.textLightSecondary);
 
     return ShadTooltip(

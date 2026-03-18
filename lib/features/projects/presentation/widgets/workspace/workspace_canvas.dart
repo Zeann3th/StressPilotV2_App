@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/domain/entities/flow.dart' as flow;
-import 'package:stress_pilot/core/themes/components/buttons/pilot_button.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
@@ -290,7 +290,7 @@ class _CanvasContentState extends State<_CanvasContent>
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(
-                          node.type == FlowNodeType.branch ? 12 : 16,
+                          node.type == FlowNodeType.branch ? 8 : 16,
                         ),
                         border:
                         Border.all(color: colors.primary, width: 3),
@@ -352,12 +352,12 @@ class _CanvasContentState extends State<_CanvasContent>
       width: type == FlowNodeType.start
           ? 56
           : (type == FlowNodeType.branch
-          ? 132
+          ? 160
           : (type == FlowNodeType.subflow ? 180 : 160)),
       height: type == FlowNodeType.start
           ? 56
           : (type == FlowNodeType.branch
-          ? 132
+          ? 100
           : (type == FlowNodeType.subflow ? 64 : 100)),
     );
     context.read<CanvasProvider>().addNode(newNode);
@@ -1004,7 +1004,7 @@ class _NodeBody extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Left Accent Bar
+
           Positioned(
             left: 0,
             top: 0,
@@ -1065,8 +1065,7 @@ class _NodeBody extends StatelessWidget {
               ],
             ),
           ),
-          // Delete button on hover is handled by _HoverableNodeWrapper but subflow doesn't use it yet.
-          // Let's add the same hover wrapper or just keep the close button.
+
           Positioned(
             top: 4,
             right: 4,
@@ -1129,64 +1128,72 @@ class _NodeBody extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // Modern Rounded Diamond Shape using a CustomPainter
-          CustomPaint(
-            size: Size(node.actualWidth, node.actualHeight),
-            painter: _DiamondPainter(
-              color: colors.surface,
-              borderColor: colors.primary.withValues(alpha: 0.5),
-              glowColor: colors.primary.withValues(alpha: 0.1),
+          // The Rotated Square (Diamond)
+          Transform.rotate(
+            angle: 3.14159 / 4, // 45 degrees
+            child: Container(
+              width: node.actualWidth * 0.7, // Fit within bounds when rotated
+              height: node.actualHeight * 0.7,
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colors.primary.withValues(alpha: 0.5), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                  )
+                ],
+              ),
             ),
           ),
+          
+          // Label content
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.call_split_rounded, size: 14, color: colors.primary),
-                  const SizedBox(width: 4),
-                  Text(
-                    'BRANCH',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: colors.primary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _BranchHandle(
-                    label: 'TRUE',
-                    icon: Icons.check_rounded,
-                    color: Colors.green,
-                    isSelected: provider.selectedSourceNodeId == node.id &&
-                        provider.selectedSourceHandle == 'true',
-                    onTap: () => provider.selectSourceNode(node.id, 'true'),
-                  ),
-                  const SizedBox(width: 4),
-                  _BranchHandle(
-                    label: 'FALSE',
-                    icon: Icons.close_rounded,
-                    color: Colors.red,
-                    isSelected: provider.selectedSourceNodeId == node.id &&
-                        provider.selectedSourceHandle == 'false',
-                    onTap: () => provider.selectSourceNode(node.id, 'false'),
-                  ),
-                ],
+              Icon(Icons.call_split_rounded, size: 16, color: colors.primary),
+              const SizedBox(height: 2),
+              Text(
+                'BRANCH',
+                style: AppTypography.label.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colors.primary,
+                ),
               ),
             ],
           ),
-          // Positioned close button at the top-right of the diamond's "bounding box"
-          // but we want it more visible
+
+          // TRUE Pipe (Left)
           Positioned(
-            top: 2,
-            right: 2,
+            left: -12,
+            child: _BranchHandle(
+              label: 'TRUE',
+              shortLabel: 'T',
+              color: Colors.green,
+              isSelected: provider.selectedSourceNodeId == node.id &&
+                  provider.selectedSourceHandle == 'true',
+              onTap: () => provider.selectSourceNode(node.id, 'true'),
+            ),
+          ),
+
+          // FALSE Pipe (Right)
+          Positioned(
+            right: -12,
+            child: _BranchHandle(
+              label: 'FALSE',
+              shortLabel: 'F',
+              color: Colors.red,
+              isSelected: provider.selectedSourceNodeId == node.id &&
+                  provider.selectedSourceHandle == 'false',
+              onTap: () => provider.selectSourceNode(node.id, 'false'),
+            ),
+          ),
+
+          // Close Button
+          Positioned(
+            top: -12,
+            right: -12,
             child: IconButton(
               onPressed: () => provider.removeNode(node.id),
               icon: const Icon(Icons.close, size: 14),
@@ -1247,14 +1254,14 @@ class _InfoBadge extends StatelessWidget {
 
 class _BranchHandle extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final String shortLabel;
   final Color color;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _BranchHandle({
     required this.label,
-    required this.icon,
+    required this.shortLabel,
     required this.color,
     required this.isSelected,
     required this.onTap,
@@ -1262,91 +1269,41 @@ class _BranchHandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected ? color : color.withValues(alpha: 0.1),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-          borderRadius: BorderRadius.circular(6),
-          boxShadow: isSelected
-              ? [
-            BoxShadow(
-                color: color.withValues(alpha: 0.3),
-                blurRadius: 6,
-                offset: const Offset(0, 1))
-          ]
-              : [],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 10, color: isSelected ? Colors.white : color),
-            const SizedBox(width: 4),
-            Text(
-              label,
+    return Tooltip(
+      message: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: isSelected ? color : color.withValues(alpha: 0.1),
+            border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: isSelected ? color.withValues(alpha: 0.4) : Colors.black12,
+                blurRadius: isSelected ? 8 : 4,
+                spreadRadius: isSelected ? 1 : 0,
+              )
+            ],
+          ),
+          child: Center(
+            child: Text(
+              shortLabel,
               style: TextStyle(
-                fontSize: 8,
+                fontSize: 10,
                 fontWeight: FontWeight.w900,
                 color: isSelected ? Colors.white : color,
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
-}
-
-class _DiamondPainter extends CustomPainter {
-  final Color color;
-  final Color borderColor;
-  final Color glowColor;
-
-  _DiamondPainter({
-    required this.color,
-    required this.borderColor,
-    required this.glowColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final borderPaint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    final path = Path();
-    const radius = 12.0;
-
-    // Diamond with rounded corners
-    path.moveTo(size.width / 2, radius);
-    path.quadraticBezierTo(size.width / 2, 0, size.width / 2 + radius, radius);
-    path.lineTo(size.width - radius, size.height / 2 - radius);
-    path.quadraticBezierTo(size.width, size.height / 2, size.width - radius, size.height / 2 + radius);
-    path.lineTo(size.width / 2 + radius, size.height - radius);
-    path.quadraticBezierTo(size.width / 2, size.height, size.width / 2 - radius, size.height - radius);
-    path.lineTo(radius, size.height / 2 + radius);
-    path.quadraticBezierTo(0, size.height / 2, radius, size.height / 2 - radius);
-    path.close();
-
-    // Draw shadow/glow
-    canvas.drawShadow(path, glowColor, 8, true);
-    
-    canvas.drawPath(path, paint);
-    canvas.drawPath(path, borderPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _DiamondPainter oldDelegate) =>
-      color != oldDelegate.color || borderColor != oldDelegate.borderColor;
 }
 
 class _BranchDialog extends StatelessWidget {
@@ -1355,44 +1312,35 @@ class _BranchDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Dialog(
-      backgroundColor: colors.surface,
-      child: Container(
-        width: 400,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Edit Branch Condition', style: AppTypography.title),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              autofocus: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'e.g. response.status == 200',
-                labelText: 'Expression',
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel')),
-                const SizedBox(width: 12),
-                FilledButton(
-                    onPressed: () =>
-                        Navigator.pop(context, controller.text),
-                    child: const Text('Save')),
-              ],
-            ),
-          ],
-        ),
+    return PilotDialog(
+      title: 'Edit Branch Condition',
+      maxWidth: 400,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Enter the expression to evaluate. "response" and "env" variables are available.',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          PilotInput(
+            controller: controller,
+            placeholder: 'e.g. response.status == 200',
+            autofocus: true,
+          ),
+        ],
       ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.pop(context),
+        ),
+        PilotButton.primary(
+          label: 'Save',
+          onPressed: () => Navigator.pop(context, controller.text),
+        ),
+      ],
     );
   }
 }

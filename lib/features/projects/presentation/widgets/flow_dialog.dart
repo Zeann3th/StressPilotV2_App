@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/core/navigation/app_router.dart';
-import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
-import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
+import 'package:stress_pilot/core/themes/components/components.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/common/data/utility_service.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 
 class FlowDialog {
   static void showCreateDialog(
@@ -17,7 +18,6 @@ class FlowDialog {
     )
     onCreate,
   }) {
-    final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     String? selectedType;
@@ -25,127 +25,100 @@ class FlowDialog {
     final projectId = projectProvider.selectedProject?.id;
 
     if (projectId == null) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('No project selected')),
-      );
+      PilotToast.show(context, 'No project selected', isError: true);
       return;
     }
 
-    showDialog(
+    PilotDialog.show(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
+      title: 'New Flow',
+      content: StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Create Flow'),
-            content: SizedBox(
-              width: 600,
-              child: FutureBuilder(
-                future: getIt<UtilityService>().getCapabilities(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+          return FutureBuilder(
+            future: getIt<UtilityService>().getCapabilities(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                  final capabilities = snapshot.data;
-                  final flowTypes = capabilities?.flowExecutors ?? ['DEFAULT'];
+              final capabilities = snapshot.data;
+              final flowTypes = capabilities?.flowExecutors ?? ['DEFAULT'];
 
-                  if (selectedType == null && flowTypes.isNotEmpty) {
-                    selectedType = flowTypes.first;
-                  }
+              if (selectedType == null && flowTypes.isNotEmpty) {
+                selectedType = flowTypes.first;
+              }
 
-                  return Form(
-                    key: formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          controller: nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Name',
-                            hintText: 'Enter flow name',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Name is required';
-                            }
-                            return null;
-                          },
-                          autofocus: true,
-                        ),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          initialValue: selectedType,
-                          decoration: const InputDecoration(
-                            labelText: 'Type',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: flowTypes.map((type) {
-                            return DropdownMenuItem(
-                              value: type,
-                              child: Text(type),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() => selectedType = value);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: descriptionController,
-                          decoration: const InputDecoration(
-                            labelText: 'Description (optional)',
-                            hintText: 'Enter flow description',
-                            border: OutlineInputBorder(),
-                          ),
-                          maxLines: 3,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.of(dialogContext).pop();
-
-                    try {
-                      await onCreate(
-                        nameController.text.trim(),
-                        descriptionController.text.trim().isEmpty
-                            ? null
-                            : descriptionController.text.trim(),
-                        selectedType ?? 'DEFAULT',
-                        projectId,
-                      );
-
-                      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                        const SnackBar(
-                          content: Text('Flow created successfully'),
-                        ),
-                      );
-                    } catch (e) {
-                      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                        SnackBar(content: Text('Error: ${e.toString()}')),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Create'),
-              ),
-            ],
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _FieldLabel('Flow Name'),
+                  const SizedBox(height: 6),
+                  PilotInput(
+                    controller: nameController,
+                    placeholder: 'e.g. Checkout Flow',
+                    autofocus: true,
+                  ),
+                  const SizedBox(height: 16),
+                  const _FieldLabel('Type'),
+                  const SizedBox(height: 6),
+                  _buildDropdown(
+                    context: context,
+                    value: selectedType ?? 'DEFAULT',
+                    items: flowTypes,
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => selectedType = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const _FieldLabel('Description'),
+                  const SizedBox(height: 6),
+                  PilotInput(
+                    controller: descriptionController,
+                    placeholder: 'Optional description...',
+                    maxLines: 3,
+                  ),
+                ],
+              );
+            },
           );
-        }
+        },
       ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        PilotButton.primary(
+          label: 'Create',
+          onPressed: () async {
+            if (nameController.text.trim().isEmpty) {
+              PilotToast.show(context, 'Name is required', isError: true);
+              return;
+            }
+            try {
+              await onCreate(
+                nameController.text.trim(),
+                descriptionController.text.trim().isEmpty
+                    ? null
+                    : descriptionController.text.trim(),
+                selectedType ?? 'DEFAULT',
+                projectId,
+              );
+              if (context.mounted) {
+                Navigator.of(context).pop();
+                PilotToast.show(context, 'Flow created');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                PilotToast.show(context, 'Error: $e', isError: true);
+              }
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -155,87 +128,67 @@ class FlowDialog {
     required Future<void> Function(int id, String name, String? description)
     onUpdate,
   }) {
-    final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: flow.name);
     final descriptionController = TextEditingController(
       text: flow.description ?? '',
     );
 
-    showDialog(
+    PilotDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit Flow'),
-        content: SizedBox(
-          width: 600,
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    hintText: 'Enter flow name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Name is required';
-                    }
-                    return null;
-                  },
-                  autofocus: true,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                    hintText: 'Enter flow description',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-              ],
-            ),
+      title: 'Edit Flow',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _FieldLabel('Flow Name'),
+          const SizedBox(height: 6),
+          PilotInput(
+            controller: nameController,
+            placeholder: 'e.g. Checkout Flow',
+            autofocus: true,
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                Navigator.of(dialogContext).pop();
-
-                try {
-                  await onUpdate(
-                    flow.id,
-                    nameController.text.trim(),
-                    descriptionController.text.trim().isEmpty
-                        ? null
-                        : descriptionController.text.trim(),
-                  );
-
-                  AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                    const SnackBar(
-                      content: Text('Flow updated successfully'),
-                    ),
-                  );
-                } catch (e) {
-                  AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                    SnackBar(content: Text('Error: ${e.toString()}')),
-                  );
-                }
-              }
-            },
-            child: const Text('Update'),
+          const SizedBox(height: 16),
+          const _FieldLabel('Description'),
+          const SizedBox(height: 6),
+          PilotInput(
+            controller: descriptionController,
+            placeholder: 'Optional description...',
+            maxLines: 3,
           ),
         ],
       ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        PilotButton.primary(
+          label: 'Save',
+          onPressed: () async {
+            if (nameController.text.trim().isEmpty) {
+              PilotToast.show(context, 'Name is required', isError: true);
+              return;
+            }
+            try {
+              await onUpdate(
+                flow.id,
+                nameController.text.trim(),
+                descriptionController.text.trim().isEmpty
+                    ? null
+                    : descriptionController.text.trim(),
+              );
+              if (context.mounted) {
+                Navigator.of(context).pop();
+                PilotToast.show(context, 'Flow updated');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                PilotToast.show(context, 'Error: $e', isError: true);
+              }
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -244,42 +197,92 @@ class FlowDialog {
     required flow_domain.Flow flow,
     required Future<void> Function(int id) onDelete,
   }) {
-    showDialog(
+    PilotDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Flow'),
-        content: Text(
-          'Are you sure you want to delete "${flow.name}"? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+      title: 'Delete Flow',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Are you sure you want to delete "${flow.name}"?',
+            style: AppTypography.body,
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            onPressed: () async {
-              Navigator.of(dialogContext).pop();
-
-              try {
-                await onDelete(flow.id);
-
-                AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                  const SnackBar(content: Text('Flow deleted successfully')),
-                );
-              } catch (e) {
-                AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                  SnackBar(content: Text('Error: ${e.toString()}')),
-                );
-              }
-            },
-            child: const Text('Delete'),
+          const SizedBox(height: 8),
+          Text(
+            'This action cannot be undone.',
+            style: AppTypography.caption.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        PilotButton.danger(
+          label: 'Delete',
+          onPressed: () async {
+            try {
+              await onDelete(flow.id);
+              if (context.mounted) {
+                Navigator.of(context).pop();
+                PilotToast.show(context, 'Flow deleted');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                PilotToast.show(context, 'Error: $e', isError: true);
+              }
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  static Widget _buildDropdown({
+    required BuildContext context,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+        borderRadius: AppRadius.br8,
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          items: items
+              .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+              .toList(),
+          onChanged: onChanged,
+          dropdownColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+          style: AppTypography.body.copyWith(
+            color: isDark ? AppColors.textPrimary : AppColors.textLight,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: AppTypography.label.copyWith(color: AppColors.textSecondary),
     );
   }
 }

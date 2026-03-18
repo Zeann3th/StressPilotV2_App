@@ -78,7 +78,7 @@ class ThemeManager with ChangeNotifier {
         return fallback;
       }
 
-      final colorScheme = _themeMode == ThemeMode.dark 
+      final colorScheme = _themeMode == ThemeMode.dark
           ? const ShadZincColorScheme.dark(
               background: AppColors.darkBackground,
               foreground: AppColors.textPrimary,
@@ -99,7 +99,7 @@ class ThemeManager with ChangeNotifier {
               border: AppColors.darkBorder,
               input: AppColors.darkBorder,
               ring: AppColors.darkGreenStart,
-            ) 
+            )
           : const ShadZincColorScheme.light(
               background: AppColors.lightBackground,
               foreground: AppColors.textLight,

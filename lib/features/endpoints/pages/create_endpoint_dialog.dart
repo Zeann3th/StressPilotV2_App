@@ -1,10 +1,13 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/core/navigation/app_router.dart';
-import '../presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/common/data/utility_service.dart';
+
+import '../presentation/provider/endpoint_provider.dart';
 import '../widgets/key_value_editor.dart';
 
 class CreateEndpointDialog extends StatefulWidget {
@@ -17,7 +20,6 @@ class CreateEndpointDialog extends StatefulWidget {
 }
 
 class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
-  final _formKey = GlobalKey<FormState>();
 
   final _nameCtrl = TextEditingController();
   final _urlCtrl = TextEditingController();
@@ -68,7 +70,10 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   }
 
   Future<void> _create() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_nameCtrl.text.trim().isEmpty) {
+      PilotToast.show(context, 'Name is required', isError: true);
+      return;
+    }
 
     try {
       dynamic bodyPayload = _bodyCtrl.text;
@@ -105,173 +110,133 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       final ep = await context.read<EndpointProvider>().createEndpoint(data);
       if (mounted) {
         Navigator.pop(context, ep);
+        PilotToast.show(context, 'Endpoint created');
       }
     } catch (e) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
+      if (mounted) {
+        PilotToast.show(context, 'Error: $e', isError: true);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Dialog(
-      child: Container(
-        width: 800,
-        constraints: const BoxConstraints(maxHeight: 900),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Text(
-                      'New Endpoint',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(width: 16),
-                    TextButton.icon(
-                      onPressed: _showCurlPasteDialog,
-                      icon: const Icon(Icons.terminal, size: 16),
-                      label: const Text('Paste cURL'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: colors.primary,
-                        textStyle: const TextStyle(fontSize: 13),
+    return PilotDialog(
+      title: 'New Endpoint',
+      maxWidth: 800,
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _FieldLabel('Name *'),
+                      const SizedBox(height: 6),
+                      PilotInput(
+                        controller: _nameCtrl,
+                        placeholder: 'e.g. Get User Profile',
                       ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: TextFormField(
-                                controller: _nameCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Name *',
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (v) =>
-                                    v?.isEmpty == true ? 'Required' : null,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 1,
-                                child: DropdownButtonFormField<String>(
-                                  initialValue: _selectedType,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Type *',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  items: _availableTypes
-                                      .map(
-                                        (t) => DropdownMenuItem(
-                                          value: t,
-                                          child: Text(t),
-                                        ),
-                                      )
-                                      .toList(),
-                                  onChanged: (v) =>
-                                      setState(() => _selectedType = v!),
-                                ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _urlCtrl,
-                          decoration: InputDecoration(
-                            labelText: _getUrlLabel(),
-                            border: const OutlineInputBorder(),
-                            helperText: _getUrlHelper(),
-                          ),
-                          onChanged: _handleUrlChanged,
-                          validator: (v) {
-                            if (_selectedType == 'JS') {
-                              return null;
-                            }
-                            if (v == null || v.isEmpty) return 'Required';
-
-                            if (_selectedType == 'JDBC' &&
-                                !v.startsWith('jdbc:')) {
-                              return 'Must start with "jdbc:"';
-                            }
-                            if (_selectedType == 'TCP' && !v.contains(':')) {
-                              return 'Must be in "host:port" format';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _descCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Description',
-                            border: OutlineInputBorder(),
-                          ),
-                          maxLines: 2,
-                        ),
-                        const SizedBox(height: 24),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Protocol Details',
-                          style: TextStyle(
-                            color: colors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        if (_selectedType == 'HTTP') _buildHttpFields(colors),
-                        if (_selectedType == 'GRPC') _buildGrpcFields(),
-                        if (_selectedType == 'JDBC') _buildJdbcFields(),
-                        if (_selectedType == 'JS') _buildJsFields(),
-                        if (_selectedType == 'TCP') _buildTcpFields(),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: _create,
-                      child: const Text('Create Endpoint'),
-                    ),
-                  ],
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _FieldLabel('Type *'),
+                      const SizedBox(height: 6),
+                      _buildDropdown(
+                        value: _selectedType,
+                        items: _availableTypes,
+                        onChanged: (v) => setState(() => _selectedType = v!),
+                      ),
+                    ],
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const _FieldLabel('URL / Connection String *'),
+            const SizedBox(height: 6),
+            PilotInput(
+              controller: _urlCtrl,
+              placeholder: _getUrlLabel(),
+            ),
+            const SizedBox(height: 16),
+            const _FieldLabel('Description'),
+            const SizedBox(height: 6),
+            PilotInput(
+              controller: _descCtrl,
+              placeholder: 'Optional description...',
+              maxLines: 2,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'PROTOCOL DETAILS',
+              style: AppTypography.label.copyWith(
+                color: AppColors.accent,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
               ),
-            ],
+            ),
+            const SizedBox(height: 4),
+            const Divider(),
+            const SizedBox(height: 16),
+            if (_selectedType == 'HTTP') _buildHttpFields(),
+            if (_selectedType == 'GRPC') _buildGrpcFields(),
+            if (_selectedType == 'JDBC') _buildJdbcFields(),
+            if (_selectedType == 'JS') _buildJsFields(),
+            if (_selectedType == 'TCP') _buildTcpFields(),
+          ],
+        ),
+      ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.pop(context),
+        ),
+        PilotButton.primary(
+          label: 'Create Endpoint',
+          onPressed: _create,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown({
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+        borderRadius: AppRadius.br8,
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          items: items
+              .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+              .toList(),
+          onChanged: onChanged,
+          dropdownColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+          style: AppTypography.body.copyWith(
+            color: isDark ? AppColors.textPrimary : AppColors.textLight,
           ),
         ),
       ),
@@ -281,174 +246,44 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   String _getUrlLabel() {
     switch (_selectedType) {
       case 'JDBC':
-        return 'Connection String (JDBC URL) *';
+        return 'jdbc:mysql://localhost:3306/db';
       case 'TCP':
-        return 'Host:Port *';
+        return 'localhost:8080';
       case 'JS':
-        return 'Script Name / Identifier (Optional)';
+        return 'Script Identifier';
       default:
-        return 'URL *';
+        return 'https://api.example.com/v1/resource';
     }
   }
 
-  String? _getUrlHelper() {
-    if (_selectedType == 'JS') {
-      return 'Can be left empty if script is self-contained';
-    }
-    return null;
-  }
-
-  void _handleUrlChanged(String value) {
-    if (value.trim().toLowerCase().startsWith('curl ')) {
-      _parseCurlCommand(value);
-    }
-  }
-
-  void _showCurlPasteDialog() {
-    final curlCtrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Paste cURL Command'),
-        content: SizedBox(
-          width: 600,
-          child: TextField(
-            controller: curlCtrl,
-            maxLines: 10,
-            decoration: const InputDecoration(
-              hintText: 'curl -X POST https://api.example.com...',
-              border: OutlineInputBorder(),
-            ),
-            style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (curlCtrl.text.isNotEmpty) {
-                _parseCurlCommand(curlCtrl.text);
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Parse & Fill'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _parseCurlCommand(String curlCommand) {
-
-    final cleanCommand = curlCommand.replaceAll('\\\n', ' ').replaceAll('\\\r\n', ' ');
-
-    String method = 'GET';
-    String url = '';
-    Map<String, String> headers = {};
-    String body = '';
-
-    final urlMatch = RegExp(r'''(?:curl\s+)?(?:['"]?)(https?://[^'"\s]+)(?:['"]?)''').firstMatch(cleanCommand);
-    if (urlMatch != null) {
-      url = urlMatch.group(1)!;
-    }
-
-    final methodMatch = RegExp(r'''(?:-X|--request)\s+(['"]?)([A-Z]+)\1''').firstMatch(cleanCommand);
-    if (methodMatch != null) {
-      method = methodMatch.group(2)!;
-    } else if (cleanCommand.contains('-d') || cleanCommand.contains('--data') || cleanCommand.contains('--data-raw')) {
-      method = 'POST';
-    }
-
-    final headerRegExp = RegExp(r'''(?:-H|--header)\s+(['"])([^:]+):\s*(.*?)\1''');
-    for (final match in headerRegExp.allMatches(cleanCommand)) {
-      headers[match.group(2)!.trim()] = match.group(3)!.trim();
-    }
-
-    final headerNoQuoteRegExp = RegExp(r'''(?:-H|--header)\s+([^'"\s]+):\s*([^'"\s]+)''');
-    for (final match in headerNoQuoteRegExp.allMatches(cleanCommand)) {
-      final key = match.group(1)!.trim();
-      if (!headers.containsKey(key)) {
-        headers[key] = match.group(2)!.trim();
-      }
-    }
-
-    final dataRegExp = RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+(['"])(.*?)\1''', dotAll: true);
-    final dataMatch = dataRegExp.firstMatch(cleanCommand);
-    if (dataMatch != null) {
-      body = dataMatch.group(2) ?? '';
-    } else {
-
-      final dataNoQuoteRegExp = RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+([^{'"\s][^\s]*)''');
-      final dataNoQuoteMatch = dataNoQuoteRegExp.firstMatch(cleanCommand);
-      if (dataNoQuoteMatch != null) {
-        body = dataNoQuoteMatch.group(1) ?? '';
-      }
-    }
-
-    setState(() {
-      if (url.isNotEmpty) _urlCtrl.text = url;
-      if (_availableTypes.contains('HTTP')) _selectedType = 'HTTP';
-      _httpMethod = method;
-      _headers = {...headers};
-      if (body.isNotEmpty) _bodyCtrl.text = body;
-    });
-  }
-
-  Widget _buildHttpFields(ColorScheme colors) {
+  Widget _buildHttpFields() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DropdownButtonFormField<String>(
-          initialValue: _httpMethod,
-          decoration: const InputDecoration(
-            labelText: 'HTTP Method *',
-            border: OutlineInputBorder(),
-          ),
-          items: [
-            'GET',
-            'POST',
-            'PUT',
-            'DELETE',
-            'PATCH',
-            'HEAD',
-            'OPTIONS',
-          ].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+        const _FieldLabel('HTTP Method *'),
+        const SizedBox(height: 6),
+        _buildDropdown(
+          value: _httpMethod,
+          items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
           onChanged: (v) => setState(() => _httpMethod = v!),
-          validator: (v) => v == null ? 'Required' : null,
         ),
         const SizedBox(height: 16),
-        const Text('Headers'),
-        const SizedBox(height: 8),
+        const _FieldLabel('Headers'),
+        const SizedBox(height: 6),
         Container(
           height: 150,
           decoration: BoxDecoration(
-            border: Border.all(color: colors.outlineVariant),
-            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: AppColors.darkBorder.withValues(alpha: 0.5)),
+            borderRadius: AppRadius.br8,
           ),
           child: KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
         ),
         const SizedBox(height: 16),
-        const Text('Parameters'),
-        const SizedBox(height: 8),
-        Container(
-          height: 150,
-          decoration: BoxDecoration(
-            border: Border.all(color: colors.outlineVariant),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: KeyValueEditor(data: _params, onChanged: (d) => _params = d),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
+        const _FieldLabel('Initial Body (JSON)'),
+        const SizedBox(height: 6),
+        PilotInput(
           controller: _bodyCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Initial Body (JSON)',
-            border: OutlineInputBorder(),
-            alignLabelWithHint: true,
-          ),
+          placeholder: '{"key": "value"}',
           maxLines: 5,
           style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
         ),
@@ -458,41 +293,25 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
 
   Widget _buildGrpcFields() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextFormField(
-          controller: _grpcServiceCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Service Name *',
-            border: OutlineInputBorder(),
-          ),
-          validator: (v) => v?.isEmpty == true ? 'Required' : null,
-        ),
+        const _FieldLabel('Service Name *'),
+        const SizedBox(height: 6),
+        PilotInput(controller: _grpcServiceCtrl, placeholder: 'com.example.UserService'),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _grpcMethodCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Method Name *',
-            border: OutlineInputBorder(),
-          ),
-          validator: (v) => v?.isEmpty == true ? 'Required' : null,
-        ),
+        const _FieldLabel('Method Name *'),
+        const SizedBox(height: 6),
+        PilotInput(controller: _grpcMethodCtrl, placeholder: 'GetUser'),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _grpcStubCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Stub Path (Proto File) *',
-            border: OutlineInputBorder(),
-          ),
-          validator: (v) => v?.isEmpty == true ? 'Required' : null,
-        ),
+        const _FieldLabel('Stub Path (Proto File) *'),
+        const SizedBox(height: 6),
+        PilotInput(controller: _grpcStubCtrl, placeholder: '/path/to/service.proto'),
         const SizedBox(height: 16),
-        TextFormField(
+        const _FieldLabel('Initial Message (JSON)'),
+        const SizedBox(height: 6),
+        PilotInput(
           controller: _bodyCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Initial Message (JSON Body)',
-            border: OutlineInputBorder(),
-            alignLabelWithHint: true,
-          ),
+          placeholder: '{"id": 123}',
           maxLines: 5,
           style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
         ),
@@ -502,18 +321,15 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
 
   Widget _buildJdbcFields() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextFormField(
+        const _FieldLabel('SQL Query *'),
+        const SizedBox(height: 6),
+        PilotInput(
           controller: _bodyCtrl,
-          decoration: const InputDecoration(
-            labelText: 'SQL Query *',
-            border: OutlineInputBorder(),
-            alignLabelWithHint: true,
-            hintText: 'SELECT * FROM users LIMIT 10',
-          ),
-          maxLines: 5,
+          placeholder: 'SELECT * FROM users LIMIT 10',
+          maxLines: 8,
           style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-          validator: (v) => v?.trim().isEmpty == true ? 'Required' : null,
         ),
       ],
     );
@@ -521,17 +337,15 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
 
   Widget _buildJsFields() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextFormField(
+        const _FieldLabel('JavaScript Code *'),
+        const SizedBox(height: 6),
+        PilotInput(
           controller: _bodyCtrl,
-          decoration: const InputDecoration(
-            labelText: 'JavaScript Code *',
-            border: OutlineInputBorder(),
-            alignLabelWithHint: true,
-          ),
+          placeholder: '// Your JS code here',
           maxLines: 15,
           style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-          validator: (v) => v?.trim().isEmpty == true ? 'Required' : null,
         ),
       ],
     );
@@ -539,19 +353,33 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
 
   Widget _buildTcpFields() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextFormField(
+        const _FieldLabel('Payload (Text/JSON) *'),
+        const SizedBox(height: 6),
+        PilotInput(
           controller: _bodyCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Payload (Text/JSON) *',
-            border: OutlineInputBorder(),
-            alignLabelWithHint: true,
-          ),
+          placeholder: 'Enter TCP payload',
           maxLines: 5,
           style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-          validator: (v) => v?.trim().isEmpty == true ? 'Required' : null,
         ),
       ],
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: AppTypography.label.copyWith(
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }
