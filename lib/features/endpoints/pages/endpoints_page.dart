@@ -3,6 +3,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 import 'package:stress_pilot/core/domain/entities/endpoint.dart';
 import '../presentation/provider/endpoint_provider.dart';
@@ -29,6 +31,9 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
   Endpoint? _selectedEndpoint;
   late ScrollController _scrollCtrl;
 
+  final GlobalKey _sidebarKey = GlobalKey();
+  final GlobalKey _workspaceKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +42,75 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EndpointProvider>().loadEndpoints(
         projectId: widget.project.id,
+      );
+      _showTutorial();
+    });
+  }
+
+  void _showTutorial() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      TutorialHelper.showTutorialIfFirstTime(
+        context: context,
+        prefKey: 'tutorial_endpoint',
+        targets: [
+          TargetFocus(
+            identify: "EndpointsSidebar",
+            keyTarget: _sidebarKey,
+            shape: ShapeLightFocus.RRect,
+            alignSkip: Alignment.topRight,
+            contents: [
+              TargetContent(
+                align: ContentAlign.right,
+                builder: (context, controller) {
+                  return const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Endpoints List",
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "Manage all your API endpoints here. You can create, search, and select endpoints to edit.",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+          TargetFocus(
+            identify: "EndpointWorkspace",
+            keyTarget: _workspaceKey,
+            shape: ShapeLightFocus.RRect,
+            alignSkip: Alignment.topRight,
+            contents: [
+              TargetContent(
+                align: ContentAlign.left,
+                builder: (context, controller) {
+                  return const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Workspace",
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "Configure your request details, headers, body, and view the response directly here.",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
       );
     });
   }
@@ -101,6 +175,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                   children: [
 
                     Container(
+                      key: _sidebarKey,
                       width: 300,
                       decoration: BoxDecoration(
                         color: surface,
@@ -277,6 +352,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                     ),
 
                     Expanded(
+                      key: _workspaceKey,
                       child: _selectedEndpoint == null
                           ? _EmptyState(
                               projectId: widget.project.id,

@@ -29,7 +29,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   String _httpMethod = 'GET';
   final _bodyCtrl = TextEditingController();
   Map<String, String> _headers = {};
-  Map<String, String> _params = {};
+  final Map<String, String> _params = {};
 
   final _grpcServiceCtrl = TextEditingController();
   final _grpcMethodCtrl = TextEditingController();

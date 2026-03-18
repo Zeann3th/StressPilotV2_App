@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
+import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_topbar.dart';
@@ -22,12 +24,83 @@ class ProjectsPage extends StatefulWidget {
 
 class _ProjectsPageState extends State<ProjectsPage> {
   final TextEditingController _searchController = TextEditingController();
+  final GlobalKey _topBarKey = GlobalKey();
+  final GlobalKey _analyticsKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjectProvider>().loadProjects();
+      _showTutorial();
+    });
+  }
+
+  void _showTutorial() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      TutorialHelper.showTutorialIfFirstTime(
+        context: context,
+        prefKey: 'tutorial_projects',
+        targets: [
+          TargetFocus(
+            identify: "ProjectTopBar",
+            keyTarget: _topBarKey,
+            shape: ShapeLightFocus.RRect,
+            alignSkip: Alignment.topRight,
+            contents: [
+              TargetContent(
+                align: ContentAlign.bottom,
+                builder: (context, controller) {
+                  return const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Manage Projects",
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "Here you can create, import, export, and search your projects.",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+          TargetFocus(
+            identify: "AnalyticsPanel",
+            keyTarget: _analyticsKey,
+            shape: ShapeLightFocus.RRect,
+            alignSkip: Alignment.topRight,
+            contents: [
+              TargetContent(
+                align: ContentAlign.top,
+                builder: (context, controller) {
+                  return const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Analytics Dashboard",
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "View realtime charts and KPIs of your stress tests here.",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      );
     });
   }
 
@@ -74,6 +147,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       child: Column(
                         children: [
                           ProjectTopBar(
+                            key: _topBarKey,
                             searchController: _searchController,
                             onRefresh: _handleRefresh,
                             onAdd: _handleCreate,
@@ -87,6 +161,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       ),
                     ),
                     Container(
+                      key: _analyticsKey,
                       height: MediaQuery.of(context).size.height * 0.4,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(

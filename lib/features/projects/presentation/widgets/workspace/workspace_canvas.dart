@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart' hide Flow;
 import 'package:provider/provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/domain/entities/flow.dart' as flow;
@@ -102,6 +104,8 @@ class _CanvasContentState extends State<_CanvasContent>
 
   bool _initialLoadScheduled = false;
 
+  final GlobalKey _toolbarKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -116,6 +120,48 @@ class _CanvasContentState extends State<_CanvasContent>
       ..setTranslationRaw(-3500.0, -3500.0, 0.0);
 
     _scheduleInitialLoad();
+    _showTutorial();
+  }
+
+  void _showTutorial() {
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      TutorialHelper.showTutorialIfFirstTime(
+        context: context,
+        prefKey: 'tutorial_canvas',
+        targets: [
+          TargetFocus(
+            identify: "CanvasToolbar",
+            keyTarget: _toolbarKey,
+            alignSkip: Alignment.topRight,
+            shape: ShapeLightFocus.RRect,
+            contents: [
+              TargetContent(
+                align: ContentAlign.top,
+                builder: (context, controller) {
+                  return const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Canvas Toolbar",
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "Switch between Pan and Link modes, zoom in/out, and save or run your flow here.",
+                        style: TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      );
+    });
   }
 
   void _scheduleInitialLoad() {
@@ -239,7 +285,10 @@ class _CanvasContentState extends State<_CanvasContent>
           left: 0,
           right: 0,
           child: Center(
-            child: _buildUnifiedToolbar(context, colors, canvasProvider),
+            child: Container(
+              key: _toolbarKey,
+              child: _buildUnifiedToolbar(context, colors, canvasProvider),
+            ),
           ),
         ),
       ],

@@ -55,6 +55,7 @@ dependencies:
   flutter_code_editor: ^0.3.5
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
+  tutorial_coach_mark: ^1.3.3
 
 
 dev_dependencies:
