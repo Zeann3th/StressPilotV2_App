@@ -70,17 +70,13 @@ class WorkspaceCanvas extends StatelessWidget {
     return ChangeNotifierProvider.value(
       value: context.read<CanvasProvider>(),
       child: _CanvasContent(
-        // ValueKey on flow id: Flutter only destroys/recreates _CanvasContent
-        // when the user actually switches flows. Notifications from FlowProvider
-        // after a save no longer cause a full widget rebuild+reload.
+
         key: ValueKey(selectedFlow!.id),
         flowId: selectedFlow!.id.toString(),
       ),
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _CanvasContent extends StatefulWidget {
   final String flowId;
@@ -99,8 +95,6 @@ class _CanvasContentState extends State<_CanvasContent>
 
   CanvasProvider? _canvasProvider;
 
-  // Guard: loadFlowLayout is scheduled exactly once per widget instance.
-  // CanvasProvider also guards on _loadedFlowId for double protection.
   bool _initialLoadScheduled = false;
 
   @override
@@ -113,7 +107,6 @@ class _CanvasContentState extends State<_CanvasContent>
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    // Start centred on the infinite canvas.
     _transformationController.value = Matrix4.identity()
       ..setTranslationRaw(-3500.0, -3500.0, 0.0);
 
@@ -147,9 +140,6 @@ class _CanvasContentState extends State<_CanvasContent>
     super.didChangeDependencies();
     _canvasProvider = context.read<CanvasProvider>();
 
-    // Only sync lightweight display metadata here.
-    // Never call loadFlowLayout here — it would wipe the canvas on every
-    // FlowProvider.notifyListeners() (e.g. triggered after a save).
     final endpoints = context.watch<EndpointProvider>().endpoints;
     if (endpoints.isNotEmpty) {
       _canvasProvider?.syncEndpointsMetadata(endpoints);
@@ -160,8 +150,6 @@ class _CanvasContentState extends State<_CanvasContent>
       _canvasProvider?.syncFlowsMetadata(flows);
     }
   }
-
-  // ─── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +162,7 @@ class _CanvasContentState extends State<_CanvasContent>
 
     return Stack(
       children: [
-        // Dot-grid background
+
         Positioned.fill(
           child: RepaintBoundary(
             child: CustomPaint(
@@ -186,7 +174,6 @@ class _CanvasContentState extends State<_CanvasContent>
           ),
         ),
 
-        // Canvas + drop target
         Positioned.fill(
           child: DragTarget<DragData>(
             onAcceptWithDetails: (details) => _handleDrop(details, context),
@@ -204,7 +191,7 @@ class _CanvasContentState extends State<_CanvasContent>
                   color: Colors.transparent,
                   child: Stack(
                     children: [
-                      // Animated edges layer
+
                       Positioned.fill(
                         child: AnimatedBuilder(
                           animation: _animationController,
@@ -221,7 +208,7 @@ class _CanvasContentState extends State<_CanvasContent>
                           },
                         ),
                       ),
-                      // Node widgets
+
                       ...canvasProvider.nodes.map(
                             (node) =>
                             _buildNodeWidget(node, canvasProvider, colors),
@@ -234,7 +221,6 @@ class _CanvasContentState extends State<_CanvasContent>
           ),
         ),
 
-        // Floating toolbar
         Positioned(
           bottom: 32,
           left: 0,
@@ -246,8 +232,6 @@ class _CanvasContentState extends State<_CanvasContent>
       ],
     );
   }
-
-  // ─── Node widget ───────────────────────────────────────────────────────────
 
   Widget _buildNodeWidget(
       CanvasNode node, CanvasProvider provider, ColorScheme colors) {
@@ -312,8 +296,6 @@ class _CanvasContentState extends State<_CanvasContent>
       ),
     );
   }
-
-  // ─── Interaction ───────────────────────────────────────────────────────────
 
   void _handleNodeDoubleTap(CanvasNode node) {
     switch (node.type) {
@@ -488,8 +470,6 @@ class _CanvasContentState extends State<_CanvasContent>
     );
   }
 
-  // ─── Toolbar ───────────────────────────────────────────────────────────────
-
   Widget _buildUnifiedToolbar(
       BuildContext context,
       ColorScheme colors,
@@ -654,8 +634,6 @@ class _CanvasContentState extends State<_CanvasContent>
   }
 }
 
-// ─── Edge painter ─────────────────────────────────────────────────────────────
-
 class _EdgeOverlayPainter extends CustomPainter {
   final List<CanvasNode> nodes;
   final List<CanvasConnection> connections;
@@ -746,8 +724,6 @@ class _EdgeOverlayPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _EdgeOverlayPainter old) => true;
 }
-
-// ─── Node body ────────────────────────────────────────────────────────────────
 
 class _NodeBody extends StatelessWidget {
   final CanvasNode node;
@@ -1045,8 +1021,6 @@ class _NodeBody extends StatelessWidget {
     }
   }
 }
-
-// ─── Shared small widgets ─────────────────────────────────────────────────────
 
 class _InfoBadge extends StatelessWidget {
   final IconData icon;

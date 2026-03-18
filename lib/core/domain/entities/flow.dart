@@ -80,14 +80,8 @@ class FlowStep {
   final String id;
   final String type;
 
-  /// The endpoint id — extracted from either:
-  ///   • a flat  `"endpointId": 5`  field  (sent by the client to the backend)
-  ///   • a nested `"endpoint": { "id": 5, ... }` object  (returned by the backend)
   final int? endpointId;
 
-  /// Endpoint metadata fields populated when the backend returns a nested
-  /// endpoint object.  These are only used for display enrichment inside
-  /// rebuildFromSteps and are never serialised back to the backend.
   final String? endpointName;
   final String? endpointUrl;
   final String? endpointType;
@@ -115,9 +109,7 @@ class FlowStep {
   });
 
   factory FlowStep.fromJson(Map<String, dynamic> json) {
-    // The backend stores the endpoint as a nested object on the step entity.
-    // Extract the id and display fields from it so the canvas can render
-    // nodes correctly without needing a separate endpoint list lookup.
+
     final endpointObj = json['endpoint'];
     int? endpointId;
     String? endpointName;
@@ -126,7 +118,7 @@ class FlowStep {
     String? endpointMethod;
 
     if (endpointObj is Map<String, dynamic>) {
-      // Nested object form — returned by the backend after save/load.
+
       endpointId    = Flow._toInt(endpointObj['id']);
       endpointName  = endpointObj['name']?.toString();
       endpointUrl   = endpointObj['url']?.toString();
@@ -135,7 +127,7 @@ class FlowStep {
           ?? endpointObj['http_method']?.toString()
           ?? endpointObj['method']?.toString();
     } else {
-      // Flat form — used when the client sends steps back for persistence.
+
       final raw = json['endpointId'] ?? json['endpoint_id'];
       endpointId = raw == null ? null : Flow._toInt(raw);
     }
@@ -156,8 +148,6 @@ class FlowStep {
     );
   }
 
-  /// Serialises for sending TO the backend (configure / save).
-  /// Only includes endpointId — never the nested endpoint object.
   Map<String, dynamic> toJson() => {
     'id':           id,
     'type':         type,
@@ -169,8 +159,6 @@ class FlowStep {
     'postProcessor':postProcessor,
   };
 }
-
-// ─── Other request/response models ───────────────────────────────────────────
 
 class CreateFlowRequest {
   final int projectId;

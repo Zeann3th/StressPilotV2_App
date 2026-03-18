@@ -44,7 +44,7 @@ class ProjectTopBar extends StatelessWidget {
               onTap: onRefresh,
             ),
           ),
-          
+
           const Spacer(),
 
           Tooltip(

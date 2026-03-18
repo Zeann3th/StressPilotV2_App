@@ -31,7 +31,7 @@ class ProjectProvider extends ChangeNotifier {
   Future<void> initialize() async {
     await _loadSelectedProject();
   }
-  
+
   void toggleSidebar() {
     _isSidebarCollapsed = !_isSidebarCollapsed;
     notifyListeners();
@@ -172,7 +172,7 @@ class ProjectProvider extends ChangeNotifier {
 
   Future<void> exportProject(int projectId, String projectName) async {
     try {
-      
+
       final result = await FilePicker.platform.saveFile(
         dialogTitle: 'Export Project',
         fileName: '${projectName.replaceAll(' ', '_')}_export.json',
@@ -181,7 +181,7 @@ class ProjectProvider extends ChangeNotifier {
       );
 
       if (result == null) {
-        
+
         return;
       }
 
@@ -203,7 +203,7 @@ class ProjectProvider extends ChangeNotifier {
           .map((e) => e.toLowerCase().replaceAll('.', ''))
           .toSet()
           .toList();
-      
+
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Import Project',
         type: FileType.custom,

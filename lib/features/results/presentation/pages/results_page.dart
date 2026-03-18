@@ -39,7 +39,7 @@ class _ResultsPageState extends State<ResultsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _loadRun();
       if (_currentRun != null && mounted) {
-        // Provider initialization is now handled inside _loadRun to support async isCompleted check
+
         _startTimers();
       }
     });
@@ -87,7 +87,6 @@ class _ResultsPageState extends State<ResultsPage> {
         _elapsed = newElapsed;
       });
 
-      // Smart Polling: If elapsed time exceeds expected duration, poll aggressively
       if (!_aggressivePolling &&
           !_isTerminalStatus(_currentRun!.status) &&
           newElapsed.inSeconds >= (_currentRun!.duration + 1)) {
@@ -108,7 +107,7 @@ class _ResultsPageState extends State<ResultsPage> {
       final isTerminal = _isTerminalStatus(run.status);
 
       if (mounted) {
-        // Pass completion status to provider
+
         context.read<ResultsProvider>().setRun(
           run.id,
           run.flowId,
@@ -232,7 +231,7 @@ class _ResultsPageState extends State<ResultsPage> {
                 borderRadius: AppRadius.br16,
                 child: Column(
                   children: [
-                    // Custom Header
+
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       decoration: BoxDecoration(
@@ -414,7 +413,7 @@ class _ResultsPageState extends State<ResultsPage> {
     if (_loadingRun) {
       final colors = Theme.of(context).colorScheme;
       return Container(
-        height: 100, // Fixed height to match metrics
+        height: 100,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colors.surfaceContainer,

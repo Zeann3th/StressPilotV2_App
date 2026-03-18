@@ -6,13 +6,13 @@ import 'package:stress_pilot/core/system/logger.dart';
 class PluginCapability {
   final String id;
   final String name;
-  final String category; // 'endpoint' or 'flow_step'
+  final String category;
   final List<String> requiredFields;
 
   PluginCapability({
-    required this.id, 
-    required this.name, 
-    required this.category, 
+    required this.id,
+    required this.name,
+    required this.category,
     this.requiredFields = const []
   });
 
@@ -31,7 +31,7 @@ class PluginCapabilityService {
 
   Future<void> initialize() async {
     _capabilities.clear();
-    // Add base/default types
+
     _capabilities.addAll([
       PluginCapability(id: 'HTTP', name: 'HTTP Request', category: 'endpoint'),
       PluginCapability(id: 'GRPC', name: 'gRPC Call', category: 'endpoint'),
@@ -39,7 +39,7 @@ class PluginCapabilityService {
       PluginCapability(id: 'JS', name: 'JavaScript Script', category: 'endpoint'),
       PluginCapability(id: 'TCP', name: 'TCP Socket', category: 'endpoint'),
       PluginCapability(id: 'WEBSOCKET', name: 'WebSocket Connection', category: 'endpoint'),
-      
+
       PluginCapability(id: 'ENDPOINT', name: 'Run Endpoint', category: 'flow_step'),
       PluginCapability(id: 'GROUP', name: 'Run Target Group', category: 'flow_step'),
       PluginCapability(id: 'DELAY', name: 'Delay Execution', category: 'flow_step'),
@@ -72,11 +72,11 @@ class PluginCapabilityService {
 
   List<PluginCapability> get endpointTypes {
     final types = _capabilities.where((e) => e.category == 'endpoint').toList();
-    // Remove duplicates by ID (last loaded wins, allows overriding defaults)
+
     final map = {for (var t in types) t.id: t};
     return map.values.toList()..sort((a, b) => a.name.compareTo(b.name));
   }
-  
+
   List<PluginCapability> get flowStepTypes {
     final types = _capabilities.where((e) => e.category == 'flow_step').toList();
     final map = {for (var t in types) t.id: t};

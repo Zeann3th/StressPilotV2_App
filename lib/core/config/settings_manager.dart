@@ -16,8 +16,8 @@ class SettingsManager extends ChangeNotifier {
   bool get isInitialized => _initialized;
 
   Future<File> get _file async {
-    final String home = Platform.environment['HOME'] ?? 
-                        Platform.environment['USERPROFILE'] ?? 
+    final String home = Platform.environment['HOME'] ??
+                        Platform.environment['USERPROFILE'] ??
                         '/';
     final dir = Directory(p.join(home, _dirName, _subDirName));
 
@@ -34,8 +34,7 @@ class SettingsManager extends ChangeNotifier {
         final content = await file.readAsString();
         _settings = jsonDecode(content);
       }
-      
-      // Merge with defaults
+
       final defaults = _defaultSettings;
       bool needsSave = false;
       for (final key in defaults.keys) {

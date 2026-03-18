@@ -23,7 +23,6 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   final _durationCtrl = TextEditingController(text: '60');
   final _rampUpCtrl = TextEditingController(text: '0');
 
-  // List of variables as Key-Value pairs
   final List<MapEntry<TextEditingController, TextEditingController>>
   _variables = [];
 
@@ -110,7 +109,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
       final navigator = Navigator.of(context);
 
-      navigator.pop(); // Close dialog
+      navigator.pop();
 
       await Future.delayed(const Duration(milliseconds: 300));
 
@@ -145,7 +144,6 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
           final candidate = await runSvc.getLastRun(widget.flowId);
           final created = candidate.startedAt.toUtc();
 
-          // Check if created after we started polling (with small buffer)
           if (created.isAfter(startTime.subtract(const Duration(seconds: 1)))) {
             found = candidate;
             break;
@@ -162,14 +160,14 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
           arguments: {'runId': found.id},
         );
       } else {
-        // Fallback to Projects page showing runs panel filtered by this flow
+
         navigator.pushNamed(
           AppRouter.projectsRoute,
           arguments: {'initialFlowId': widget.flowId},
         );
       }
     } catch (e) {
-      // General error fallback
+
       navigator.pushNamed(
         AppRouter.projectsRoute,
         arguments: {'initialFlowId': widget.flowId},
@@ -195,7 +193,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header
+
                 Row(
                   children: [
                     Container(
@@ -230,12 +228,11 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                 ),
                 const SizedBox(height: 24),
 
-                // Configuration Form
                 Flexible(
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        // Section: Performance Settings
+
                         _buildSectionHeader('Performance Settings'),
                         const SizedBox(height: 12),
                         Row(
@@ -268,11 +265,9 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
                         const SizedBox(height: 24),
 
-                        // Section: Data & Environment
                         _buildSectionHeader('Data & Environment'),
                         const SizedBox(height: 12),
 
-                        // File Upload
                         InkWell(
                           onTap: _pickFile,
                           borderRadius: BorderRadius.circular(12),
@@ -348,7 +343,6 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
                         const SizedBox(height: 24),
 
-                        // Section: Variables
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -420,7 +414,6 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
                 const SizedBox(height: 24),
 
-                // Action Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [

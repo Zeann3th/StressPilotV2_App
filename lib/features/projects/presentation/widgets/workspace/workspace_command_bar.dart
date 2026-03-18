@@ -36,7 +36,7 @@ class WorkspaceCommandBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Back chevron
+
           _BackButton(
             onTap: () {
               Navigator.of(context).pushReplacement(
@@ -47,14 +47,12 @@ class WorkspaceCommandBar extends StatelessWidget {
           ),
           const SizedBox(width: 4),
 
-          // Separator
           Text(
             '/',
             style: AppTypography.body.copyWith(color: AppColors.textMuted),
           ),
           const SizedBox(width: 8),
 
-          // Project name
           Text(
             project?.name ?? 'Workspace',
             style: AppTypography.bodyLg.copyWith(
@@ -65,7 +63,6 @@ class WorkspaceCommandBar extends StatelessWidget {
 
           const Spacer(),
 
-          // Endpoints button
           Tooltip(
             message: 'Endpoints',
             child: PilotButton.ghost(
@@ -83,7 +80,6 @@ class WorkspaceCommandBar extends StatelessWidget {
           ),
           const SizedBox(width: 6),
 
-          // Environment button
           Tooltip(
             message: 'Environment',
             child: PilotButton.ghost(

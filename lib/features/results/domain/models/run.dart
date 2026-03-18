@@ -2,9 +2,9 @@ class Run {
   final int id;
   final int flowId;
   final String status;
-  final int threads; 
-  final int duration; 
-  final int rampUpDuration; 
+  final int threads;
+  final int duration;
+  final int rampUpDuration;
   final DateTime startedAt;
   final DateTime? completedAt;
 

@@ -22,21 +22,18 @@ class RealtimeChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    // --- OPTIMIZATION: Stabilize Axis Calculation ---
     double minX = 0;
     double maxX = 0;
-    double xInterval = 1000; // Default 1 second
+    double xInterval = 1000;
 
     if (data.isNotEmpty) {
-      // Lock the start of the chart to the first data point
+
       minX = data.first.x;
-      // Lock the end of the chart to the latest data point
+
       maxX = data.last.x;
 
-      // Prevent crash if only 1 data point exists
       if (maxX <= minX) maxX = minX + 1000;
 
-      // Calculate interval to show exactly 5 labels
       xInterval = (maxX - minX) / 5;
       if (xInterval <= 0) xInterval = 1000;
     }
@@ -72,7 +69,7 @@ class RealtimeChart extends StatelessWidget {
                   )
                 : LineChart(
                     LineChartData(
-                      // Explicitly set min/max to stop "jumping"
+
                       minX: minX,
                       maxX: maxX,
 
@@ -100,7 +97,7 @@ class RealtimeChart extends StatelessWidget {
                             reservedSize: 30,
                             interval: xInterval,
                             getTitlesWidget: (value, meta) {
-                              // Hide labels that fall outside our fixed range
+
                               if (value < minX || value > maxX) {
                                 return const SizedBox.shrink();
                               }
@@ -147,7 +144,7 @@ class RealtimeChart extends StatelessWidget {
                           spots: data.map((e) => FlSpot(e.x, e.y)).toList(),
                           isCurved: true,
                           curveSmoothness:
-                              0.2, // Lower smoothness = higher performance
+                              0.2,
                           color: color,
                           barWidth: 2,
                           isStrokeCapRound: true,
@@ -178,7 +175,7 @@ class RealtimeChart extends StatelessWidget {
     if (data.isEmpty) return null;
     double maxY = data.map((e) => e.y).reduce(math.max);
     if (maxY == 0) return 1;
-    // Divide by 4 to get ~4 horizontal grid lines
+
     return maxY / 4;
   }
 }

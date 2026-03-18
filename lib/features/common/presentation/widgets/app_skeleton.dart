@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
-/// A skeleton loading screen that mimics the main app layout.
 class AppSkeleton extends StatefulWidget {
   const AppSkeleton({super.key});
 
@@ -32,25 +31,23 @@ class _AppSkeletonState extends State<AppSkeleton>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    // New custom green theme colors
+
     final bg = isDark ? const Color(0xFF091413) : const Color(0xFFF5F5F7);
     final surface = isDark ? const Color(0xFF122420) : Colors.white;
     final shimmerBase = isDark ? const Color(0xFF285A48) : const Color(0xFFE8E8ED);
     final shimmerHighlight = isDark ? const Color(0xFF408A71) : const Color(0xFFF5F5F7);
-    
-    final border = isDark 
-        ? AppColors.darkBorder.withValues(alpha: 0.3) 
+
+    final border = isDark
+        ? AppColors.darkBorder.withValues(alpha: 0.3)
         : AppColors.lightBorder;
 
     return Scaffold(
       backgroundColor: bg,
       body: Column(
         children: [
-          // Real AppTopBar
+
           const AppTopBar(),
 
-          // Main unified container mirroring the new look
           Expanded(
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -70,12 +67,12 @@ class _AppSkeletonState extends State<AppSkeleton>
                 borderRadius: AppRadius.br16,
                 child: Column(
                   children: [
-                    // Upper half: Projects Area
+
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Fake ProjectTopBar controls
+
                           Padding(
                             padding: const EdgeInsets.all(16),
                             child: Row(
@@ -89,13 +86,13 @@ class _AppSkeletonState extends State<AppSkeleton>
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // Fake Table Header
+
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: _ShimmerBox(ctrl: _shimmerCtrl, w: double.infinity, h: 24, r: 4, base: shimmerBase, highlight: shimmerHighlight),
                           ),
                           const SizedBox(height: 16),
-                          // Fake Table Rows
+
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -113,7 +110,6 @@ class _AppSkeletonState extends State<AppSkeleton>
                       ),
                     ),
 
-                    // Lower half: Left (Runs) and Right (Analytics)
                     Container(
                       height: MediaQuery.of(context).size.height * 0.4,
                       padding: const EdgeInsets.all(16),
@@ -122,7 +118,7 @@ class _AppSkeletonState extends State<AppSkeleton>
                       ),
                       child: Row(
                         children: [
-                          // Left: Runs panel
+
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.all(16),
@@ -134,7 +130,7 @@ class _AppSkeletonState extends State<AppSkeleton>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Title
+
                                   _ShimmerBox(ctrl: _shimmerCtrl, w: 140, h: 24, r: 4, base: shimmerBase, highlight: shimmerHighlight),
                                   const SizedBox(height: 16),
                                   Expanded(
@@ -157,10 +153,9 @@ class _AppSkeletonState extends State<AppSkeleton>
                               ),
                             ),
                           ),
-                          
+
                           const SizedBox(width: 16),
 
-                          // Right: Analytics panel
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.all(16),
@@ -172,10 +167,10 @@ class _AppSkeletonState extends State<AppSkeleton>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Title
+
                                   _ShimmerBox(ctrl: _shimmerCtrl, w: 100, h: 24, r: 4, base: shimmerBase, highlight: shimmerHighlight),
                                   const SizedBox(height: 24),
-                                  // Big chart area
+
                                   Expanded(
                                     child: _ShimmerBox(
                                       ctrl: _shimmerCtrl,

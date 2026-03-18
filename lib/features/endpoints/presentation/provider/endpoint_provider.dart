@@ -10,12 +10,10 @@ class EndpointProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isLoadingMore = false;
 
-  
-  int _currentPage = 0; 
+  int _currentPage = 0;
   int _pageSize = 20;
   bool _hasMore = true;
 
-  
   bool _isExecuting = false;
   String? _error;
 
@@ -25,12 +23,10 @@ class EndpointProvider extends ChangeNotifier {
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
 
-  
   bool get isExecuting => _isExecuting;
 
   String? get error => _error;
 
-  
   Future<void> loadEndpoints({required int projectId, int pageSize = 20}) async {
     _isLoading = true;
     _error = null;
@@ -59,7 +55,6 @@ class EndpointProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  
   Future<void> loadMoreEndpoints({required int projectId}) async {
     if (!_hasMore || _isLoadingMore) return;
 
@@ -79,7 +74,7 @@ class EndpointProvider extends ChangeNotifier {
       _hasMore = _currentPage < (page.totalPages - 1);
     } catch (e) {
       _error = e.toString();
-      
+
     }
 
     _isLoadingMore = false;
@@ -172,7 +167,6 @@ class EndpointProvider extends ChangeNotifier {
     return await _endpointRepository.getEndpointDetail(id);
   }
 
-  
   Future<Map<String, dynamic>> executeEndpoint(
     int endpointId,
     Map<String, dynamic> body,

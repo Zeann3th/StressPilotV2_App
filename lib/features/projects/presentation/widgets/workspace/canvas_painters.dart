@@ -10,15 +10,15 @@ class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withValues(alpha: 0.35) // Increased opacity
+      ..color = color.withValues(alpha: 0.35)
       ..strokeWidth = 2.0 / scale
       ..strokeCap = StrokeCap.round;
 
-    const spacing = 25.0; // Slightly larger spacing for cleaner look
+    const spacing = 25.0;
 
     for (double x = 0; x < size.width; x += spacing) {
       for (double y = 0; y < size.height; y += spacing) {
-        // More visible dots
+
         canvas.drawCircle(Offset(x, y), 1.2 / scale, paint);
       }
     }
@@ -37,7 +37,7 @@ class ConnectionPainter extends CustomPainter {
   final Offset? tempEndPos;
   final Color lineColor;
   final Color activeColor;
-  final double animationOffset; // For moving dashed lines
+  final double animationOffset;
 
   ConnectionPainter({
     required this.connections,
@@ -234,17 +234,16 @@ class ConnectionPainter extends CustomPainter {
       path.lineTo(end.dx, end.dy);
     }
 
-    // Draw dashed line with animation offset
     const dashWidth = 8.0;
     const dashSpace = 6.0;
     final pathMetrics = path.computeMetrics();
-    
+
     for (final metric in pathMetrics) {
       double distance = -animationOffset % (dashWidth + dashSpace);
       while (distance < metric.length) {
         final double startDist = distance.clamp(0.0, metric.length);
         final double endDist = (distance + dashWidth).clamp(0.0, metric.length);
-        
+
         if (startDist < endDist) {
           canvas.drawPath(
             metric.extractPath(startDist, endDist),
@@ -270,7 +269,6 @@ class ConnectionPainter extends CustomPainter {
       );
       textPainter.layout();
 
-      // Position label slightly away from the start point
       Offset labelPos;
       switch (startDir) {
         case AxisDirection.right:

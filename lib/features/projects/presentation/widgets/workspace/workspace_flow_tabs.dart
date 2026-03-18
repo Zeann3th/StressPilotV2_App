@@ -33,7 +33,7 @@ class WorkspaceFlowTabs extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Scrollable tab list
+
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
@@ -61,7 +61,6 @@ class WorkspaceFlowTabs extends StatelessWidget {
             ),
           ),
 
-          // + New Flow chip
           _NewFlowButton(
             onPressed: () {
               final projectId =
@@ -89,8 +88,6 @@ class WorkspaceFlowTabs extends StatelessWidget {
     );
   }
 }
-
-// ─── Individual tab chip ───────────────────────────────────────────────────
 
 class _FlowTab extends StatefulWidget {
   final flow_domain.Flow flow;
@@ -156,7 +153,7 @@ class _FlowTabState extends State<_FlowTab> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Emerald dot for active
+
               if (widget.isActive) ...[
                 Container(
                   width: 5,
@@ -184,7 +181,6 @@ class _FlowTabState extends State<_FlowTab> {
                 ),
               ),
 
-              // ··· menu on hover/active
               if (_hovered || widget.isActive) ...[
                 const SizedBox(width: 4),
                 _TabMenu(onEdit: widget.onEdit, onDelete: widget.onDelete),
@@ -238,8 +234,6 @@ class _TabMenu extends StatelessWidget {
     );
   }
 }
-
-// ─── + New Flow button ─────────────────────────────────────────────────────
 
 class _NewFlowButton extends StatefulWidget {
   final VoidCallback onPressed;

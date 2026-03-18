@@ -132,7 +132,7 @@ class FlowProvider extends ChangeNotifier {
   Future<void> deleteFlow(int flowId) async {
     try {
       final isDeletingSelected = _selectedFlow?.id == flowId;
-      
+
       await _flowRepository.deleteFlow(flowId);
       _flows.removeWhere((f) => f.id == flowId);
 
@@ -147,7 +147,7 @@ class FlowProvider extends ChangeNotifier {
           final prefs = await SharedPreferences.getInstance();
           await prefs.remove(_selectedFlowKey);
         }
-        // Notify immediately after changing selection to let UI react
+
         notifyListeners();
       } else {
         notifyListeners();
@@ -163,7 +163,6 @@ class FlowProvider extends ChangeNotifier {
     try {
       final flow = await _flowRepository.getFlowDetail(flowId);
 
-      // Update cache if this is the selected flow
       final index = _flows.indexWhere((f) => f.id == flowId);
       if (index != -1) {
         _flows[index] = flow;
@@ -218,7 +217,7 @@ class FlowProvider extends ChangeNotifier {
         runFlowRequest: runFlowRequest,
         file: file,
       );
-      
+
       try {
         final notification = LocalNotification(
           title: 'Stress Test Complete',
@@ -231,7 +230,7 @@ class FlowProvider extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       notifyListeners();
-      
+
       try {
         final notification = LocalNotification(
           title: 'Stress Test Failed',
@@ -239,7 +238,7 @@ class FlowProvider extends ChangeNotifier {
         );
         await notification.show();
       } catch (_) {}
-      
+
       rethrow;
     }
   }

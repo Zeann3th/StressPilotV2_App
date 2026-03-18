@@ -112,7 +112,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                   ),
                 ),
               ),
-              const SizedBox(width: 48), // Action space
+              const SizedBox(width: 48),
             ],
           ),
         ),
@@ -131,7 +131,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                     final realIndex = variables.indexOf(v);
 
                     return _EnvironmentRow(
-                      key: ValueKey(v.id), // Important for tracking
+                      key: ValueKey(v.id),
                       variable: v,
                       onChanged: (key, value, isActive) {
                         provider.updateVariable(

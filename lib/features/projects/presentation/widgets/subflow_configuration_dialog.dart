@@ -29,11 +29,11 @@ class _SubflowConfigurationDialogState extends State<SubflowConfigurationDialog>
 
   Future<void> _loadInitialFlow() async {
     if (widget.initialFlowId == null) return;
-    
+
     final flowProvider = context.read<FlowProvider>();
     final flows = flowProvider.flows;
     final found = flows.where((f) => f.id.toString() == widget.initialFlowId).firstOrNull;
-    
+
     if (found != null) {
       setState(() {
         _selectedFlow = found;

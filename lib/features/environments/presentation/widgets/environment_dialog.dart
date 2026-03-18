@@ -33,7 +33,7 @@ class EnvironmentManagerDialog extends StatefulWidget {
         child: Dialog(
           backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
           surfaceTintColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(48), // Large dialog
+          insetPadding: const EdgeInsets.all(48),
           shape: RoundedRectangleBorder(
             borderRadius: AppRadius.br12,
             side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),

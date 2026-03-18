@@ -7,7 +7,7 @@ import 'package:stress_pilot/features/projects/presentation/pages/project_worksp
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
-// runs integrated into Projects page - separate runs page removed
+
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 
 class AppRouter {
@@ -59,7 +59,7 @@ class AppRouter {
       case resultsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         return buildRoute(ResultsPage(runId: args['runId']));
-      // runsRoute removed: runs are shown within the Projects page UI
+
       default:
         return buildRoute(
           Scaffold(

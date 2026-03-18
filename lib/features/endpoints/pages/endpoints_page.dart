@@ -98,7 +98,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                 borderRadius: AppRadius.br16,
                 child: Row(
                   children: [
-                    // ── Sidebar ──
+
                     Container(
                       width: 300,
                       decoration: BoxDecoration(
@@ -111,7 +111,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                       ),
                       child: Column(
                         children: [
-                          // Header
+
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                             child: Row(
@@ -160,7 +160,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                             ),
                           ),
 
-                          // Search bar
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: SizedBox(
@@ -187,7 +186,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
 
                           const SizedBox(height: 20),
 
-                          // List header
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 0, 16, 8),
                             child: Row(
@@ -218,7 +216,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                             ),
                           ),
 
-                          // Endpoint list
                           Expanded(
                             child: provider.isLoading
                                 ? Center(
@@ -540,7 +537,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   }
 
   void _parseCurlCommand(String curlCommand) {
-    // Basic cleanup: remove backslashes at end of lines
+
     final cleanCommand =
         curlCommand.replaceAll('\\\n', ' ').replaceAll('\\\r\n', ' ');
 
@@ -549,7 +546,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     Map<String, String> headers = {};
     String body = '';
 
-    // Improved Regex for URL: handle various quote types or no quotes
     final urlMatch =
         RegExp(r'''(?:curl\s+)?(?:['"]?)(https?://[^'"\s]+)(?:['"]?)''')
             .firstMatch(cleanCommand);
@@ -557,7 +553,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       url = urlMatch.group(1)!;
     }
 
-    // Method: check -X or --request
     final methodMatch =
         RegExp(r'''(?:-X|--request)\s+(['"]?)([A-Z]+)\1''')
             .firstMatch(cleanCommand);
@@ -569,13 +564,12 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       method = 'POST';
     }
 
-    // Headers: handle -H or --header
     final headerRegExp =
         RegExp(r'''(?:-H|--header)\s+(['"])([^:]+):\s*(.*?)\1''');
     for (final match in headerRegExp.allMatches(cleanCommand)) {
       headers[match.group(2)!.trim()] = match.group(3)!.trim();
     }
-    // Also try without quotes if the above fails for some headers
+
     final headerNoQuoteRegExp =
         RegExp(r'''(?:-H|--header)\s+([^'"\s]+):\s*([^'"\s]+)''');
     for (final match in headerNoQuoteRegExp.allMatches(cleanCommand)) {
@@ -585,7 +579,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       }
     }
 
-    // Body: handle -d, --data, --data-raw, --data-binary
     final dataRegExp = RegExp(
       r'''(?:-d|--data(?:-raw|-binary)?)\s+(['"])(.*?)\1''',
       dotAll: true,
@@ -594,7 +587,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     if (dataMatch != null) {
       body = dataMatch.group(2) ?? '';
     } else {
-      // Try without quotes if body is a single word or simple
+
       final dataNoQuoteRegExp =
           RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+([^{'"\s][^\s]*)''');
       final dataNoQuoteMatch = dataNoQuoteRegExp.firstMatch(cleanCommand);
@@ -677,9 +670,9 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
       setState(() {
         _response = result;
-        
-        final responseData = result.containsKey('data') && result['data'] is Map 
-            ? result['data'] as Map<String, dynamic> 
+
+        final responseData = result.containsKey('data') && result['data'] is Map
+            ? result['data'] as Map<String, dynamic>
             : result;
 
         _statusCode = responseData['statusCode'];
@@ -707,7 +700,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Header ──
+
           Container(
             padding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
             decoration: BoxDecoration(
@@ -783,7 +776,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Request Panel ──
+
                 Expanded(
                   flex: 3,
                   child: Container(
@@ -797,7 +790,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                     ),
                     child: Column(
                     children: [
-                      // URL bar
+
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                         child: Container(
@@ -809,7 +802,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                           ),
                           child: Row(
                             children: [
-                              // Method selector
+
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14),
                                 decoration: BoxDecoration(
@@ -834,7 +827,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                   ),
                                 ),
                               ),
-                              // URL input
+
                               Expanded(
                                 child: TextField(
                                   controller: _urlCtrl,
@@ -850,7 +843,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                                   onChanged: _handleUrlChanged,
                                 ),
                               ),
-                              // Send button
+
                               Padding(
                                 padding: const EdgeInsets.only(right: 4),
                                 child: SizedBox(
@@ -1004,7 +997,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                   ),
                 ),
                 const SizedBox(height: 16),
-                // ── Response Panel ──
+
                 Expanded(
                   flex: 2,
                   child: Container(

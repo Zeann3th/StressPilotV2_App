@@ -142,7 +142,6 @@ class AppLogger {
     }
   }
 
-  
   static Future<T> measure<T>(
       String operation,
       Future<T> Function() function, {

@@ -48,7 +48,7 @@ class FlowDialog {
 
                   final capabilities = snapshot.data;
                   final flowTypes = capabilities?.flowExecutors ?? ['DEFAULT'];
-                  
+
                   if (selectedType == null && flowTypes.isNotEmpty) {
                     selectedType = flowTypes.first;
                   }

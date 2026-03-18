@@ -2,7 +2,11 @@ name: stress_pilot
 description: "Load testing software"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.2
+
+linter:
+  rules:
+    - always_use_package_imports
 
 environment:
   sdk: ^3.9.2

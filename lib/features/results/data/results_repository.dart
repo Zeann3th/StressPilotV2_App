@@ -15,7 +15,6 @@ class ResultsRepository {
   void connect() {
     if (_client != null && _client!.connected) return;
 
-    
     final wsUrl =
         '${AppConfig.apiBaseUrl.replaceFirst('http', 'ws')}/ws/websocket';
 

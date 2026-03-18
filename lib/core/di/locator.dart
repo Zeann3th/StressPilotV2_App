@@ -44,7 +44,7 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => SettingService());
   getIt.registerLazySingleton(() => SettingProvider());
-  
+
   getIt.registerLazySingleton(() => SettingsManager());
   getIt.registerLazySingleton(() => KeymapProvider());
 

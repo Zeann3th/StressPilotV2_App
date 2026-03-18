@@ -9,7 +9,7 @@ class JsonViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Generate pretty JSON string
+
     final jsonString = const JsonEncoder.withIndent('  ').convert(json);
 
     return SelectableText.rich(
@@ -38,19 +38,19 @@ class JsonViewer extends StatelessWidget {
 
     final keyColor = isDark
         ? const Color(0xFF9CDCFE)
-        : const Color(0xFF0451A5); // Blue
+        : const Color(0xFF0451A5);
     final stringColor = isDark
         ? const Color(0xFFCE9178)
-        : const Color(0xFFA31515); // Orange/Red
+        : const Color(0xFFA31515);
     final numberColor = isDark
         ? const Color(0xFFB5CEA8)
-        : const Color(0xFF098658); // Green
+        : const Color(0xFF098658);
     final keywordColor = isDark
         ? const Color(0xFF569CD6)
-        : const Color(0xFF0000FF); // Blue
+        : const Color(0xFF0000FF);
 
     for (final match in regex.allMatches(json)) {
-      // Add non-matching text (brackets, braces, commas, whitespace)
+
       if (match.start > lastMatchEnd) {
         spans.add(TextSpan(text: json.substring(lastMatchEnd, match.start)));
       }
@@ -95,7 +95,6 @@ class JsonViewer extends StatelessWidget {
       lastMatchEnd = match.end;
     }
 
-    // Add remaining text
     if (lastMatchEnd < json.length) {
       spans.add(TextSpan(text: json.substring(lastMatchEnd)));
     }

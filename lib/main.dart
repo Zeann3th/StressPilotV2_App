@@ -28,7 +28,6 @@ void main() async {
 
   setupDependencies();
 
-  // Setup shutdown handler
   final shutdownHandler = ShutdownHandler(getIt<ProcessManager>());
   shutdownHandler.setup();
 

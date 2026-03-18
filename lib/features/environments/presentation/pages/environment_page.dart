@@ -62,7 +62,7 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
                 borderRadius: AppRadius.br16,
                 child: Column(
                   children: [
-                    // Custom Header
+
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       decoration: BoxDecoration(

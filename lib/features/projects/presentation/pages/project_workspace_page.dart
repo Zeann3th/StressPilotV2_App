@@ -24,7 +24,6 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   int? _lastLoadedProjectId;
   bool _libraryCollapsed = false;
 
-  // Guard against _maybeAutoSelect scheduling multiple concurrent callbacks.
   bool _autoSelectPending = false;
 
   @override
@@ -52,19 +51,13 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
     }
   }
 
-  /// Auto-selects the first flow once the list loads and nothing is selected.
-  ///
-  /// The _autoSelectPending guard ensures only one postFrameCallback is ever
-  /// queued at a time. Without it, rapid FlowProvider notifications (e.g.
-  /// during a save round-trip) would queue multiple callbacks, each potentially
-  /// overwriting a selection the user just made, causing the canvas to blank.
   void _maybeAutoSelect(
       List<flow_domain.Flow> flows,
       flow_domain.Flow? selectedFlow,
       ) {
-    if (selectedFlow != null) return; // Already selected — nothing to do.
-    if (flows.isEmpty) return;        // List not loaded yet.
-    if (_autoSelectPending) return;   // Callback already queued.
+    if (selectedFlow != null) return;
+    if (flows.isEmpty) return;
+    if (_autoSelectPending) return;
 
     _autoSelectPending = true;
 
@@ -74,8 +67,6 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
 
       final provider = context.read<FlowProvider>();
 
-      // Re-read at flush time: the user or another callback may have already
-      // made a selection between when we scheduled and when we ran.
       if (provider.selectedFlow != null) return;
 
       final latestFlows = provider.flows;
@@ -155,8 +146,6 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                             border: border,
                           ),
 
-                          // Canvas is stable across FlowProvider notifications
-                          // because _CanvasContent is keyed on selectedFlow.id.
                           Expanded(
                             child: WorkspaceCanvas(selectedFlow: selectedFlow),
                           ),
@@ -176,8 +165,6 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
     );
   }
 }
-
-// ─── Collapse handle ──────────────────────────────────────────────────────────
 
 class _LibraryHandle extends StatefulWidget {
   final bool collapsed;

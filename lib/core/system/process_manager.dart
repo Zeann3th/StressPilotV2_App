@@ -76,7 +76,7 @@ class ProcessManager {
             .transform(SystemEncoding().decoder)
             .listen((data) => AppLogger.error(data.trim(), name: '$_logName.stderr'));
       } else {
-        // Drain streams to avoid backpressure but no logging subscription
+
         _process!.stdout.drain();
         _process!.stderr.drain();
       }
@@ -111,7 +111,7 @@ class ProcessManager {
           return;
         }
       } catch (_) {
-        // Ignore connection errors while starting
+
       }
 
       await Future.delayed(const Duration(seconds: 1));
@@ -126,7 +126,7 @@ class ProcessManager {
 
   Future<void> forceKill() async {
     AppLogger.info('Attempting to force kill backend...', name: _logName);
-    
+
     if (_process != null) {
       final int pid = _process!.pid;
       AppLogger.info('Attempting to kill backend pid=$pid', name: _logName);
@@ -149,7 +149,6 @@ class ProcessManager {
       }
     }
 
-    // Always attempt to kill by port to catch orphaned processes
     try {
       if (Platform.isWindows) {
         final result = await Process.run('cmd', ['/c', 'netstat -ano | findstr :52000']);

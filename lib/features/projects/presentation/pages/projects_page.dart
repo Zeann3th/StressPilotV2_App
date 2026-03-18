@@ -50,13 +50,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
       backgroundColor: bg,
       body: Column(
         children: [
-          // Top global topbar
+
           AppTopBar(
             searchController: _searchController,
             onSearchSubmitted: _handleSearch,
           ),
 
-          // Main content container with padding and rounded corners
           Expanded(
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -76,11 +75,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
                 borderRadius: AppRadius.br16,
                 child: Column(
                   children: [
-                    // Upper half: projects area
+
                     Expanded(
                       child: Column(
                         children: [
-                          // Project topbar controls (import/export/add/refresh)
+
                           ProjectTopBar(
                             searchController: _searchController,
                             onRefresh: _handleRefresh,
@@ -95,7 +94,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       ),
                     ),
 
-                    // Lower half: left=recent runs / project details, right=analytics mock
                     Container(
                       height: MediaQuery.of(context).size.height * 0.4,
                       padding: const EdgeInsets.all(16),
@@ -104,7 +102,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       ),
                       child: Row(
                         children: [
-                          // Left: Runs / project details (half width)
+
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.all(16),
@@ -119,7 +117,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
                           const SizedBox(width: 16),
 
-                          // Right: Analytics / charts (mocked)
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.all(16),

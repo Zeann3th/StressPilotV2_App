@@ -19,7 +19,7 @@ class RunService {
   Future<List<Run>> getRuns({int? flowId}) async {
     final response = await _dio.get(
       '/api/v1/runs',
-      queryParameters: {if (flowId != null) 'flowId': flowId},
+      queryParameters: {'flowId': ?flowId},
     );
     return (response.data['data'] as List).map((e) => Run.fromJson(e)).toList();
   }

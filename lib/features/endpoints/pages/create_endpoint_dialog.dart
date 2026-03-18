@@ -211,7 +211,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                           validator: (v) {
                             if (_selectedType == 'JS') {
                               return null;
-                            } // Optional for JS
+                            }
                             if (v == null || v.isEmpty) return 'Required';
 
                             if (_selectedType == 'JDBC' &&
@@ -342,7 +342,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   }
 
   void _parseCurlCommand(String curlCommand) {
-    // Basic cleanup: remove backslashes at end of lines
+
     final cleanCommand = curlCommand.replaceAll('\\\n', ' ').replaceAll('\\\r\n', ' ');
 
     String method = 'GET';
@@ -350,13 +350,11 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
     Map<String, String> headers = {};
     String body = '';
 
-    // Improved Regex for URL: handle various quote types or no quotes
     final urlMatch = RegExp(r'''(?:curl\s+)?(?:['"]?)(https?://[^'"\s]+)(?:['"]?)''').firstMatch(cleanCommand);
     if (urlMatch != null) {
       url = urlMatch.group(1)!;
     }
 
-    // Method: check -X or --request
     final methodMatch = RegExp(r'''(?:-X|--request)\s+(['"]?)([A-Z]+)\1''').firstMatch(cleanCommand);
     if (methodMatch != null) {
       method = methodMatch.group(2)!;
@@ -364,12 +362,11 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       method = 'POST';
     }
 
-    // Headers: handle -H or --header
     final headerRegExp = RegExp(r'''(?:-H|--header)\s+(['"])([^:]+):\s*(.*?)\1''');
     for (final match in headerRegExp.allMatches(cleanCommand)) {
       headers[match.group(2)!.trim()] = match.group(3)!.trim();
     }
-    // Also try without quotes if the above fails for some headers
+
     final headerNoQuoteRegExp = RegExp(r'''(?:-H|--header)\s+([^'"\s]+):\s*([^'"\s]+)''');
     for (final match in headerNoQuoteRegExp.allMatches(cleanCommand)) {
       final key = match.group(1)!.trim();
@@ -378,13 +375,12 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       }
     }
 
-    // Body: handle -d, --data, --data-raw, --data-binary
     final dataRegExp = RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+(['"])(.*?)\1''', dotAll: true);
     final dataMatch = dataRegExp.firstMatch(cleanCommand);
     if (dataMatch != null) {
       body = dataMatch.group(2) ?? '';
     } else {
-      // Try without quotes if body is a single word or simple
+
       final dataNoQuoteRegExp = RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+([^{'"\s][^\s]*)''');
       final dataNoQuoteMatch = dataNoQuoteRegExp.firstMatch(cleanCommand);
       if (dataNoQuoteMatch != null) {

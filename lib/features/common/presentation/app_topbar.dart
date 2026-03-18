@@ -49,10 +49,9 @@ class _AppTopBarState extends State<AppTopBar> {
       ),
       child: Row(
         children: [
-          // Spacer to push the search bar to the center
+
           const Spacer(),
 
-          // Global search (fixed width, centered)
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 350),
             child: SizedBox(
@@ -66,10 +65,8 @@ class _AppTopBarState extends State<AppTopBar> {
             ),
           ),
 
-          // Spacer to push action icons to the right
           const Spacer(),
 
-          // Action icons (no text; tooltip on hover)
           _TopBarIcon(
             icon: LucideIcons.settings,
             tooltip: _tip('Settings', keymap.getShortcut('app.settings')),
@@ -85,7 +82,7 @@ class _AppTopBarState extends State<AppTopBar> {
             onTap: themeManager.toggleTheme,
           ),
           const SizedBox(width: 8),
-          // Profile icon shows a small popup menu with Exit action
+
           GestureDetector(
             onTapDown: (tap) async {
               final renderBox = context.findRenderObject() as RenderBox?;
@@ -101,7 +98,7 @@ class _AppTopBarState extends State<AppTopBar> {
               );
 
               if (selected == 'exit') {
-                // Try to shutdown backend and exit immediately
+
                 try {
                   await getIt<ProcessManager>().forceKill();
                 } catch (_) {}

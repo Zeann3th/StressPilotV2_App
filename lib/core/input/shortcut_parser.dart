@@ -90,14 +90,14 @@ class ShortcutParser {
   }
 
   static LogicalKeyboardKey? parseKey(String label) {
-    // Handle single character alphanumerics manually if needed, but the map covers standard ASCII.
+
     return _keyMap[label] ?? _keyMap[label.toUpperCase()];
   }
 
   static bool isMatch(KeyEvent event, String shortcut) {
     final parts = shortcut.split('+');
     final keyLabel = parts.last;
-    
+
     final logicalKey = parseKey(keyLabel);
     if (logicalKey == null) return false;
 

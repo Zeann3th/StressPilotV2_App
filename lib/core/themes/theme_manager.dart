@@ -10,7 +10,7 @@ import 'package:stress_pilot/core/system/logger.dart';
 
 class ThemeManager with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
-  
+
   ShadThemeData? _currentShadTheme;
 
   ThemeMode get themeMode => _themeMode;
@@ -22,19 +22,19 @@ class ThemeManager with ChangeNotifier {
     if (!settingsManager.isInitialized) {
       await settingsManager.initialize();
     }
-    
+
     final themeName = settingsManager.getString('workbench.colorTheme', defaultValue: 'dark');
     _themeMode = themeName.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.dark;
-    
+
     await _loadCustomTheme(themeName);
-    
+
     settingsManager.addListener(_onSettingsChanged);
   }
 
   void _onSettingsChanged() {
     final newTheme = getIt<SettingsManager>().getString('workbench.colorTheme', defaultValue: 'dark');
     final newMode = newTheme.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.dark;
-    
+
     if (newMode != _themeMode) {
       _themeMode = newMode;
       _loadCustomTheme(newTheme).then((_) => notifyListeners());
@@ -43,11 +43,11 @@ class ThemeManager with ChangeNotifier {
 
   Future<void> _loadCustomTheme(String themeName) async {
     try {
-      final String home = Platform.environment['HOME'] ?? 
-                          Platform.environment['USERPROFILE'] ?? 
+      final String home = Platform.environment['HOME'] ??
+                          Platform.environment['USERPROFILE'] ??
                           '/';
       final file = File(p.join(home, '.pilot', 'client', 'themes', '$themeName.json'));
-      
+
       if (await file.exists()) {
         final content = await file.readAsString();
         final json = jsonDecode(content);
@@ -64,7 +64,7 @@ class ThemeManager with ChangeNotifier {
   ShadThemeData? _parseShadTheme(Map<String, dynamic> json) {
     try {
       final colors = json['colors'] as Map<String, dynamic>? ?? {};
-      
+
       Color parseColor(String hexKey, Color fallback) {
         if (!colors.containsKey(hexKey)) return fallback;
         final hex = (colors[hexKey] as String).replaceAll('#', '');
@@ -78,7 +78,7 @@ class ThemeManager with ChangeNotifier {
       }
 
       final colorScheme = _themeMode == ThemeMode.dark ? const ShadZincColorScheme.dark() : const ShadZincColorScheme.light();
-      
+
       return ShadThemeData(
         brightness: _themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light,
         colorScheme: ShadColorScheme(

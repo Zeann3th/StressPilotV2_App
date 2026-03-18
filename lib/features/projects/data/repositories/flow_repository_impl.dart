@@ -19,7 +19,7 @@ class FlowRepositoryImpl implements FlowRepository {
     final response = await _dio.get(
       '/api/v1/flows',
       queryParameters: {
-        if (projectId != null) 'projectId': projectId,
+        'projectId': ?projectId,
         if (name != null && name.isNotEmpty) 'name': name,
         'page': page,
         'size': size,
@@ -48,8 +48,8 @@ class FlowRepositoryImpl implements FlowRepository {
     String? description,
   }) async {
     final body = {
-      if (name != null) 'name': name,
-      if (description != null) 'description': description,
+      'name': ?name,
+      'description': ?description,
     };
 
     final response = await _dio.patch('/api/v1/flows/$flowId', data: body);

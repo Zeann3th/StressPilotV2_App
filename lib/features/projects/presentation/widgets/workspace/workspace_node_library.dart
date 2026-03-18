@@ -34,7 +34,7 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── LOGIC section ─────────────────────────────────
+
           _SectionHeader(label: 'LOGIC'),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
@@ -73,10 +73,8 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
             ),
           ),
 
-          // ── Divider ───────────────────────────────────────
           Divider(height: 1, color: border),
 
-          // ── ENDPOINTS section (fills remaining space) ─────
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,8 +95,6 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
   }
 }
 
-// ─── Section header ─────────────────────────────────────────────────────────
-
 class _SectionHeader extends StatelessWidget {
   final String label;
   const _SectionHeader({required this.label});
@@ -114,8 +110,6 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-
-// ─── Draggable logic chip ────────────────────────────────────────────────────
 
 class _LogicChip extends StatefulWidget {
   final FlowNodeType type;

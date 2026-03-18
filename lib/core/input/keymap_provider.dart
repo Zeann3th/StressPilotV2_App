@@ -15,28 +15,27 @@ class KeymapProvider extends ChangeNotifier {
   Future<void> initialize() async {
     _isLoading = true;
     notifyListeners();
-    
+
     final settingsManager = getIt<SettingsManager>();
     if (!settingsManager.isInitialized) {
       await settingsManager.initialize();
     }
-    
-    // Extract keymaps from settings
+
     _keymap.clear();
     final defaultKeymapKeys = [
-      'keymap.sidebar.toggle', 'keymap.app.settings', 'keymap.flow.save', 
-      'keymap.flow.run', 'keymap.flow.new', 'keymap.node.delete', 
-      'keymap.sidebar.tab.flows', 'keymap.sidebar.tab.nodes', 
-      'keymap.project.endpoints', 'keymap.project.environment', 
-      'keymap.project.view_all', 'keymap.nav.notifications', 
+      'keymap.sidebar.toggle', 'keymap.app.settings', 'keymap.flow.save',
+      'keymap.flow.run', 'keymap.flow.new', 'keymap.node.delete',
+      'keymap.sidebar.tab.flows', 'keymap.sidebar.tab.nodes',
+      'keymap.project.endpoints', 'keymap.project.environment',
+      'keymap.project.view_all', 'keymap.nav.notifications',
       'keymap.nav.runs', 'keymap.theme.toggle'
     ];
-    
+
     for (var key in defaultKeymapKeys) {
       final actionId = key.replaceFirst('keymap.', '');
       _keymap[actionId] = settingsManager.getString(key);
     }
-    
+
     _updateCache();
     _isLoading = false;
     notifyListeners();
@@ -56,7 +55,7 @@ class KeymapProvider extends ChangeNotifier {
   Future<void> resetToDefaults() async {
     final settingsManager = getIt<SettingsManager>();
     await settingsManager.resetKeymaps();
-    await initialize(); // Re-fetch the keymaps
+    await initialize();
   }
 
   void _updateCache() {

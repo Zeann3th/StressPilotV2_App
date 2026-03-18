@@ -56,7 +56,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 borderRadius: AppRadius.br16,
                 child: Column(
                   children: [
-                    // Custom topbar
+
                     Container(
                       height: 60,
                       padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -56,7 +56,7 @@ class _SettingsTableState extends State<SettingsTable> {
 
     return Column(
       children: [
-        // Search bar
+
         Container(
           color: surface,
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
@@ -76,7 +76,7 @@ class _SettingsTableState extends State<SettingsTable> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Category sidebar
+
               Container(
                 width: 210,
                 color: surface,
@@ -106,7 +106,6 @@ class _SettingsTableState extends State<SettingsTable> {
 
               VerticalDivider(width: 1, color: border),
 
-              // Content area
               Expanded(
                 child: Container(
                   color: bg,

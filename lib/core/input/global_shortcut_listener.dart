@@ -30,18 +30,9 @@ class _GlobalShortcutListenerState extends State<GlobalShortcutListener> {
 
   bool _handleKeyEvent(KeyEvent event) {
     if (event is! KeyDownEvent) return false;
-    
-    // Ignore if a text field has focus to prevent interfering with typing
-    // Actually, for Ctrl-combinations, we usually WANT them to work even in text fields,
-    // but single keys (like Delete) might be tricky.
-    // For now, let's allow all, but maybe checking focus manager is safer.
-    // Ideally:
-    // FocusManager.instance.primaryFocus?.context?.widget is EditableText ?
-    
-    // But let's proceed with simple matching first.
-    
-    final provider = getIt<KeymapProvider>(); 
-    // Use cached activators for performance
+
+    final provider = getIt<KeymapProvider>();
+
     for (final entry in provider.cachedActivators) {
       if (entry.key.accepts(event, HardwareKeyboard.instance)) {
         return _performAction(entry.value);
@@ -60,7 +51,7 @@ class _GlobalShortcutListenerState extends State<GlobalShortcutListener> {
         AppNavigator.pushNamed(AppRouter.settingsRoute);
         return true;
       case 'nav.runs':
-        // Open Projects page and show runs panel
+
         AppNavigator.pushNamed(AppRouter.projectsRoute);
         return true;
       case 'theme.toggle':
@@ -92,12 +83,10 @@ class _GlobalShortcutListenerState extends State<GlobalShortcutListener> {
         }
         return true;
 
-      // 'flow.save', 'flow.run', etc. generally require context or knowing the active project/flow.
-      // We can implement them if Providers are singletons, which they are.
       case 'flow.save':
-        // getIt<FlowProvider>().saveCurrentFlow(); // Assuming such method exists
+
         return true;
-        
+
       default:
         return false;
     }

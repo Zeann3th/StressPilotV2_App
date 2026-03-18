@@ -24,7 +24,7 @@ class EnvironmentProvider extends ChangeNotifier {
     try {
       final vars = await _service.getVariables(environmentId);
       _variables = List.from(vars);
-      
+
       _originalVariables = vars.map((e) => e.copyWith()).toList();
     } catch (e) {
       _error = e.toString();
@@ -39,7 +39,7 @@ class EnvironmentProvider extends ChangeNotifier {
     _tempIdCounter--;
     final newVar = EnvironmentVariable(
       id: _tempIdCounter,
-      environmentId: 0, 
+      environmentId: 0,
       key: '',
       value: '',
       isActive: true,
@@ -76,15 +76,14 @@ class EnvironmentProvider extends ChangeNotifier {
       final updated = <Map<String, dynamic>>[];
       final removed = <int>[];
 
-      
       for (final v in _variables) {
         if (v.id <= 0) {
           added.add({'key': v.key, 'value': v.value});
         } else {
-          
+
           final original = _originalVariables.firstWhere(
             (o) => o.id == v.id,
-            orElse: () => v, 
+            orElse: () => v,
           );
 
           if (original.key != v.key ||
@@ -101,7 +100,6 @@ class EnvironmentProvider extends ChangeNotifier {
         }
       }
 
-      
       final currentIds = _variables.map((v) => v.id).toSet();
       for (final original in _originalVariables) {
         if (!currentIds.contains(original.id)) {
@@ -122,7 +120,6 @@ class EnvironmentProvider extends ChangeNotifier {
         removed: removed,
       );
 
-      
       await loadVariables(environmentId);
     } catch (e) {
       _error = e.toString();
@@ -135,15 +132,11 @@ class EnvironmentProvider extends ChangeNotifier {
   bool _calculateHasChanges() {
     if (_variables.length != _originalVariables.length) return true;
 
-    
-    
     if (_variables.any((v) => v.id <= 0)) return true;
 
-    
     final currentIds = _variables.map((v) => v.id).toSet();
     if (_originalVariables.any((v) => !currentIds.contains(v.id))) return true;
 
-    
     for (final v in _variables) {
       final original = _originalVariables.firstWhere(
         (o) => o.id == v.id,

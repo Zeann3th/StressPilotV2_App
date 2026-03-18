@@ -209,7 +209,7 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
             if (endpoint.description != null && endpoint.description!.isNotEmpty)
               _buildDetailRow('Description', endpoint.description!),
           ]),
-          
+
           if (endpoint.type == 'GRPC')
             _buildDetailSection('gRPC Configuration', [
               _buildDetailRow('Service', endpoint.grpcServiceName ?? '—'),
@@ -233,19 +233,19 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
             style: AppTypography.bodyLg.copyWith(fontWeight: FontWeight.bold, color: colors.primary),
           ),
           const Divider(),
-          
+
           if (endpoint.httpHeaders != null && endpoint.httpHeaders!.isNotEmpty)
             _buildCodeBlock('Headers', jsonEncode(endpoint.httpHeaders)),
-          
+
           if (endpoint.httpParameters != null && endpoint.httpParameters!.isNotEmpty)
             _buildCodeBlock('Query Parameters', jsonEncode(endpoint.httpParameters)),
-          
+
           if (endpoint.body != null && endpoint.body!.toString().isNotEmpty)
             _buildCodeBlock('Body / Payload', endpoint.body.toString()),
 
           if (endpoint.graphqlVariables != null && endpoint.graphqlVariables!.isNotEmpty)
             _buildCodeBlock('GraphQL Variables', jsonEncode(endpoint.graphqlVariables)),
-          
+
           const SizedBox(height: 24),
         ],
       ),
