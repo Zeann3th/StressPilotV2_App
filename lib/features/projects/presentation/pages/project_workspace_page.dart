@@ -97,34 +97,47 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
           Expanded(
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                borderRadius: AppRadius.br16,
-                border: Border.all(color: border.withValues(alpha: 0.3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: AppRadius.br16,
-                child: Column(
-                  children: [
-                    const WorkspaceCommandBar(),
-
-                    WorkspaceFlowTabs(
-                      selectedFlow: selectedFlow,
-                      onFlowSelected: (f) {
-                        if (f != null) {
-                          context.read<FlowProvider>().selectFlow(f);
-                        }
-                      },
+              child: Column(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                      borderRadius: AppRadius.br16,
+                      border: Border.all(color: border.withValues(alpha: 0.3)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          offset: const Offset(0, 4),
+                          blurRadius: 12,
+                        ),
+                      ],
                     ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const WorkspaceCommandBar(),
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: border.withValues(alpha: 0.1),
+                          indent: 16,
+                          endIndent: 16,
+                        ),
+                        WorkspaceFlowTabs(
+                          selectedFlow: selectedFlow,
+                          onFlowSelected: (f) {
+                            if (f != null) {
+                              context.read<FlowProvider>().selectFlow(f);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
 
-                    Expanded(
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
                       child: Row(
                         children: [
                           AnimatedSize(
@@ -147,13 +160,30 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                           ),
 
                           Expanded(
-                            child: WorkspaceCanvas(selectedFlow: selectedFlow),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                                borderRadius: AppRadius.br16,
+                                border: Border.all(color: border.withValues(alpha: 0.3)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    offset: const Offset(0, 4),
+                                    blurRadius: 12,
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: AppRadius.br16,
+                                child: WorkspaceCanvas(selectedFlow: selectedFlow),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ).animate().fadeIn(
               duration: 400.ms,
@@ -196,13 +226,13 @@ class _LibraryHandleState extends State<_LibraryHandle> {
         onTap: widget.onToggle,
         child: AnimatedContainer(
           duration: AppDurations.micro,
-          width: 16,
+          width: 14,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
             color: _hovered
-                ? AppColors.accent.withValues(alpha: 0.06)
+                ? AppColors.accent.withValues(alpha: 0.1)
                 : Colors.transparent,
-            border:
-            Border(left: BorderSide(color: widget.border, width: 1)),
+            borderRadius: AppRadius.br4,
           ),
           child: Center(
             child: AnimatedRotation(

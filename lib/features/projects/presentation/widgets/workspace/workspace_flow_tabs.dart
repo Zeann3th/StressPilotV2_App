@@ -18,19 +18,17 @@ class WorkspaceFlowTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final border = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.darkBorder
+        : AppColors.lightBorder;
 
     final flowProvider = context.watch<FlowProvider>();
     final flows = flowProvider.flows;
 
     return Container(
       height: 40,
-      decoration: BoxDecoration(
-        color: bg,
-        border: Border(bottom: BorderSide(color: border, width: 1)),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      color: Colors.transparent,
       child: Row(
         children: [
 
@@ -81,6 +79,7 @@ class WorkspaceFlowTabs extends StatelessWidget {
                 },
               );
             },
+            border: border,
           ),
           const SizedBox(width: 8),
         ],
@@ -237,7 +236,8 @@ class _TabMenu extends StatelessWidget {
 
 class _NewFlowButton extends StatefulWidget {
   final VoidCallback onPressed;
-  const _NewFlowButton({required this.onPressed});
+  final Color border;
+  const _NewFlowButton({required this.onPressed, required this.border});
 
   @override
   State<_NewFlowButton> createState() => _NewFlowButtonState();
@@ -263,7 +263,7 @@ class _NewFlowButtonState extends State<_NewFlowButton> {
             border: Border.all(
               color: _hovered
                   ? AppColors.accent.withValues(alpha: 0.5)
-                  : AppColors.darkBorder,
+                  : widget.border,
               width: 1,
             ),
             color: _hovered

@@ -149,15 +149,18 @@ class _CanvasContentState extends State<_CanvasContent>
     super.didChangeDependencies();
     _canvasProvider = context.read<CanvasProvider>();
 
-    final endpoints = context.watch<EndpointProvider>().endpoints;
-    if (endpoints.isNotEmpty) {
-      _canvasProvider?.syncEndpointsMetadata(endpoints);
-    }
+    final endpoints = context.read<EndpointProvider>().endpoints;
+    final flows = context.read<FlowProvider>().flows;
 
-    final flows = context.watch<FlowProvider>().flows;
-    if (flows.isNotEmpty) {
-      _canvasProvider?.syncFlowsMetadata(flows);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (endpoints.isNotEmpty) {
+        _canvasProvider?.syncEndpointsMetadata(endpoints);
+      }
+      if (flows.isNotEmpty) {
+        _canvasProvider?.syncFlowsMetadata(flows);
+      }
+    });
   }
 
   @override
@@ -271,9 +274,10 @@ class _CanvasContentState extends State<_CanvasContent>
               GestureDetector(
                 onPanUpdate: provider.canvasMode == CanvasMode.move
                     ? (details) {
+                  final scale = _transformationController.value.getMaxScaleOnAxis();
                   provider.updateNodePosition(
                     node.id,
-                    node.position + details.delta,
+                    node.position + (details.delta / scale),
                   );
                 }
                     : null,
@@ -490,26 +494,26 @@ class _CanvasContentState extends State<_CanvasContent>
     isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: AppRadius.br16,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: surfaceColor.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: borderColor, width: 1),
+            borderRadius: AppRadius.br16,
+            border: Border.all(color: borderColor.withValues(alpha: 0.3), width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildModeButton(
                   provider, CanvasMode.move, Icons.pan_tool_rounded, 'Pan'),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               _buildModeButton(
                   provider, CanvasMode.connect, Icons.cable_rounded, 'Link'),
-              _ToolbarDivider(borderColor: borderColor),
+              _ToolbarDivider(borderColor: borderColor.withValues(alpha: 0.3)),
               _ToolbarIcon(
                 tooltip: provider.isLocked ? 'Unlock Canvas' : 'Lock Canvas',
                 onTap: () => provider.toggleLock(),
@@ -623,9 +627,9 @@ class _CanvasContentState extends State<_CanvasContent>
     final Offset center = Offset(size.width / 2, size.height / 2);
 
     final Matrix4 zoomMatrix = Matrix4.identity()
-      ..translate(center.dx, center.dy)
-      ..scale(factor, factor, 1.0)
-      ..translate(-center.dx, -center.dy);
+      ..multiply(Matrix4.translationValues(center.dx, center.dy, 0.0))
+      ..multiply(Matrix4.diagonal3Values(factor, factor, 1.0))
+      ..multiply(Matrix4.translationValues(-center.dx, -center.dy, 0.0));
 
     final Matrix4 next = zoomMatrix * current;
 
@@ -682,45 +686,79 @@ class _CanvasContentState extends State<_CanvasContent>
       String label,
       ) {
     final isSelected = provider.canvasMode == mode;
-    return GestureDetector(
-      onTap: () => provider.setCanvasMode(mode),
-      child: AnimatedContainer(
-        duration: AppDurations.micro,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 12 : 10,
-          vertical: 7,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.accent.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: AppRadius.br8,
-          border: Border.all(
+    return Tooltip(
+      message: label,
+      child: GestureDetector(
+        onTap: () => provider.setCanvasMode(mode),
+        child: AnimatedContainer(
+          duration: AppDurations.micro,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.accent.withValues(alpha: 0.5)
+                ? AppColors.accent.withValues(alpha: 0.15)
                 : Colors.transparent,
+            borderRadius: AppRadius.br8,
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.accent.withValues(alpha: 0.5)
+                  : Colors.transparent,
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: isSelected ? AppColors.accent : AppColors.textMuted,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? AppColors.accent : AppColors.textMuted,
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.accent,
-                  fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
+
+class _HoverableNodeWrapper extends StatefulWidget {
+  final CanvasNode node;
+  final CanvasProvider provider;
+  final Widget child;
+
+  const _HoverableNodeWrapper({
+    required this.node,
+    required this.provider,
+    required this.child,
+  });
+
+  @override
+  State<_HoverableNodeWrapper> createState() => _HoverableNodeWrapperState();
+}
+
+class _HoverableNodeWrapperState extends State<_HoverableNodeWrapper> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          widget.child,
+          if (_hovered && !widget.provider.isLocked)
+            Positioned(
+              top: -8,
+              right: -8,
+              child: GestureDetector(
+                onTap: () => widget.provider.removeNode(widget.node.id),
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: AppColors.error,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 12, color: Colors.white),
                 ),
               ),
-            ],
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -994,22 +1032,26 @@ class _NodeBody extends StatelessWidget {
   }
 
   Widget _buildStart() {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        gradient:
-        LinearGradient(colors: [colors.primary, colors.tertiary]),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-              color: colors.primary.withValues(alpha: 0.3),
-              blurRadius: 8)
-        ],
+    return _HoverableNodeWrapper(
+      node: node,
+      provider: provider,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          gradient:
+          LinearGradient(colors: [colors.primary, colors.tertiary]),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: [
+            BoxShadow(
+                color: colors.primary.withValues(alpha: 0.3),
+                blurRadius: 8)
+          ],
+        ),
+        child: const Icon(Icons.play_arrow_rounded,
+            color: Colors.white, size: 28),
       ),
-      child: const Icon(Icons.play_arrow_rounded,
-          color: Colors.white, size: 28),
     );
   }
 

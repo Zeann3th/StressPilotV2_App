@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/config/settings_manager.dart';
 import 'package:stress_pilot/core/system/logger.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class ThemeManager with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
@@ -77,7 +78,49 @@ class ThemeManager with ChangeNotifier {
         return fallback;
       }
 
-      final colorScheme = _themeMode == ThemeMode.dark ? const ShadZincColorScheme.dark() : const ShadZincColorScheme.light();
+      final colorScheme = _themeMode == ThemeMode.dark 
+          ? const ShadZincColorScheme.dark(
+              background: AppColors.darkBackground,
+              foreground: AppColors.textPrimary,
+              card: AppColors.darkSurface,
+              cardForeground: AppColors.textPrimary,
+              popover: AppColors.darkSurface,
+              popoverForeground: AppColors.textPrimary,
+              primary: AppColors.darkGreenStart,
+              primaryForeground: Colors.white,
+              secondary: AppColors.darkElevated,
+              secondaryForeground: AppColors.textPrimary,
+              muted: AppColors.darkElevated,
+              mutedForeground: AppColors.textSecondary,
+              accent: AppColors.darkElevated,
+              accentForeground: AppColors.textPrimary,
+              destructive: AppColors.error,
+              destructiveForeground: Colors.white,
+              border: AppColors.darkBorder,
+              input: AppColors.darkBorder,
+              ring: AppColors.darkGreenStart,
+            ) 
+          : const ShadZincColorScheme.light(
+              background: AppColors.lightBackground,
+              foreground: AppColors.textLight,
+              card: AppColors.lightSurface,
+              cardForeground: AppColors.textLight,
+              popover: AppColors.lightSurface,
+              popoverForeground: AppColors.textLight,
+              primary: AppColors.lightGreenStart,
+              primaryForeground: Colors.white,
+              secondary: AppColors.lightElevated,
+              secondaryForeground: AppColors.textLight,
+              muted: AppColors.lightElevated,
+              mutedForeground: AppColors.textLightSecondary,
+              accent: AppColors.lightElevated,
+              accentForeground: AppColors.textLight,
+              destructive: AppColors.error,
+              destructiveForeground: Colors.white,
+              border: AppColors.lightBorder,
+              input: AppColors.lightBorder,
+              ring: AppColors.lightGreenStart,
+            );
 
       return ShadThemeData(
         brightness: _themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light,

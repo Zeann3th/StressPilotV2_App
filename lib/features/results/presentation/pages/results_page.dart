@@ -216,224 +216,237 @@ class _ResultsPageState extends State<ResultsPage> {
           Expanded(
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: AppRadius.br16,
-                border: Border.all(color: border.withValues(alpha: 0.3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: AppRadius.br16,
-                child: Column(
-                  children: [
+              child: Column(
+                children: [
 
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: surface,
-                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
-                      ),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.arrow_back, color: textCol),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Live Run Dashboard',
-                            style: AppTypography.heading.copyWith(color: textCol),
-                          ),
-                          const Spacer(),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: DropdownButton<int?>(
-                              value: provider.selectedEndpointId,
-                              hint: Text(
-                                'All Endpoints',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurface,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: surface,
+                      borderRadius: AppRadius.br16,
+                      border: Border.all(color: border.withValues(alpha: 0.3)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          offset: const Offset(0, 4),
+                          blurRadius: 12,
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.arrow_back, color: textCol, size: 20),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Live Run Dashboard',
+                          style: AppTypography.heading.copyWith(color: textCol),
+                        ),
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: DropdownButton<int?>(
+                            value: provider.selectedEndpointId,
+                            hint: Text(
+                              'All Endpoints',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            dropdownColor: Theme.of(context).colorScheme.surfaceContainer,
+                            underline: const SizedBox(),
+                            icon: const Icon(
+                              LucideIcons.chevronDown,
+                              size: 14,
+                              color: Color(0xFF98989D),
+                            ),
+                            items: [
+                              DropdownMenuItem(
+                                value: null,
+                                child: Text(
+                                  'All Endpoints',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
                                 ),
                               ),
-                              dropdownColor: Theme.of(context).colorScheme.surfaceContainer,
-                              underline: const SizedBox(),
-                              icon: const Icon(
-                                LucideIcons.chevronDown,
-                                size: 14,
-                                color: Color(0xFF98989D),
-                              ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: null,
+                              ...provider.endpointNames.entries.map(
+                                (e) => DropdownMenuItem(
+                                  value: e.key,
                                   child: Text(
-                                    'All Endpoints',
+                                    e.value,
                                     style: TextStyle(
                                       color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
-                                ...provider.endpointNames.entries.map(
-                                  (e) => DropdownMenuItem(
-                                    value: e.key,
-                                    child: Text(
-                                      e.value,
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onSurface,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (v) => provider.setEndpointFilter(v),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Consumer<RunProvider>(
-                              builder: (context, runProvider, child) {
-                                final isTerminal = _currentRun == null ||
-                                    _isTerminalStatus(_currentRun!.status);
-                                if (isTerminal) return const SizedBox.shrink();
-
-                                return Tooltip(
-                                  message: 'Abort Run',
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.stop_circle_outlined,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () async {
-                                      try {
-                                        await runProvider.interruptRun(_currentRun!.id);
-                                        _refreshRun();
-                                      } catch (e) {
-                                        if (mounted && context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Failed to abort: $e')),
-                                          );
-                                        }
-                                      }
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Tooltip(
-                              message: 'Export',
-                              child: IconButton(
-                                icon: _exporting
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(
-                                        LucideIcons.fileDown,
-                                        color: Color(0xFF007AFF),
-                                      ),
-                                onPressed:
-                                    (_currentRun != null &&
-                                        _currentRun!.status.toUpperCase() == 'COMPLETED' &&
-                                        !_exporting)
-                                    ? () => _exportRun()
-                                    : null,
                               ),
+                            ],
+                            onChanged: (v) => provider.setEndpointFilter(v),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Consumer<RunProvider>(
+                            builder: (context, runProvider, child) {
+                              final isTerminal = _currentRun == null ||
+                                  _isTerminalStatus(_currentRun!.status);
+                              if (isTerminal) return const SizedBox.shrink();
+
+                              return Tooltip(
+                                message: 'Abort Run',
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.stop_circle_outlined,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () async {
+                                    try {
+                                      await runProvider.interruptRun(_currentRun!.id);
+                                      _refreshRun();
+                                    } catch (e) {
+                                      if (mounted && context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Failed to abort: $e')),
+                                        );
+                                      }
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Tooltip(
+                            message: 'Export',
+                            child: IconButton(
+                              icon: _exporting
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      LucideIcons.fileDown,
+                                      color: Color(0xFF007AFF),
+                                    ),
+                              onPressed:
+                                  (_currentRun != null &&
+                                      _currentRun!.status.toUpperCase() == 'COMPLETED' &&
+                                      !_exporting)
+                                  ? () => _exportRun()
+                                  : null,
                             ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: surface,
+                        borderRadius: AppRadius.br16,
+                        border: Border.all(color: border.withValues(alpha: 0.3)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            offset: const Offset(0, 4),
+                            blurRadius: 12,
                           ),
                         ],
                       ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(flex: 3, child: _buildRunInfoCard()),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  flex: 2,
-                                  child: MetricsCard(
-                                    title: 'Total Requests',
-                                    value: provider.totalRequests.toString(),
-                                    icon: LucideIcons.hash,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  flex: 2,
-                                  child: MetricsCard(
-                                    title: 'Avg Response',
-                                    value: '${provider.avgResponseTime.toStringAsFixed(0)} ms',
-                                    icon: LucideIcons.timer,
-                                    color: Colors.orange,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  flex: 2,
-                                  child: MetricsCard(
-                                    title: 'Req / Sec',
-                                    value: provider.requestsPerSecond.toStringAsFixed(1),
-                                    icon: LucideIcons.gauge,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  flex: 2,
-                                  child: MetricsCard(
-                                    title: 'Errors',
-                                    value: provider.errorCount.toString(),
-                                    icon: LucideIcons.triangleAlert,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Expanded(
-                              child: Row(
+                      child: ClipRRect(
+                        borderRadius: AppRadius.br16,
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            children: [
+                              Row(
                                 children: [
+                                  Expanded(flex: 3, child: _buildRunInfoCard()),
+                                  const SizedBox(width: 16),
                                   Expanded(
-                                    child: RealtimeChart(
-                                      title: 'Response Time (ms)',
-                                      data: provider.responseTimePoints,
+                                    flex: 2,
+                                    child: MetricsCard(
+                                      title: 'Total Requests',
+                                      value: provider.totalRequests.toString(),
+                                      icon: LucideIcons.hash,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    flex: 2,
+                                    child: MetricsCard(
+                                      title: 'Avg Response',
+                                      value: '${provider.avgResponseTime.toStringAsFixed(0)} ms',
+                                      icon: LucideIcons.timer,
                                       color: Colors.orange,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
-                                    child: RealtimeChart(
-                                      title: 'Requests Per Second',
-                                      data: provider.rpsPoints,
+                                    flex: 2,
+                                    child: MetricsCard(
+                                      title: 'Req / Sec',
+                                      value: provider.requestsPerSecond.toStringAsFixed(1),
+                                      icon: LucideIcons.gauge,
                                       color: Colors.green,
-                                      isYAxisInteger: true,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    flex: 2,
+                                    child: MetricsCard(
+                                      title: 'Errors',
+                                      value: provider.errorCount.toString(),
+                                      icon: LucideIcons.triangleAlert,
+                                      color: Colors.red,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 16),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: RealtimeChart(
+                                        title: 'Response Time (ms)',
+                                        data: provider.responseTimePoints,
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: RealtimeChart(
+                                        title: 'Requests Per Second',
+                                        data: provider.rpsPoints,
+                                        color: Colors.green,
+                                        isYAxisInteger: true,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

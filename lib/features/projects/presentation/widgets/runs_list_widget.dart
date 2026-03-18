@@ -313,11 +313,11 @@ class _RunTileState extends State<_RunTile> {
               )
             ],
           ),
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              Icon(statusIcon, color: statusColor, size: 24),
-              const SizedBox(width: 14),
+              Icon(statusIcon, color: statusColor, size: 20),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,27 +326,29 @@ class _RunTileState extends State<_RunTile> {
                       children: [
                         Text(
                           'Run #${widget.run.id}',
-                          style: AppTypography.bodyLg.copyWith(
+                          style: AppTypography.body.copyWith(
                             color: textColor,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        PilotBadge(label: status, color: statusColor),
+                        PilotBadge(label: status, color: statusColor, compact: true),
                       ],
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 1),
                     Text(
                       'Flow ID: ${widget.run.flowId}',
                       style: AppTypography.caption.copyWith(
                         color: AppColors.textSecondary,
+                        fontSize: 11,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.run.startedAt.toLocal()),
                       style: AppTypography.caption.copyWith(
                         color: AppColors.textMuted,
+                        fontSize: 10,
                       ),
                     ),
                   ],

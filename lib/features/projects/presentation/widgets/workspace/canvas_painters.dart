@@ -360,15 +360,14 @@ class ConnectionPainter extends CustomPainter {
     const arrowSize = 6.0;
 
     final arrowPath = Path();
-    arrowPath.moveTo(tip.dx, tip.dy);
-    arrowPath.lineTo(tip.dx - arrowSize * 1.5 * 0.8, tip.dy - arrowSize * 0.8);
-    arrowPath.lineTo(tip.dx - arrowSize * 1.5 * 0.8, tip.dy + arrowSize * 0.8);
+    arrowPath.moveTo(0, 0);
+    arrowPath.lineTo(-arrowSize * 1.5, -arrowSize * 0.8);
+    arrowPath.lineTo(-arrowSize * 1.5, arrowSize * 0.8);
     arrowPath.close();
 
     canvas.save();
     canvas.translate(tip.dx, tip.dy);
     canvas.rotate(angle);
-    canvas.translate(-tip.dx, -tip.dy);
 
     canvas.drawPath(
       arrowPath,

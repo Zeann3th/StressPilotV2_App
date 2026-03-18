@@ -63,11 +63,11 @@ class _PilotButtonState extends State<PilotButton> {
     switch (widget.variant) {
       case PilotButtonVariant.primary:
         if (_isPressed) {
-          bgColor = AppColors.accentActive;
+          bgColor = isDark ? AppColors.darkGreenEnd : AppColors.lightGreenEnd;
         } else if (_isHovered || _isFocused) {
-          bgColor = AppColors.accentHover;
+          bgColor = isDark ? const Color(0xFF059669) : const Color(0xFF34D399);
         } else {
-          bgColor = AppColors.accent;
+          bgColor = isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart;
         }
         textColor = Colors.white;
         borderColor = _isFocused
@@ -77,17 +77,17 @@ class _PilotButtonState extends State<PilotButton> {
 
       case PilotButtonVariant.ghost:
         if (_isPressed) {
-          bgColor = AppColors.accent.withValues(alpha: 0.15);
+          bgColor = (isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart).withValues(alpha: 0.15);
         } else if (_isHovered || _isFocused) {
-          bgColor = AppColors.accent.withValues(alpha: 0.08);
+          bgColor = (isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart).withValues(alpha: 0.08);
         } else {
           bgColor = Colors.transparent;
         }
         textColor = (_isHovered || _isFocused)
-            ? AppColors.accentHover
+            ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
             : (isDark ? AppColors.textPrimary : AppColors.textLight);
         borderColor = _isFocused
-            ? AppColors.accent
+            ? (isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart)
             : (isDark ? AppColors.darkBorder : AppColors.lightBorder);
         break;
 
@@ -127,7 +127,12 @@ class _PilotButtonState extends State<PilotButton> {
           duration: AppDurations.short,
           padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
           decoration: BoxDecoration(
-            color: bgColor,
+            color: widget.variant == PilotButtonVariant.primary && !_isHovered && !_isPressed && !_isFocused
+                ? null
+                : bgColor,
+            gradient: widget.variant == PilotButtonVariant.primary && !_isHovered && !_isPressed && !_isFocused
+                ? AppGradients.green(isDark)
+                : null,
             borderRadius: AppRadius.br8,
             border: Border.all(color: borderColor, width: _isFocused ? 2 : 1),
             boxShadow: _isFocused

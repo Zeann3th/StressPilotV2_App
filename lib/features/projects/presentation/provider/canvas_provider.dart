@@ -15,6 +15,7 @@ class CanvasProvider extends ChangeNotifier {
   CanvasMode _canvasMode = CanvasMode.move;
   String? _selectedSourceNodeId;
   String? _selectedSourceHandle;
+  Offset? _tempEndPos;
 
   bool _isLoading = false;
   bool _isSaving = false;
@@ -28,10 +29,16 @@ class CanvasProvider extends ChangeNotifier {
   CanvasMode get canvasMode => _canvasMode;
   String? get selectedSourceNodeId => _selectedSourceNodeId;
   String? get selectedSourceHandle => _selectedSourceHandle;
+  Offset? get tempEndPos => _tempEndPos;
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   bool get isLocked => _isLocked;
+
+  void setTempEndPos(Offset? pos) {
+    _tempEndPos = pos;
+    notifyListeners();
+  }
 
   void toggleLock() {
     _isLocked = !_isLocked;
@@ -90,6 +97,7 @@ class CanvasProvider extends ChangeNotifier {
     _canvasMode = mode;
     _selectedSourceNodeId = null;
     _selectedSourceHandle = null;
+    _tempEndPos = null;
     notifyListeners();
   }
 
@@ -98,6 +106,7 @@ class CanvasProvider extends ChangeNotifier {
     if (_selectedSourceNodeId == nodeId && _selectedSourceHandle == handle) {
       _selectedSourceNodeId = null;
       _selectedSourceHandle = null;
+      _tempEndPos = null;
     } else {
       _selectedSourceNodeId = nodeId;
       _selectedSourceHandle = handle;
@@ -109,6 +118,8 @@ class CanvasProvider extends ChangeNotifier {
     if (_isLocked || _canvasMode != CanvasMode.connect || _selectedSourceNodeId == null) {
       return;
     }
+
+    if (_selectedSourceNodeId == targetNodeId) return;
 
     ConnectionType connType = ConnectionType.defaultType;
     if (_selectedSourceHandle == 'true') connType = ConnectionType.trueType;
@@ -126,6 +137,9 @@ class CanvasProvider extends ChangeNotifier {
       type: connType,
     ));
 
+    _selectedSourceNodeId = null;
+    _selectedSourceHandle = null;
+    _tempEndPos = null;
     notifyListeners();
   }
 

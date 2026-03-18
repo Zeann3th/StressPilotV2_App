@@ -23,13 +23,22 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+
     final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return Container(
       width: 232,
       decoration: BoxDecoration(
         color: bg,
-        border: Border(right: BorderSide(color: border, width: 1)),
+        borderRadius: AppRadius.br16,
+        border: Border.all(color: border.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +52,7 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
               runSpacing: 8,
               children: [
                 SizedBox(
-                  width: 100,
+                  width: 98,
                   child: _LogicChip(
                     type: FlowNodeType.start,
                     label: 'Start',
@@ -52,7 +61,7 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
                   ),
                 ),
                 SizedBox(
-                  width: 100,
+                  width: 98,
                   child: _LogicChip(
                     type: FlowNodeType.branch,
                     label: 'Branch',
@@ -61,7 +70,7 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
                   ),
                 ),
                 SizedBox(
-                  width: 100,
+                  width: 98,
                   child: _LogicChip(
                     type: FlowNodeType.subflow,
                     label: 'Subflow',
@@ -73,7 +82,7 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
             ),
           ),
 
-          Divider(height: 1, color: border),
+          const SizedBox(height: 1),
 
           Expanded(
             child: Column(

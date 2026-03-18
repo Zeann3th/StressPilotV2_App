@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/core/navigation/app_router.dart';
 
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 import 'package:stress_pilot/core/domain/entities/endpoint.dart';
@@ -15,6 +14,7 @@ import 'package:stress_pilot/core/domain/entities/project.dart';
 import '../widgets/key_value_editor.dart';
 import 'create_endpoint_dialog.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/buttons/pilot_button.dart';
 
 class ProjectEndpointsPage extends StatefulWidget {
   final Project project;
@@ -68,11 +68,12 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
   Widget build(BuildContext context) {
     final provider = context.watch<EndpointProvider>();
 
-    final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
     final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
     final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final secondaryText = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
 
     return Scaffold(
       backgroundColor: bg,
@@ -85,10 +86,10 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
               decoration: BoxDecoration(
                 color: surface,
                 borderRadius: AppRadius.br16,
-                border: Border.all(color: border.withValues(alpha: 0.3)),
+                border: Border.all(color: border.withValues(alpha: 0.5)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                     offset: const Offset(0, 4),
                     blurRadius: 12,
                   ),
@@ -98,62 +99,43 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                 borderRadius: AppRadius.br16,
                 child: Row(
                   children: [
-
+                    // Sidebar List
                     Container(
                       width: 300,
                       decoration: BoxDecoration(
                         color: surface,
                         border: Border(
                           right: BorderSide(
-                            color: border.withValues(alpha: 0.3),
+                            color: border.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
                       child: Column(
                         children: [
-
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                             child: Row(
                               children: [
-                                Material(
-                                  color: colors.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(8),
-                                    onTap: () => Navigator.of(context).pop(),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8),
-                                      child: Icon(LucideIcons.arrowLeft, size: 16, color: colors.onSurfaceVariant),
-                                    ),
-                                  ),
+                                PilotButton.ghost(
+                                  icon: LucideIcons.arrowLeft,
+                                  compact: true,
+                                  onPressed: () => Navigator.of(context).pop(),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     widget.project.name,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
-                                      color: colors.onSurface,
-                                    ),
+                                    style: AppTypography.heading.copyWith(color: textColor, fontSize: 15),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Material(
-                                  color: colors.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(8),
-                                    onTap: () => EnvironmentManagerDialog.show(
-                                      context,
-                                      widget.project.environmentId,
-                                      widget.project.name,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8),
-                                      child: Icon(LucideIcons.layers, size: 16, color: colors.primary),
-                                    ),
+                                PilotButton.ghost(
+                                  icon: LucideIcons.layers,
+                                  compact: true,
+                                  onPressed: () => EnvironmentManagerDialog.show(
+                                    context,
+                                    widget.project.environmentId,
+                                    widget.project.name,
                                   ),
                                 ),
                               ],
@@ -163,23 +145,22 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: SizedBox(
-                              height: 40,
+                              height: 36,
                               child: TextField(
                                 decoration: InputDecoration(
                                   hintText: 'Search endpoints...',
-                                  hintStyle: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
-                                  prefixIcon: Icon(LucideIcons.search, size: 16, color: colors.onSurfaceVariant),
+                                  hintStyle: TextStyle(fontSize: 12, color: secondaryText),
+                                  prefixIcon: Icon(LucideIcons.search, size: 14, color: secondaryText),
                                   filled: true,
-                                  fillColor: isDark ? colors.surfaceContainerHighest : const Color(0xFFF0F0F5),
+                                  fillColor: isDark ? AppColors.darkElevated : AppColors.lightElevated,
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide.none,
                                   ),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                  contentPadding: EdgeInsets.zero,
                                   isDense: true,
                                 ),
-                                style: const TextStyle(fontSize: 13),
-                                onChanged: (value) {},
+                                style: TextStyle(fontSize: 12, color: textColor),
                               ),
                             ),
                           ),
@@ -193,24 +174,17 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                 Text(
                                   'ENDPOINTS',
                                   style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.8,
-                                    color: colors.onSurfaceVariant,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                    color: secondaryText,
                                   ),
                                 ),
                                 const Spacer(),
-                                Material(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(6),
-                                    onTap: _createNewEndpoint,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4),
-                                      child: Icon(LucideIcons.plus, size: 16, color: colors.onSurfaceVariant),
-                                    ),
-                                  ),
+                                PilotButton.ghost(
+                                  icon: LucideIcons.plus,
+                                  compact: true,
+                                  onPressed: _createNewEndpoint,
                                 ),
                               ],
                             ),
@@ -221,14 +195,17 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                 ? Center(
                                     child: SizedBox(
                                       width: 20, height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2, 
+                                        color: isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart
+                                      ),
                                     ),
                                   )
                                 : RefreshIndicator(
                                     onRefresh: () => provider.refreshEndpoints(projectId: widget.project.id),
                                     child: ListView.builder(
                                       controller: _scrollCtrl,
-                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                       physics: const AlwaysScrollableScrollPhysics(),
                                       itemCount: provider.endpoints.length + (provider.hasMore ? 1 : 0),
                                       itemBuilder: (context, index) {
@@ -239,7 +216,10 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                               child: provider.isLoadingMore
                                                   ? SizedBox(
                                                       width: 16, height: 16,
-                                                      child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2, 
+                                                        color: isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart
+                                                      ),
                                                     )
                                                   : const SizedBox.shrink(),
                                             ),
@@ -250,39 +230,39 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                         final isSelected = _selectedEndpoint?.id == ep.id;
 
                                         return Padding(
-                                          padding: const EdgeInsets.only(bottom: 2),
-                                          child: Material(
-                                            color: isSelected
-                                                ? (isDark ? colors.primary.withValues(alpha: 0.15) : colors.primary.withValues(alpha: 0.08))
-                                                : Colors.transparent,
-                                            borderRadius: BorderRadius.circular(10),
-                                            child: InkWell(
-                                              onTap: () => setState(() => _selectedEndpoint = ep),
+                                          padding: const EdgeInsets.only(bottom: 4),
+                                          child: AnimatedContainer(
+                                            duration: AppDurations.short,
+                                            decoration: BoxDecoration(
                                               borderRadius: BorderRadius.circular(10),
-                                              hoverColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                                decoration: isSelected ? BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 1),
-                                                ) : null,
-                                                child: Row(
-                                                  children: [
-                                                    EndpointTypeBadge(type: ep.type, compact: true, inverse: false),
-                                                    const SizedBox(width: 10),
-                                                    Expanded(
-                                                      child: Text(
-                                                        ep.name,
-                                                        style: TextStyle(
-                                                          fontSize: 13,
-                                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                                          color: isSelected ? colors.primary : colors.onSurface,
+                                              gradient: isSelected ? AppGradients.green(isDark) : null,
+                                            ),
+                                            child: Material(
+                                              color: Colors.transparent,
+                                              borderRadius: BorderRadius.circular(10),
+                                              child: InkWell(
+                                                onTap: () => setState(() => _selectedEndpoint = ep),
+                                                borderRadius: BorderRadius.circular(10),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                                  child: Row(
+                                                    children: [
+                                                      EndpointTypeBadge(type: ep.type, compact: true, inverse: isSelected),
+                                                      const SizedBox(width: 10),
+                                                      Expanded(
+                                                        child: Text(
+                                                          ep.name,
+                                                          style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                                            color: isSelected ? Colors.white : textColor,
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
                                                         ),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
                                                       ),
-                                                    ),
-                                                  ],
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -336,6 +316,10 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryText = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -343,21 +327,21 @@ class _EmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainer,
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               shape: BoxShape.circle,
-              border: Border.all(color: Theme.of(context).colorScheme.outline),
+              border: Border.all(color: (isDark ? AppColors.darkBorder : AppColors.lightBorder).withValues(alpha: 0.5)),
             ),
             child: Icon(
               LucideIcons.box,
               size: 48,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: secondaryText.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             'No Endpoint Selected',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
+              color: textColor,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -367,22 +351,15 @@ class _EmptyState extends StatelessWidget {
             'Select an endpoint from the sidebar\nor create a new one to get started.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: secondaryText,
               fontSize: 13,
             ),
           ),
           const SizedBox(height: 24),
-          FilledButton(
+          PilotButton.primary(
+            label: 'Create Endpoint',
+            icon: LucideIcons.plus,
             onPressed: () => _showCreateDialog(context),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Create Endpoint'),
           ),
         ],
       ),
@@ -443,7 +420,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   bool? _isSuccess;
 
   late TabController _reqTabCtrl;
-  late TabController _resTabCtrl;
 
   @override
   void initState() {
@@ -479,7 +455,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     }
 
     _reqTabCtrl = TabController(length: 4, vsync: this);
-    _resTabCtrl = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -489,7 +464,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     _bodyCtrl.dispose();
     _successConditionCtrl.dispose();
     _reqTabCtrl.dispose();
-    _resTabCtrl.dispose();
     super.dispose();
   }
 
@@ -537,7 +511,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   }
 
   void _parseCurlCommand(String curlCommand) {
-
     final cleanCommand =
         curlCommand.replaceAll('\\\n', ' ').replaceAll('\\\r\n', ' ');
 
@@ -587,7 +560,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     if (dataMatch != null) {
       body = dataMatch.group(2) ?? '';
     } else {
-
       final dataNoQuoteRegExp =
           RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+([^{'"\s][^\s]*)''');
       final dataNoQuoteMatch = dataNoQuoteRegExp.firstMatch(cleanCommand);
@@ -629,12 +601,13 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         widget.endpoint.id,
         data,
       );
+      if (!mounted) return;
       widget.onUpdated(updated);
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Saved')),
       );
     } catch (e) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
@@ -668,6 +641,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
             'successCondition': _successConditionCtrl.text,
           });
 
+      if (!mounted) return;
       setState(() {
         _response = result;
 
@@ -682,33 +656,37 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _response = {'error': e.toString()};
       });
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final secondaryText = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
+    final accentColor = isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart;
 
     return Container(
-      color: isDark ? colors.surface : const Color(0xFFF5F5F7),
+      color: bg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-
+          // Header: Name + Actions
           Container(
-            padding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
             decoration: BoxDecoration(
-              color: colors.surface,
+              color: surface,
               border: Border(
-                bottom: BorderSide(
-                  color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED),
-                ),
+                bottom: BorderSide(color: border.withValues(alpha: 0.5)),
               ),
             ),
             child: Row(
@@ -719,417 +697,303 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText: 'Endpoint Name',
-                      hintStyle: TextStyle(color: colors.onSurfaceVariant),
+                      hintStyle: TextStyle(color: secondaryText),
                       contentPadding: EdgeInsets.zero,
                       isDense: true,
                     ),
-                    style: TextStyle(
-                      fontSize: 22,
+                    style: AppTypography.heading.copyWith(
+                      fontSize: 20,
                       fontWeight: FontWeight.w700,
-                      color: colors.onSurface,
+                      color: textColor,
                     ),
                   ),
                 ),
                 const SizedBox(width: 16),
-                TextButton.icon(
+                PilotButton.ghost(
+                  label: 'cURL',
+                  icon: LucideIcons.terminal,
                   onPressed: _showCurlPasteDialog,
-                  icon: const Icon(LucideIcons.terminal, size: 16),
-                  label: const Text('Paste cURL'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: colors.primary,
-                    textStyle: const TextStyle(fontSize: 13),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                FilledButton.icon(
-                  onPressed: _save,
-                  icon: const Icon(LucideIcons.save, size: 16),
-                  label: const Text('Save'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
+                  compact: true,
                 ),
                 const SizedBox(width: 8),
-                Material(
-                  color: isDark ? colors.surfaceContainerHighest : const Color(0xFFF0F0F5),
-                  borderRadius: BorderRadius.circular(10),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: widget.onDeleted,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Icon(LucideIcons.trash2, size: 18, color: colors.error),
-                    ),
-                  ),
+                PilotButton.danger(
+                  icon: LucideIcons.trash2,
+                  onPressed: widget.onDeleted,
+                  compact: true,
+                ),
+                const SizedBox(width: 8),
+                PilotButton.primary(
+                  label: 'Save',
+                  icon: LucideIcons.save,
+                  onPressed: _save,
+                  compact: true,
                 ),
               ],
             ),
           ),
 
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: Column(
               children: [
+                // Request Bar: Method + URL + Send
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: surface,
+                  child: Row(
+                    children: [
+                      Container(
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                          borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                          border: Border.all(color: border.withValues(alpha: 0.5)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _method,
+                            dropdownColor: surface,
+                            icon: Icon(LucideIcons.chevronDown, size: 12, color: secondaryText),
+                            items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].map((m) {
+                              final methodColor = {
+                                'GET': const Color(0xFF10B981),
+                                'POST': const Color(0xFF3B82F6),
+                                'PUT': const Color(0xFFF59E0B),
+                                'DELETE': const Color(0xFFEF4444),
+                                'PATCH': const Color(0xFF8B5CF6),
+                              }[m] ?? accentColor;
+                              return DropdownMenuItem(
+                                value: m, 
+                                child: Text(m, style: TextStyle(color: methodColor, fontSize: 13, fontWeight: FontWeight.w700))
+                              );
+                            }).toList(),
+                            onChanged: (v) => setState(() => _method = v!),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                            border: Border(
+                              top: BorderSide(color: border.withValues(alpha: 0.5)),
+                              bottom: BorderSide(color: border.withValues(alpha: 0.5)),
+                            ),
+                          ),
+                          child: TextField(
+                            controller: _urlCtrl,
+                            decoration: InputDecoration(
+                              hintText: 'https://api.example.com/v1/resource',
+                              hintStyle: TextStyle(color: secondaryText.withValues(alpha: 0.5), fontSize: 13),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                              isDense: true,
+                            ),
+                            style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: textColor),
+                            textAlignVertical: TextAlignVertical.center,
+                            onChanged: _handleUrlChanged,
+                          ),
+                        ),
+                      ),
+                      PilotButton.primary(
+                        label: 'Send',
+                        icon: LucideIcons.send,
+                        onPressed: _isLoading ? null : _send,
+                        compact: false,
+                      ),
+                    ],
+                  ),
+                ),
 
+                // Request Tabs
+                Container(
+                  height: 36,
+                  color: surface,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _SegmentedTabControl(
+                    controller: _reqTabCtrl,
+                    tabs: const ['Params', 'Headers', 'Body', 'Settings'],
+                  ),
+                ),
+
+                // Request Body/Config Area
                 Expanded(
                   flex: 3,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: colors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED)),
-                      boxShadow: isDark ? [] : [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
-                      ],
+                      border: Border(top: BorderSide(color: border.withValues(alpha: 0.3))),
                     ),
-                    child: Column(
-                    children: [
-
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                        child: Container(
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: isDark ? colors.surfaceContainerHighest : const Color(0xFFF5F5F7),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isDark ? colors.outlineVariant : const Color(0xFFE0E0E5)),
-                          ),
-                          child: Row(
-                            children: [
-
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                decoration: BoxDecoration(
-                                  border: Border(right: BorderSide(color: isDark ? colors.outlineVariant : const Color(0xFFE0E0E5))),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _method,
-                                    dropdownColor: colors.surface,
-                                    icon: Icon(LucideIcons.chevronDown, size: 12, color: colors.onSurfaceVariant),
-                                    items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].map((m) {
-                                      final methodColor = {
-                                        'GET': const Color(0xFF10B981),
-                                        'POST': const Color(0xFF3B82F6),
-                                        'PUT': const Color(0xFFF59E0B),
-                                        'DELETE': const Color(0xFFEF4444),
-                                        'PATCH': const Color(0xFF8B5CF6),
-                                      }[m] ?? colors.primary;
-                                      return DropdownMenuItem(value: m, child: Text(m, style: TextStyle(color: methodColor, fontSize: 13, fontWeight: FontWeight.w700)));
-                                    }).toList(),
-                                    onChanged: (v) => setState(() => _method = v!),
-                                  ),
-                                ),
-                              ),
-
-                              Expanded(
-                                child: TextField(
-                                  controller: _urlCtrl,
-                                  decoration: InputDecoration(
-                                    hintText: 'https://api.example.com/v1/resource',
-                                    hintStyle: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                                    isDense: true,
-                                  ),
-                                  style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: colors.onSurface),
-                                  textAlignVertical: TextAlignVertical.center,
-                                  onChanged: _handleUrlChanged,
-                                ),
-                              ),
-
-                              Padding(
-                                padding: const EdgeInsets.only(right: 4),
-                                child: SizedBox(
-                                  height: 36,
-                                  child: FilledButton.icon(
-                                    onPressed: _isLoading ? null : _send,
-                                    icon: _isLoading
-                                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                        : const Icon(LucideIcons.play, size: 14),
-                                    label: const Text('Send'),
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: colors.primary,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                                      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                    child: TabBarView(
+                      controller: _reqTabCtrl,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: KeyValueEditor(data: _params, onChanged: (d) => _params = d),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: SizedBox(
-                          height: 32,
-                          child: _SegmentedTabControl(
-                            controller: _reqTabCtrl,
-                            tabs: const [
-                              'Params',
-                              'Headers',
-                              'Body',
-                              'Configuration',
-                            ],
-                          ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(
-                                color: Theme.of(context).dividerTheme.color!,
-                              ),
+                        Padding(
+                          padding: const EdgeInsets.all(1),
+                          child: TextField(
+                            controller: _bodyCtrl,
+                            maxLines: null,
+                            expands: true,
+                            style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: textColor),
+                            decoration: InputDecoration(
+                              hintText: 'Request Body (JSON)',
+                              hintStyle: TextStyle(color: secondaryText),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.all(16),
+                              fillColor: bg.withValues(alpha: 0.3),
+                              filled: true,
                             ),
                           ),
-                          child: TabBarView(
-                            controller: _reqTabCtrl,
-                            physics: const NeverScrollableScrollPhysics(),
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: KeyValueEditor(
-                                  data: _params,
-                                  onChanged: (d) => _params = d,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: KeyValueEditor(
-                                  data: _headers,
-                                  onChanged: (d) => _headers = d,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(1),
-                                child: TextField(
-                                  controller: _bodyCtrl,
-                                  maxLines: null,
-                                  expands: true,
-                                  style: TextStyle(
-                                    fontFamily: 'JetBrains Mono',
-                                    fontSize: 13,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText: 'Request Body (JSON)',
-                                    hintStyle: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.all(16),
-                                  ),
-                                ),
-                              ),
-                              ListView(
-                                padding: const EdgeInsets.all(16),
-                                children: [
-                                  Text(
-                                    'Success Condition (SpEL)',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  TextField(
-                                    controller: _successConditionCtrl,
-                                    decoration: const InputDecoration(
-                                      hintText:
-                                          'e.g., #statusCode == 200 && #body.status == "OK"',
-                                      border: OutlineInputBorder(),
-                                      helperText:
-                                          'Available variables: #statusCode, #body, #headers, #responseTime',
-                                    ),
-                                    minLines: 1,
-                                    maxLines: 3,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Text(
-                                    'Variables',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    constraints: const BoxConstraints(
-                                      minHeight: 100,
-                                      maxHeight: 300,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Theme.of(
-                                          context,
-                                        ).dividerTheme.color!,
-                                      ),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: KeyValueEditor(
-                                      data: _variables,
-                                      onChanged: (d) => _variables = d,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                        _buildSettingsTab(isDark, textColor, secondaryText, border),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
 
+                // Response Divider
+                Container(
+                  height: 1,
+                  color: border.withValues(alpha: 0.5),
+                ),
+
+                // Response Area
                 Expanded(
                   flex: 2,
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: colors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED)),
-                      boxShadow: isDark ? [] : [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
-                      ],
-                    ),
+                    color: bg,
                     child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                          border: Border(
-                            bottom: BorderSide(color: isDark ? colors.outlineVariant : const Color(0xFFE8E8ED)),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: surface,
+                            border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
+                          ),
+                          child: Row(
+                            children: [
+                              Text('Response', style: TextStyle(color: secondaryText, fontWeight: FontWeight.w600, fontSize: 12)),
+                              const Spacer(),
+                              if (_statusCode != null) ...[
+                                _buildStatusBadge(_isSuccess == true, _statusCode!),
+                                const SizedBox(width: 12),
+                                Text('${_responseTime}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono')),
+                              ],
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Response',
-                              style: TextStyle(
-                                color: colors.onSurfaceVariant,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const Spacer(),
-                            if (_statusCode != null) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: (_isSuccess == true)
-                                      ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                                      : const Color(0xFFEF4444).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
+                        Expanded(
+                          child: _response == null
+                              ? _buildResponseEmptyState(secondaryText)
+                              : SingleChildScrollView(
+                                  padding: const EdgeInsets.all(16),
+                                  child: JsonViewer(json: _filterResponse(_response!)),
                                 ),
-                                child: Text(
-                                  _isSuccess == true
-                                      ? 'SUCCESS (${_statusCode ?? '-'})'
-                                      : 'FAILED (${_statusCode ?? '-'})',
-                                  style: TextStyle(
-                                    color: (_isSuccess == true)
-                                        ? const Color(0xFF10B981)
-                                        : const Color(0xFFEF4444),
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                '${_responseTime}ms',
-                                style: TextStyle(
-                                  color: colors.onSurfaceVariant,
-                                  fontSize: 12,
-                                  fontFamily: 'JetBrains Mono',
-                                ),
-                              ),
-                            ],
-                          ],
                         ),
-                      ),
-                      Expanded(
-                        child: _response == null
-                            ? Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(LucideIcons.send, size: 32, color: colors.onSurfaceVariant.withValues(alpha: 0.4)),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      'Hit Send to execute the request',
-                                      style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : SingleChildScrollView(
-                                padding: const EdgeInsets.all(16),
-                                child: JsonViewer(
-                                  json: () {
-                                    final r = Map<String, dynamic>.from(
-                                      _response!,
-                                    );
-                                    final filtered = <String, dynamic>{};
-                                    if (r.containsKey('message')) {
-                                      filtered['message'] = r['message'];
-                                    }
-                                    if (r.containsKey('data')) {
-                                      filtered['data'] = r['data'];
-                                    } else if (r.containsKey('body')) {
-                                      filtered['data'] = r['body'];
-                                    } else {
-                                      if (r.containsKey('error')) {
-                                        filtered['error'] = r['error'];
-                                      }
-                                    }
-                                    if (filtered.isEmpty) {
-                                      final metadataKeys = [
-                                        'statusCode',
-                                        'success',
-                                        'responseTimeMs',
-                                        'timestamp',
-                                        'headers',
-                                      ];
-                                      r.removeWhere(
-                                        (k, v) => metadataKeys.contains(k),
-                                      );
-                                      return r;
-                                    }
-                                    return filtered;
-                                  }(),
-                                ),
-                              ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   ),
                 ),
               ],
-            ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildSettingsTab(bool isDark, Color textColor, Color secondaryText, Color border) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('Success Condition (SpEL)', style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _successConditionCtrl,
+          style: TextStyle(fontSize: 13, color: textColor),
+          decoration: InputDecoration(
+            hintText: 'e.g., #statusCode == 200 && #body.status == "OK"',
+            hintStyle: TextStyle(color: secondaryText.withValues(alpha: 0.5)),
+            filled: true,
+            fillColor: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+            helperText: 'Available variables: #statusCode, #body, #headers, #responseTime',
+            helperStyle: TextStyle(color: secondaryText, fontSize: 11),
+          ),
+          minLines: 1,
+          maxLines: 3,
+        ),
+        const SizedBox(height: 24),
+        Text('Variables', style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13)),
+        const SizedBox(height: 8),
+        Container(
+          constraints: const BoxConstraints(minHeight: 100, maxHeight: 300),
+          decoration: BoxDecoration(
+            border: Border.all(color: border.withValues(alpha: 0.5)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: KeyValueEditor(data: _variables, onChanged: (d) => _variables = d),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusBadge(bool success, int code) {
+    final color = success ? AppColors.success : AppColors.error;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        success ? 'SUCCESS ($code)' : 'FAILED ($code)',
+        style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: 0.5),
+      ),
+    );
+  }
+
+  Widget _buildResponseEmptyState(Color secondaryText) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(LucideIcons.send, size: 32, color: secondaryText.withValues(alpha: 0.2)),
+          const SizedBox(height: 12),
+          Text('Hit Send to execute the request', style: TextStyle(color: secondaryText, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  Map<String, dynamic> _filterResponse(Map<String, dynamic> r) {
+    final filtered = <String, dynamic>{};
+    if (r.containsKey('message')) filtered['message'] = r['message'];
+    if (r.containsKey('data')) {
+      filtered['data'] = r['data'];
+    } else if (r.containsKey('body')) {
+      filtered['data'] = r['body'];
+    } else if (r.containsKey('error')) {
+      filtered['error'] = r['error'];
+    }
+    
+    if (filtered.isEmpty) {
+      final metadataKeys = ['statusCode', 'success', 'responseTimeMs', 'timestamp', 'headers'];
+      final cleaned = Map<String, dynamic>.from(r);
+      cleaned.removeWhere((k, v) => metadataKeys.contains(k));
+      return cleaned;
+    }
+    return filtered;
   }
 }
 
@@ -1162,10 +1026,16 @@ class _SegmentedTabControlState extends State<_SegmentedTabControl> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final elevated = isDark ? AppColors.darkElevated : AppColors.lightElevated;
+    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final secondaryText = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
+
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
+        color: elevated,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1175,13 +1045,11 @@ class _SegmentedTabControlState extends State<_SegmentedTabControl> {
             child: GestureDetector(
               onTap: () => widget.controller.animateTo(index),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: AppDurations.short,
                 curve: Curves.easeOut,
                 margin: const EdgeInsets.symmetric(horizontal: 1),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? Theme.of(context).cardTheme.color
-                      : Colors.transparent,
+                  color: isSelected ? surface : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                   boxShadow: isSelected
                       ? [
@@ -1192,18 +1060,17 @@ class _SegmentedTabControlState extends State<_SegmentedTabControl> {
                           ),
                         ]
                       : [],
+                  border: isSelected 
+                    ? Border.all(color: (isDark ? AppColors.darkBorder : AppColors.lightBorder).withValues(alpha: 0.5))
+                    : null,
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   widget.tabs[index],
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    color: isSelected ? textColor : secondaryText,
                   ),
                 ),
               ),

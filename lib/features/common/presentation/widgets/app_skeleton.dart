@@ -94,7 +94,8 @@ class _AppSkeletonState extends State<AppSkeleton>
                           const SizedBox(height: 16),
 
                           Expanded(
-                            child: Padding(
+                            child: SingleChildScrollView(
+                              physics: const NeverScrollableScrollPhysics(),
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Column(
                                 children: [

@@ -139,7 +139,10 @@ class _TopBarIconState extends State<_TopBarIcon> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = _isHovered ? AppColors.accentHover : AppColors.textSecondary;
+    final accent = isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart;
+    final accentHover = isDark ? const Color(0xFF059669) : const Color(0xFF34D399);
+    
+    final iconColor = _isHovered ? accentHover : (isDark ? AppColors.textSecondary : AppColors.textLightSecondary);
 
     return ShadTooltip(
       builder: (context) => Text(widget.tooltip),
@@ -155,7 +158,7 @@ class _TopBarIconState extends State<_TopBarIcon> {
             height: 40,
             decoration: BoxDecoration(
               color: _isHovered
-                  ? (isDark ? AppColors.darkSurface : AppColors.accent.withValues(alpha: 0.06))
+                  ? accent.withValues(alpha: 0.1)
                   : Colors.transparent,
               borderRadius: AppRadius.br8,
             ),
