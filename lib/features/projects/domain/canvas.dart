@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:graphview/graphview.dart' as gv;
 
 enum FlowNodeType { start, endpoint, branch, subflow }
 
@@ -18,7 +17,11 @@ class CanvasNode {
     this.data = const {},
     this.width = 160,
     this.height = 90,
-  });
+  }) : actualWidth = type == FlowNodeType.branch ? 120 : width,
+       actualHeight = type == FlowNodeType.branch ? 120 : height;
+
+  final double actualWidth;
+  final double actualHeight;
 
   CanvasNode copyWith({
     String? id,
@@ -67,10 +70,6 @@ class CanvasNode {
       width: (json['width'] as num?)?.toDouble() ?? 160,
       height: (json['height'] as num?)?.toDouble() ?? 90,
     );
-  }
-
-  gv.Node toGraphNode() {
-    return gv.Node.Id(id);
   }
 }
 

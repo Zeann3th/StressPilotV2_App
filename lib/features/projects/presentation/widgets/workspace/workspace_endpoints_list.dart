@@ -52,7 +52,11 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
   Future<void> _handleUpload(BuildContext context) async {
     try {
       final capabilities = await getIt<UtilityService>().getCapabilities();
-      final formats = capabilities.parsers.expand((p) => p.formats).map((e) => e.toLowerCase()).toSet().toList();
+      final formats = capabilities.parsers
+          .expand((p) => p.formats)
+          .map((e) => e.toLowerCase().replaceAll('.', ''))
+          .toSet()
+          .toList();
 
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart' hide Flow;
-import 'package:graphview/graphview.dart' as gv;
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/design/tokens.dart';
@@ -11,6 +10,7 @@ import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dia
 import 'package:stress_pilot/features/projects/presentation/widgets/node_configuration_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/subflow_configuration_dialog.dart';
 import 'package:uuid/uuid.dart';
+import 'package:vector_math/vector_math_64.dart' hide Colors;
 import 'dart:convert';
 import 'dart:ui';
 
@@ -84,12 +84,8 @@ class _CanvasContent extends StatefulWidget {
 }
 
 class _CanvasContentState extends State<_CanvasContent> with SingleTickerProviderStateMixin {
-  final gv.SugiyamaConfiguration configuration = gv.SugiyamaConfiguration()
-    ..orientation = gv.SugiyamaConfiguration.ORIENTATION_LEFT_RIGHT
-    ..nodeSeparation = 100
-    ..levelSeparation = 150;
-
   late AnimationController _animationController;
+  final TransformationController _transformationController = TransformationController();
   CanvasProvider? _canvasProvider;
 
   @override
@@ -102,26 +98,19 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
       duration: const Duration(seconds: 2),
     )..repeat();
 
+    // Center the initial view
+    _transformationController.value = Matrix4.identity()
+      ..setTranslationRaw(-3500.0, -3500.0, 0.0);
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
-        await _canvasProvider?.loadFlowLayout(widget.flowId);
-        if (!mounted) return;
-
         final flowProvider = context.read<FlowProvider>();
         final endpointProvider = context.read<EndpointProvider>();
-        try {
-          final flowId = int.parse(widget.flowId);
-          final flow = await flowProvider.getFlow(flowId);
-          if (flow.steps.isNotEmpty) {
-            _canvasProvider?.syncWithBackend(
-              flow.steps,
-              endpointProvider.endpoints,
-              flowProvider.flows,
-            );
-          }
-        } catch (e) {
-          debugPrint('Failed to load flow configuration: $e');
-        }
+        await _canvasProvider?.loadFlowLayout(
+          widget.flowId,
+          flowProvider,
+          endpointProvider.endpoints,
+        );
       }
     });
   }
@@ -176,63 +165,42 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
             onAcceptWithDetails: (details) => _handleDrop(details, context),
             builder: (context, candidateData, rejectedData) {
               return InteractiveViewer(
+                transformationController: _transformationController,
                 panEnabled: canvasProvider.canvasMode == CanvasMode.move,
-                boundaryMargin: const EdgeInsets.all(8000),
+                boundaryMargin: const EdgeInsets.all(4000),
                 minScale: 0.1,
-                maxScale: 4.0,
+                maxScale: 2.0,
                 constrained: false,
                 child: Container(
+                  width: 8000,
+                  height: 8000,
                   color: Colors.transparent,
-                  constraints: BoxConstraints(
-                    minWidth: MediaQuery.of(context).size.width,
-                    minHeight: MediaQuery.of(context).size.height,
-                  ),
                   child: Stack(
                     children: [
-                      if (canvasProvider.graph.nodes.isNotEmpty)
-                      gv.GraphView(
-                        graph: canvasProvider.graph,
-                        algorithm: gv.SugiyamaAlgorithm(configuration),
-                        paint: Paint()
-                          ..color = colors.onSurfaceVariant.withValues(alpha: 0.5)
-                          ..strokeWidth = 2
-                          ..style = PaintingStyle.stroke,
-                        builder: (gv.Node node) {
-                          final nodeId = node.key?.value as String?;
-                          if (nodeId == null) return const SizedBox.shrink();
-
-                          final canvasNode = canvasProvider.nodes
-                              .where((n) => n.id == nodeId)
-                              .firstOrNull;
-
-                          if (canvasNode == null) return const SizedBox.shrink();
-
-                          return _buildNodeWidget(canvasNode, canvasProvider, colors);
-                        },
-                      ),
-                    
-                    if (canvasProvider.graph.nodes.isNotEmpty)
+                      // Edges layer
                       Positioned.fill(
-                        child: IgnorePointer(
-                          child: AnimatedBuilder(
-                            animation: _animationController,
-                            builder: (context, child) {
-                              return CustomPaint(
-                                painter: _EdgeOverlayPainter(
-                                  nodes: canvasProvider.nodes,
-                                  connections: canvasProvider.connections,
-                                  graph: canvasProvider.graph,
-                                  animationOffset: _animationController.value * 14.0,
-                                  colors: colors,
-                                ),
-                              );
-                            },
-                          ),
+                        child: AnimatedBuilder(
+                          animation: _animationController,
+                          builder: (context, child) {
+                            return CustomPaint(
+                              painter: _EdgeOverlayPainter(
+                                nodes: canvasProvider.nodes,
+                                connections: canvasProvider.connections,
+                                animationOffset: _animationController.value * 14.0,
+                                colors: colors,
+                              ),
+                            );
+                          },
                         ),
                       ),
-                  ],
+                      // Nodes layer
+                      ...canvasProvider.nodes.map((node) {
+                        return _buildNodeWidget(node, canvasProvider, colors);
+                      }),
+                    ],
+                  ),
                 ),
-              ));
+              );
             },
           ),
         ),
@@ -250,37 +218,54 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
   }
 
   Widget _buildNodeWidget(CanvasNode node, CanvasProvider provider, ColorScheme colors) {
-    return GestureDetector(
-      onDoubleTap: () => _handleNodeDoubleTap(node),
-      onTap: () {
-        if (provider.canvasMode == CanvasMode.connect) {
-          if (provider.selectedSourceNodeId != null) {
-            provider.connectToTarget(node.id);
-          } else {
-            provider.selectSourceNode(node.id);
+    return Positioned(
+      left: node.position.dx,
+      top: node.position.dy,
+      width: node.actualWidth,
+      // Removed fixed height to allow nodes to grow naturally and prevent RenderFlex overflow
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onDoubleTap: () => _handleNodeDoubleTap(node),
+        onTap: () {
+          if (provider.canvasMode == CanvasMode.connect) {
+            if (provider.selectedSourceNodeId != null) {
+              provider.connectToTarget(node.id);
+            } else {
+              provider.selectSourceNode(node.id);
+            }
           }
-        }
-      },
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          _NodeBody(node: node, provider: provider, colors: colors),
-          if (provider.selectedSourceNodeId == node.id)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.primary, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                    ),
-                  ],
-                ),
+        },
+        child: MouseRegion(
+          cursor: provider.canvasMode == CanvasMode.move ? SystemMouseCursors.grab : SystemMouseCursors.click,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(
+                onPanUpdate: provider.canvasMode == CanvasMode.move ? (details) {
+                  provider.updateNodePosition(node.id, node.position + details.delta);
+                } : null,
+                child: _NodeBody(node: node, provider: provider, colors: colors),
               ),
-            ),
-        ],
+              if (provider.selectedSourceNodeId == node.id)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(node.type == FlowNodeType.branch ? 12 : 16),
+                        border: Border.all(color: colors.primary, width: 3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.primary.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -302,11 +287,33 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
   }
 
   void _handleDrop(DragTargetDetails<DragData> details, BuildContext context) {
+    // Get the global offset of the drop
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final Offset localOffset = renderBox.globalToLocal(details.offset);
+    
+    // Get the InteractiveViewer transformation
+    final Matrix4 transform = _transformationController.value;
+    Offset canvasPosition;
+    
+    // Ensure matrix is invertible before attempting calculation
+    if (transform.determinant() != 0.0) {
+      final Matrix4 inverse = Matrix4.inverted(transform);
+      // Map the local coordinate back to the canvas coordinates
+      final Vector3 transformedPoint = inverse.transform3(Vector3(localOffset.dx, localOffset.dy, 0));
+      canvasPosition = Offset(transformedPoint.x, transformedPoint.y);
+    } else {
+      // Fallback: if matrix is not invertible (singular), just use the local offset
+      // This should ideally not happen but prevents the app from crashing.
+      canvasPosition = localOffset;
+    }
+
     final newNode = CanvasNode(
       id: const Uuid().v4(),
       type: details.data.type,
-      position: Offset.zero,
+      position: canvasPosition,
       data: details.data.payload,
+      width: details.data.type == FlowNodeType.start ? 48 : (details.data.type == FlowNodeType.branch ? 120 : (details.data.type == FlowNodeType.subflow ? 180 : 160)),
+      height: details.data.type == FlowNodeType.start ? 48 : (details.data.type == FlowNodeType.branch ? 120 : (details.data.type == FlowNodeType.subflow ? 64 : 100)),
     );
     context.read<CanvasProvider>().addNode(newNode);
   }
@@ -320,6 +327,8 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
     if (result != null && mounted) {
       final canvasProvider = context.read<CanvasProvider>();
       final flowProvider = context.read<FlowProvider>();
+      final endpointProvider = context.read<EndpointProvider>();
+      
       canvasProvider.updateNodeData(node.id, result);
       
       final scaffoldMessenger = AppNavigator.scaffoldMessengerKey.currentState;
@@ -327,7 +336,12 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
       
       try {
         final flowId = int.parse(widget.flowId);
-        await canvasProvider.saveFlowConfiguration(flowId, flowProvider);
+        await canvasProvider.saveFlowConfiguration(
+          flowId, 
+          flowProvider,
+          endpoints: endpointProvider.endpoints,
+          flows: flowProvider.flows,
+        );
         scaffoldMessenger?.showSnackBar(const SnackBar(content: Text('Node configuration saved')));
       } catch (e) {
         scaffoldMessenger?.showSnackBar(SnackBar(content: Text('Failed to save: $e'), backgroundColor: theme.colorScheme.error));
@@ -345,6 +359,8 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
     if (result != null && mounted) {
       final canvasProvider = context.read<CanvasProvider>();
       final flowProvider = context.read<FlowProvider>();
+      final endpointProvider = context.read<EndpointProvider>();
+      
       canvasProvider.updateNodeData(node.id, {'subflowId': result.id.toString(), 'flowName': result.name});
       
       final scaffoldMessenger = AppNavigator.scaffoldMessengerKey.currentState;
@@ -352,7 +368,12 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
       
       try {
         final flowId = int.parse(widget.flowId);
-        await canvasProvider.saveFlowConfiguration(flowId, flowProvider);
+        await canvasProvider.saveFlowConfiguration(
+          flowId, 
+          flowProvider,
+          endpoints: endpointProvider.endpoints,
+          flows: flowProvider.flows,
+        );
         scaffoldMessenger?.showSnackBar(const SnackBar(content: Text('Subflow configuration saved')));
       } catch (e) {
         scaffoldMessenger?.showSnackBar(SnackBar(content: Text('Failed to save: $e'), backgroundColor: theme.colorScheme.error));
@@ -449,9 +470,15 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
                     : () async {
                         final flowId = int.parse(widget.flowId);
                         final flowProvider = context.read<FlowProvider>();
+                        final endpointProvider = context.read<EndpointProvider>();
                         final scaffoldMessenger = AppNavigator.scaffoldMessengerKey.currentState;
                         try {
-                          await provider.saveFlowConfiguration(flowId, flowProvider);
+                          await provider.saveFlowConfiguration(
+                            flowId, 
+                            flowProvider,
+                            endpoints: endpointProvider.endpoints,
+                            flows: flowProvider.flows,
+                          );
                           scaffoldMessenger?.showSnackBar(const SnackBar(content: Text('Flow saved.')));
                         } catch (e) {
                           scaffoldMessenger?.showSnackBar(SnackBar(content: Text('Error saving: $e')));
@@ -500,14 +527,12 @@ class _CanvasContentState extends State<_CanvasContent> with SingleTickerProvide
 class _EdgeOverlayPainter extends CustomPainter {
   final List<CanvasNode> nodes;
   final List<CanvasConnection> connections;
-  final gv.Graph graph;
   final double animationOffset;
   final ColorScheme colors;
 
   _EdgeOverlayPainter({
     required this.nodes,
     required this.connections,
-    required this.graph,
     required this.animationOffset,
     required this.colors,
   });
@@ -521,16 +546,14 @@ class _EdgeOverlayPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     for (final conn in connections) {
-      final sourceGv = graph.nodes.where((n) => n.key?.value == conn.sourceNodeId).firstOrNull;
-      final targetGv = graph.nodes.where((n) => n.key?.value == conn.targetNodeId).firstOrNull;
-      
-      if (sourceGv == null || targetGv == null) continue;
-
       final sourceNode = nodes.where((n) => n.id == conn.sourceNodeId).firstOrNull;
-      if (sourceNode == null) continue;
+      final targetNode = nodes.where((n) => n.id == conn.targetNodeId).firstOrNull;
+      
+      if (sourceNode == null || targetNode == null) continue;
 
-      final start = Offset(sourceGv.x, sourceGv.y);
-      final end = Offset(targetGv.x, targetGv.y);
+      // Calculate centers
+      final start = sourceNode.position + Offset(sourceNode.actualWidth / 2, sourceNode.actualHeight / 2);
+      final end = targetNode.position + Offset(targetNode.actualWidth / 2, targetNode.actualHeight / 2);
 
       _drawAnimatedDashes(canvas, start, end, paint);
 
@@ -543,6 +566,8 @@ class _EdgeOverlayPainter extends CustomPainter {
   void _drawAnimatedDashes(Canvas canvas, Offset start, Offset end, Paint paint) {
     final path = Path();
     path.moveTo(start.dx, start.dy);
+    
+    // Use a bezier curve or just a line. Line is simpler for now to fix the "off" issue.
     path.lineTo(end.dx, end.dy);
 
     const dashWidth = 8.0;
@@ -604,8 +629,12 @@ class _NodeBody extends StatelessWidget {
   Widget _buildStandard(ColorScheme colors) {
     final type = node.data['type'] ?? 'HTTP';
     final methodColor = _getTypeColor(type);
+    final hasPre = node.data['preProcessor'] != null && (node.data['preProcessor'] as Map).isNotEmpty;
+    final hasPost = node.data['postProcessor'] != null && (node.data['postProcessor'] as Map).isNotEmpty;
+
     return Container(
       width: node.width,
+      constraints: BoxConstraints(minHeight: node.height),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.surface,
@@ -620,10 +649,18 @@ class _NodeBody extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: methodColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-                child: Text(type.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: methodColor)),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: methodColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                    child: Text(type.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: methodColor)),
+                  ),
+                  if (node.data['method'] != null) ...[
+                    const SizedBox(width: 4),
+                    Text(node.data['method'].toString().toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: colors.onSurfaceVariant)),
+                  ],
+                ],
               ),
               IconButton(
                 onPressed: () => provider.removeNode(node.id),
@@ -633,9 +670,19 @@ class _NodeBody extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(node.data['name'] ?? "Endpoint", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text(node.data['url'] ?? "Action node", style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant, fontFamily: 'JetBrains Mono'), maxLines: 1, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 2),
+          Text(node.data['url'] ?? "Action node", style: TextStyle(fontSize: 10, color: colors.onSurfaceVariant, fontFamily: 'JetBrains Mono'), maxLines: 1, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              if (hasPre) _InfoBadge(icon: Icons.login_rounded, label: 'PRE', color: Colors.orange),
+              if (hasPost) _InfoBadge(icon: Icons.logout_rounded, label: 'POST', color: Colors.purple),
+            ],
+          ),
         ],
       ),
     );
@@ -685,25 +732,77 @@ class _NodeBody extends StatelessWidget {
   }
 
   Widget _buildBranch(ColorScheme colors) {
-    return Container(
-      width: node.width,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border.all(color: colors.primary.withValues(alpha: 0.5), width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    return SizedBox(
+      width: node.actualWidth,
+      height: node.actualHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          const Icon(Icons.call_split_rounded, size: 20, color: Colors.grey),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _BranchHandle(label: 'T', color: Colors.green, isSelected: provider.selectedSourceNodeId == node.id && provider.selectedSourceHandle == 'true', onTap: () => provider.selectSourceNode(node.id, 'true')),
-              _BranchHandle(label: 'F', color: Colors.red, isSelected: provider.selectedSourceNodeId == node.id && provider.selectedSourceHandle == 'false', onTap: () => provider.selectSourceNode(node.id, 'false')),
-            ],
+          // Diamond shape
+          Center(
+            child: Transform.rotate(
+              angle: 0.785398, // 45 degrees
+              child: Container(
+                width: node.actualWidth * 0.75,
+                height: node.actualHeight * 0.75,
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  border: Border.all(color: colors.primary.withValues(alpha: 0.5), width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.primary.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Content
+          Positioned.fill(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.call_split_rounded, size: 16, color: colors.primary),
+                    const SizedBox(width: 4),
+                    Text('BRANCH', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colors.primary, letterSpacing: 0.8)),
+                    const SizedBox(width: 2),
+                    IconButton(
+                      onPressed: () => provider.removeNode(node.id), 
+                      icon: const Icon(Icons.close, size: 12), 
+                      padding: EdgeInsets.zero, 
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // 2x2 style handles
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _BranchHandle(
+                      label: 'TRUE', 
+                      color: Colors.green, 
+                      isSelected: provider.selectedSourceNodeId == node.id && provider.selectedSourceHandle == 'true', 
+                      onTap: () => provider.selectSourceNode(node.id, 'true')
+                    ),
+                    const SizedBox(width: 6),
+                    _BranchHandle(
+                      label: 'FALSE', 
+                      color: Colors.red, 
+                      isSelected: provider.selectedSourceNodeId == node.id && provider.selectedSourceHandle == 'false', 
+                      onTap: () => provider.selectSourceNode(node.id, 'false')
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -719,6 +818,34 @@ class _NodeBody extends StatelessWidget {
   }
 }
 
+class _InfoBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _InfoBadge({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 2),
+          Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
+  }
+}
+
 class _BranchHandle extends StatelessWidget {
   final String label;
   final Color color;
@@ -729,16 +856,32 @@ class _BranchHandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      borderRadius: BorderRadius.circular(6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
-          border: Border.all(color: isSelected ? color : color.withValues(alpha: 0.3)),
+          color: isSelected ? color : color.withValues(alpha: 0.1),
+          border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
           borderRadius: BorderRadius.circular(6),
+          boxShadow: isSelected ? [
+            BoxShadow(
+              color: color.withValues(alpha: 0.4),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            )
+          ] : [],
         ),
-        child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+        child: Text(
+          label, 
+          style: TextStyle(
+            fontSize: 9, 
+            fontWeight: FontWeight.w900, 
+            color: isSelected ? Colors.white : color,
+          ),
+        ),
       ),
     );
   }

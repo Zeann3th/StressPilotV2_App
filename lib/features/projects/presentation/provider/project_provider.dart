@@ -197,7 +197,11 @@ class ProjectProvider extends ChangeNotifier {
   Future<Project> importProject() async {
     try {
       final capabilities = await getIt<UtilityService>().getCapabilities();
-      final formats = capabilities.parsers.expand((p) => p.formats).map((e) => e.toLowerCase()).toSet().toList();
+      final formats = capabilities.parsers
+          .expand((p) => p.formats)
+          .map((e) => e.toLowerCase().replaceAll('.', ''))
+          .toSet()
+          .toList();
       
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Import Project',

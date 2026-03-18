@@ -200,35 +200,72 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailRow('Name', endpoint.name),
-          _buildDetailRow('Type', endpoint.type),
-          _buildDetailRow('URL', endpoint.url ?? '—'),
-          if (endpoint.httpMethod != null)
-            _buildDetailRow('Method', endpoint.httpMethod!),
-          if (endpoint.description != null && endpoint.description!.isNotEmpty)
-            _buildDetailRow('Description', endpoint.description!),
+          _buildDetailSection('Basic Information', [
+            _buildDetailRow('Name', endpoint.name),
+            _buildDetailRow('Type', endpoint.type),
+            _buildDetailRow('URL', endpoint.url ?? '—'),
+            if (endpoint.httpMethod != null)
+              _buildDetailRow('Method', endpoint.httpMethod!.toUpperCase()),
+            if (endpoint.description != null && endpoint.description!.isNotEmpty)
+              _buildDetailRow('Description', endpoint.description!),
+          ]),
           
-          const SizedBox(height: 20),
+          if (endpoint.type == 'GRPC')
+            _buildDetailSection('gRPC Configuration', [
+              _buildDetailRow('Service', endpoint.grpcServiceName ?? '—'),
+              _buildDetailRow('Method', endpoint.grpcMethodName ?? '—'),
+              _buildDetailRow('Stub Path', endpoint.grpcStubPath ?? '—'),
+            ]),
+
+          if (endpoint.type == 'GRAPHQL')
+            _buildDetailSection('GraphQL Configuration', [
+              _buildDetailRow('Operation', endpoint.graphqlOperationType ?? '—'),
+            ]),
+
+          if (endpoint.successCondition != null && endpoint.successCondition!.isNotEmpty)
+            _buildDetailSection('Validation', [
+              _buildDetailRow('Success Condition', endpoint.successCondition!),
+            ]),
+
+          const SizedBox(height: 8),
           Text(
-            'Raw Data',
-            style: AppTypography.bodyLg.copyWith(fontWeight: FontWeight.bold),
+            'Data & Payload',
+            style: AppTypography.bodyLg.copyWith(fontWeight: FontWeight.bold, color: colors.primary),
           ),
           const Divider(),
-          const SizedBox(height: 8),
           
           if (endpoint.httpHeaders != null && endpoint.httpHeaders!.isNotEmpty)
             _buildCodeBlock('Headers', jsonEncode(endpoint.httpHeaders)),
           
+          if (endpoint.httpParameters != null && endpoint.httpParameters!.isNotEmpty)
+            _buildCodeBlock('Query Parameters', jsonEncode(endpoint.httpParameters)),
+          
           if (endpoint.body != null && endpoint.body!.toString().isNotEmpty)
-            _buildCodeBlock('Body', endpoint.body.toString()),
-            
-          if (endpoint.graphqlOperationType != null)
-            _buildDetailRow('GraphQL Op', endpoint.graphqlOperationType!),
+            _buildCodeBlock('Body / Payload', endpoint.body.toString()),
 
           if (endpoint.graphqlVariables != null && endpoint.graphqlVariables!.isNotEmpty)
-            _buildCodeBlock('GraphQL Vars', jsonEncode(endpoint.graphqlVariables)),
+            _buildCodeBlock('GraphQL Variables', jsonEncode(endpoint.graphqlVariables)),
+          
+          const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+
+  Widget _buildDetailSection(String title, List<Widget> children) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: AppTypography.bodyLg.copyWith(fontWeight: FontWeight.bold, color: colors.primary),
+        ),
+        const Divider(),
+        const SizedBox(height: 8),
+        ...children,
+        const SizedBox(height: 16),
+      ],
     );
   }
 
