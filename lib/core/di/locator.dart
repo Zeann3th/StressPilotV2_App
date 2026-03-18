@@ -4,8 +4,10 @@ import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/core/config/settings_manager.dart';
-import 'package:stress_pilot/features/projects/data/flow_service.dart';
-import 'package:stress_pilot/features/projects/data/project_service.dart';
+import 'package:stress_pilot/features/projects/domain/repositories/flow_repository.dart';
+import 'package:stress_pilot/features/projects/data/repositories/flow_repository_impl.dart';
+import 'package:stress_pilot/features/projects/domain/repositories/project_repository.dart';
+import 'package:stress_pilot/features/projects/data/repositories/project_repository_impl.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
@@ -34,10 +36,10 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => SessionManager(getIt()));
   HttpClient.getInstance(sessionManager: getIt<SessionManager>());
 
-  getIt.registerLazySingleton(() => ProjectService());
+  getIt.registerLazySingleton<ProjectRepository>(() => ProjectRepositoryImpl());
   getIt.registerLazySingleton(() => ProjectProvider());
 
-  getIt.registerLazySingleton(() => FlowService());
+  getIt.registerLazySingleton<FlowRepository>(() => FlowRepositoryImpl());
   getIt.registerLazySingleton(() => FlowProvider());
 
   getIt.registerLazySingleton(() => SettingService());
@@ -53,7 +55,7 @@ void setupDependencies() {
 
   getIt.registerLazySingleton(() => ResultsRepository());
   getIt.registerLazySingleton(
-    () => ResultsProvider(getIt(), getIt<FlowService>()),
+    () => ResultsProvider(getIt(), getIt<FlowRepository>()),
   );
 
   getIt.registerLazySingleton(() => RunService());

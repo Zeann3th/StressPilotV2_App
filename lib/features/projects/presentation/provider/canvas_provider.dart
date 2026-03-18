@@ -374,16 +374,16 @@ class CanvasProvider extends ChangeNotifier {
       final step = steps[i];
       FlowNodeType type;
       switch (step.type) {
-        case 'START':
-          type = FlowNodeType.start;
+        case 'START': 
+          type = FlowNodeType.start; 
           break;
-        case 'BRANCH':
-          type = FlowNodeType.branch;
+        case 'BRANCH': 
+          type = FlowNodeType.branch; 
           break;
-        case 'SUBFLOW':
-          type = FlowNodeType.subflow;
+        case 'SUBFLOW': 
+          type = FlowNodeType.subflow; 
           break;
-        default:
+        default: 
           type = FlowNodeType.endpoint;
       }
 
@@ -506,14 +506,18 @@ class CanvasProvider extends ChangeNotifier {
       if (index != -1) {
         final node = _nodes[index];
         final Map<String, dynamic> newData = Map.from(node.data);
-        if (step.preProcessor != null)
+        if (step.preProcessor != null) {
           newData['preProcessor'] = step.preProcessor;
-        if (step.postProcessor != null)
+        }
+        if (step.postProcessor != null) {
           newData['postProcessor'] = step.postProcessor;
-        if (node.type == FlowNodeType.branch && step.condition != null)
+        }
+        if (node.type == FlowNodeType.branch && step.condition != null) {
           newData['condition'] = step.condition;
-        if (node.type == FlowNodeType.subflow && step.condition != null)
+        }
+        if (node.type == FlowNodeType.subflow && step.condition != null) {
           newData['subflowId'] = step.condition;
+        }
         _nodes[index] = node.copyWith(data: newData);
       }
     }

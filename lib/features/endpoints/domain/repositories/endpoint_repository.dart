@@ -1,0 +1,13 @@
+import 'package:stress_pilot/core/domain/entities/endpoint.dart';
+import 'package:stress_pilot/core/domain/entities/paged_response.dart';
+
+abstract class EndpointRepository {
+  Future<PagedResponse<Endpoint>> fetchEndpoints({required int projectId, int page = 0, int size = 20});
+  Future<Endpoint> getEndpointDetail(int endpointId);
+  Future<Endpoint> createEndpoint(Map<String, dynamic> endpointData);
+  Future<Endpoint> updateEndpoint(int endpointId, Map<String, dynamic> endpointData);
+  Future<void> deleteEndpoint(int endpointId);
+  Future<void> uploadEndpoints({required String filePath, required int projectId});
+  Future<Map<String, dynamic>> executeEndpoint(int endpointId, Map<String, dynamic> requestBody);
+  Future<Map<String, dynamic>> executeAdhocEndpoint({required int projectId, required Map<String, dynamic> requestBody});
+}

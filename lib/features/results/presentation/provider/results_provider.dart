@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:stress_pilot/features/projects/data/flow_service.dart';
+import 'package:stress_pilot/features/projects/domain/repositories/flow_repository.dart';
 import 'package:stress_pilot/features/results/data/results_repository.dart';
 import 'package:stress_pilot/features/results/domain/models/request_log.dart';
 
@@ -12,7 +12,7 @@ class FlSpotData {
 
 class ResultsProvider extends ChangeNotifier {
   final ResultsRepository _repository;
-  final FlowService _flowService;
+  final FlowRepository _flowRepository;
 
   final List<RequestLog> _allLogs = [];
   List<RequestLog> _filteredLogs = [];
@@ -42,7 +42,7 @@ class ResultsProvider extends ChangeNotifier {
   // Track the last second we have successfully plotted
   int _lastPlottedSecond = -1;
 
-  ResultsProvider(this._repository, this._flowService) {
+  ResultsProvider(this._repository, this._flowRepository) {
     // Start listening immediately on creation (App Startup)
     _repository.connect();
     _subscription = _repository.logStream.listen(_onNewLogs);
@@ -107,7 +107,7 @@ class ResultsProvider extends ChangeNotifier {
 
   Future<void> _loadFlowDetails(int flowId) async {
     try {
-      final flow = await _flowService.getFlowDetail(flowId);
+      final flow = await _flowRepository.getFlowDetail(flowId);
       _endpointNames.clear();
       for (var step in flow.steps) {
         if (step.endpointId != null) {

@@ -3,10 +3,12 @@ import 'package:dio/dio.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/domain/entities/endpoint.dart';
 import 'package:stress_pilot/core/domain/entities/paged_response.dart';
+import '../../domain/repositories/endpoint_repository.dart';
 
-class EndpointService {
+class EndpointRepositoryImpl implements EndpointRepository {
   final Dio _dio = HttpClient.getInstance();
 
+  @override
   Future<PagedResponse<Endpoint>> fetchEndpoints({
     required int projectId,
     int page = 0,
@@ -31,6 +33,7 @@ class EndpointService {
     }
   }
 
+  @override
   Future<Endpoint> getEndpointDetail(int endpointId) async {
     final response = await _dio.get('/api/v1/endpoints/$endpointId');
     if (response.statusCode == 200) {
@@ -40,6 +43,7 @@ class EndpointService {
     }
   }
 
+  @override
   Future<Endpoint> createEndpoint(Map<String, dynamic> endpointData) async {
     final response = await _dio.post('/api/v1/endpoints', data: endpointData);
     if (response.statusCode == 200) {
@@ -49,16 +53,12 @@ class EndpointService {
     }
   }
 
+  @override
   Future<Endpoint> updateEndpoint(
     int endpointId,
     Map<String, dynamic> endpointData,
   ) async {
-    
     final dataToSend = Map<String, dynamic>.from(endpointData);
-
-    
-    
-    
     final complexFields = ['httpHeaders', 'httpParameters', 'graphqlVariables'];
 
     for (final field in complexFields) {
@@ -67,7 +67,6 @@ class EndpointService {
       }
     }
 
-    
     if (dataToSend['body'] is Map || dataToSend['body'] is List) {
       dataToSend['body'] = jsonEncode(dataToSend['body']);
     }
@@ -83,6 +82,7 @@ class EndpointService {
     }
   }
 
+  @override
   Future<void> deleteEndpoint(int endpointId) async {
     final response = await _dio.delete('/api/v1/endpoints/$endpointId');
     if (response.statusCode != 204) {
@@ -90,6 +90,7 @@ class EndpointService {
     }
   }
 
+  @override
   Future<void> uploadEndpoints({
     required String filePath,
     required int projectId,
@@ -107,6 +108,7 @@ class EndpointService {
     }
   }
 
+  @override
   Future<Map<String, dynamic>> executeEndpoint(
     int endpointId,
     Map<String, dynamic> requestBody,
@@ -122,6 +124,7 @@ class EndpointService {
     }
   }
 
+  @override
   Future<Map<String, dynamic>> executeAdhocEndpoint({
     required int projectId,
     required Map<String, dynamic> requestBody,

@@ -3,13 +3,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stress_pilot/core/domain/entities/paged_response.dart';
+import 'package:stress_pilot/core/domain/entities/project.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/common/data/utility_service.dart';
-import 'package:stress_pilot/features/projects/data/project_service.dart';
-import 'package:stress_pilot/core/domain/entities/project.dart';
+import 'package:stress_pilot/features/projects/domain/repositories/project_repository.dart';
+import 'package:stress_pilot/features/projects/data/repositories/project_repository_impl.dart';
 
 class ProjectProvider extends ChangeNotifier {
-  final ProjectService _projectService = ProjectService();
+  final ProjectRepository _projectRepository = ProjectRepositoryImpl();
 
   List<Project> _projects = [];
   Project? _selectedProject;
@@ -47,7 +48,7 @@ class ProjectProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final PagedResponse<Project> response = await _projectService.getProjects(
+      final PagedResponse<Project> response = await _projectRepository.getProjects(
         name: searchName,
         page: 0,
         size: 20,
@@ -101,7 +102,7 @@ class ProjectProvider extends ChangeNotifier {
     int? environmentId,
   }) async {
     try {
-      final project = await _projectService.createProject(
+      final project = await _projectRepository.createProject(
         name: name,
         description: description,
         environmentId: environmentId,
@@ -123,7 +124,7 @@ class ProjectProvider extends ChangeNotifier {
     int? environmentId,
   }) async {
     try {
-      final updated = await _projectService.updateProject(
+      final updated = await _projectRepository.updateProject(
         projectId: projectId,
         name: name,
         description: description,
@@ -154,7 +155,7 @@ class ProjectProvider extends ChangeNotifier {
 
   Future<void> deleteProject(int projectId) async {
     try {
-      await _projectService.deleteProject(projectId);
+      await _projectRepository.deleteProject(projectId);
       _projects.removeWhere((p) => p.id == projectId);
 
       if (_selectedProject?.id == projectId) {
@@ -184,7 +185,7 @@ class ProjectProvider extends ChangeNotifier {
         return;
       }
 
-      await _projectService.exportProject(projectId, result);
+      await _projectRepository.exportProject(projectId, result);
       _error = null;
       notifyListeners();
     } catch (e) {
@@ -215,7 +216,7 @@ class ProjectProvider extends ChangeNotifier {
         throw Exception('Invalid or no file selected');
       }
 
-      final project = await _projectService.importProject(filePath);
+      final project = await _projectRepository.importProject(filePath);
       _projects.insert(0, project);
       _error = null;
       notifyListeners();

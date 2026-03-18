@@ -167,7 +167,7 @@ class _SubflowConfigurationDialogState extends State<SubflowConfigurationDialog>
                   onPressed: _selectedFlow == null
                       ? null
                       : () {
-                          Navigator.of(context).pop(_selectedFlow);
+                          Navigator.of(context).pop(_selectedFlow!);
                         },
                   child: const Text('Apply'),
                 ),

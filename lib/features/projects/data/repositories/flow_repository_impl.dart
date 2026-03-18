@@ -4,10 +4,12 @@ import 'package:http_parser/http_parser.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/domain/entities/paged_response.dart';
 import 'package:stress_pilot/core/domain/entities/flow.dart';
+import '../../domain/repositories/flow_repository.dart';
 
-class FlowService {
+class FlowRepositoryImpl implements FlowRepository {
   final Dio _dio = HttpClient.getInstance();
 
+  @override
   Future<PagedResponse<Flow>> getFlows({
     int? projectId,
     String? name,
@@ -27,16 +29,19 @@ class FlowService {
     return PagedResponse.fromJson(response.data['data'], (json) => Flow.fromJson(json));
   }
 
+  @override
   Future<Flow> getFlowDetail(int flowId) async {
     final response = await _dio.get('/api/v1/flows/$flowId');
     return Flow.fromJson(response.data['data']);
   }
 
+  @override
   Future<Flow> createFlow(CreateFlowRequest request) async {
     final response = await _dio.post('/api/v1/flows', data: request.toJson());
     return Flow.fromJson(response.data['data']);
   }
 
+  @override
   Future<Flow> updateFlow({
     required int flowId,
     String? name,
@@ -51,10 +56,12 @@ class FlowService {
     return Flow.fromJson(response.data['data']);
   }
 
+  @override
   Future<void> deleteFlow(int flowId) async {
     await _dio.delete('/api/v1/flows/$flowId');
   }
 
+  @override
   Future<List<FlowStep>> configureFlow(int flowId, List<FlowStep> steps) async {
     final body = steps.map((s) => s.toJson()).toList();
     final response = await _dio.post(
@@ -66,6 +73,7 @@ class FlowService {
         .toList();
   }
 
+  @override
   Future<void> runFlow({
     required int flowId,
     required RunFlowRequest runFlowRequest,

@@ -3,12 +3,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_notifier/local_notifier.dart';
-import 'package:stress_pilot/core/domain/entities/paged_response.dart';
-import 'package:stress_pilot/features/projects/data/flow_service.dart';
 import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
+import 'package:stress_pilot/core/domain/entities/paged_response.dart';
+import 'package:stress_pilot/features/projects/domain/repositories/flow_repository.dart';
+import 'package:stress_pilot/features/projects/data/repositories/flow_repository_impl.dart';
 
 class FlowProvider extends ChangeNotifier {
-  final FlowService _flowService = FlowService();
+  final FlowRepository _flowRepository = FlowRepositoryImpl();
 
   List<flow_domain.Flow> _flows = [];
   flow_domain.Flow? _selectedFlow;
@@ -37,7 +38,7 @@ class FlowProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final PagedResponse<flow_domain.Flow> response = await _flowService
+      final PagedResponse<flow_domain.Flow> response = await _flowRepository
           .getFlows(projectId: projectId, name: name, page: 0, size: 20);
       _flows = response.content;
     } catch (e) {
@@ -85,7 +86,7 @@ class FlowProvider extends ChangeNotifier {
     flow_domain.CreateFlowRequest request,
   ) async {
     try {
-      final created = await _flowService.createFlow(request);
+      final created = await _flowRepository.createFlow(request);
       _flows.insert(0, created);
       await selectFlow(created);
       return created;
@@ -102,7 +103,7 @@ class FlowProvider extends ChangeNotifier {
     String? description,
   }) async {
     try {
-      final updated = await _flowService.updateFlow(
+      final updated = await _flowRepository.updateFlow(
         flowId: flowId,
         name: name,
         description: description,
@@ -132,7 +133,7 @@ class FlowProvider extends ChangeNotifier {
     try {
       final isDeletingSelected = _selectedFlow?.id == flowId;
       
-      await _flowService.deleteFlow(flowId);
+      await _flowRepository.deleteFlow(flowId);
       _flows.removeWhere((f) => f.id == flowId);
 
       if (isDeletingSelected) {
@@ -160,7 +161,7 @@ class FlowProvider extends ChangeNotifier {
 
   Future<flow_domain.Flow> getFlow(int flowId) async {
     try {
-      final flow = await _flowService.getFlowDetail(flowId);
+      final flow = await _flowRepository.getFlowDetail(flowId);
 
       // Update cache if this is the selected flow
       final index = _flows.indexWhere((f) => f.id == flowId);
@@ -186,7 +187,7 @@ class FlowProvider extends ChangeNotifier {
     List<flow_domain.FlowStep> steps,
   ) async {
     try {
-      final updatedSteps = await _flowService.configureFlow(flowId, steps);
+      final updatedSteps = await _flowRepository.configureFlow(flowId, steps);
 
       final index = _flows.indexWhere((f) => f.id == flowId);
       if (index != -1) {
@@ -212,7 +213,7 @@ class FlowProvider extends ChangeNotifier {
     MultipartFile? file,
   }) async {
     try {
-      await _flowService.runFlow(
+      await _flowRepository.runFlow(
         flowId: flowId,
         runFlowRequest: runFlowRequest,
         file: file,

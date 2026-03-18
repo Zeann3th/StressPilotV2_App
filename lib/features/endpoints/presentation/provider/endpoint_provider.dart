@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-
-import '../../data/endpoint_service.dart';
+import 'package:stress_pilot/features/endpoints/domain/repositories/endpoint_repository.dart';
+import 'package:stress_pilot/features/endpoints/data/repositories/endpoint_repository_impl.dart';
 import 'package:stress_pilot/core/domain/entities/endpoint.dart';
 import 'package:stress_pilot/core/domain/entities/paged_response.dart';
 
 class EndpointProvider extends ChangeNotifier {
-  final EndpointService _service = EndpointService();
+  final EndpointRepository _endpointRepository = EndpointRepositoryImpl();
   List<Endpoint> _endpoints = [];
   bool _isLoading = false;
   bool _isLoadingMore = false;
@@ -41,7 +41,7 @@ class EndpointProvider extends ChangeNotifier {
     _hasMore = true;
 
     try {
-      final PagedResponse<Endpoint> page = await _service.fetchEndpoints(
+      final PagedResponse<Endpoint> page = await _endpointRepository.fetchEndpoints(
         projectId: projectId,
         page: _currentPage,
         size: _pageSize,
@@ -68,7 +68,7 @@ class EndpointProvider extends ChangeNotifier {
 
     try {
       final nextPage = _currentPage + 1;
-      final PagedResponse<Endpoint> page = await _service.fetchEndpoints(
+      final PagedResponse<Endpoint> page = await _endpointRepository.fetchEndpoints(
         projectId: projectId,
         page: nextPage,
         size: _pageSize,
@@ -101,7 +101,7 @@ class EndpointProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final created = await _service.createEndpoint(data);
+      final created = await _endpointRepository.createEndpoint(data);
       if (data['projectId'] != null) {
         await loadEndpoints(projectId: data['projectId']);
       }
@@ -120,7 +120,7 @@ class EndpointProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final updated = await _service.updateEndpoint(id, data);
+      final updated = await _endpointRepository.updateEndpoint(id, data);
       if (data['projectId'] != null) {
         await loadEndpoints(projectId: data['projectId']);
       }
@@ -139,7 +139,7 @@ class EndpointProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _service.deleteEndpoint(id);
+      await _endpointRepository.deleteEndpoint(id);
       await loadEndpoints(projectId: projectId);
     } catch (e) {
       _error = e.toString();
@@ -158,7 +158,7 @@ class EndpointProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _service.uploadEndpoints(filePath: filePath, projectId: projectId);
+      await _endpointRepository.uploadEndpoints(filePath: filePath, projectId: projectId);
       await loadEndpoints(projectId: projectId);
     } catch (e) {
       _error = e.toString();
@@ -169,7 +169,7 @@ class EndpointProvider extends ChangeNotifier {
   }
 
   Future<Endpoint> getEndpoint(int id) async {
-    return await _service.getEndpointDetail(id);
+    return await _endpointRepository.getEndpointDetail(id);
   }
 
   
@@ -181,7 +181,7 @@ class EndpointProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _service.executeEndpoint(endpointId, body);
+      final result = await _endpointRepository.executeEndpoint(endpointId, body);
       _isExecuting = false;
       notifyListeners();
       return result;

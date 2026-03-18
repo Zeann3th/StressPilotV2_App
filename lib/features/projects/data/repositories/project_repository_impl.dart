@@ -2,10 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/domain/entities/paged_response.dart';
 import 'package:stress_pilot/core/domain/entities/project.dart';
+import '../../domain/repositories/project_repository.dart';
 
-class ProjectService {
+class ProjectRepositoryImpl implements ProjectRepository {
   final Dio _dio = HttpClient.getInstance();
 
+  @override
   Future<PagedResponse<Project>> getProjects({
     String? name,
     int page = 0,
@@ -26,11 +28,13 @@ class ProjectService {
     );
   }
 
+  @override
   Future<Project> getProjectDetail(int projectId) async {
     final response = await _dio.get('/api/v1/projects/$projectId');
     return Project.fromJson(response.data['data']);
   }
 
+  @override
   Future<Project> createProject({
     required String name,
     String? description,
@@ -46,6 +50,7 @@ class ProjectService {
     return Project.fromJson(response.data['data']);
   }
 
+  @override
   Future<Project> updateProject({
     required int projectId,
     String? name,
@@ -62,10 +67,12 @@ class ProjectService {
     return Project.fromJson(response.data['data']);
   }
 
+  @override
   Future<void> deleteProject(int projectId) async {
     await _dio.delete('/api/v1/projects/$projectId');
   }
 
+  @override
   Future<void> exportProject(int projectId, String savePath) async {
     await _dio.download(
       '/api/v1/projects/$projectId/export',
@@ -77,6 +84,7 @@ class ProjectService {
     );
   }
 
+  @override
   Future<Project> importProject(String filePath) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
