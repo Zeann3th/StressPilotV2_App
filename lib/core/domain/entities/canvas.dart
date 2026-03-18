@@ -17,8 +17,8 @@ class CanvasNode {
     this.data = const {},
     this.width = 160,
     this.height = 90,
-  }) : actualWidth = type == FlowNodeType.branch ? 120 : width,
-       actualHeight = type == FlowNodeType.branch ? 120 : height;
+  }) : actualWidth = type == FlowNodeType.branch ? 132 : (type == FlowNodeType.start ? 56 : width),
+       actualHeight = type == FlowNodeType.branch ? 132 : (type == FlowNodeType.start ? 56 : height);
 
   final double actualWidth;
   final double actualHeight;

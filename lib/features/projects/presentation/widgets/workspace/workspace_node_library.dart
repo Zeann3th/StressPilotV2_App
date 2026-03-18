@@ -74,7 +74,7 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
                   child: _LogicChip(
                     type: FlowNodeType.subflow,
                     label: 'Subflow',
-                    icon: Icons.sync_alt_rounded,
+                    icon: Icons.account_tree_rounded,
                     color: const Color(0xFF10B981),
                   ),
                 ),

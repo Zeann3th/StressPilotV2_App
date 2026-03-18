@@ -350,14 +350,14 @@ class _CanvasContentState extends State<_CanvasContent>
       position: canvasPosition,
       data: details.data.payload,
       width: type == FlowNodeType.start
-          ? 48
+          ? 56
           : (type == FlowNodeType.branch
-          ? 120
+          ? 132
           : (type == FlowNodeType.subflow ? 180 : 160)),
       height: type == FlowNodeType.start
-          ? 48
+          ? 56
           : (type == FlowNodeType.branch
-          ? 120
+          ? 132
           : (type == FlowNodeType.subflow ? 64 : 100)),
     );
     context.read<CanvasProvider>().addNode(newNode);
@@ -867,7 +867,7 @@ class _NodeBody extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (node.type) {
       case FlowNodeType.start:
-        return _buildStart();
+        return _buildStart(context);
       case FlowNodeType.branch:
         return _buildBranch();
       case FlowNodeType.subflow:
@@ -989,68 +989,134 @@ class _NodeBody extends StatelessWidget {
   Widget _buildSubflow() {
     return Container(
       width: node.width,
-      padding: const EdgeInsets.all(12),
+      height: node.height,
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: colors.secondary.withValues(alpha: 0.5), width: 1.5),
+        borderRadius: AppRadius.br12,
+        border: Border.all(color: colors.secondary.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Icon(Icons.sync_alt_rounded, size: 16, color: colors.secondary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('SUBFLOW',
-                    style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: colors.secondary)),
-                Text(
-                  node.data['flowName'] ?? 'Select...',
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          // Left Accent Bar
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            child: Container(
+              decoration: BoxDecoration(
+                color: colors.secondary,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  bottomLeft: Radius.circular(12),
                 ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: colors.secondary.withValues(alpha: 0.1),
+                    borderRadius: AppRadius.br8,
+                  ),
+                  child: Icon(Icons.account_tree_rounded,
+                      size: 20, color: colors.secondary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'SUBFLOW',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: colors.secondary,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      Text(
+                        node.data['flowName'] ?? 'Select flow...',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    size: 16, color: colors.onSurfaceVariant.withValues(alpha: 0.5)),
               ],
             ),
           ),
-          IconButton(
-            onPressed: () => provider.removeNode(node.id),
-            icon: const Icon(Icons.close, size: 14),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
+          // Delete button on hover is handled by _HoverableNodeWrapper but subflow doesn't use it yet.
+          // Let's add the same hover wrapper or just keep the close button.
+          Positioned(
+            top: 4,
+            right: 4,
+            child: IconButton(
+              onPressed: () => provider.removeNode(node.id),
+              icon: const Icon(Icons.close, size: 14),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              splashRadius: 12,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStart() {
+  Widget _buildStart(BuildContext context) {
     return _HoverableNodeWrapper(
       node: node,
       provider: provider,
       child: Container(
-        width: 48,
-        height: 48,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
-          gradient:
-          LinearGradient(colors: [colors.primary, colors.tertiary]),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
+          gradient: AppGradients.green(Theme.of(context).brightness == Brightness.dark),
+          borderRadius: AppRadius.br16,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
           boxShadow: [
             BoxShadow(
-                color: colors.primary.withValues(alpha: 0.3),
-                blurRadius: 8)
+              color: AppColors.lightGreenStart.withValues(alpha: 0.3),
+              blurRadius: 12,
+              spreadRadius: 2,
+            )
           ],
         ),
-        child: const Icon(Icons.play_arrow_rounded,
-            color: Colors.white, size: 28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+            Text(
+              'START',
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+                color: Colors.white.withValues(alpha: 0.9),
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1061,82 +1127,72 @@ class _NodeBody extends StatelessWidget {
       height: node.actualHeight,
       child: Stack(
         clipBehavior: Clip.none,
+        alignment: Alignment.center,
         children: [
-          Center(
-            child: Transform.rotate(
-              angle: 0.785398,
-              child: Container(
-                width: node.actualWidth * 0.75,
-                height: node.actualHeight * 0.75,
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  border: Border.all(
-                      color: colors.primary.withValues(alpha: 0.5),
-                      width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                        color: colors.primary.withValues(alpha: 0.15),
-                        blurRadius: 12,
-                        spreadRadius: 2)
-                  ],
-                ),
-              ),
+          // Modern Rounded Diamond Shape using a CustomPainter
+          CustomPaint(
+            size: Size(node.actualWidth, node.actualHeight),
+            painter: _DiamondPainter(
+              color: colors.surface,
+              borderColor: colors.primary.withValues(alpha: 0.5),
+              glowColor: colors.primary.withValues(alpha: 0.1),
             ),
           ),
-          Positioned.fill(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.call_split_rounded,
-                        size: 16, color: colors.primary),
-                    const SizedBox(width: 4),
-                    Text(
-                      'BRANCH',
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: colors.primary,
-                          letterSpacing: 0.8),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.call_split_rounded, size: 14, color: colors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    'BRANCH',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: colors.primary,
+                      letterSpacing: 0.8,
                     ),
-                    const SizedBox(width: 2),
-                    IconButton(
-                      onPressed: () => provider.removeNode(node.id),
-                      icon: const Icon(Icons.close, size: 12),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _BranchHandle(
-                      label: 'TRUE',
-                      color: Colors.green,
-                      isSelected:
-                      provider.selectedSourceNodeId == node.id &&
-                          provider.selectedSourceHandle == 'true',
-                      onTap: () =>
-                          provider.selectSourceNode(node.id, 'true'),
-                    ),
-                    const SizedBox(width: 6),
-                    _BranchHandle(
-                      label: 'FALSE',
-                      color: Colors.red,
-                      isSelected:
-                      provider.selectedSourceNodeId == node.id &&
-                          provider.selectedSourceHandle == 'false',
-                      onTap: () =>
-                          provider.selectSourceNode(node.id, 'false'),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _BranchHandle(
+                    label: 'TRUE',
+                    icon: Icons.check_rounded,
+                    color: Colors.green,
+                    isSelected: provider.selectedSourceNodeId == node.id &&
+                        provider.selectedSourceHandle == 'true',
+                    onTap: () => provider.selectSourceNode(node.id, 'true'),
+                  ),
+                  const SizedBox(width: 4),
+                  _BranchHandle(
+                    label: 'FALSE',
+                    icon: Icons.close_rounded,
+                    color: Colors.red,
+                    isSelected: provider.selectedSourceNodeId == node.id &&
+                        provider.selectedSourceHandle == 'false',
+                    onTap: () => provider.selectSourceNode(node.id, 'false'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Positioned close button at the top-right of the diamond's "bounding box"
+          // but we want it more visible
+          Positioned(
+            top: 2,
+            right: 2,
+            child: IconButton(
+              onPressed: () => provider.removeNode(node.id),
+              icon: const Icon(Icons.close, size: 14),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              splashRadius: 12,
             ),
           ),
         ],
@@ -1191,12 +1247,14 @@ class _InfoBadge extends StatelessWidget {
 
 class _BranchHandle extends StatelessWidget {
   final String label;
+  final IconData icon;
   final Color color;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _BranchHandle({
     required this.label,
+    required this.icon,
     required this.color,
     required this.isSelected,
     required this.onTap,
@@ -1209,33 +1267,86 @@ class _BranchHandle extends StatelessWidget {
       borderRadius: BorderRadius.circular(6),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding:
-        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected ? color : color.withValues(alpha: 0.1),
-          border: Border.all(
-              color: color.withValues(alpha: 0.5), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
           borderRadius: BorderRadius.circular(6),
           boxShadow: isSelected
               ? [
             BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                blurRadius: 8,
-                offset: const Offset(0, 2))
+                color: color.withValues(alpha: 0.3),
+                blurRadius: 6,
+                offset: const Offset(0, 1))
           ]
               : [],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w900,
-            color: isSelected ? Colors.white : color,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 10, color: isSelected ? Colors.white : color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+                color: isSelected ? Colors.white : color,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _DiamondPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
+  final Color glowColor;
+
+  _DiamondPainter({
+    required this.color,
+    required this.borderColor,
+    required this.glowColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final path = Path();
+    const radius = 12.0;
+
+    // Diamond with rounded corners
+    path.moveTo(size.width / 2, radius);
+    path.quadraticBezierTo(size.width / 2, 0, size.width / 2 + radius, radius);
+    path.lineTo(size.width - radius, size.height / 2 - radius);
+    path.quadraticBezierTo(size.width, size.height / 2, size.width - radius, size.height / 2 + radius);
+    path.lineTo(size.width / 2 + radius, size.height - radius);
+    path.quadraticBezierTo(size.width / 2, size.height, size.width / 2 - radius, size.height - radius);
+    path.lineTo(radius, size.height / 2 + radius);
+    path.quadraticBezierTo(0, size.height / 2, radius, size.height / 2 - radius);
+    path.close();
+
+    // Draw shadow/glow
+    canvas.drawShadow(path, glowColor, 8, true);
+    
+    canvas.drawPath(path, paint);
+    canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DiamondPainter oldDelegate) =>
+      color != oldDelegate.color || borderColor != oldDelegate.borderColor;
 }
 
 class _BranchDialog extends StatelessWidget {
