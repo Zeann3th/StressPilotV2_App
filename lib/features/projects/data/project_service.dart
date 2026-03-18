@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
-import 'package:stress_pilot/core/models/paged_response.dart';
-import '../domain/project.dart';
+import 'package:stress_pilot/core/domain/entities/paged_response.dart';
+import 'package:stress_pilot/core/domain/entities/project.dart';
 
 class ProjectService {
   final Dio _dio = HttpClient.getInstance();

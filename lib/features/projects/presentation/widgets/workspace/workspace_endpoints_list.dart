@@ -2,13 +2,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
-import 'package:stress_pilot/features/projects/domain/flow.dart' as flow;
-import 'package:stress_pilot/features/endpoints/domain/endpoint.dart'
+import 'package:stress_pilot/core/domain/entities/flow.dart' as flow;
+import 'package:stress_pilot/core/domain/entities/endpoint.dart'
     as domain_endpoint;
 import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_type_badge.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/common/data/utility_service.dart';
-import '../../../domain/canvas.dart';
+import 'package:stress_pilot/core/domain/entities/canvas.dart';
 import '../../../../endpoints/presentation/provider/endpoint_provider.dart';
 
 class WorkspaceEndpointsList extends StatefulWidget {

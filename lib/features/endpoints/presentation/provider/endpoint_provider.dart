@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../data/endpoint_service.dart';
-import '../../domain/endpoint.dart';
-import 'package:stress_pilot/core/models/paged_response.dart';
+import 'package:stress_pilot/core/domain/entities/endpoint.dart';
+import 'package:stress_pilot/core/domain/entities/paged_response.dart';
 
 class EndpointProvider extends ChangeNotifier {
   final EndpointService _service = EndpointService();

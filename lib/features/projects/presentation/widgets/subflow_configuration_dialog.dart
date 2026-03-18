@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart' hide Flow;
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/design/tokens.dart';
-import 'package:stress_pilot/features/projects/domain/flow.dart';
+import 'package:stress_pilot/core/domain/entities/flow.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 
 class SubflowConfigurationDialog extends StatefulWidget {

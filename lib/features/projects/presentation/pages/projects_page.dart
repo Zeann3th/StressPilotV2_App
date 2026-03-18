@@ -4,7 +4,7 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_topbar.dart';
-import '../../domain/project.dart';
+import 'package:stress_pilot/core/domain/entities/project.dart';
 import '../provider/project_provider.dart';
 import '../widgets/project/project_table.dart';
 import '../widgets/project/project_empty_states.dart';

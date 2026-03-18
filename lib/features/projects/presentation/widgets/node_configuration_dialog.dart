@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/design/tokens.dart';
-import 'package:stress_pilot/features/projects/domain/canvas.dart';
+import 'package:stress_pilot/core/domain/entities/canvas.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
-import 'package:stress_pilot/features/endpoints/domain/endpoint.dart' as domain_endpoint;
+import 'package:stress_pilot/core/domain/entities/endpoint.dart' as domain_endpoint;
 
 class NodeConfigurationDialog extends StatefulWidget {
   final CanvasNode node;

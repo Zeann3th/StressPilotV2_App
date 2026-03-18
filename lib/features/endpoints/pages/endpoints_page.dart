@@ -5,12 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
-import '../domain/endpoint.dart';
+import 'package:stress_pilot/core/domain/entities/endpoint.dart';
 import '../presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_dialog.dart';
 import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_type_badge.dart';
 import 'package:stress_pilot/features/common/presentation/widgets/json_viewer.dart';
-import 'package:stress_pilot/features/projects/domain/project.dart';
+import 'package:stress_pilot/core/domain/entities/project.dart';
 
 import '../widgets/key_value_editor.dart';
 import 'create_endpoint_dialog.dart';

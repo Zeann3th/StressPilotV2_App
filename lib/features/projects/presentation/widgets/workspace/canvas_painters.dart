@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../domain/canvas.dart';
+import 'package:stress_pilot/core/domain/entities/canvas.dart';
 
 class GridPainter extends CustomPainter {
   final Color color;

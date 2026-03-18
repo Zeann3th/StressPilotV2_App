@@ -4,7 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'package:stress_pilot/core/design/tokens.dart';
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
-import 'package:stress_pilot/features/projects/domain/flow.dart' as flow_domain;
+import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
@@ -23,6 +23,9 @@ class ProjectWorkspacePage extends StatefulWidget {
 class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   int? _lastLoadedProjectId;
   bool _libraryCollapsed = false;
+
+  // Guard against _maybeAutoSelect scheduling multiple concurrent callbacks.
+  bool _autoSelectPending = false;
 
   @override
   void initState() {
@@ -49,17 +52,37 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
     }
   }
 
-  // Auto-select the first flow when the list loads and nothing is selected
-  void _maybeAutoSelect(List<flow_domain.Flow> flows, flow_domain.Flow? selectedFlow) {
-    if (selectedFlow == null && flows.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final latestFlows = context.read<FlowProvider>().flows;
-        if (latestFlows.isNotEmpty) {
-          context.read<FlowProvider>().selectFlow(latestFlows.first);
-        }
-      });
-    }
+  /// Auto-selects the first flow once the list loads and nothing is selected.
+  ///
+  /// The _autoSelectPending guard ensures only one postFrameCallback is ever
+  /// queued at a time. Without it, rapid FlowProvider notifications (e.g.
+  /// during a save round-trip) would queue multiple callbacks, each potentially
+  /// overwriting a selection the user just made, causing the canvas to blank.
+  void _maybeAutoSelect(
+      List<flow_domain.Flow> flows,
+      flow_domain.Flow? selectedFlow,
+      ) {
+    if (selectedFlow != null) return; // Already selected — nothing to do.
+    if (flows.isEmpty) return;        // List not loaded yet.
+    if (_autoSelectPending) return;   // Callback already queued.
+
+    _autoSelectPending = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoSelectPending = false;
+      if (!mounted) return;
+
+      final provider = context.read<FlowProvider>();
+
+      // Re-read at flush time: the user or another callback may have already
+      // made a selection between when we scheduled and when we ran.
+      if (provider.selectedFlow != null) return;
+
+      final latestFlows = provider.flows;
+      if (latestFlows.isNotEmpty) {
+        provider.selectFlow(latestFlows.first);
+      }
+    });
   }
 
   @override
@@ -69,19 +92,17 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
     final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
     final project = context.watch<ProjectProvider>().selectedProject;
 
-    // Trigger auto-select whenever flows change
     final flows = context.watch<FlowProvider>().flows;
     final selectedFlow = context.watch<FlowProvider>().selectedFlow;
+
     _maybeAutoSelect(flows, selectedFlow);
 
     return Scaffold(
       backgroundColor: bg,
       body: Column(
         children: [
-          // Topbar
           const AppTopBar(),
 
-          // Main workspace column
           Expanded(
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -101,10 +122,8 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                 borderRadius: AppRadius.br16,
                 child: Column(
                   children: [
-                    // Breadcrumb command bar
                     const WorkspaceCommandBar(),
 
-                    // Flow tab strip
                     WorkspaceFlowTabs(
                       selectedFlow: selectedFlow,
                       onFlowSelected: (f) {
@@ -114,32 +133,30 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                       },
                     ),
 
-                    // Canvas + node library row
                     Expanded(
                       child: Row(
                         children: [
-                          // Node library (collapsible)
                           AnimatedSize(
                             duration: AppDurations.short,
                             curve: Curves.easeInOut,
                             child: _libraryCollapsed
                                 ? const SizedBox.shrink()
                                 : WorkspaceNodeLibrary(
-                                    projectId: project?.id ?? 0,
-                                    selectedFlow: selectedFlow,
-                                  ),
+                              projectId: project?.id ?? 0,
+                              selectedFlow: selectedFlow,
+                            ),
                           ),
 
-                          // Collapse toggle handle
                           _LibraryHandle(
                             collapsed: _libraryCollapsed,
                             onToggle: () => setState(
-                              () => _libraryCollapsed = !_libraryCollapsed,
+                                  () => _libraryCollapsed = !_libraryCollapsed,
                             ),
                             border: border,
                           ),
 
-                          // Canvas fills the rest
+                          // Canvas is stable across FlowProvider notifications
+                          // because _CanvasContent is keyed on selectedFlow.id.
                           Expanded(
                             child: WorkspaceCanvas(selectedFlow: selectedFlow),
                           ),
@@ -149,7 +166,10 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                   ],
                 ),
               ),
-            ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOutCubic),
+            ).animate().fadeIn(
+              duration: 400.ms,
+              curve: Curves.easeOutCubic,
+            ),
           ),
         ],
       ),
@@ -157,7 +177,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   }
 }
 
-// ─── Slim collapse handle between library and canvas ─────────────────────────
+// ─── Collapse handle ──────────────────────────────────────────────────────────
 
 class _LibraryHandle extends StatefulWidget {
   final bool collapsed;
@@ -194,7 +214,8 @@ class _LibraryHandleState extends State<_LibraryHandle> {
             color: _hovered
                 ? AppColors.accent.withValues(alpha: 0.06)
                 : Colors.transparent,
-            border: Border(left: BorderSide(color: widget.border, width: 1)),
+            border:
+            Border(left: BorderSide(color: widget.border, width: 1)),
           ),
           child: Center(
             child: AnimatedRotation(
@@ -205,7 +226,9 @@ class _LibraryHandleState extends State<_LibraryHandle> {
                 size: 14,
                 color: _hovered
                     ? AppColors.accent
-                    : (isDark ? AppColors.textMuted : AppColors.textSecondary),
+                    : (isDark
+                    ? AppColors.textMuted
+                    : AppColors.textSecondary),
               ),
             ),
           ),

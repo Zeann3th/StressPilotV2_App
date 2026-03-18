@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
-import 'package:stress_pilot/core/models/paged_response.dart';
-import '../domain/flow.dart';
+import 'package:stress_pilot/core/domain/entities/paged_response.dart';
+import 'package:stress_pilot/core/domain/entities/flow.dart';
 
 class FlowService {
   final Dio _dio = HttpClient.getInstance();

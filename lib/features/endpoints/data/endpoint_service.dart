@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
-import '../domain/endpoint.dart';
-import 'package:stress_pilot/core/models/paged_response.dart';
+import 'package:stress_pilot/core/domain/entities/endpoint.dart';
+import 'package:stress_pilot/core/domain/entities/paged_response.dart';
 
 class EndpointService {
   final Dio _dio = HttpClient.getInstance();

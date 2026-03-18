@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stress_pilot/core/models/paged_response.dart';
+import 'package:stress_pilot/core/domain/entities/paged_response.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/common/data/utility_service.dart';
 import 'package:stress_pilot/features/projects/data/project_service.dart';
-import 'package:stress_pilot/features/projects/domain/project.dart';
+import 'package:stress_pilot/core/domain/entities/project.dart';
 
 class ProjectProvider extends ChangeNotifier {
   final ProjectService _projectService = ProjectService();

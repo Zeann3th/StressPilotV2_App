@@ -3,9 +3,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_notifier/local_notifier.dart';
-import 'package:stress_pilot/core/models/paged_response.dart';
+import 'package:stress_pilot/core/domain/entities/paged_response.dart';
 import 'package:stress_pilot/features/projects/data/flow_service.dart';
-import 'package:stress_pilot/features/projects/domain/flow.dart' as flow_domain;
+import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
 
 class FlowProvider extends ChangeNotifier {
   final FlowService _flowService = FlowService();
