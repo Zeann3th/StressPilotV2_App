@@ -49,3 +49,5 @@ assets/core/
 
 /.local-chrome/
 dist/
+
+scripts/
