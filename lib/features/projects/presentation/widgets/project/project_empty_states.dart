@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:stress_pilot/core/design/tokens.dart';
-import 'package:stress_pilot/core/design/components.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 
 class ProjectEmptyState extends StatefulWidget {
   const ProjectEmptyState({super.key});

@@ -11,7 +11,7 @@ import 'package:stress_pilot/features/results/presentation/widgets/metrics_card.
 import 'package:stress_pilot/features/results/presentation/widgets/realtime_chart.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
-import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 

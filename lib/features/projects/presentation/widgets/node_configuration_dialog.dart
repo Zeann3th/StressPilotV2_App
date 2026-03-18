@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/domain/entities/canvas.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/core/domain/entities/endpoint.dart' as domain_endpoint;

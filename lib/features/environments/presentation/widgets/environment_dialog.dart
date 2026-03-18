@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
-import 'package:stress_pilot/core/design/tokens.dart';
-import 'package:stress_pilot/core/design/components.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 
 import 'package:stress_pilot/core/navigation/app_router.dart';
 

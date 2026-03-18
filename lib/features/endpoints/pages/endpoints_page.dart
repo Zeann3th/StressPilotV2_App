@@ -14,7 +14,7 @@ import 'package:stress_pilot/core/domain/entities/project.dart';
 
 import '../widgets/key_value_editor.dart';
 import 'create_endpoint_dialog.dart';
-import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class ProjectEndpointsPage extends StatefulWidget {
   final Project project;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stress_pilot/core/design/components.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 
 class EndpointTypeBadge extends StatelessWidget {
   final String type;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
-import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 /// A skeleton loading screen that mimics the main app layout.
 class AppSkeleton extends StatefulWidget {

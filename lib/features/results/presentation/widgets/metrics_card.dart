@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class MetricsCard extends StatelessWidget {
   final String title;

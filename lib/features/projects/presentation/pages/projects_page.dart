@@ -11,7 +11,7 @@ import '../widgets/project/project_empty_states.dart';
 import 'package:stress_pilot/features/results/data/run_service.dart';
 import 'package:stress_pilot/features/results/domain/models/run.dart' as run_model;
 import 'package:intl/intl.dart';
-import 'package:stress_pilot/core/design/tokens.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 
 class ProjectsPage extends StatefulWidget {
