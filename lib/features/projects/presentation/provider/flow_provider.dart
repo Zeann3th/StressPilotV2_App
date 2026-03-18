@@ -225,7 +225,7 @@ class FlowProvider extends ChangeNotifier {
         );
         await notification.show();
       } catch (e) {
-
+        // no-op
       }
     } catch (e) {
       _error = e.toString();
