@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async' as async_timer;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,7 @@ import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/common/data/utility_service.dart';
 
+import '../data/curl_parser.dart';
 import '../presentation/provider/endpoint_provider.dart';
 import '../widgets/key_value_editor.dart';
 
@@ -30,6 +32,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   final _bodyCtrl = TextEditingController();
   Map<String, String> _headers = {};
   final Map<String, String> _params = {};
+  async_timer.Timer? _debounce;
 
   final _grpcServiceCtrl = TextEditingController();
   final _grpcMethodCtrl = TextEditingController();
@@ -57,8 +60,39 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
     } catch (_) {}
   }
 
+  void _handleUrlChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = async_timer.Timer(const Duration(milliseconds: 300), () {
+      if (value.trim().toLowerCase().startsWith('curl ')) {
+        final data = CurlParser.parse(value);
+        setState(() {
+          if (data.url != null && data.url!.isNotEmpty) _urlCtrl.text = data.url!;
+          if (data.method != null) _httpMethod = data.method!;
+          if (data.headers != null) _headers = {...data.headers!};
+          if (data.body != null) _bodyCtrl.text = data.body!;
+          _selectedType = 'HTTP';
+        });
+      }
+    });
+  }
+
+  void _beautifyJson() {
+    try {
+      final content = _bodyCtrl.text.trim();
+      if (content.isEmpty) return;
+      final decoded = jsonDecode(content);
+      const encoder = JsonEncoder.withIndent('  ');
+      setState(() {
+        _bodyCtrl.text = encoder.convert(decoded);
+      });
+    } catch (e) {
+      PilotToast.show(context, 'Invalid JSON', isError: true);
+    }
+  }
+
   @override
   void dispose() {
+    _debounce?.cancel();
     _nameCtrl.dispose();
     _urlCtrl.dispose();
     _descCtrl.dispose();
@@ -169,6 +203,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
             PilotInput(
               controller: _urlCtrl,
               placeholder: _getUrlLabel(),
+              onChanged: _handleUrlChanged,
             ),
             const SizedBox(height: 16),
             const _FieldLabel('Description'),
@@ -279,7 +314,16 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
           child: KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
         ),
         const SizedBox(height: 16),
-        const _FieldLabel('Initial Body (JSON)'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const _FieldLabel('Initial Body (JSON)'),
+            PilotButton.ghost(
+              label: 'Beautify',
+              onPressed: _beautifyJson,
+            ),
+          ],
+        ),
         const SizedBox(height: 6),
         PilotInput(
           controller: _bodyCtrl,
@@ -307,7 +351,16 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
         const SizedBox(height: 6),
         PilotInput(controller: _grpcStubCtrl, placeholder: '/path/to/service.proto'),
         const SizedBox(height: 16),
-        const _FieldLabel('Initial Message (JSON)'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const _FieldLabel('Initial Message (JSON)'),
+            PilotButton.ghost(
+              label: 'Beautify',
+              onPressed: _beautifyJson,
+            ),
+          ],
+        ),
         const SizedBox(height: 6),
         PilotInput(
           controller: _bodyCtrl,
@@ -355,7 +408,16 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _FieldLabel('Payload (Text/JSON) *'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const _FieldLabel('Payload (Text/JSON) *'),
+            PilotButton.ghost(
+              label: 'Beautify',
+              onPressed: _beautifyJson,
+            ),
+          ],
+        ),
         const SizedBox(height: 6),
         PilotInput(
           controller: _bodyCtrl,

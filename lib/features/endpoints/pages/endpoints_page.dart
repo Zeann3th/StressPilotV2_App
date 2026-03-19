@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async' as async_timer;
+import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +9,7 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
 import 'package:stress_pilot/core/domain/entities/endpoint.dart';
+import '../data/curl_parser.dart';
 import '../presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_dialog.dart';
 import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_type_badge.dart';
@@ -16,7 +19,7 @@ import 'package:stress_pilot/core/domain/entities/project.dart';
 import '../widgets/key_value_editor.dart';
 import 'create_endpoint_dialog.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/core/themes/components/buttons/pilot_button.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 
 class ProjectEndpointsPage extends StatefulWidget {
   final Project project;
@@ -492,6 +495,9 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   bool _isLoading = false;
   int? _statusCode;
   int? _responseTime;
+  int _elapsedMs = 0;
+  async_timer.Timer? _executionTimer;
+  async_timer.Timer? _debounce;
 
   bool? _isSuccess;
 
@@ -535,6 +541,8 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
   @override
   void dispose() {
+    _executionTimer?.cancel();
+    _debounce?.cancel();
     _urlCtrl.dispose();
     _nameCtrl.dispose();
     _bodyCtrl.dispose();
@@ -543,113 +551,142 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     super.dispose();
   }
 
-  void _handleUrlChanged(String value) {
-    if (value.trim().toLowerCase().startsWith('curl ')) {
-      _parseCurlCommand(value);
-    }
+  void _startTimer() {
+    _executionTimer?.cancel();
+    _elapsedMs = 0;
+    _executionTimer = async_timer.Timer.periodic(const Duration(milliseconds: 10), (timer) {
+      if (mounted) {
+        setState(() {
+          _elapsedMs += 10;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
-  void _showCurlPasteDialog() {
-    final curlCtrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Paste cURL Command'),
-        content: SizedBox(
-          width: 600,
-          child: TextField(
-            controller: curlCtrl,
-            maxLines: 10,
-            decoration: const InputDecoration(
-              hintText: 'curl -X POST https://api.example.com...',
-              border: OutlineInputBorder(),
-            ),
-            style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (curlCtrl.text.isNotEmpty) {
-                _parseCurlCommand(curlCtrl.text);
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Parse & Fill'),
-          ),
-        ],
-      ),
-    );
+  void _stopTimer() {
+    _executionTimer?.cancel();
+    _executionTimer = null;
+  }
+
+  void _handleUrlChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = async_timer.Timer(const Duration(milliseconds: 300), () {
+      if (value.trim().toLowerCase().startsWith('curl ')) {
+        _parseCurlCommand(value);
+      }
+    });
   }
 
   void _parseCurlCommand(String curlCommand) {
-    final cleanCommand =
-        curlCommand.replaceAll('\\\n', ' ').replaceAll('\\\r\n', ' ');
-
-    String method = 'GET';
-    String url = '';
-    Map<String, String> headers = {};
-    String body = '';
-
-    final urlMatch =
-        RegExp(r'''(?:curl\s+)?(?:['"]?)(https?://[^'"\s]+)(?:['"]?)''')
-            .firstMatch(cleanCommand);
-    if (urlMatch != null) {
-      url = urlMatch.group(1)!;
-    }
-
-    final methodMatch =
-        RegExp(r'''(?:-X|--request)\s+(['"]?)([A-Z]+)\1''')
-            .firstMatch(cleanCommand);
-    if (methodMatch != null) {
-      method = methodMatch.group(2)!;
-    } else if (cleanCommand.contains('-d') ||
-        cleanCommand.contains('--data') ||
-        cleanCommand.contains('--data-raw')) {
-      method = 'POST';
-    }
-
-    final headerRegExp =
-        RegExp(r'''(?:-H|--header)\s+(['"])([^:]+):\s*(.*?)\1''');
-    for (final match in headerRegExp.allMatches(cleanCommand)) {
-      headers[match.group(2)!.trim()] = match.group(3)!.trim();
-    }
-
-    final headerNoQuoteRegExp =
-        RegExp(r'''(?:-H|--header)\s+([^'"\s]+):\s*([^'"\s]+)''');
-    for (final match in headerNoQuoteRegExp.allMatches(cleanCommand)) {
-      final key = match.group(1)!.trim();
-      if (!headers.containsKey(key)) {
-        headers[key] = match.group(2)!.trim();
-      }
-    }
-
-    final dataRegExp = RegExp(
-      r'''(?:-d|--data(?:-raw|-binary)?)\s+(['"])(.*?)\1''',
-      dotAll: true,
-    );
-    final dataMatch = dataRegExp.firstMatch(cleanCommand);
-    if (dataMatch != null) {
-      body = dataMatch.group(2) ?? '';
-    } else {
-      final dataNoQuoteRegExp =
-          RegExp(r'''(?:-d|--data(?:-raw|-binary)?)\s+([^{'"\s][^\s]*)''');
-      final dataNoQuoteMatch = dataNoQuoteRegExp.firstMatch(cleanCommand);
-      if (dataNoQuoteMatch != null) {
-        body = dataNoQuoteMatch.group(1) ?? '';
-      }
-    }
+    final data = CurlParser.parse(curlCommand);
 
     setState(() {
-      if (url.isNotEmpty) _urlCtrl.text = url;
-      _method = method;
-      _headers = {...headers};
-      if (body.isNotEmpty) _bodyCtrl.text = body;
+      if (data.url != null && data.url!.isNotEmpty) _urlCtrl.text = data.url!;
+      if (data.method != null) _method = data.method!;
+      if (data.headers != null) _headers = {...data.headers!};
+      if (data.body != null && data.body!.isNotEmpty) _bodyCtrl.text = data.body!;
     });
+  }
+
+  void _beautifyJson() {
+    try {
+      final content = _bodyCtrl.text.trim();
+      if (content.isEmpty) return;
+      final decoded = jsonDecode(content);
+      const encoder = JsonEncoder.withIndent('  ');
+      setState(() {
+        _bodyCtrl.text = encoder.convert(decoded);
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid JSON')),
+        );
+      }
+    }
+  }
+
+  String _generateCurlCommand() {
+    final url = _urlCtrl.text;
+    final method = _method;
+    final headers = _headers;
+    final body = _bodyCtrl.text;
+
+    var curl = 'curl -X $method "$url"';
+    headers.forEach((key, value) {
+      curl += ' \\\n  -H "$key: $value"';
+    });
+
+    if (body.isNotEmpty && (method == 'POST' || method == 'PUT' || method == 'PATCH' || method == 'DELETE')) {
+      final escapedBody = body.replaceAll("'", "'\\''");
+      curl += " \\\n  -d '$escapedBody'";
+    }
+    return curl;
+  }
+
+  void _showExportCurlDialog() {
+    final curlCommand = _generateCurlCommand();
+    showDialog(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return PilotDialog(
+          title: 'Export to cURL',
+          maxWidth: 600,
+          content: Container(
+            constraints: const BoxConstraints(maxHeight: 400),
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+                  child: SelectableText(
+                    curlCommand,
+                    style: TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 13,
+                      color: isDark ? AppColors.textPrimary : AppColors.textLight,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Tooltip(
+                    message: 'Copy to clipboard',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: curlCommand));
+                          PilotToast.show(context, 'Copied to clipboard');
+                        },
+                        borderRadius: BorderRadius.circular(4),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            LucideIcons.copy,
+                            size: 18,
+                            color: (isDark ? AppColors.textPrimary : AppColors.textLight).withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            PilotButton.primary(
+              label: 'Done',
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _save() async {
@@ -694,8 +731,11 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
       _isLoading = true;
       _response = null;
       _statusCode = null;
+      _responseTime = null;
       _isSuccess = null;
     });
+
+    _startTimer();
 
     try {
       dynamic bodyPayload = _bodyCtrl.text;
@@ -718,6 +758,8 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
           });
 
       if (!mounted) return;
+      _stopTimer();
+
       setState(() {
         _response = result;
 
@@ -732,6 +774,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         }
       });
     } catch (e) {
+      _stopTimer();
       if (!mounted) return;
       setState(() {
         _response = {'error': e.toString()};
@@ -786,9 +829,8 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                 ),
                 const SizedBox(width: 16),
                 PilotButton.ghost(
-                  label: 'cURL',
-                  icon: LucideIcons.terminal,
-                  onPressed: _showCurlPasteDialog,
+                  icon: LucideIcons.code,
+                  onPressed: _showExportCurlDialog,
                   compact: true,
                 ),
                 const SizedBox(width: 8),
@@ -912,19 +954,33 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                         ),
                         Padding(
                           padding: const EdgeInsets.all(1),
-                          child: TextField(
-                            controller: _bodyCtrl,
-                            maxLines: null,
-                            expands: true,
-                            style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: textColor),
-                            decoration: InputDecoration(
-                              hintText: 'Request Body (JSON)',
-                              hintStyle: TextStyle(color: secondaryText),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.all(16),
-                              fillColor: bg.withValues(alpha: 0.3),
-                              filled: true,
-                            ),
+                          child: Stack(
+                            children: [
+                              TextField(
+                                controller: _bodyCtrl,
+                                maxLines: null,
+                                expands: true,
+                                style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: textColor),
+                                decoration: InputDecoration(
+                                  hintText: 'Request Body (JSON)',
+                                  hintStyle: TextStyle(color: secondaryText),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.all(16),
+                                  fillColor: bg.withValues(alpha: 0.3),
+                                  filled: true,
+                                ),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 16,
+                                child: PilotButton.ghost(
+                                  label: 'Beautify',
+                                  icon: LucideIcons.sparkles,
+                                  onPressed: _beautifyJson,
+                                  compact: true,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         _buildSettingsTab(isDark, textColor, secondaryText, border),
@@ -955,7 +1011,10 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                             children: [
                               Text('Response', style: TextStyle(color: secondaryText, fontWeight: FontWeight.w600, fontSize: 12)),
                               const Spacer(),
-                              if (_statusCode != null) ...[
+                              if (_isLoading) ...[
+                                Text('${_elapsedMs}ms', style: TextStyle(color: accentColor, fontSize: 12, fontFamily: 'JetBrains Mono')),
+                              ],
+                              if (_statusCode != null && !_isLoading) ...[
                                 _buildStatusBadge(_isSuccess == true, _statusCode!),
                                 const SizedBox(width: 12),
                                 Text('${_responseTime}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono')),
