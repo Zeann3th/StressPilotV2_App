@@ -68,13 +68,13 @@ class _RunsListWidgetState extends State<RunsListWidget> {
 
   void _handleRunTap(Run run) {
     final status = run.status.toUpperCase();
-    if (status == 'RUNNING') {
+    if (status == 'RUNNING' || status == 'STARTING') {
       Navigator.pushNamed(
         context,
         AppRouter.resultsRoute,
         arguments: {'runId': run.id},
       ).then((_) => _loadRuns());
-    } else if (status == 'COMPLETED') {
+    } else {
       _exportRun(run);
     }
   }
@@ -384,7 +384,7 @@ class _RunTileState extends State<_RunTile> {
                   size: 16,
                   color: AppColors.textMuted,
                 ),
-              if (status == 'COMPLETED')
+              if (status != 'RUNNING' && status != 'STARTING')
                 Tooltip(
                   message: 'Export',
                   child: widget.isExporting
@@ -418,6 +418,7 @@ class _RunTileState extends State<_RunTile> {
         return (AppColors.accent, Icons.check_circle_outline_rounded);
       case 'FAILED':
       case 'ABORTED':
+      case 'CANCELED':
         return (AppColors.error, Icons.error_outline_rounded);
       default:
         return (AppColors.textMuted, Icons.help_outline_rounded);

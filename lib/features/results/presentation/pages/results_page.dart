@@ -339,7 +339,7 @@ class _ResultsPageState extends State<ResultsPage> {
                                     ),
                               onPressed:
                                   (_currentRun != null &&
-                                      _currentRun!.status.toUpperCase() == 'COMPLETED' &&
+                                      _isTerminalStatus(_currentRun!.status) &&
                                       !_exporting)
                                   ? () => _exportRun()
                                   : null,
@@ -500,8 +500,10 @@ class _ResultsPageState extends State<ResultsPage> {
 
     final status = _currentRun!.status.toUpperCase();
     final statusColor = status == 'COMPLETED'
-        ? Colors.green
-        : (status == 'FAILED' ? Colors.red : Colors.blue);
+        ? AppColors.success
+        : (status == 'FAILED' || status == 'ABORTED' || status == 'CANCELED'
+            ? AppColors.error
+            : AppColors.info);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
