@@ -225,11 +225,29 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
             const SizedBox(height: 4),
             const Divider(),
             const SizedBox(height: 16),
+            
+            // Body field is now universal for all endpoint types
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const _FieldLabel('Body / Payload'),
+                PilotButton.ghost(
+                  label: 'Beautify',
+                  onPressed: _beautifyJson,
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            PilotInput(
+              controller: _bodyCtrl,
+              placeholder: _getBodyPlaceholder(),
+              maxLines: 8,
+              style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+
             if (_selectedType == 'HTTP') _buildHttpFields(),
             if (_selectedType == 'GRPC') _buildGrpcFields(),
-            if (_selectedType == 'JDBC') _buildJdbcFields(),
-            if (_selectedType == 'JS') _buildJsFields(),
-            if (_selectedType == 'TCP') _buildTcpFields(),
           ],
         ),
       ),
@@ -244,6 +262,19 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
         ),
       ],
     );
+  }
+
+  String _getBodyPlaceholder() {
+    switch (_selectedType) {
+      case 'JDBC':
+        return 'SELECT * FROM users LIMIT 10';
+      case 'JS':
+        return '// Your JS code here';
+      case 'GRPC':
+        return '{"id": 123}';
+      default:
+        return '{"key": "value"}';
+    }
   }
 
   Widget _buildDropdown({
@@ -313,24 +344,6 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
           ),
           child: KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
         ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const _FieldLabel('Initial Body (JSON)'),
-            PilotButton.ghost(
-              label: 'Beautify',
-              onPressed: _beautifyJson,
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        PilotInput(
-          controller: _bodyCtrl,
-          placeholder: '{"key": "value"}',
-          maxLines: 5,
-          style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-        ),
       ],
     );
   }
@@ -350,81 +363,6 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
         const _FieldLabel('Stub Path (Proto File) *'),
         const SizedBox(height: 6),
         PilotInput(controller: _grpcStubCtrl, placeholder: '/path/to/service.proto'),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const _FieldLabel('Initial Message (JSON)'),
-            PilotButton.ghost(
-              label: 'Beautify',
-              onPressed: _beautifyJson,
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        PilotInput(
-          controller: _bodyCtrl,
-          placeholder: '{"id": 123}',
-          maxLines: 5,
-          style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildJdbcFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _FieldLabel('SQL Query *'),
-        const SizedBox(height: 6),
-        PilotInput(
-          controller: _bodyCtrl,
-          placeholder: 'SELECT * FROM users LIMIT 10',
-          maxLines: 8,
-          style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildJsFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _FieldLabel('JavaScript Code *'),
-        const SizedBox(height: 6),
-        PilotInput(
-          controller: _bodyCtrl,
-          placeholder: '// Your JS code here',
-          maxLines: 15,
-          style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTcpFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const _FieldLabel('Payload (Text/JSON) *'),
-            PilotButton.ghost(
-              label: 'Beautify',
-              onPressed: _beautifyJson,
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        PilotInput(
-          controller: _bodyCtrl,
-          placeholder: 'Enter TCP payload',
-          maxLines: 5,
-          style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-        ),
       ],
     );
   }
