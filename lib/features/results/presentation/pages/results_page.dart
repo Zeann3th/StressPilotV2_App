@@ -14,7 +14,7 @@ import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
-import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
+import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
 
 class ResultsPage extends StatefulWidget {
   final int runId;

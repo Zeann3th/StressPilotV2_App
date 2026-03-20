@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/input/shortcut_parser.dart';
-import 'package:stress_pilot/core/config/settings_manager.dart';
+import 'package:stress_pilot/core/system/settings_manager.dart';
 
 class KeymapProvider extends ChangeNotifier {
   final Map<String, String> _keymap = {};

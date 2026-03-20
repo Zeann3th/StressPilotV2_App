@@ -3,7 +3,7 @@ import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
-import 'package:stress_pilot/core/config/settings_manager.dart';
+import 'package:stress_pilot/core/system/settings_manager.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/flow_repository.dart';
 import 'package:stress_pilot/features/projects/data/repositories/flow_repository_impl.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/project_repository.dart';

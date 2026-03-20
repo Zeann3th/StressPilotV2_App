@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/core/config/settings_manager.dart';
+import 'package:stress_pilot/core/system/settings_manager.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 

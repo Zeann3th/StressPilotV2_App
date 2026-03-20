@@ -7,7 +7,7 @@ import 'package:stress_pilot/features/environments/presentation/provider/environ
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
-import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
+import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
 
 class EnvironmentPage extends StatefulWidget {
   final int environmentId;

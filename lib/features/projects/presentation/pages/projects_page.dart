@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/utils/tutorial_helper.dart';
-import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
+import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_topbar.dart';
 import 'package:stress_pilot/core/domain/entities/project.dart';

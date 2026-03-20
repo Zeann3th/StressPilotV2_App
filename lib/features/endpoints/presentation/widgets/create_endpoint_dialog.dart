@@ -8,9 +8,9 @@ import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/common/data/utility_service.dart';
 
-import '../data/curl_parser.dart';
-import '../presentation/provider/endpoint_provider.dart';
-import '../widgets/key_value_editor.dart';
+import 'package:stress_pilot/features/endpoints/data/curl_parser.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
+import 'key_value_editor.dart';
 
 class CreateEndpointDialog extends StatefulWidget {
   final int projectId;

@@ -6,7 +6,7 @@ import 'package:stress_pilot/features/settings/presentation/provider/setting_pro
 import 'package:stress_pilot/features/settings/presentation/widgets/settings_table.dart';
 import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 
-import 'package:stress_pilot/features/common/presentation/app_topbar.dart';
+import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
