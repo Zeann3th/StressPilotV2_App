@@ -7,9 +7,7 @@ VERSION     := 1.0.0
 ARCH        := amd64
 MAINTAINER  := Long Ly <longhienly112@gmail.com>
 DESCRIPTION := A Stress testing application
-DEPENDS     := libgtk-3-0 (>= 3.18), libblkid1 (>= 2.27), liblzma5 (>= 5.1), \
-               libglib2.0-0, libnss3, libatk1.0-0, libdrm2, libxcomposite1, \
-               libxdamage1, libxrandr2, libgbm1
+DEPENDS     := libgtk-3-0 (>= 3.18), libblkid1 (>= 2.27), liblzma5 (>= 5.1)
 SECTION     := utils
 PRIORITY    := optional
 
@@ -17,11 +15,6 @@ PRIORITY    := optional
 JDK_URL     := https://aka.ms/download-jdk/microsoft-jdk-25-linux-x64.tar.gz
 JDK_ARCHIVE := /tmp/openjdk-25.tar.gz
 JDK_EXTRACT := /tmp/jdk-25
-
-# CEF cache
-CEF_CACHE_DIR  := $(HOME)/.cache/stress-pilot-build
-CEF_CACHE_FILE := $(CEF_CACHE_DIR)/cef_prebuilt.zip
-CEF_PLUGIN_DIR := linux/flutter/ephemeral/.plugin_symlinks/webview_cef/linux
 
 # Paths
 DIST_ROOT         := dist
@@ -32,7 +25,7 @@ DEB_FILE          := $(DIST_ROOT)/$(APP_NAME)_$(VERSION)_$(ARCH).deb
 ICON_SRC  := $(FLUTTER_BUILD_DIR)/data/flutter_assets/assets/images/logo.png
 ICON_DEST := $(PACKAGE_DIR)/usr/share/pixmaps/$(APP_NAME).png
 
-.PHONY: all clean fetch-jdk cache-cef restore-cef build structure files copy permissions deb install lint help
+.PHONY: all clean fetch-jdk dev build structure files copy permissions deb install lint clean-cache nuke help
 
 # ==============================================================================
 # Default target
@@ -70,43 +63,20 @@ fetch-jdk:
 	@echo "✅ JDK ready at $(JDK_EXTRACT)"
 
 # ==============================================================================
-# 3. Cache CEF binary (run once after first successful build)
+# 3. Dev: run in debug mode
 # ==============================================================================
-cache-cef:
-	@echo "→ Caching CEF binary..."
-	@mkdir -p $(CEF_CACHE_DIR)
-	@if [ -f "$(CEF_PLUGIN_DIR)/prebuilt.zip" ]; then \
-		cp $(CEF_PLUGIN_DIR)/prebuilt.zip $(CEF_CACHE_FILE); \
-		echo "✅ CEF cached to $(CEF_CACHE_FILE)"; \
-	elif [ -f "$(CEF_CACHE_FILE)" ]; then \
-		echo "  (already cached) $(CEF_CACHE_FILE)"; \
-	else \
-		echo "⚠️  CEF prebuilt.zip not found yet. Run a full build first."; \
-	fi
+dev:
+	flutter run -d linux
 
 # ==============================================================================
-# 4. Restore CEF from cache before build
+# 4. Build the Flutter app
 # ==============================================================================
-restore-cef:
-	@echo "→ Restoring CEF from cache..."
-	@if [ -f "$(CEF_CACHE_FILE)" ]; then \
-		mkdir -p $(CEF_PLUGIN_DIR); \
-		cp $(CEF_CACHE_FILE) $(CEF_PLUGIN_DIR)/prebuilt.zip; \
-		echo "✅ CEF restored from cache"; \
-	else \
-		echo "  No CEF cache found, will download during build."; \
-	fi
-
-# ==============================================================================
-# 5. Build the Flutter app
-# ==============================================================================
-build: restore-cef
+build:
 	@echo "→ Building Flutter app (release)..."
 	flutter build linux --release
-	@$(MAKE) cache-cef
 
 # ==============================================================================
-# 6. Create the directory structure
+# 5. Create the directory structure
 # ==============================================================================
 structure:
 	@echo "→ Creating package directory structure..."
@@ -116,7 +86,7 @@ structure:
 	mkdir -p $(PACKAGE_DIR)/usr/share/pixmaps
 
 # ==============================================================================
-# 7. Generate control, desktop, postinst, and prerm files
+# 6. Generate control, desktop, postinst, and prerm files
 # ==============================================================================
 files:
 	@echo "→ Generating DEBIAN/control..."
@@ -160,7 +130,7 @@ files:
 	@echo "update-desktop-database /usr/share/applications || true"                        >> $(PACKAGE_DIR)/DEBIAN/prerm
 
 # ==============================================================================
-# 8. Copy build files, JDK, and icon
+# 7. Copy build files, JDK, and icon
 # ==============================================================================
 copy:
 	@echo "→ Copying Flutter build files..."
@@ -178,7 +148,7 @@ copy:
 	fi
 
 # ==============================================================================
-# 9. Set permissions
+# 8. Set permissions
 # ==============================================================================
 permissions:
 	@echo "→ Setting permissions..."
@@ -191,7 +161,7 @@ permissions:
 	find $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk/lib -name "*.so*" -exec chmod 644 {} \; 2>/dev/null || true
 
 # ==============================================================================
-# 10. Build the .deb package
+# 9. Build the .deb package
 # ==============================================================================
 deb:
 	@echo "→ Building .deb package..."
@@ -216,6 +186,21 @@ install:
 	sudo dpkg -i $(DEB_FILE)
 
 # ==============================================================================
+# Optional: Clear all cached build artifacts
+# ==============================================================================
+clean-cache:
+	@echo "→ Clearing build cache..."
+	@rm -f $(JDK_ARCHIVE)
+	@rm -rf $(JDK_EXTRACT)
+	@echo "✅ Cache cleared (JDK)"
+
+# ==============================================================================
+# Optional: Full nuke — clean everything including cache
+# ==============================================================================
+nuke: clean clean-cache
+	@echo "✅ Full nuke complete — next build will re-download everything"
+
+# ==============================================================================
 # Help
 # ==============================================================================
 help:
@@ -225,8 +210,7 @@ help:
 	@echo "  all          Full build pipeline (default)"
 	@echo "  clean        Remove dist/ and flutter build cache"
 	@echo "  fetch-jdk    Download and extract JDK 25 to /tmp"
-	@echo "  restore-cef  Restore CEF binary from ~/.cache"
-	@echo "  cache-cef    Save CEF binary to ~/.cache (auto-runs after build)"
+	@echo "  dev          Run flutter run -d linux"
 	@echo "  build        Run flutter build linux --release"
 	@echo "  structure    Create package directory layout"
 	@echo "  files        Generate control, desktop, postinst files"
@@ -235,4 +219,6 @@ help:
 	@echo "  deb          Package into .deb file"
 	@echo "  lint         Run lintian on the .deb (optional)"
 	@echo "  install      Install .deb locally for testing"
+	@echo "  clean-cache  Remove cached JDK"
+	@echo "  nuke         Full clean including cache"
 	@echo ""
