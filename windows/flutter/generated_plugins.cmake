@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   local_notifier
   screen_retriever_windows
   url_launcher_windows
+  webview_cef
   window_manager
 )
 

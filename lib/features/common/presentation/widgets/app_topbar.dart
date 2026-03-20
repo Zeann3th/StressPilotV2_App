@@ -68,6 +68,12 @@ class _AppTopBarState extends State<AppTopBar> {
           const Spacer(),
 
           _TopBarIcon(
+            icon: LucideIcons.shoppingBag,
+            tooltip: 'Marketplace',
+            onTap: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
+          ),
+          const SizedBox(width: 8),
+          _TopBarIcon(
             icon: LucideIcons.settings,
             tooltip: _tip('Settings', keymap.getShortcut('app.settings')),
             onTap: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
