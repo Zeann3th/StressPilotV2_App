@@ -202,9 +202,9 @@ class ProjectProvider extends ChangeNotifier {
 
       final result = await FilePicker.platform.saveFile(
         dialogTitle: 'Export Project',
-        fileName: '${projectName.replaceAll(' ', '_')}_export.json',
+        fileName: '${projectName.replaceAll(' ', '_')}_export.yaml',
         type: FileType.custom,
-        allowedExtensions: ['json'],
+        allowedExtensions: ['yaml'],
       );
 
       if (result == null) {
@@ -234,7 +234,7 @@ class ProjectProvider extends ChangeNotifier {
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Import Project',
         type: FileType.custom,
-        allowedExtensions: formats.isEmpty ? ['json'] : formats,
+        allowedExtensions: formats.isEmpty ? ['yaml'] : formats,
         allowMultiple: false,
       );
 
