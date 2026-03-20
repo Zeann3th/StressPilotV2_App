@@ -93,18 +93,20 @@ class PilotDialog extends StatelessWidget {
                   ),
                 ),
                 Divider(height: 1, color: border),
-                Padding(padding: const EdgeInsets.all(24), child: content),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: content,
+                  ),
+                ),
                 Divider(height: 1, color: border),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      for (int i = 0; i < actions.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 8),
-                        actions[i],
-                      ],
-                    ],
+                  child: OverflowBar(
+                    alignment: MainAxisAlignment.end,
+                    spacing: 8,
+                    overflowSpacing: 8,
+                    children: actions,
                   ),
                 ),
               ],

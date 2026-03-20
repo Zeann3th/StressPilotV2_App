@@ -78,4 +78,23 @@ class Endpoint {
     successCondition: json['successCondition'],
     projectId: _toInt(json['projectId']),
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'type': type,
+    'url': url,
+    'httpMethod': httpMethod,
+    'httpHeaders': httpHeaders,
+    'body': body,
+    'httpParameters': httpParameters,
+    'grpcServiceName': grpcServiceName,
+    'grpcMethodName': grpcMethodName,
+    'grpcStubPath': grpcStubPath,
+    'graphqlOperationType': graphqlOperationType,
+    'graphqlVariables': graphqlVariables,
+    'successCondition': successCondition,
+    'projectId': projectId,
+  };
 }

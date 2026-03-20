@@ -7,7 +7,6 @@ class RunProvider extends ChangeNotifier {
   final RunService _runService;
 
   Run? _activeRun;
-  Timer? _statusTimer;
 
   RunProvider(this._runService);
 
@@ -33,30 +32,57 @@ class RunProvider extends ChangeNotifier {
     }
   }
 
-  void _startPolling(int flowId) {
-    _statusTimer?.cancel();
-    _statusTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+  bool _isPolling = false;
+  Duration _pollInterval = const Duration(seconds: 2);
+
+  Future<void> _startPolling(int flowId) async {
+    if (_isPolling) return;
+    _isPolling = true;
+    _pollInterval = const Duration(seconds: 2);
+    
+    while (_isPolling) {
       try {
         final lastRun = await _runService.getLastRun(flowId);
         if (lastRun.status != 'RUNNING' && lastRun.status != 'STARTING') {
           _activeRun = null;
           _stopPolling();
           notifyListeners();
+          break;
         } else {
           _activeRun = lastRun;
           notifyListeners();
+          
+          // Use status as a factor for interval
+          if (lastRun.status == 'STARTING') {
+            _pollInterval = const Duration(seconds: 1);
+          } else {
+            // Check if run duration reached
+            final created = lastRun.startedAt;
+            final elapsed = DateTime.now().toUtc().difference(created.toUtc());
+            if (elapsed.inSeconds >= lastRun.duration) {
+              // Apply backoff as it should have finished
+              _pollInterval = _pollInterval + const Duration(seconds: 1);
+              if (_pollInterval > const Duration(seconds: 10)) {
+                _pollInterval = const Duration(seconds: 10);
+              }
+            } else {
+              _pollInterval = const Duration(seconds: 2);
+            }
+          }
         }
       } catch (_) {
         _activeRun = null;
         _stopPolling();
         notifyListeners();
+        break;
       }
-    });
+      
+      await Future.delayed(_pollInterval);
+    }
   }
 
   void _stopPolling() {
-    _statusTimer?.cancel();
-    _statusTimer = null;
+    _isPolling = false;
   }
 
   Future<void> interruptActiveRun() async {

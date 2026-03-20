@@ -47,22 +47,43 @@ class SessionManager {
   }
 
   Future<bool> waitForHealthCheck({
-    int maxAttempts = 12,
-    Duration interval = const Duration(seconds: 5),
+    int maxAttempts = 15,
+    Duration initialInterval = const Duration(seconds: 1),
+    Duration maxInterval = const Duration(seconds: 15),
   }) async {
     AppLogger.info(
-      'Starting health check (max $maxAttempts attempts, ${interval.inSeconds}s interval)',
+      'Starting health check (max $maxAttempts attempts, exponential backoff)',
       name: _logName,
     );
 
+    Duration currentInterval = initialInterval;
+
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       AppLogger.debug(
-        'Health check attempt $attempt/$maxAttempts...',
+        'Health check attempt $attempt/$maxAttempts (waiting ${currentInterval.inSeconds}s)...',
         name: _logName,
       );
 
       try {
-        final response = await _dio.get(
+        // First try the session endpoint as it's the most critical
+        final sessionResponse = await _dio.get(
+          '/api/v1/utilities/session',
+          options: Options(
+            sendTimeout: const Duration(seconds: 3),
+            receiveTimeout: const Duration(seconds: 3),
+            validateStatus: (status) => status != null && status < 500,
+          ),
+        );
+
+        if (sessionResponse.statusCode == 200) {
+          AppLogger.info('Backend session is ready!', name: _logName);
+          _sessionId = sessionResponse.data['data']?.toString();
+          startAutoRefresh();
+          return true;
+        }
+
+        // Fallback to actuator health if session endpoint didn't give 200
+        final healthResponse = await _dio.get(
           '/actuator/health',
           options: Options(
             sendTimeout: const Duration(seconds: 3),
@@ -71,21 +92,11 @@ class SessionManager {
           ),
         );
 
-        AppLogger.debug(
-          'Health check response: ${response.statusCode} - ${response.data}',
-          name: _logName,
-        );
-
-        if (response.statusCode == 200 &&
-            response.data is Map &&
-            response.data['status'] == 'UP') {
-          AppLogger.info('Backend is ready!', name: _logName);
+        if (healthResponse.statusCode == 200 &&
+            healthResponse.data is Map &&
+            healthResponse.data['status'] == 'UP') {
+          AppLogger.info('Backend health is UP!', name: _logName);
           return true;
-        } else {
-          AppLogger.warning(
-            'Unexpected health check response: ${response.statusCode}',
-            name: _logName,
-          );
         }
       } on DioException catch (e) {
         AppLogger.debug(
@@ -101,7 +112,12 @@ class SessionManager {
       }
 
       if (attempt < maxAttempts) {
-        await Future.delayed(interval);
+        await Future.delayed(currentInterval);
+        // Exponential backoff with a cap
+        currentInterval = currentInterval * 1.5;
+        if (currentInterval > maxInterval) {
+          currentInterval = maxInterval;
+        }
       }
     }
 

@@ -112,13 +112,18 @@ class ResultsProvider extends ChangeNotifier {
     }
   }
 
+  double _totalResponseTime = 0;
+
   void _onNewLogs(List<RequestLog> newLogs) {
     _allLogs.addAll(newLogs);
 
     if (_allLogs.length > 50000) {
       _allLogs.removeRange(0, _allLogs.length - 50000);
+      // If we remove logs, we need a full recalculation to stay accurate
+      _applyFilter();
+    } else {
+      _applyFilter(newLogsOnly: newLogs);
     }
-    _applyFilter(newLogsOnly: newLogs);
   }
 
   void _applyFilter({List<RequestLog>? newLogsOnly}) {
@@ -134,8 +139,9 @@ class ResultsProvider extends ChangeNotifier {
             .toList();
         _filteredLogs.addAll(processingLogs);
       }
+      _updateTotalsIncremental(processingLogs);
     } else {
-
+      // Full re-filter
       _rpsBuckets.clear();
       _rtBuckets.clear();
       _lastPlottedSecond = -1;
@@ -150,6 +156,7 @@ class ResultsProvider extends ChangeNotifier {
             .toList();
       }
       processingLogs = _filteredLogs;
+      _recalculateTotals();
     }
 
     for (var log in processingLogs) {
@@ -165,7 +172,6 @@ class ResultsProvider extends ChangeNotifier {
       }
 
       final second = timestamp.millisecondsSinceEpoch ~/ 1000;
-
       _rpsBuckets[second] = (_rpsBuckets[second] ?? 0) + 1;
 
       if (log.responseTime != null) {
@@ -174,9 +180,6 @@ class ResultsProvider extends ChangeNotifier {
             .add(log.responseTime!.toDouble());
       }
     }
-
-    _recalculateTotals();
-
   }
 
   void setEndpointFilter(int? endpointId) {
@@ -186,18 +189,36 @@ class ResultsProvider extends ChangeNotifier {
     }
   }
 
+  void _updateTotalsIncremental(List<RequestLog> newFilteredLogs) {
+    _totalRequests += newFilteredLogs.length;
+    for (var l in newFilteredLogs) {
+      if (l.statusCode == null || l.statusCode! >= 400) {
+        _errorCount++;
+      }
+      _totalResponseTime += (l.responseTime ?? 0);
+    }
+    
+    if (_totalRequests > 0) {
+      _avgResponseTime = _totalResponseTime / _totalRequests;
+    } else {
+      _avgResponseTime = 0;
+    }
+  }
+
   void _recalculateTotals() {
     _totalRequests = _filteredLogs.length;
-    _errorCount = _filteredLogs
-        .where((l) => l.statusCode == null || l.statusCode! >= 400)
-        .length;
+    _errorCount = 0;
+    _totalResponseTime = 0;
+
+    for (var l in _filteredLogs) {
+      if (l.statusCode == null || l.statusCode! >= 400) {
+        _errorCount++;
+      }
+      _totalResponseTime += (l.responseTime ?? 0);
+    }
 
     if (_totalRequests > 0) {
-      final totalTime = _filteredLogs.fold(
-        0.0,
-        (sum, l) => sum + (l.responseTime ?? 0),
-      );
-      _avgResponseTime = totalTime / _totalRequests;
+      _avgResponseTime = _totalResponseTime / _totalRequests;
     } else {
       _avgResponseTime = 0;
     }

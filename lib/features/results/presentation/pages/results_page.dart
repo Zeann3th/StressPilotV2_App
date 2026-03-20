@@ -29,7 +29,6 @@ class _ResultsPageState extends State<ResultsPage> {
   Run? _currentRun;
   bool _loadingRun = false;
 
-  Timer? _pollTimer;
   Timer? _tickTimer;
   Duration _elapsed = Duration.zero;
   bool _exporting = false;
@@ -46,14 +45,11 @@ class _ResultsPageState extends State<ResultsPage> {
     });
   }
 
-  bool _aggressivePolling = false;
+  Duration _currentPollInterval = const Duration(seconds: 15);
+  bool _isPolling = false;
 
   void _startTimers() {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) => _refreshRun(),
-    );
+    _startPolling();
 
     _tickTimer?.cancel();
     _tickTimer = Timer.periodic(
@@ -62,20 +58,53 @@ class _ResultsPageState extends State<ResultsPage> {
     );
   }
 
-  void _startAggressivePolling() {
-    if (_aggressivePolling) return;
-    _aggressivePolling = true;
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(
-      const Duration(seconds: 2),
-      (_) => _refreshRun(),
-    );
+  void _startPolling() {
+    if (_isPolling) return;
+    _isPolling = true;
+    _pollLoop();
+  }
+
+  Future<void> _pollLoop() async {
+    while (_isPolling && mounted) {
+      await _refreshRun();
+      
+      // Calculate next delay
+      if (_currentRun == null || _isTerminalStatus(_currentRun!.status)) {
+        _isPolling = false;
+        break;
+      }
+
+      // If we are nearing end of duration or just started, poll more frequently
+      // Otherwise, use backoff if nothing is changing or just a steady rate
+      Duration nextDelay = _currentPollInterval;
+      
+      final created = _currentRun!.startedAt;
+      final elapsed = DateTime.now().toUtc().difference(created.toUtc());
+      final remaining = Duration(seconds: _currentRun!.duration) - elapsed;
+
+      if (remaining.inSeconds <= 5 || elapsed.inSeconds <= 10) {
+        // Near end or just started, poll faster
+        nextDelay = const Duration(seconds: 2);
+      } else if (remaining.inSeconds > 0) {
+        // In the middle of the run, poll every 5-10 seconds
+        nextDelay = const Duration(seconds: 5);
+      } else {
+        // Run should have finished, but status is still running
+        // Apply backoff here as we wait for the backend to finalize
+        nextDelay = _currentPollInterval + const Duration(seconds: 2);
+        if (nextDelay > const Duration(seconds: 10)) {
+          nextDelay = const Duration(seconds: 10);
+        }
+      }
+      
+      _currentPollInterval = nextDelay;
+      await Future.delayed(_currentPollInterval);
+    }
   }
 
   void _stopTimers() {
-    _pollTimer?.cancel();
+    _isPolling = false;
     _tickTimer?.cancel();
-    _aggressivePolling = false;
   }
 
   Future<void> _updateElapsed() async {
@@ -88,10 +117,8 @@ class _ResultsPageState extends State<ResultsPage> {
         _elapsed = newElapsed;
       });
 
-      if (!_aggressivePolling &&
-          !_isTerminalStatus(_currentRun!.status) &&
-          newElapsed.inSeconds >= (_currentRun!.duration + 1)) {
-        _startAggressivePolling();
+      if (!_isPolling && !_isTerminalStatus(_currentRun!.status)) {
+        _startPolling();
       }
     } catch (_) {
       setState(() {

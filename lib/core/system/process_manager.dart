@@ -102,26 +102,42 @@ class ProcessManager {
   }
 
   Future<void> _waitForHealth() async {
-    const int maxRetries = 30;
-    int attempts = 0;
+    const int maxAttempts = 20;
+    Duration currentInterval = const Duration(seconds: 1);
+    final Duration maxInterval = const Duration(seconds: 10);
 
-    while (attempts < maxRetries) {
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        final response = await _dio.get('/actuator/health');
-        if (response.statusCode == 200 && response.data['status'] == 'UP') {
-          AppLogger.info('Backend is UP and healthy.', name: _logName);
+        // Try session endpoint first as it's our primary way of interacting
+        final sessionResponse = await _dio.get('/api/v1/utilities/session');
+        if (sessionResponse.statusCode == 200) {
+          AppLogger.info('Backend session ready.', name: _logName);
+          return;
+        }
+
+        // Fallback to actuator health
+        final healthResponse = await _dio.get('/actuator/health');
+        if (healthResponse.statusCode == 200 && healthResponse.data['status'] == 'UP') {
+          AppLogger.info('Backend actuator UP.', name: _logName);
           return;
         }
       } catch (_) {
-
+        // Ignore errors during healthcheck
       }
 
-      await Future.delayed(const Duration(seconds: 1));
-      attempts++;
+      if (attempt < maxAttempts) {
+        AppLogger.debug('Backend not ready yet, waiting ${currentInterval.inSeconds}s...', name: _logName);
+        await Future.delayed(currentInterval);
+        // Exponential backoff
+        currentInterval = currentInterval * 1.5;
+        if (currentInterval > maxInterval) {
+          currentInterval = maxInterval;
+        }
+      }
     }
 
     AppLogger.error(
-      'Backend failed to become healthy after $maxRetries seconds',
+      'Backend failed to become healthy after $maxAttempts attempts',
       name: _logName,
     );
   }

@@ -44,11 +44,19 @@ class _AppRootState extends State<AppRoot> {
     try {
       AppLogger.info('Starting application initialization', name: 'AppRoot');
 
-      await getIt<ProcessManager>().startBackend(attachLogs: kDebugMode);
+      // Start backend in background or catch its failure to allow offline mode
+      try {
+        await getIt<ProcessManager>().startBackend(attachLogs: kDebugMode);
+      } catch (e) {
+        AppLogger.error('Backend startup failed/timed out, continuing in offline mode', name: 'AppRoot', error: e);
+      }
 
-      AppLogger.info('Backend initialization complete.', name: 'AppRoot');
+      try {
+        await getIt<SessionManager>().initializeSession();
+      } catch (e) {
+        AppLogger.error('Session initialization failed, continuing in offline mode', name: 'AppRoot', error: e);
+      }
 
-      await getIt<SessionManager>().initializeSession();
       await getIt<ThemeManager>().initialize();
       await getIt<ProjectProvider>().initialize();
       await getIt<KeymapProvider>().initialize();
@@ -57,22 +65,24 @@ class _AppRootState extends State<AppRoot> {
       if (mounted) {
         setState(() {
           _initialized = true;
+          _hasError = false; // Reset error state if we managed to reach this point
         });
       }
 
-      AppLogger.info('Application initialized successfully', name: 'AppRoot');
+      AppLogger.info('Application initialized (Offline Mode compatible)', name: 'AppRoot');
     } catch (e, st) {
+      // Only critical errors that prevent UI from rendering at all should trigger _hasError
+      AppLogger.critical(
+        'Critical application initialization failed',
+        name: 'AppRoot',
+        error: e,
+        stackTrace: st,
+      );
       if (mounted) {
         setState(() {
           _hasError = true;
         });
       }
-      AppLogger.critical(
-        'Application initialization failed',
-        name: 'AppRoot',
-        error: e,
-        stackTrace: st,
-      );
     }
   }
 

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stress_pilot/features/endpoints/domain/repositories/endpoint_repository.dart';
 import 'package:stress_pilot/features/endpoints/data/repositories/endpoint_repository_impl.dart';
 import 'package:stress_pilot/core/domain/entities/endpoint.dart';
@@ -16,6 +18,26 @@ class EndpointProvider extends ChangeNotifier {
 
   bool _isExecuting = false;
   String? _error;
+
+  String _getCacheKey(int projectId) => 'endpoints_project_${projectId}_json';
+
+  Future<void> _cacheEndpoints(int projectId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = jsonEncode(_endpoints.map((e) => e.toJson()).toList());
+    await prefs.setString(_getCacheKey(projectId), jsonString);
+  }
+
+  Future<void> _loadCachedEndpoints(int projectId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_getCacheKey(projectId));
+    if (jsonString != null) {
+      try {
+        final List<dynamic> jsonList = jsonDecode(jsonString);
+        _endpoints = jsonList.map((e) => Endpoint.fromJson(e)).toList();
+        notifyListeners();
+      } catch (_) {}
+    }
+  }
 
   List<Endpoint> get endpoints => _endpoints;
 
@@ -45,9 +67,10 @@ class EndpointProvider extends ChangeNotifier {
 
       _endpoints = page.content;
       _hasMore = _currentPage < (page.totalPages - 1);
+      await _cacheEndpoints(projectId);
     } catch (e) {
       _error = e.toString();
-      _endpoints = [];
+      if (_endpoints.isEmpty) await _loadCachedEndpoints(projectId);
       _hasMore = false;
     }
 
