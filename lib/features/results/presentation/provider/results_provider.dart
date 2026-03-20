@@ -119,7 +119,7 @@ class ResultsProvider extends ChangeNotifier {
 
     if (_allLogs.length > 50000) {
       _allLogs.removeRange(0, _allLogs.length - 50000);
-      // If we remove logs, we need a full recalculation to stay accurate
+
       _applyFilter();
     } else {
       _applyFilter(newLogsOnly: newLogs);
@@ -141,7 +141,7 @@ class ResultsProvider extends ChangeNotifier {
       }
       _updateTotalsIncremental(processingLogs);
     } else {
-      // Full re-filter
+
       _rpsBuckets.clear();
       _rtBuckets.clear();
       _lastPlottedSecond = -1;
@@ -197,7 +197,7 @@ class ResultsProvider extends ChangeNotifier {
       }
       _totalResponseTime += (l.responseTime ?? 0);
     }
-    
+
     if (_totalRequests > 0) {
       _avgResponseTime = _totalResponseTime / _totalRequests;
     } else {

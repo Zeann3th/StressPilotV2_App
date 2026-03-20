@@ -39,7 +39,7 @@ class RunProvider extends ChangeNotifier {
     if (_isPolling) return;
     _isPolling = true;
     _pollInterval = const Duration(seconds: 2);
-    
+
     while (_isPolling) {
       try {
         final lastRun = await _runService.getLastRun(flowId);
@@ -51,16 +51,15 @@ class RunProvider extends ChangeNotifier {
         } else {
           _activeRun = lastRun;
           notifyListeners();
-          
-          // Use status as a factor for interval
+
           if (lastRun.status == 'STARTING') {
             _pollInterval = const Duration(seconds: 1);
           } else {
-            // Check if run duration reached
+
             final created = lastRun.startedAt;
             final elapsed = DateTime.now().toUtc().difference(created.toUtc());
             if (elapsed.inSeconds >= lastRun.duration) {
-              // Apply backoff as it should have finished
+
               _pollInterval = _pollInterval + const Duration(seconds: 1);
               if (_pollInterval > const Duration(seconds: 10)) {
                 _pollInterval = const Duration(seconds: 10);
@@ -76,7 +75,7 @@ class RunProvider extends ChangeNotifier {
         notifyListeners();
         break;
       }
-      
+
       await Future.delayed(_pollInterval);
     }
   }

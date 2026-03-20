@@ -72,14 +72,14 @@ class ProjectProvider extends ChangeNotifier {
       final PagedResponse<Project> response = await _projectRepository.getProjects(
         name: searchName,
         page: 0,
-        size: 50, // Increase size for better offline view
+        size: 50,
       );
       _projects = response.content;
       _error = null;
       await _cacheProjects();
     } catch (e) {
       _error = e.toString();
-      // Keep cached projects if search is not active
+
       if (searchName == null || searchName.isEmpty) {
         if (_projects.isEmpty) await _loadCachedProjects();
       } else {

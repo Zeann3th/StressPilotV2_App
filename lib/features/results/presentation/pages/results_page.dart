@@ -67,36 +67,32 @@ class _ResultsPageState extends State<ResultsPage> {
   Future<void> _pollLoop() async {
     while (_isPolling && mounted) {
       await _refreshRun();
-      
-      // Calculate next delay
+
       if (_currentRun == null || _isTerminalStatus(_currentRun!.status)) {
         _isPolling = false;
         break;
       }
 
-      // If we are nearing end of duration or just started, poll more frequently
-      // Otherwise, use backoff if nothing is changing or just a steady rate
       Duration nextDelay = _currentPollInterval;
-      
+
       final created = _currentRun!.startedAt;
       final elapsed = DateTime.now().toUtc().difference(created.toUtc());
       final remaining = Duration(seconds: _currentRun!.duration) - elapsed;
 
       if (remaining.inSeconds <= 5 || elapsed.inSeconds <= 10) {
-        // Near end or just started, poll faster
+
         nextDelay = const Duration(seconds: 2);
       } else if (remaining.inSeconds > 0) {
-        // In the middle of the run, poll every 5-10 seconds
+
         nextDelay = const Duration(seconds: 5);
       } else {
-        // Run should have finished, but status is still running
-        // Apply backoff here as we wait for the backend to finalize
+
         nextDelay = _currentPollInterval + const Duration(seconds: 2);
         if (nextDelay > const Duration(seconds: 10)) {
           nextDelay = const Duration(seconds: 10);
         }
       }
-      
+
       _currentPollInterval = nextDelay;
       await Future.delayed(_currentPollInterval);
     }

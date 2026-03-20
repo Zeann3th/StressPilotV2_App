@@ -10,7 +10,7 @@ class TutorialHelper {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final hasShown = prefs.getBool(prefKey) ?? false;
-    
+
     if (!hasShown) {
       if (!context.mounted) return;
       TutorialCoachMark(
@@ -23,10 +23,10 @@ class TutorialHelper {
           prefs.setBool(prefKey, true);
         },
         onClickTarget: (target) {
-          // onClick
+
         },
         onClickOverlay: (target) {
-          // onClickOverlay
+
         },
         onSkip: () {
           prefs.setBool(prefKey, true);

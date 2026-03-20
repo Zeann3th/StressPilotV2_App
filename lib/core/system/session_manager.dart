@@ -65,7 +65,7 @@ class SessionManager {
       );
 
       try {
-        // First try the session endpoint as it's the most critical
+
         final sessionResponse = await _dio.get(
           '/api/v1/utilities/session',
           options: Options(
@@ -82,7 +82,6 @@ class SessionManager {
           return true;
         }
 
-        // Fallback to actuator health if session endpoint didn't give 200
         final healthResponse = await _dio.get(
           '/actuator/health',
           options: Options(
@@ -113,7 +112,7 @@ class SessionManager {
 
       if (attempt < maxAttempts) {
         await Future.delayed(currentInterval);
-        // Exponential backoff with a cap
+
         currentInterval = currentInterval * 1.5;
         if (currentInterval > maxInterval) {
           currentInterval = maxInterval;

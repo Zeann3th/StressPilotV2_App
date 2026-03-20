@@ -36,7 +36,7 @@ class ProcessManager {
     if (Platform.isWindows) {
       return path.join(executableDir, 'jdk', 'bin', 'java.exe');
     } else {
-      // macOS and Linux
+
       return path.join(executableDir, 'jdk', 'bin', 'java');
     }
   }
@@ -152,7 +152,7 @@ class ProcessManager {
           return;
         }
       } catch (_) {
-        // Ignore errors during healthcheck
+
       }
 
       if (attempt < maxAttempts) {
@@ -161,7 +161,7 @@ class ProcessManager {
           name: _logName,
         );
         await Future.delayed(currentInterval);
-        // Exponential backoff
+
         currentInterval = currentInterval * 1.5;
         if (currentInterval > maxInterval) {
           currentInterval = maxInterval;

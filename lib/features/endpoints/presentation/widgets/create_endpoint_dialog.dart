@@ -225,8 +225,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
             const SizedBox(height: 4),
             const Divider(),
             const SizedBox(height: 16),
-            
-            // Body field is now universal for all endpoint types
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

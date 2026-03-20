@@ -56,9 +56,8 @@ dependencies:
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
   tutorial_coach_mark: ^1.3.3
-
-  webview_cef:
-
+  flutter_inappwebview: ^6.1.5
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

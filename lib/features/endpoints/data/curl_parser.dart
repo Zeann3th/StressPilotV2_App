@@ -17,7 +17,6 @@ class CurlParser {
     Map<String, String> headers = {};
     String body = '';
 
-    // Extract URL
     final urlMatch =
         RegExp(r'''(?:curl\s+)?(?:['"]?)(https?://[^'"\s]+)(?:['"]?)''')
             .firstMatch(cleanCommand);
@@ -25,7 +24,6 @@ class CurlParser {
       url = urlMatch.group(1)!;
     }
 
-    // Extract Method
     final methodMatch =
         RegExp(r'''(?:-X|--request)\s+(['"]?)([A-Z]+)\1''')
             .firstMatch(cleanCommand);
@@ -37,7 +35,6 @@ class CurlParser {
       method = 'POST';
     }
 
-    // Extract Headers
     final headerRegExp =
         RegExp(r'''(?:-H|--header)\s+(['"])([^:]+):\s*(.*?)\1''');
     for (final match in headerRegExp.allMatches(cleanCommand)) {
@@ -53,7 +50,6 @@ class CurlParser {
       }
     }
 
-    // Extract Body
     final dataRegExp = RegExp(
       r'''(?:-d|--data(?:-raw|-binary)?)\s+(['"])(.*?)\1''',
       dotAll: true,

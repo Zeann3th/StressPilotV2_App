@@ -1177,11 +1177,11 @@ class _NodeBody extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // The Rotated Square (Diamond)
+
           Transform.rotate(
-            angle: 3.14159 / 4, // 45 degrees
+            angle: 3.14159 / 4,
             child: Container(
-              width: node.actualWidth * 0.7, // Fit within bounds when rotated
+              width: node.actualWidth * 0.7,
               height: node.actualHeight * 0.7,
               decoration: BoxDecoration(
                 color: colors.surface,
@@ -1196,8 +1196,7 @@ class _NodeBody extends StatelessWidget {
               ),
             ),
           ),
-          
-          // Label content
+
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -1213,7 +1212,6 @@ class _NodeBody extends StatelessWidget {
             ],
           ),
 
-          // TRUE Pipe (Left)
           Positioned(
             left: -12,
             child: _BranchHandle(
@@ -1226,7 +1224,6 @@ class _NodeBody extends StatelessWidget {
             ),
           ),
 
-          // FALSE Pipe (Right)
           Positioned(
             right: -12,
             child: _BranchHandle(
@@ -1239,7 +1236,6 @@ class _NodeBody extends StatelessWidget {
             ),
           ),
 
-          // Close Button
           Positioned(
             top: -12,
             right: -12,

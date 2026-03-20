@@ -44,7 +44,6 @@ class _AppRootState extends State<AppRoot> {
     try {
       AppLogger.info('Starting application initialization', name: 'AppRoot');
 
-      // Start backend in background or catch its failure to allow offline mode
       try {
         await getIt<ProcessManager>().startBackend(attachLogs: kDebugMode);
       } catch (e) {
@@ -65,13 +64,13 @@ class _AppRootState extends State<AppRoot> {
       if (mounted) {
         setState(() {
           _initialized = true;
-          _hasError = false; // Reset error state if we managed to reach this point
+          _hasError = false;
         });
       }
 
       AppLogger.info('Application initialized (Offline Mode compatible)', name: 'AppRoot');
     } catch (e, st) {
-      // Only critical errors that prevent UI from rendering at all should trigger _hasError
+
       AppLogger.critical(
         'Critical application initialization failed',
         name: 'AppRoot',
