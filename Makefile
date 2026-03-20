@@ -18,6 +18,11 @@ JDK_URL     := https://aka.ms/download-jdk/microsoft-jdk-25-linux-x64.tar.gz
 JDK_ARCHIVE := /tmp/openjdk-25.tar.gz
 JDK_EXTRACT := /tmp/jdk-25
 
+# CEF cache
+CEF_CACHE_DIR  := $(HOME)/.cache/stress-pilot-build
+CEF_CACHE_FILE := $(CEF_CACHE_DIR)/cef_prebuilt.zip
+CEF_PLUGIN_DIR := linux/flutter/ephemeral/.plugin_symlinks/webview_cef/linux
+
 # Paths
 DIST_ROOT         := dist
 PACKAGE_DIR       := $(DIST_ROOT)/$(APP_NAME)_$(VERSION)_$(ARCH)
@@ -27,7 +32,7 @@ DEB_FILE          := $(DIST_ROOT)/$(APP_NAME)_$(VERSION)_$(ARCH).deb
 ICON_SRC  := $(FLUTTER_BUILD_DIR)/data/flutter_assets/assets/images/logo.png
 ICON_DEST := $(PACKAGE_DIR)/usr/share/pixmaps/$(APP_NAME).png
 
-.PHONY: all clean fetch-jdk build structure files copy permissions deb install lint help
+.PHONY: all clean fetch-jdk cache-cef restore-cef build structure files copy permissions deb install lint help
 
 # ==============================================================================
 # Default target
@@ -65,14 +70,43 @@ fetch-jdk:
 	@echo "✅ JDK ready at $(JDK_EXTRACT)"
 
 # ==============================================================================
-# 3. Build the Flutter app
+# 3. Cache CEF binary (run once after first successful build)
 # ==============================================================================
-build:
-	@echo "→ Building Flutter app (release)..."
-	flutter build linux --release
+cache-cef:
+	@echo "→ Caching CEF binary..."
+	@mkdir -p $(CEF_CACHE_DIR)
+	@if [ -f "$(CEF_PLUGIN_DIR)/prebuilt.zip" ]; then \
+		cp $(CEF_PLUGIN_DIR)/prebuilt.zip $(CEF_CACHE_FILE); \
+		echo "✅ CEF cached to $(CEF_CACHE_FILE)"; \
+	elif [ -f "$(CEF_CACHE_FILE)" ]; then \
+		echo "  (already cached) $(CEF_CACHE_FILE)"; \
+	else \
+		echo "⚠️  CEF prebuilt.zip not found yet. Run a full build first."; \
+	fi
 
 # ==============================================================================
-# 4. Create the directory structure
+# 4. Restore CEF from cache before build
+# ==============================================================================
+restore-cef:
+	@echo "→ Restoring CEF from cache..."
+	@if [ -f "$(CEF_CACHE_FILE)" ]; then \
+		mkdir -p $(CEF_PLUGIN_DIR); \
+		cp $(CEF_CACHE_FILE) $(CEF_PLUGIN_DIR)/prebuilt.zip; \
+		echo "✅ CEF restored from cache"; \
+	else \
+		echo "  No CEF cache found, will download during build."; \
+	fi
+
+# ==============================================================================
+# 5. Build the Flutter app
+# ==============================================================================
+build: restore-cef
+	@echo "→ Building Flutter app (release)..."
+	flutter build linux --release
+	@$(MAKE) cache-cef
+
+# ==============================================================================
+# 6. Create the directory structure
 # ==============================================================================
 structure:
 	@echo "→ Creating package directory structure..."
@@ -82,7 +116,7 @@ structure:
 	mkdir -p $(PACKAGE_DIR)/usr/share/pixmaps
 
 # ==============================================================================
-# 5. Generate control, desktop, postinst, and prerm files
+# 7. Generate control, desktop, postinst, and prerm files
 # ==============================================================================
 files:
 	@echo "→ Generating DEBIAN/control..."
@@ -110,23 +144,23 @@ files:
 	@echo "StartupNotify=true"                                       >> $(PACKAGE_DIR)/usr/share/applications/$(APP_NAME).desktop
 
 	@echo "→ Generating DEBIAN/postinst..."
-	@echo "#!/bin/bash"                                                                     > $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo "set -e"                                                                         >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo ""                                                                               >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo "# Make bundled JDK executable"                                                  >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo "find /opt/$(BINARY_NAME)/jdk/bin -type f -exec chmod 755 {} \;"                >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo "find /opt/$(BINARY_NAME)/jdk/lib -name '*.so*' -exec chmod 644 {} \; || true" >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo ""                                                                               >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo "update-desktop-database /usr/share/applications || true"                       >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo "gtk-update-icon-cache /usr/share/pixmaps || true"                              >> $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo "#!/bin/bash"                                                                      > $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo "set -e"                                                                          >> $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo ""                                                                                >> $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo "# Make bundled JDK executable"                                                   >> $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo "find /opt/$(BINARY_NAME)/jdk/bin -type f -exec chmod 755 {} \;"                 >> $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo "find /opt/$(BINARY_NAME)/jdk/lib -name '*.so*' -exec chmod 644 {} \; || true"  >> $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo ""                                                                                >> $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo "update-desktop-database /usr/share/applications || true"                        >> $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo "gtk-update-icon-cache /usr/share/pixmaps || true"                               >> $(PACKAGE_DIR)/DEBIAN/postinst
 
 	@echo "→ Generating DEBIAN/prerm..."
-	@echo "#!/bin/bash"                                                                     > $(PACKAGE_DIR)/DEBIAN/prerm
-	@echo "set -e"                                                                         >> $(PACKAGE_DIR)/DEBIAN/prerm
-	@echo "update-desktop-database /usr/share/applications || true"                       >> $(PACKAGE_DIR)/DEBIAN/prerm
+	@echo "#!/bin/bash"                                                                      > $(PACKAGE_DIR)/DEBIAN/prerm
+	@echo "set -e"                                                                          >> $(PACKAGE_DIR)/DEBIAN/prerm
+	@echo "update-desktop-database /usr/share/applications || true"                        >> $(PACKAGE_DIR)/DEBIAN/prerm
 
 # ==============================================================================
-# 6. Copy build files, JDK, and icon
+# 8. Copy build files, JDK, and icon
 # ==============================================================================
 copy:
 	@echo "→ Copying Flutter build files..."
@@ -144,7 +178,7 @@ copy:
 	fi
 
 # ==============================================================================
-# 7. Set permissions
+# 9. Set permissions
 # ==============================================================================
 permissions:
 	@echo "→ Setting permissions..."
@@ -157,7 +191,7 @@ permissions:
 	find $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk/lib -name "*.so*" -exec chmod 644 {} \; 2>/dev/null || true
 
 # ==============================================================================
-# 8. Build the .deb package
+# 10. Build the .deb package
 # ==============================================================================
 deb:
 	@echo "→ Building .deb package..."
@@ -188,15 +222,17 @@ help:
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
-	@echo "  all         Full build pipeline (default)"
-	@echo "  clean       Remove dist/ and flutter build cache"
-	@echo "  fetch-jdk   Download and extract JDK 25 to /tmp"
-	@echo "  build       Run flutter build linux --release"
-	@echo "  structure   Create package directory layout"
-	@echo "  files       Generate control, desktop, postinst files"
-	@echo "  copy        Copy build output + JDK into package"
-	@echo "  permissions Set correct file permissions"
-	@echo "  deb         Package into .deb file"
-	@echo "  lint        Run lintian on the .deb (optional)"
-	@echo "  install     Install .deb locally for testing"
+	@echo "  all          Full build pipeline (default)"
+	@echo "  clean        Remove dist/ and flutter build cache"
+	@echo "  fetch-jdk    Download and extract JDK 25 to /tmp"
+	@echo "  restore-cef  Restore CEF binary from ~/.cache"
+	@echo "  cache-cef    Save CEF binary to ~/.cache (auto-runs after build)"
+	@echo "  build        Run flutter build linux --release"
+	@echo "  structure    Create package directory layout"
+	@echo "  files        Generate control, desktop, postinst files"
+	@echo "  copy         Copy build output + JDK into package"
+	@echo "  permissions  Set correct file permissions"
+	@echo "  deb          Package into .deb file"
+	@echo "  lint         Run lintian on the .deb (optional)"
+	@echo "  install      Install .deb locally for testing"
 	@echo ""
