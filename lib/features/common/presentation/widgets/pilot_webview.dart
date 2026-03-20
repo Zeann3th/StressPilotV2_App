@@ -3,6 +3,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart' as inapp;
+import 'package:local_notifier/local_notifier.dart';
+import 'package:path/path.dart' as p;
+import 'package:stress_pilot/core/network/http_client.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 abstract class PilotWebViewController {
   Future<void> loadUrl(String url);
@@ -79,6 +83,8 @@ class PilotWebView extends StatefulWidget {
 class _PilotWebViewState extends State<PilotWebView> {
   final bool _isLinux = !kIsWeb && Platform.isLinux;
   bool _launched = false; // prevent multiple opens on rebuild
+  bool _isDownloading = false;
+  double _downloadProgress = 0;
 
   @override
   void initState() {
@@ -96,9 +102,113 @@ class _PilotWebViewState extends State<PilotWebView> {
     }
   }
 
+  Future<void> _handleDownload(String url, String filename) async {
+    setState(() {
+      _isDownloading = true;
+      _downloadProgress = 0;
+    });
+
+    try {
+      final String home = Platform.isWindows
+          ? Platform.environment['USERPROFILE'] ?? ''
+          : Platform.environment['HOME'] ?? '';
+
+      if (home.isEmpty) throw Exception('Could not determine home directory');
+
+      final pluginsDir = p.join(home, '.pilot', 'core', 'plugins');
+      final dir = Directory(pluginsDir);
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+
+      final savePath = p.join(pluginsDir, filename);
+      final dio = HttpClient.getInstance();
+
+      await dio.download(
+        url,
+        savePath,
+        onReceiveProgress: (count, total) {
+          if (total != -1) {
+            setState(() {
+              _downloadProgress = count / total;
+            });
+          }
+        },
+      );
+
+      final notification = LocalNotification(
+        title: 'Plugin Downloaded',
+        body: '$filename has been installed to ~/.pilot/core/plugins',
+        actions: [
+          LocalNotificationAction(text: 'OK'),
+        ],
+      );
+      notification.show();
+    } catch (e) {
+      final notification = LocalNotification(
+        title: 'Download Failed',
+        body: 'Failed to download $filename: $e',
+      );
+      notification.show();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _isLinux ? _buildLinux() : _buildInApp();
+    return Stack(
+      children: [
+        _isLinux ? _buildLinux() : _buildInApp(),
+        if (_isDownloading) _buildDownloadOverlay(),
+      ],
+    );
+  }
+
+  Widget _buildDownloadOverlay() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      color: Colors.black.withValues(alpha: 0.5),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+            borderRadius: AppRadius.br16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppColors.accent)),
+              const SizedBox(height: 16),
+              Text(
+                'Downloading Plugin...',
+                style: AppTypography.bodyLg.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Installing to ~/.pilot/core/plugins',
+                style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 200,
+                child: LinearProgressIndicator(
+                  value: _downloadProgress > 0 ? _downloadProgress : null,
+                  backgroundColor: AppColors.accent.withValues(alpha: 0.1),
+                  valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildLinux() {
@@ -123,7 +233,15 @@ class _PilotWebViewState extends State<PilotWebView> {
   Widget _buildInApp() {
     return inapp.InAppWebView(
       initialUrlRequest: inapp.URLRequest(url: inapp.WebUri(widget.initialUrl)),
-      initialSettings: inapp.InAppWebViewSettings(javaScriptEnabled: true),
+      initialSettings: inapp.InAppWebViewSettings(
+        javaScriptEnabled: true,
+        useOnDownloadStart: true,
+      ),
+      onDownloadStartRequest: (controller, downloadStartRequest) async {
+        final url = downloadStartRequest.url.toString();
+        final filename = downloadStartRequest.suggestedFilename ?? url.split('/').last;
+        await _handleDownload(url, filename);
+      },
       onWebViewCreated: (controller) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           widget.onWebViewCreated?.call(InAppPilotController(controller));

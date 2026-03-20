@@ -29,8 +29,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
     final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
 
     return Scaffold(
@@ -38,64 +36,37 @@ class _SettingsPageState extends State<SettingsPage> {
       body: Column(
         children: [
           const AppTopBar(),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: AppRadius.br16,
-                border: Border.all(color: border.withValues(alpha: 0.3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: AppRadius.br16,
-                child: Column(
-                  children: [
-
-                    Container(
-                      height: 60,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: surface,
-                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3), width: 1)),
-                      ),
-                      child: Row(
-                        children: [
-                          PilotButton.ghost(
-                            icon: Icons.arrow_back_rounded,
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Settings',
-                            style: AppTypography.heading.copyWith(color: textColor),
-                          ),
-                          const Spacer(),
-                          PilotButton.ghost(
-                            label: 'Reset Tutorials',
-                            icon: Icons.refresh_rounded,
-                            onPressed: () async {
-                              await TutorialHelper.resetTutorials();
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Tutorials reset successfully. They will show again on next visit.')),
-                                );
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Expanded(child: SettingsTable()),
-                  ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+            child: Row(
+              children: [
+                PilotButton.ghost(
+                  icon: Icons.arrow_back_rounded,
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Text(
+                  'Settings',
+                  style: AppTypography.heading.copyWith(color: textColor),
+                ),
+                const Spacer(),
+                PilotButton.ghost(
+                  label: 'Reset Tutorials',
+                  icon: Icons.refresh_rounded,
+                  onPressed: () async {
+                    await TutorialHelper.resetTutorials();
+                    if (context.mounted) {
+                      PilotToast.show(context, 'Tutorials reset successfully');
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          const Expanded(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, 24),
+              child: SettingsTable(),
             ),
           ),
         ],

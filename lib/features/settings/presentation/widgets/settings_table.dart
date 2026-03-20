@@ -14,7 +14,6 @@ class SettingsTable extends StatefulWidget {
 }
 
 class _SettingsTableState extends State<SettingsTable> {
-  String _search = '';
   final ScrollController _scrollController = ScrollController();
   String? _selectedCategory;
 
@@ -29,19 +28,12 @@ class _SettingsTableState extends State<SettingsTable> {
     final provider = context.watch<SettingProvider>();
     final configs = provider.configs;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
     final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
     final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
     final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
 
-    final filteredEntries = configs.entries.where((e) {
-      final q = _search.toLowerCase();
-      return e.key.toLowerCase().contains(q) ||
-          e.value.toLowerCase().contains(q);
-    }).toList();
-
     final Map<String, List<MapEntry<String, String>>> grouped = {};
-    for (var entry in filteredEntries) {
+    for (var entry in configs.entries) {
       final parts = entry.key.split('_');
       String category = parts.length > 1 ? parts.first.toUpperCase() : 'GENERAL';
       if (entry.key.startsWith('AI_MODEL')) category = 'AI MODEL';
@@ -54,106 +46,72 @@ class _SettingsTableState extends State<SettingsTable> {
       _selectedCategory = categories.first;
     }
 
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
+        // Sidebar
         Container(
-          color: surface,
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
-          child: SizedBox(
-            width: 360,
-            height: 34,
-            child: PilotInput(
-              placeholder: 'Search settings...',
-              prefixIcon: Icons.search_rounded,
-              onChanged: (v) => setState(() => _search = v.trim()),
-            ),
+          width: 220,
+          margin: const EdgeInsets.only(right: 16),
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: AppRadius.br16,
+            border: Border.all(color: border.withValues(alpha: 0.3)),
+          ),
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final cat = categories[index];
+              final isSelected = cat == _selectedCategory;
+              return _CategoryItem(
+                label: cat,
+                isSelected: isSelected,
+                onTap: () => setState(() => _selectedCategory = cat),
+              );
+            },
           ),
         ),
-        Divider(height: 1, color: border),
 
+        // Main Content
         Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-
-              Container(
-                width: 210,
-                color: surface,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 8,
+          child: Container(
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: AppRadius.br16,
+              border: Border.all(color: border.withValues(alpha: 0.3)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: _selectedCategory == 'SHORTCUTS'
+                ? const KeymapSettingsTable()
+                : SingleChildScrollView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 680),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_selectedCategory != null &&
+                                grouped[_selectedCategory] != null) ...[
+                              Text(
+                                _selectedCategory!,
+                                style: AppTypography.heading.copyWith(
+                                  color: textColor,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _SettingsGroup(
+                                entries: grouped[_selectedCategory]!,
+                                provider: provider,
+                              ),
+                            ],
+                          ],
                         ),
-                        itemCount: categories.length,
-                        itemBuilder: (context, index) {
-                          final cat = categories[index];
-                          final isSelected = cat == _selectedCategory;
-                          return _CategoryItem(
-                            label: cat,
-                            isSelected: isSelected,
-                            onTap: () => setState(() => _selectedCategory = cat),
-                          );
-                        },
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              VerticalDivider(width: 1, color: border),
-
-              Expanded(
-                child: Container(
-                  color: bg,
-                  child: _selectedCategory == 'SHORTCUTS'
-                      ? const SingleChildScrollView(
-                          padding: EdgeInsets.all(32),
-                          child: KeymapSettingsTable(),
-                        )
-                      : filteredEntries.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No matching settings found.',
-                            style: AppTypography.body.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        )
-                      : SingleChildScrollView(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.all(32),
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 680),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (_selectedCategory != null &&
-                                      grouped[_selectedCategory] != null) ...[
-                                    Text(
-                                      _selectedCategory!,
-                                      style: AppTypography.heading.copyWith(
-                                        color: textColor,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    _SettingsGroup(
-                                      entries: grouped[_selectedCategory]!,
-                                      provider: provider,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                ),
-              ),
-            ],
+                  ),
           ),
         ),
       ],

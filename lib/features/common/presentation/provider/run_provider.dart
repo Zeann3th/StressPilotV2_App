@@ -1,108 +1,102 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'package:stress_pilot/features/common/data/run_service.dart';
 import 'package:stress_pilot/core/domain/entities/run.dart';
 
 class RunProvider extends ChangeNotifier {
   final RunService _runService;
 
-  Run? _activeRun;
+  final Set<int> _trackedRunIds = {};
+  final Map<int, Run> _runningRuns = {};
 
-  RunProvider(this._runService);
+  RunProvider(this._runService) {
+    syncRunningRuns();
+  }
 
-  Run? get activeRun => _activeRun;
+  bool get isAnyRunRunning => _runningRuns.values.any((run) =>
+  run.status == 'RUNNING' || run.status == 'STARTING');
 
-  bool get isRunning => _activeRun != null && (_activeRun!.status == 'RUNNING' || _activeRun!.status == 'STARTING');
+  List<Run> get runningRuns => _runningRuns.values.toList();
 
-  Future<void> checkRunStatus(int flowId) async {
+  Future<void> trackRun(int runId) async {
+    if (_trackedRunIds.contains(runId)) return;
+    _trackedRunIds.add(runId);
+    _startGlobalPolling();
+  }
+
+  Future<void> syncRunningRuns() async {
     try {
-      final lastRun = await _runService.getLastRun(flowId);
-      if (lastRun.status == 'RUNNING' || lastRun.status == 'STARTING') {
-        _activeRun = lastRun;
-        _startPolling(flowId);
-      } else {
-        _activeRun = null;
-        _stopPolling();
+      final allRuns = await _runService.getRuns();
+      final running = allRuns.where((run) =>
+      run.status == 'RUNNING' || run.status == 'STARTING');
+
+      for (var run in running) {
+        if (!_trackedRunIds.contains(run.id)) {
+          _trackedRunIds.add(run.id);
+          _runningRuns[run.id] = run;
+        }
+      }
+      if (_trackedRunIds.isNotEmpty) {
+        _startGlobalPolling();
       }
       notifyListeners();
-    } catch (_) {
-      _activeRun = null;
-      _stopPolling();
-      notifyListeners();
+    } catch (e) {
+      debugPrint('Error syncing running runs: $e');
     }
   }
 
   bool _isPolling = false;
-  Duration _pollInterval = const Duration(seconds: 2);
 
-  Future<void> _startPolling(int flowId) async {
+  void _startGlobalPolling() {
     if (_isPolling) return;
     _isPolling = true;
-    _pollInterval = const Duration(seconds: 2);
-
-    while (_isPolling) {
-      try {
-        final lastRun = await _runService.getLastRun(flowId);
-        if (lastRun.status != 'RUNNING' && lastRun.status != 'STARTING') {
-          _activeRun = null;
-          _stopPolling();
-          notifyListeners();
-          break;
-        } else {
-          _activeRun = lastRun;
-          notifyListeners();
-
-          if (lastRun.status == 'STARTING') {
-            _pollInterval = const Duration(seconds: 1);
-          } else {
-
-            final created = lastRun.startedAt;
-            final elapsed = DateTime.now().toUtc().difference(created.toUtc());
-            if (elapsed.inSeconds >= lastRun.duration) {
-
-              _pollInterval = _pollInterval + const Duration(seconds: 1);
-              if (_pollInterval > const Duration(seconds: 10)) {
-                _pollInterval = const Duration(seconds: 10);
-              }
-            } else {
-              _pollInterval = const Duration(seconds: 2);
-            }
-          }
-        }
-      } catch (_) {
-        _activeRun = null;
-        _stopPolling();
-        notifyListeners();
-        break;
-      }
-
-      await Future.delayed(_pollInterval);
-    }
+    _pollAllTrackedRuns();
   }
 
-  void _stopPolling() {
+  Future<void> _pollAllTrackedRuns() async {
+    while (_isPolling && _trackedRunIds.isNotEmpty) {
+      final idsToPoll = List<int>.from(_trackedRunIds);
+      for (final runId in idsToPoll) {
+        try {
+          final run = await _runService.getRun(runId);
+
+          if (run.status == 'COMPLETED' || run.status == 'ABORTED') {
+            _trackedRunIds.remove(runId);
+            _runningRuns.remove(runId);
+
+            final notification = LocalNotification(
+              title: run.status == 'COMPLETED'
+                  ? 'Stress Test Completed'
+                  : 'Stress Test Aborted',
+              body: 'Run #$runId for Flow #${run.flowId} has ${run.status.toLowerCase()}.',
+            );
+            notification.show();
+          } else {
+            _runningRuns[runId] = run;
+          }
+        } catch (e) {
+          debugPrint('Error polling run $runId: $e');
+
+          _trackedRunIds.remove(runId);
+          _runningRuns.remove(runId);
+        }
+      }
+      notifyListeners();
+      await Future.delayed(const Duration(seconds: 2));
+    }
     _isPolling = false;
   }
 
-  Future<void> interruptActiveRun() async {
-    if (_activeRun == null) return;
-    try {
-      await _runService.interruptRun(_activeRun!.id);
-      _activeRun = null;
-      _stopPolling();
-      notifyListeners();
-    } catch (e) {
-      rethrow;
-    }
+  void stopPolling() {
+    _isPolling = false;
   }
 
   Future<void> interruptRun(int runId) async {
     try {
       await _runService.interruptRun(runId);
-      if (_activeRun?.id == runId) {
-        _activeRun = null;
-        _stopPolling();
-      }
+      _trackedRunIds.remove(runId);
+      _runningRuns.remove(runId);
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -111,7 +105,12 @@ class RunProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _stopPolling();
+    stopPolling();
     super.dispose();
+  }
+
+  // Legacy compatibility if needed, but updated to use global tracking
+  Future<void> checkRunStatus(int flowId) async {
+    await syncRunningRuns();
   }
 }

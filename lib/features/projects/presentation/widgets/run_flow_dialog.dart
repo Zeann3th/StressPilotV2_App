@@ -6,6 +6,7 @@ import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
 
 class RunFlowDialog extends StatefulWidget {
   final int flowId;
@@ -102,6 +103,9 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         runFlowRequest: request,
         file: multipartFile,
       );
+
+      if (!mounted) return;
+      await context.read<RunProvider>().syncRunningRuns();
 
       if (!mounted) return;
       Navigator.of(context).pop();

@@ -84,17 +84,20 @@ class _SettingsRowState extends State<SettingsRow> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
 
+    final isBool = widget.value.toLowerCase() == 'true' || widget.value.toLowerCase() == 'false';
+    final boolValue = widget.value.toLowerCase() == 'true';
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
+      cursor: isBool ? SystemMouseCursors.basic : SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          if (!_isEditing) setState(() => _isEditing = true);
+          if (!isBool && !_isEditing) setState(() => _isEditing = true);
         },
         child: AnimatedContainer(
           duration: AppDurations.micro,
-          color: _isHovered && !_isEditing
+          color: _isHovered && !_isEditing && !isBool
               ? AppColors.accent.withValues(alpha: 0.04)
               : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
@@ -114,43 +117,56 @@ class _SettingsRowState extends State<SettingsRow> {
               const SizedBox(width: 16),
               Expanded(
                 flex: 6,
-                child: _isEditing
-                    ? Focus(
-                        onFocusChange: (hasFocus) {
-                          if (!hasFocus) _handleSubmission();
-                        },
-                        child: PilotInput(
-                          controller: _controller,
-                          autofocus: true,
-                          onSubmitted: (_) => _handleSubmission(),
+                child: isBool
+                    ? Align(
+                        alignment: Alignment.centerRight,
+                        child: Switch(
+                          value: boolValue,
+                          activeThumbColor: AppColors.accent,
+                          activeTrackColor: AppColors.accent.withValues(alpha: 0.2),
+                          inactiveThumbColor: Colors.white,
+                          inactiveTrackColor: Colors.grey.withValues(alpha: 0.3),
+                          trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                          onChanged: (val) => widget.onSave(val.toString()),
                         ),
                       )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.value.isEmpty ? 'Not set' : widget.value,
-                              style: AppTypography.body.copyWith(
-                                color: widget.value.isEmpty
-                                    ? AppColors.textMuted
-                                    : AppColors.textSecondary,
+                    : _isEditing
+                        ? Focus(
+                            onFocusChange: (hasFocus) {
+                              if (!hasFocus) _handleSubmission();
+                            },
+                            child: PilotInput(
+                              controller: _controller,
+                              autofocus: true,
+                              onSubmitted: (_) => _handleSubmission(),
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.value.isEmpty ? 'Not set' : widget.value,
+                                  style: AppTypography.body.copyWith(
+                                    color: widget.value.isEmpty
+                                        ? AppColors.textMuted
+                                        : AppColors.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.right,
+                                ),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.right,
-                            ),
+                              if (_isHovered) ...[
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 14,
+                                  color: AppColors.textMuted,
+                                ),
+                              ],
+                            ],
                           ),
-                          if (_isHovered) ...[
-                            const SizedBox(width: 6),
-                            const Icon(
-                              Icons.chevron_right_rounded,
-                              size: 14,
-                              color: AppColors.textMuted,
-                            ),
-                          ],
-                        ],
-                      ),
               ),
             ],
           ),

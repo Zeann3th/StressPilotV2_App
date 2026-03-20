@@ -217,16 +217,6 @@ class FlowProvider extends ChangeNotifier {
         runFlowRequest: runFlowRequest,
         file: file,
       );
-
-      try {
-        final notification = LocalNotification(
-          title: 'Stress Test Complete',
-          body: 'Flow ID $flowId has finished successfully.',
-        );
-        await notification.show();
-      } catch (e) {
-        // no-op
-      }
     } catch (e) {
       _error = e.toString();
       notifyListeners();
