@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
@@ -85,7 +86,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       ),
                       Expanded(
                         child: PilotWebView(
-                          initialUrl: "https://www.wikipedia.org",
+                          initialUrl: "${AppConfig.apiBaseUrl}/plugin-service-cms/",
                           onWebViewCreated: (controller) {
                             setState(() {
                               webViewController = controller;
