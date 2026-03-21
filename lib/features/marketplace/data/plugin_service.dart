@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
+import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
 
 class PluginService {
-  final Dio _apiClient = HttpClient.getInstance();
+  final Dio _apiClient = HttpClient.getInstance(baseUrl: AppConfig.pluginBaseUrl);
 
   Future<List<File>> getInstalledPlugins() async {
     try {

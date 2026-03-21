@@ -86,7 +86,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       ),
                       Expanded(
                         child: PilotWebView(
-                          initialUrl: "${AppConfig.apiBaseUrl}/plugin-service-cms/",
+                          initialUrl: "${AppConfig.pluginBaseUrl}/plugin-service-cms/",
                           onWebViewCreated: (controller) {
                             setState(() {
                               webViewController = controller;

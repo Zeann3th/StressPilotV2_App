@@ -7,20 +7,24 @@ import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 
 class HttpClient {
-  static Dio? _dio;
+  static final Map<String, Dio> _dioInstances = {};
   static CookieJar? _cookieJar;
   static SessionManager? _sessionManager;
 
-  static Dio getInstance({SessionManager? sessionManager}) {
+  static Dio getInstance({SessionManager? sessionManager, String? baseUrl}) {
     if (sessionManager != null) {
       _sessionManager = sessionManager;
     }
 
-    if (_dio != null) return _dio!;
+    final effectiveBaseUrl = baseUrl ?? AppConfig.apiBaseUrl;
+
+    if (_dioInstances.containsKey(effectiveBaseUrl)) {
+      return _dioInstances[effectiveBaseUrl]!;
+    }
 
     final dio = Dio(
       BaseOptions(
-        baseUrl: AppConfig.apiBaseUrl,
+        baseUrl: effectiveBaseUrl,
         headers: {'Content-Type': 'application/json'},
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 60),
@@ -124,7 +128,7 @@ class HttpClient {
       );
     }
 
-    _dio = dio;
+    _dioInstances[effectiveBaseUrl] = dio;
     _cookieJar = jar;
     return dio;
   }
