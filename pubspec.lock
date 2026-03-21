@@ -853,6 +853,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.6"
+  platform_info:
+    dependency: transitive
+    description:
+      name: platform_info
+      sha256: "012e73712166cf0b56d3eb95c0d33491f56b428c169eca385f036448474147e4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.0"
   plugin_platform_interface:
     dependency: transitive
     description:
@@ -909,6 +917,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
+  quiver:
+    dependency: transitive
+    description:
+      name: quiver
+      sha256: ea0b925899e64ecdfbf9c7becb60d5b50e706ade44a85b2363be2a22d88117d2
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.2"
   recase:
     dependency: transitive
     description:
@@ -1386,6 +1402,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.6.1"
+  xterm:
+    dependency: "direct main"
+    description:
+      name: xterm
+      sha256: "6a02b15d03152b8186e12790902ff28c8a932fc441e89fa7255a7491661a8e69"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.5.0"
   xxh3:
     dependency: transitive
     description:

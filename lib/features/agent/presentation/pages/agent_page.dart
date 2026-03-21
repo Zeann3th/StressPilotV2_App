@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
-import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
+import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'package:xterm/xterm.dart';
 
 class AgentPage extends StatefulWidget {
   const AgentPage({super.key});
@@ -13,58 +17,71 @@ class AgentPage extends StatefulWidget {
 }
 
 class _AgentPageState extends State<AgentPage> {
-  final ScrollController _scrollController = ScrollController();
-  final List<String> _logs = [];
+  final Terminal _terminal = Terminal(
+    maxLines: 10000,
+  );
+  final TerminalController _terminalController = TerminalController();
+  
   bool _isStarting = true;
+  PilotProcess? _agentProcess;
+  StreamSubscription? _outputSubscription;
 
   @override
   void initState() {
     super.initState();
     _startAgent();
+    
+    _terminal.onOutput = (data) {
+      _agentProcess?.writeRawStdin(utf8.encode(data));
+    };
   }
 
   Future<void> _startAgent() async {
+    setState(() {
+      _isStarting = true;
+      _terminal.write('\x1b[1;32m[System] Starting agent...\x1b[0m\r\n');
+    });
+
     final pm = getIt<ProcessManager>();
     try {
-      await pm.startAgent(pipeMode: true);
-      final agent = pm.getProcess('agent');
-      if (agent != null) {
-        agent.output.listen((data) {
+      await pm.startAgent(pipeMode: false);
+      _agentProcess = pm.getProcess('agent');
+      
+      await _outputSubscription?.cancel();
+      if (_agentProcess != null) {
+        _outputSubscription = _agentProcess!.rawOutput.listen((data) {
           if (mounted) {
             setState(() {
-              _logs.add(data);
+              _terminal.write(utf8.decode(data, allowMalformed: true));
               _isStarting = false;
             });
-            _scrollToBottom();
           }
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _logs.add('Error starting agent: $e');
+          _terminal.write('\x1b[1;31m[Error] Failed to start agent: $e\x1b[0m\r\n');
           _isStarting = false;
         });
       }
     }
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-        );
-      }
+  Future<void> _restartAgent() async {
+    final pm = getIt<ProcessManager>();
+    await pm.stopAgent();
+    setState(() {
+      _terminal.write('\r\n\x1b[1;33m[System] Restarting agent...\x1b[0m\r\n');
+      _agentProcess = null;
     });
+    await _startAgent();
   }
 
   @override
   void dispose() {
-    getIt<ProcessManager>().stopProcess('agent');
-    _scrollController.dispose();
+    _outputSubscription?.cancel();
+    _terminalController.dispose();
     super.dispose();
   }
 
@@ -79,96 +96,115 @@ class _AgentPageState extends State<AgentPage> {
       backgroundColor: bg,
       body: Column(
         children: [
-          // Header
-          Container(
-            height: 64,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: surface,
-              border: Border(bottom: BorderSide(color: border)),
-            ),
-            child: Row(
-              children: [
-                PilotButton.ghost(
-                  onPressed: () => Navigator.pop(context),
-                  icon: LucideIcons.chevronLeft,
-                  label: 'Back',
-                ),
-                const SizedBox(width: 16),
-                const Icon(LucideIcons.sparkles, size: 20, color: AppColors.darkGreenStart),
-                const SizedBox(width: 12),
-                Text(
-                  'StressPilot AI Agent',
-                  style: ShadTheme.of(context).textTheme.h4,
-                ),
-                const Spacer(),
-                if (_isStarting)
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.darkGreenStart),
-                  ),
-              ],
-            ),
-          ),
-
-          // Main Content
+          const AppTopBar(),
           Expanded(
             child: Container(
-              margin: const EdgeInsets.all(24),
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               decoration: BoxDecoration(
-                color: Colors.black, // Always black for terminal feel
-                borderRadius: AppRadius.br12,
-                border: Border.all(color: border),
+                color: surface,
+                borderRadius: AppRadius.br16,
+                border: Border.all(color: border.withValues(alpha: 0.3)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+                    color: Colors.black.withValues(alpha: 0.1),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
                   ),
                 ],
               ),
               child: ClipRRect(
-                borderRadius: AppRadius.br12,
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _logs.length,
-                  itemBuilder: (context, index) {
-                    final log = _logs[index];
-                    return _buildLogLine(log);
-                  },
+                borderRadius: AppRadius.br16,
+                child: Column(
+                  children: [
+                    // Agent Toolbar/Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
+                      ),
+                      child: Row(
+                        children: [
+                          PilotButton.ghost(
+                            icon: LucideIcons.chevronLeft,
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(LucideIcons.sparkles, size: 18, color: AppColors.darkGreenStart),
+                          const SizedBox(width: 12),
+                          Text(
+                            'StressPilot AI Agent',
+                            style: AppTypography.heading.copyWith(fontSize: 16),
+                          ),
+                          const Spacer(),
+                          if (_isStarting)
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.darkGreenStart),
+                            )
+                          else
+                            InkWell(
+                              onTap: _restartAgent,
+                              borderRadius: AppRadius.br4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.darkGreenStart.withValues(alpha: 0.1),
+                                  borderRadius: AppRadius.br4,
+                                  border: Border.all(color: AppColors.darkGreenStart.withValues(alpha: 0.2)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      'ACTIVE',
+                                      style: TextStyle(
+                                        color: AppColors.darkGreenStart,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(LucideIcons.refreshCcw, size: 10, color: AppColors.darkGreenStart),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Terminal Content
+                    Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0D1117), // GitHub dark theme background
+                          borderRadius: AppRadius.br12,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: AppRadius.br12,
+                          child: TerminalView(
+                            _terminal,
+                            controller: _terminalController,
+                            autofocus: true,
+                            backgroundOpacity: 0,
+                            padding: const EdgeInsets.all(16),
+                            textStyle: const TerminalStyle(
+                              fontFamily: 'JetBrains Mono',
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-          
-          // Input placeholder (since it's JSON mode/watch for now)
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Agent is running in sync mode. Interaction is managed by the StressPilot core.',
-              style: ShadTheme.of(context).textTheme.muted,
-            ),
-          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildLogLine(String line) {
-    // Try to detect JSON for pretty printing
-    bool _ = line.trim().startsWith('{') || line.trim().startsWith('[');
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Text(
-        line,
-        style: const TextStyle(
-          fontFamily: 'JetBrains Mono',
-          fontSize: 13,
-          color: Color(0xFFE2E8F0),
-        ),
       ),
     );
   }

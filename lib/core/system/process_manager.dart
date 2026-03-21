@@ -10,16 +10,30 @@ import 'package:stress_pilot/core/system/logger.dart';
 class PilotProcess {
   final String name;
   Process? process;
-  StreamSubscription<String>? stdoutSub;
-  StreamSubscription<String>? stderrSub;
+  StreamSubscription? stdoutSub;
+  StreamSubscription? stderrSub;
   final StreamController<String> _outputController = StreamController<String>.broadcast();
+  final StreamController<List<int>> _rawOutputController = StreamController<List<int>>.broadcast();
 
   PilotProcess(this.name);
 
   Stream<String> get output => _outputController.stream;
+  Stream<List<int>> get rawOutput => _rawOutputController.stream;
 
   void addOutput(String data) {
     _outputController.add(data);
+  }
+
+  void addRawOutput(List<int> data) {
+    _rawOutputController.add(data);
+  }
+
+  void writeStdin(String data) {
+    process?.stdin.writeln(data);
+  }
+
+  void writeRawStdin(List<int> data) {
+    process?.stdin.add(data);
   }
 
   Future<void> dispose() async {
@@ -114,37 +128,72 @@ class ProcessManager {
     }
   }
 
-  Future<void> startAgent({bool pipeMode = false}) async {
+  Future<void> startAgent({bool pipeMode = false, bool pythonMode = false}) async {
     if (_processes.containsKey('agent')) {
       return;
     }
 
-    final String agentExeName = Platform.isWindows ? 'stresspilot-agent.exe' : 'stresspilot-agent';
-    final agentPath = _getAssetPath('agent/$agentExeName');
-    
-    if (!await File(agentPath).exists()) {
-      AppLogger.error('Agent executable not found at $agentPath', name: _logName);
-      return;
+    Process? process;
+    String? workingDir;
+
+    if (pythonMode || kDebugMode) {
+      // In development, we can run via 'uv run' if the agent source is available
+      final agentSourceDir = path.normalize(path.join(_getExecutableDir(), '..', 'stresspilot_agent'));
+      if (await Directory(agentSourceDir).exists()) {
+        try {
+          process = await Process.start(
+            'powershell.exe',
+            ['-NoProfile', '-Command', 'uv run python src/main.py ${pipeMode ? "--pipe" : ""}'],
+            workingDirectory: agentSourceDir,
+          );
+          workingDir = agentSourceDir;
+        } catch (e) {
+          AppLogger.warning('Failed to start via uv run, trying executable...', name: _logName);
+        }
+      }
     }
 
-    try {
-      final List<String> args = pipeMode ? ['--pipe'] : [];
-      final process = await Process.start(agentPath, args);
+    if (process == null) {
+      final String agentExeName = Platform.isWindows ? 'stresspilot-agent.exe' : 'stresspilot-agent';
+      final agentPath = _getAssetPath('agent/$agentExeName');
+      
+      if (!await File(agentPath).exists()) {
+        AppLogger.error('Agent executable not found at $agentPath', name: _logName);
+        return;
+      }
 
-      final pilotProcess = PilotProcess('agent');
-      pilotProcess.process = process;
-      _processes['agent'] = pilotProcess;
-
-      _setupLogging(pilotProcess, true);
-      AppLogger.info('Agent started (pid=${process.pid})', name: _logName);
-    } catch (e) {
-      AppLogger.error('Failed to start agent', name: _logName, error: e);
-      rethrow;
+      try {
+        final List<String> args = pipeMode ? ['--pipe'] : [];
+        process = await Process.start(agentPath, args);
+        workingDir = path.dirname(agentPath);
+      } catch (e) {
+        AppLogger.error('Failed to start agent executable', name: _logName, error: e);
+        rethrow;
+      }
     }
+
+    final pilotProcess = PilotProcess('agent');
+    pilotProcess.process = process;
+    _processes['agent'] = pilotProcess;
+
+    _setupLogging(pilotProcess, true);
+    AppLogger.info('Agent started (pid=${process.pid}) in $workingDir', name: _logName);
+  }
+
+  Future<void> stopAgent() async {
+    await stopProcess('agent');
   }
 
   void _setupLogging(PilotProcess p, bool attach) {
     if (!attach) return;
+
+    p.process!.stdout.listen((data) {
+      p.addRawOutput(data);
+    });
+
+    p.process!.stderr.listen((data) {
+      p.addRawOutput(data);
+    });
     
     p.stdoutSub = p.process!.stdout
         .transform(utf8.decoder)
