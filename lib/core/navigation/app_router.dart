@@ -9,6 +9,7 @@ import 'package:stress_pilot/features/projects/presentation/provider/project_pro
 import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 import 'package:stress_pilot/features/marketplace/presentation/pages/marketplace_page.dart';
+import 'package:stress_pilot/features/agent/presentation/pages/agent_page.dart';
 
 class AppRouter {
   static const String projectsRoute = '/';
@@ -18,6 +19,7 @@ class AppRouter {
   static const String projectEnvironmentRoute = '/project/environment';
   static const String resultsRoute = '/results';
   static const String marketplaceRoute = '/marketplace';
+  static const String agentRoute = '/agent';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     MaterialPageRoute<T> buildRoute<T>(Widget widget) {
@@ -62,6 +64,8 @@ class AppRouter {
         return buildRoute(ResultsPage(runId: args['runId']));
       case marketplaceRoute:
         return buildRoute(const MarketplacePage());
+      case agentRoute:
+        return buildRoute(const AgentPage());
 
       default:
         return buildRoute(

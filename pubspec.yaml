@@ -41,7 +41,9 @@ dependencies:
   shared_preferences:
 
   # Process Management
+  process_run: ^1.1.1
   http_parser: ^4.1.2
+
   stomp_dart_client: ^3.0.1
   fl_chart: ^1.1.1
   window_manager: ^0.5.1
@@ -78,6 +80,8 @@ flutter:
     - assets/images/
     - assets/core/
     - assets/fonts/
+    - assets/agent/
+
 
   fonts:
     - family: JetBrains Mono

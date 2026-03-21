@@ -68,6 +68,12 @@ class _AppTopBarState extends State<AppTopBar> {
           const Spacer(),
 
           _TopBarIcon(
+            icon: LucideIcons.sparkles,
+            tooltip: 'AI Agent',
+            onTap: () => AppNavigator.pushNamed(AppRouter.agentRoute),
+          ),
+          const SizedBox(width: 8),
+          _TopBarIcon(
             icon: LucideIcons.shoppingBag,
             tooltip: 'Marketplace',
             onTap: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),

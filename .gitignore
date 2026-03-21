@@ -46,6 +46,7 @@ app.*.map.json
 
 # Core binary
 assets/core/
+assets/agent
 
 /.local-chrome/
 dist/

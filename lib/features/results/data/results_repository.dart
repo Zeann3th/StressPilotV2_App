@@ -12,6 +12,8 @@ class ResultsRepository {
 
   Stream<List<RequestLog>> get logStream => _logStreamController.stream;
 
+  bool get isConnected => _client != null && _client!.connected;
+
   void connect() {
     if (_client != null && _client!.connected) return;
 

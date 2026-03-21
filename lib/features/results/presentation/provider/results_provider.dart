@@ -34,13 +34,9 @@ class ResultsProvider extends ChangeNotifier {
   Timer? _refreshTimer;
   DateTime _lastNotifyTime = DateTime.fromMillisecondsSinceEpoch(0);
 
-  int? _currentRunId;
-
   int _lastPlottedSecond = -1;
 
   ResultsProvider(this._repository, this._flowRepository) {
-
-    _repository.connect();
     _subscription = _repository.logStream.listen(_onNewLogs);
 
     _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -59,15 +55,10 @@ class ResultsProvider extends ChangeNotifier {
   List<FlSpotData> get rpsPoints => _rpsPoints;
 
   void setRun(int runId, int flowId, {bool isCompleted = false}) async {
-
-    if (_currentRunId == runId) {
-      if (isCompleted) {
-        stopChart();
-      }
-      return;
+    if (!_repository.isConnected) {
+      _repository.connect();
     }
 
-    _currentRunId = runId;
 
     _allLogs.clear();
     _filteredLogs.clear();
