@@ -19,8 +19,8 @@ import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_rep
 import 'package:stress_pilot/features/marketplace/data/repositories/plugin_repository_impl.dart';
 import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_capability_repository.dart';
 import 'package:stress_pilot/features/marketplace/data/repositories/plugin_capability_repository_impl.dart';
-import 'package:stress_pilot/features/common/domain/repositories/utility_repository.dart';
-import 'package:stress_pilot/features/common/data/repositories/utility_repository_impl.dart';
+import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
+import 'package:stress_pilot/features/shared/data/repositories/utility_repository_impl.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 
 import 'package:stress_pilot/features/environments/domain/repositories/environment_repository.dart';
@@ -29,9 +29,12 @@ import 'package:stress_pilot/features/environments/presentation/provider/environ
 import 'package:stress_pilot/features/results/domain/repositories/results_repository.dart';
 import 'package:stress_pilot/features/results/data/repositories/results_repository_impl.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
-import 'package:stress_pilot/features/common/domain/repositories/run_repository.dart';
-import 'package:stress_pilot/features/common/data/repositories/run_repository_impl.dart';
-import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/shared/domain/repositories/run_repository.dart';
+import 'package:stress_pilot/features/shared/data/repositories/run_repository_impl.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/agent/domain/repositories/agent_repository.dart';
+import 'package:stress_pilot/features/agent/data/repositories/agent_repository_impl.dart';
+import 'package:stress_pilot/features/agent/presentation/provider/agent_provider.dart';
 
 final getIt = GetIt.instance;
 
@@ -76,5 +79,9 @@ void setupDependencies() {
   getIt.registerLazySingleton<PluginRepository>(() => PluginRepositoryImpl());
   getIt.registerLazySingleton<PluginCapabilityRepository>(
       () => PluginCapabilityRepositoryImpl());
+
+  getIt.registerLazySingleton<AgentRepository>(() => AgentRepositoryImpl());
+  getIt.registerLazySingleton(() => AgentProvider(getIt()));
+
   getIt<ResultsProvider>();
 }

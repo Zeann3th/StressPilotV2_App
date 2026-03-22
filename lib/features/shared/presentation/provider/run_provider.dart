@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:local_notifier/local_notifier.dart';
-import 'package:stress_pilot/features/common/domain/repositories/run_repository.dart';
-import 'package:stress_pilot/core/domain/entities/run.dart';
+import 'package:stress_pilot/features/shared/domain/repositories/run_repository.dart';
+import 'package:stress_pilot/features/shared/domain/models/run.dart';
 
 class RunProvider extends ChangeNotifier {
   final RunRepository _runRepository;

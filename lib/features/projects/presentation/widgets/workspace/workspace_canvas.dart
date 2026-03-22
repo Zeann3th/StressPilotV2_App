@@ -4,7 +4,7 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/core/domain/entities/flow.dart' as flow;
+import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow;
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
@@ -12,7 +12,7 @@ import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_p
 import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/node_configuration_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/subflow_configuration_dialog.dart';
-import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 import 'package:flutter/services.dart';
@@ -22,7 +22,7 @@ import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:highlight/languages/json.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 
-import '../../../../../core/domain/entities/canvas.dart';
+import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
 import 'canvas_painters.dart';
 
 class WorkspaceCanvas extends StatelessWidget {

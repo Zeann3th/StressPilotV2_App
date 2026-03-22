@@ -4,17 +4,17 @@ import 'dart:io';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
-import 'package:stress_pilot/features/common/domain/repositories/run_repository.dart';
-import 'package:stress_pilot/core/domain/entities/run.dart';
+import 'package:stress_pilot/features/shared/domain/repositories/run_repository.dart';
+import 'package:stress_pilot/features/shared/domain/models/run.dart';
 import 'package:stress_pilot/features/results/presentation/widgets/metrics_card.dart';
 import 'package:stress_pilot/features/results/presentation/widgets/realtime_chart.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
-import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
 
 class ResultsPage extends StatefulWidget {
   final int runId;

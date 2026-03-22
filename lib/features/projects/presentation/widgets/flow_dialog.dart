@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
+import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/common/domain/repositories/utility_repository.dart';
+import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 
 class FlowDialog {

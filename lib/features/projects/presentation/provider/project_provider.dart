@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stress_pilot/core/domain/entities/paged_response.dart';
-import 'package:stress_pilot/core/domain/entities/project.dart';
+import 'package:stress_pilot/features/shared/domain/models/paged_response.dart';
+import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/features/common/domain/repositories/utility_repository.dart';
+import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/project_repository.dart';
 import 'package:stress_pilot/features/projects/data/repositories/project_repository_impl.dart';
 

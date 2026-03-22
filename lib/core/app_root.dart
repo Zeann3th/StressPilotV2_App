@@ -20,8 +20,8 @@ import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_p
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
-import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/layout.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/layout.dart';
 
 class AppRoot extends StatefulWidget {
   const AppRoot({super.key});

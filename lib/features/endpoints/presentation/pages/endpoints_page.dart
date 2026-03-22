@@ -7,14 +7,14 @@ import 'package:provider/provider.dart';
 
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:stress_pilot/core/utils/tutorial_helper.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
-import 'package:stress_pilot/core/domain/entities/endpoint.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/endpoints//data/curl_parser.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_dialog.dart';
 import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_type_badge.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/json_viewer.dart';
-import 'package:stress_pilot/core/domain/entities/project.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/json_viewer.dart';
+import 'package:stress_pilot/features/projects/domain/models/project.dart';
 
 import '../widgets/key_value_editor.dart';
 import '../widgets/create_endpoint_dialog.dart';

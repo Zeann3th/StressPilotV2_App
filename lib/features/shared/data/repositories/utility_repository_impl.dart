@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
-import '../../../../core/domain/entities/capability.dart';
+import 'package:stress_pilot/features/shared/domain/models/capability.dart';
 import '../../domain/repositories/utility_repository.dart';
 
 class UtilityRepositoryImpl implements UtilityRepository {

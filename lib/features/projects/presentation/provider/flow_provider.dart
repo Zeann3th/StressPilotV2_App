@@ -3,8 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_notifier/local_notifier.dart';
-import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
-import 'package:stress_pilot/core/domain/entities/paged_response.dart';
+import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
+import 'package:stress_pilot/features/shared/domain/models/paged_response.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/flow_repository.dart';
 import 'package:stress_pilot/features/projects/data/repositories/flow_repository_impl.dart';
 

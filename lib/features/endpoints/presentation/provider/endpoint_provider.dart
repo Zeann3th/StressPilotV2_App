@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stress_pilot/features/endpoints/domain/repositories/endpoint_repository.dart';
 import 'package:stress_pilot/features/endpoints/data/repositories/endpoint_repository_impl.dart';
-import 'package:stress_pilot/core/domain/entities/endpoint.dart';
-import 'package:stress_pilot/core/domain/entities/paged_response.dart';
+import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
+import 'package:stress_pilot/features/shared/domain/models/paged_response.dart';
 
 class EndpointProvider extends ChangeNotifier {
   final EndpointRepository _endpointRepository = EndpointRepositoryImpl();

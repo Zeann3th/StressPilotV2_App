@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
-import 'package:stress_pilot/core/domain/entities/paged_response.dart';
-import 'package:stress_pilot/core/domain/entities/flow.dart';
+import 'package:stress_pilot/features/shared/domain/models/paged_response.dart';
+import 'package:stress_pilot/features/projects/domain/models/flow.dart';
 import '../../domain/repositories/flow_repository.dart';
 
 class FlowRepositoryImpl implements FlowRepository {

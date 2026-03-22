@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/core/domain/entities/canvas.dart';
-import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
+import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
+import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'workspace_endpoints_list.dart';
 
 class WorkspaceNodeLibrary extends StatefulWidget {

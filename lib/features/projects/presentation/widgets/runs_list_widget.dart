@@ -7,9 +7,9 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
-import 'package:stress_pilot/features/common/domain/repositories/run_repository.dart';
-import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
-import 'package:stress_pilot/core/domain/entities/run.dart';
+import 'package:stress_pilot/features/shared/domain/repositories/run_repository.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/shared/domain/models/run.dart';
 
 class RunsListWidget extends StatefulWidget {
   final int? flowId;

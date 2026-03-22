@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/pilot_webview.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/pilot_webview.dart';
 
 class MarketplacePage extends StatefulWidget {
   const MarketplacePage({super.key});

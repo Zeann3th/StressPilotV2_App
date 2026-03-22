@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart' hide Flow;
-import 'package:stress_pilot/core/domain/entities/flow.dart';
+import 'package:stress_pilot/features/projects/domain/models/flow.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
-import 'package:stress_pilot/core/domain/entities/endpoint.dart' as domain_endpoint;
+import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart' as domain_endpoint;
 import 'package:uuid/uuid.dart';
 
-import '../../../../core/domain/entities/canvas.dart';
+import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
 
 enum CanvasMode { move, connect }
 

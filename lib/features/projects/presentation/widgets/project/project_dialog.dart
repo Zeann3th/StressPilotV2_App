@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/core/domain/entities/project.dart';
+import 'package:stress_pilot/features/projects/domain/models/project.dart';
 
 class ProjectDialogs {
   static void showCreateDialog(

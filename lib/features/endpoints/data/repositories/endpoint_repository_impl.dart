@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
-import 'package:stress_pilot/core/domain/entities/endpoint.dart';
-import 'package:stress_pilot/core/domain/entities/paged_response.dart';
+import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
+import 'package:stress_pilot/features/shared/domain/models/paged_response.dart';
 import '../../domain/repositories/endpoint_repository.dart';
 
 class EndpointRepositoryImpl implements EndpointRepository {

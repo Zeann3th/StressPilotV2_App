@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class AppSkeleton extends StatefulWidget {
