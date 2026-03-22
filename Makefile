@@ -45,10 +45,24 @@ all: help
 # ==============================================================================
 # Windows build pipeline
 # ==============================================================================
-build-windows:
+build-windows: fetch-jdk-win
 	flutter build windows --release
+	@echo "Bundling JDK to $(RELEASE_DIR)/jdk..."
+	@powershell -Command "if (Test-Path '$(RELEASE_DIR)/jdk') { Remove-Item -Recurse -Force '$(RELEASE_DIR)/jdk' }; New-Item -ItemType Directory -Path '$(RELEASE_DIR)/jdk' -Force"
+	@powershell -Command "Copy-Item -Path '$(JDK_WIN_EXTRACT)/*' -Destination '$(RELEASE_DIR)/jdk/' -Recurse -Force"
 	"$(INNO_COMPILER)" "$(ISS_FILE)"
 	@echo Build complete (Windows)
+
+fetch-jdk-win:
+	@echo "Fetching Windows JDK 25..."
+	@powershell -Command "if (!(Test-Path 'build')) { New-Item -ItemType Directory -Path 'build' }"
+	@powershell -Command "if (!(Test-Path '$(JDK_WIN_ARCHIVE)')) { echo 'Downloading JDK 25 for Windows...'; curl.exe -L --fail -o '$(JDK_WIN_ARCHIVE)' '$(JDK_WIN_URL)' } else { echo '(cached) $(JDK_WIN_ARCHIVE) already exists, skipping.' }"
+	@powershell -Command "if (Test-Path '$(JDK_WIN_EXTRACT)') { Remove-Item -Recurse -Force '$(JDK_WIN_EXTRACT)' }"
+	@powershell -Command "New-Item -ItemType Directory -Path '$(JDK_WIN_EXTRACT)' -Force"
+	@powershell -Command "Expand-Archive -Path '$(JDK_WIN_ARCHIVE)' -DestinationPath '$(JDK_WIN_EXTRACT)' -Force"
+	@echo "Flattening Windows JDK..."
+	@powershell -Command "$$sub = Get-ChildItem -Path '$(JDK_WIN_EXTRACT)' -Directory | Select-Object -First 1; if ($$sub) { Get-ChildItem $$sub.FullName | Move-Item -Destination '$(JDK_WIN_EXTRACT)' -Force; Remove-Item $$sub.FullName -Recurse -Force }"
+	@echo "JDK ready at $(JDK_WIN_EXTRACT)"
 
 # ==============================================================================
 # Linux build pipeline
