@@ -4,6 +4,7 @@ import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/core/system/settings_manager.dart';
+import 'package:stress_pilot/core/system/app_state_manager.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/flow_repository.dart';
 import 'package:stress_pilot/features/projects/data/repositories/flow_repository_impl.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/project_repository.dart';
@@ -41,6 +42,7 @@ final getIt = GetIt.instance;
 void setupDependencies() {
   getIt.registerLazySingleton(() => ProcessManager());
   getIt.registerLazySingleton(() => ThemeManager());
+  getIt.registerLazySingleton(() => AppStateManager());
 
   getIt.registerLazySingleton<UtilityRepository>(() => UtilityRepositoryImpl());
 

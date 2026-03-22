@@ -8,6 +8,8 @@ import 'package:stress_pilot/features/projects/presentation/pages/projects_page.
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
+import 'package:stress_pilot/features/settings/presentation/pages/report_issue_page.dart';
+import 'package:stress_pilot/features/settings/presentation/pages/github_webview_page.dart';
 import 'package:stress_pilot/features/marketplace/presentation/pages/marketplace_page.dart';
 import 'package:stress_pilot/features/agent/presentation/pages/agent_page.dart';
 
@@ -15,6 +17,8 @@ class AppRouter {
   static const String projectsRoute = '/';
   static const String workspaceRoute = '/workspace';
   static const String settingsRoute = '/settings';
+  static const String reportIssueRoute = '/settings/report_issue';
+  static const String githubWebviewRoute = '/settings/github_webview';
   static const String projectEndpointsRoute = '/project/endpoints';
   static const String projectEnvironmentRoute = '/project/environment';
   static const String resultsRoute = '/results';
@@ -46,6 +50,15 @@ class AppRouter {
         return buildRoute(const ProjectWorkspacePage());
       case settingsRoute:
         return buildRoute(const SettingsPage());
+      case reportIssueRoute:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return buildRoute(ReportIssuePage(
+          error: args?['error'] as String?,
+          stack: args?['stack'] as String?,
+        ));
+      case githubWebviewRoute:
+        final args = settings.arguments as Map<String, dynamic>;
+        return buildRoute(GithubWebviewPage(url: args['url'] as String));
       case projectEndpointsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         return buildRoute(
@@ -77,6 +90,32 @@ class AppRouter {
   }
 }
 
+class AppRouteObserver extends NavigatorObserver {
+  String? currentRouteName;
+  Object? currentArguments;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    currentRouteName = route.settings.name;
+    currentArguments = route.settings.arguments;
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    currentRouteName = previousRoute?.settings.name;
+    currentArguments = previousRoute?.settings.arguments;
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    currentRouteName = newRoute?.settings.name;
+    currentArguments = newRoute?.settings.arguments;
+  }
+}
+
 class AppNavigator {
   AppNavigator._();
 
@@ -86,10 +125,16 @@ class AppNavigator {
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
+  static final AppRouteObserver routeObserver = AppRouteObserver();
+
   static Future<T?> pushNamed<T extends Object?>(
     String routeName, {
     Object? arguments,
   }) {
+    if (routeObserver.currentRouteName == routeName &&
+        _areArgumentsEqual(routeObserver.currentArguments, arguments)) {
+      return Future.value(null);
+    }
     return navigatorKey.currentState!.pushNamed<T>(
       routeName,
       arguments: arguments,
@@ -101,6 +146,10 @@ class AppNavigator {
     TO? result,
     Object? arguments,
   }) {
+    if (routeObserver.currentRouteName == routeName &&
+        _areArgumentsEqual(routeObserver.currentArguments, arguments)) {
+      return Future.value(null);
+    }
     return navigatorKey.currentState!.pushReplacementNamed<T, TO>(
       routeName,
       result: result,
@@ -115,4 +164,17 @@ class AppNavigator {
   static Future<bool> maybePop<T extends Object?>([T? result]) async {
     return await navigatorKey.currentState?.maybePop<T>(result) ?? false;
   }
+
+  static bool _areArgumentsEqual(Object? arg1, Object? arg2) {
+    if (arg1 == arg2) return true;
+    if (arg1 is Map && arg2 is Map) {
+      if (arg1.length != arg2.length) return false;
+      for (final key in arg1.keys) {
+        if (arg1[key] != arg2[key]) return false;
+      }
+      return true;
+    }
+    return false;
+  }
 }
+

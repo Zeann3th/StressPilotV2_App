@@ -133,7 +133,7 @@ class _ThinkingIndicatorState extends State<_ThinkingIndicator>
         children: List.generate(3, (i) {
           return AnimatedBuilder(
             animation: _controller,
-            builder: (_, __) {
+            builder: (context, child) {
               final offset = ((_controller.value + i / 3) % 1.0);
               final dy = -4 * (1 - (offset * 2 - 1).abs().clamp(0.0, 1.0));
               return Transform.translate(

@@ -4,6 +4,7 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/settings_table.dart';
+import 'package:stress_pilot/features/settings/presentation/widgets/app_health_section.dart';
 import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 
 import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
@@ -62,6 +63,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ],
             ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+            child: AppHealthSection(),
           ),
           const Expanded(
             child: Padding(

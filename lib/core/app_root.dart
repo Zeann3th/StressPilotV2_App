@@ -9,6 +9,7 @@ import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
+import 'package:stress_pilot/core/system/app_state_manager.dart';
 import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_capability_repository.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
@@ -44,14 +45,24 @@ class _AppRootState extends State<AppRoot> {
     try {
       AppLogger.info('Starting application initialization', name: 'AppRoot');
 
-      try {
+      final appStateManager = getIt<AppStateManager>();
+
+      appStateManager.register('Backend Process', () async {
         await getIt<ProcessManager>().startBackend(attachLogs: kDebugMode);
+      });
+
+      appStateManager.register('Session Manager', () async {
+        await getIt<SessionManager>().initializeSession();
+      });
+
+      try {
+        await appStateManager.recover('Backend Process');
       } catch (e) {
         AppLogger.error('Backend startup failed/timed out, continuing in offline mode', name: 'AppRoot', error: e);
       }
 
       try {
-        await getIt<SessionManager>().initializeSession();
+        await appStateManager.recover('Session Manager');
       } catch (e) {
         AppLogger.error('Session initialization failed, continuing in offline mode', name: 'AppRoot', error: e);
       }
@@ -173,6 +184,7 @@ class _AppTheme extends StatelessWidget {
       title: 'Stress Pilot',
       debugShowCheckedModeBanner: false,
       navigatorKey: AppNavigator.navigatorKey,
+      navigatorObservers: [AppNavigator.routeObserver],
       themeMode: themeManager.themeMode,
       theme: themeManager.currentShadTheme ?? defaultShadTheme,
       darkTheme: themeManager.currentShadTheme ?? defaultShadTheme,
