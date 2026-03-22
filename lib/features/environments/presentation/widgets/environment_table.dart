@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/features/environments/domain/environment_variable.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
+import 'package:stress_pilot/features/environments/domain/environment_variable.dart';
 
 class EnvironmentTable extends StatefulWidget {
   const EnvironmentTable({super.key});
@@ -17,7 +19,8 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
   Widget build(BuildContext context) {
     final provider = context.watch<EnvironmentProvider>();
     final variables = provider.variables;
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final border = AppColors.border;
 
     final filtered = variables.where((v) {
       final q = _search.toLowerCase();
@@ -28,88 +31,61 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: Row(
             children: [
               SizedBox(
-                width: 300,
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search variables...',
-                    hintStyle: TextStyle(color: colors.onSurfaceVariant),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: colors.onSurfaceVariant,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: colors.outlineVariant),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: colors.outlineVariant),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                  style: TextStyle(color: colors.onSurface),
+                width: 320,
+                child: PilotInput(
+                  placeholder: 'Search variables...',
                   onChanged: (v) => setState(() => _search = v),
+                  prefixIcon: Icons.search_rounded,
                 ),
               ),
               const Spacer(),
-              FilledButton.icon(
+              PilotButton.primary(
                 onPressed: () => provider.addVariable(),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Variable'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
+                icon: Icons.add_rounded,
+                label: 'Add Variable',
               ),
             ],
           ),
         ),
 
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-            color: colors.surfaceContainerLow,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.03)
+                : Colors.black.withValues(alpha: 0.03),
+            border: Border(
+              top: BorderSide(color: border.withValues(alpha: 0.3)),
+              bottom: BorderSide(color: border.withValues(alpha: 0.3)),
+            ),
           ),
           child: Row(
             children: [
               SizedBox(
                 width: 60,
                 child: Text(
-                  'Active',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: colors.onSurface,
-                  ),
+                  'STATUS',
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 flex: 1,
                 child: Text(
-                  'Key',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: colors.onSurface,
-                  ),
+                  'VARIABLE KEY',
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 flex: 2,
                 child: Text(
-                  'Value',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: colors.onSurface,
-                  ),
+                  'VALUE',
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
                 ),
               ),
               const SizedBox(width: 48),
@@ -120,47 +96,75 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
         Expanded(
           child: provider.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : ListView.separated(
-                  itemCount: filtered.length,
-                  separatorBuilder: (c, i) => Divider(
-                    height: 1,
-                    color: colors.outlineVariant.withValues(alpha: 0.5),
-                  ),
-                  itemBuilder: (context, index) {
-                    final v = filtered[index];
-                    final realIndex = variables.indexOf(v);
+              : filtered.isEmpty
+                ? _EmptyState(isSearch: _search.isNotEmpty)
+                : ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final v = filtered[index];
+                      final realIndex = variables.indexOf(v);
 
-                    return _EnvironmentRow(
-                      key: ValueKey(v.id),
-                      variable: v,
-                      onChanged: (key, value, isActive) {
-                        provider.updateVariable(
-                          realIndex,
-                          key: key,
-                          value: value,
-                          isActive: isActive,
-                        );
-                      },
-                      onDelete: () {
-                        provider.removeVariable(realIndex);
-                      },
-                    );
-                  },
-                ),
+                      return _EnvironmentRow(
+                        key: ValueKey(v.id),
+                        variable: v,
+                        isLast: index == filtered.length - 1,
+                        onChanged: (key, value, isActive) {
+                          provider.updateVariable(
+                            realIndex,
+                            key: key,
+                            value: value,
+                            isActive: isActive,
+                          );
+                        },
+                        onDelete: () {
+                          provider.removeVariable(realIndex);
+                        },
+                      );
+                    },
+                  ),
         ),
       ],
     );
   }
 }
 
+class _EmptyState extends StatelessWidget {
+  final bool isSearch;
+  const _EmptyState({required this.isSearch});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isSearch ? Icons.search_off_rounded : Icons.code_rounded,
+            size: 48,
+            color: AppColors.textSecondary.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            isSearch ? 'No variables match your search' : 'No environment variables found',
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EnvironmentRow extends StatefulWidget {
   final EnvironmentVariable variable;
+  final bool isLast;
   final Function(String key, String value, bool isActive) onChanged;
   final VoidCallback onDelete;
 
   const _EnvironmentRow({
     super.key,
     required this.variable,
+    required this.isLast,
     required this.onChanged,
     required this.onDelete,
   });
@@ -172,6 +176,7 @@ class _EnvironmentRow extends StatefulWidget {
 class _EnvironmentRowState extends State<_EnvironmentRow> {
   late TextEditingController _keyCtrl;
   late TextEditingController _valCtrl;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -183,10 +188,10 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
   @override
   void didUpdateWidget(covariant _EnvironmentRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.variable.key != _keyCtrl.text) {
+    if (widget.variable.key != _keyCtrl.text && !_keyCtrl.selection.isValid) {
       _keyCtrl.text = widget.variable.key;
     }
-    if (widget.variable.value != _valCtrl.text) {
+    if (widget.variable.value != _valCtrl.text && !_valCtrl.selection.isValid) {
       _valCtrl.text = widget.variable.value;
     }
   }
@@ -204,72 +209,91 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final border = AppColors.border;
+    final textColor = AppColors.textPrimary;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 60,
-            child: Checkbox(
-              value: widget.variable.isActive,
-              activeColor: colors.primary,
-              checkColor: colors.onPrimary,
-              onChanged: (v) => widget.onChanged(
-                widget.variable.key,
-                widget.variable.value,
-                v ?? true,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 1,
-            child: TextField(
-              controller: _keyCtrl,
-              decoration: InputDecoration(
-                hintText: 'KEY',
-                hintStyle: TextStyle(
-                  color: colors.onSurfaceVariant.withValues(alpha: 0.5),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: AppDurations.micro,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: _isHovered
+              ? (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02))
+              : Colors.transparent,
+          border: widget.isLast
+              ? null
+              : Border(bottom: BorderSide(color: border.withValues(alpha: 0.15))),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 60,
+              child: Switch(
+                value: widget.variable.isActive,
+                onChanged: (v) => widget.onChanged(
+                  widget.variable.key,
+                  widget.variable.value,
+                  v,
                 ),
-                border: InputBorder.none,
-                isDense: true,
+                activeThumbColor: AppColors.accent,
+                activeTrackColor: AppColors.accent.withValues(alpha: 0.2),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontWeight: FontWeight.bold,
-                color: colors.onSurface,
-              ),
-              onChanged: (_) => _notify(),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 2,
-            child: TextField(
-              controller: _valCtrl,
-              decoration: InputDecoration(
-                hintText: 'Value',
-                hintStyle: TextStyle(
-                  color: colors.onSurfaceVariant.withValues(alpha: 0.5),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 1,
+              child: TextField(
+                controller: _keyCtrl,
+                decoration: InputDecoration(
+                  hintText: 'KEY_NAME',
+                  hintStyle: TextStyle(
+                    color: AppColors.textSecondary.withValues(alpha: 0.4),
+                    fontSize: 13,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
                 ),
-                border: InputBorder.none,
-                isDense: true,
+                style: AppTypography.codeSm.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: widget.variable.isActive ? textColor : AppColors.textSecondary,
+                ),
+                onChanged: (_) => _notify(),
               ),
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
-                color: colors.onSurface,
-              ),
-              onChanged: (_) => _notify(),
             ),
-          ),
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: colors.error),
-            onPressed: widget.onDelete,
-            tooltip: 'Delete',
-          ),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: _valCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Variable value...',
+                  hintStyle: TextStyle(
+                    color: AppColors.textSecondary.withValues(alpha: 0.4),
+                    fontSize: 13,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+                style: AppTypography.codeSm.copyWith(
+                  color: widget.variable.isActive ? textColor : AppColors.textSecondary,
+                ),
+                onChanged: (_) => _notify(),
+              ),
+            ),
+            AnimatedOpacity(
+              duration: AppDurations.micro,
+              opacity: _isHovered ? 1.0 : 0.0,
+              child: PilotButton.ghost(
+                icon: Icons.delete_outline_rounded,
+                onPressed: widget.onDelete,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

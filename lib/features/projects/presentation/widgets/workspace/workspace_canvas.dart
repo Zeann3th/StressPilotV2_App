@@ -33,7 +33,6 @@ class WorkspaceCanvas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (selectedFlow == null) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -44,12 +43,12 @@ class WorkspaceCanvas extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: AppRadius.br12,
                 border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  color: AppColors.border,
                   width: 1,
                 ),
-                color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                color: AppColors.elevated,
               ),
-              child: const Center(
+              child: Center(
                 child: Icon(
                   Icons.account_tree_outlined,
                   size: 28,
@@ -61,7 +60,7 @@ class WorkspaceCanvas extends StatelessWidget {
             Text(
               'No flow selected',
               style: AppTypography.bodyLg.copyWith(
-                color: isDark ? AppColors.textPrimary : AppColors.textLight,
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -213,7 +212,6 @@ class _CanvasContentState extends State<_CanvasContent>
   @override
   Widget build(BuildContext context) {
     final canvasProvider = context.watch<CanvasProvider>();
-    final colors = Theme.of(context).colorScheme;
 
     if (canvasProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -240,7 +238,7 @@ class _CanvasContentState extends State<_CanvasContent>
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: GridPainter(
-                    color: colors.onSurface.withValues(alpha: 0.1),
+                    color: AppColors.textPrimary.withValues(alpha: 0.1),
                     scale: 1.0,
                   ),
                 ),
@@ -280,7 +278,7 @@ class _CanvasContentState extends State<_CanvasContent>
                                       connections: canvasProvider.connections,
                                       animationOffset:
                                           _animationController.value * 14.0,
-                                      colors: colors,
+                                      colors: Theme.of(context).colorScheme,
                                     ),
                                   );
                                 },
@@ -288,7 +286,7 @@ class _CanvasContentState extends State<_CanvasContent>
                             ),
                             ...canvasProvider.nodes.map(
                               (node) =>
-                                  _buildNodeWidget(node, canvasProvider, colors),
+                                  _buildNodeWidget(node, canvasProvider, Theme.of(context).colorScheme),
                             ),
                           ],
                         ),
@@ -305,7 +303,7 @@ class _CanvasContentState extends State<_CanvasContent>
               child: Center(
                 child: Container(
                   key: _toolbarKey,
-                  child: _buildUnifiedToolbar(context, colors, canvasProvider),
+                  child: _buildUnifiedToolbar(context, Theme.of(context).colorScheme, canvasProvider),
                 ),
               ),
             ),
@@ -367,10 +365,10 @@ class _CanvasContentState extends State<_CanvasContent>
                         borderRadius: BorderRadius.circular(
                           node.type == FlowNodeType.branch ? 8 : 16,
                         ),
-                        border: Border.all(color: colors.primary, width: 3),
+                        border: Border.all(color: AppColors.accent, width: 3),
                         boxShadow: [
                           BoxShadow(
-                            color: colors.primary.withValues(alpha: 0.3),
+                            color: AppColors.accent.withValues(alpha: 0.3),
                             blurRadius: 12,
                           ),
                         ],
@@ -561,11 +559,8 @@ class _CanvasContentState extends State<_CanvasContent>
       ColorScheme colors,
       CanvasProvider provider,
       ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor =
-    isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final borderColor =
-    isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final surfaceColor = AppColors.surface;
+    final borderColor = AppColors.border;
 
     return ClipRRect(
       borderRadius: AppRadius.br16,
@@ -784,63 +779,6 @@ class _CanvasContentState extends State<_CanvasContent>
             color: isSelected ? AppColors.accent : AppColors.textMuted,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _HoverableNodeWrapper extends StatefulWidget {
-  final CanvasNode node;
-  final CanvasProvider provider;
-  final Widget child;
-
-  const _HoverableNodeWrapper({
-    required this.node,
-    required this.provider,
-    required this.child,
-  });
-
-  @override
-  State<_HoverableNodeWrapper> createState() => _HoverableNodeWrapperState();
-}
-
-class _HoverableNodeWrapperState extends State<_HoverableNodeWrapper> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Invisible layer to extend hover area
-          Positioned(
-            top: -16,
-            right: -16,
-            bottom: -16,
-            left: -16,
-            child: Container(color: Colors.transparent),
-          ),
-          widget.child,
-          if (_hovered && !widget.provider.isLocked)
-            Positioned(
-              top: -8,
-              right: -8,
-              child: GestureDetector(
-                onTap: () => widget.provider.removeNode(widget.node.id),
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
-                    color: AppColors.error,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close, size: 12, color: Colors.white),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }
@@ -1151,7 +1089,7 @@ class _NodeBody extends StatelessWidget {
         border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.lightGreenStart.withValues(alpha: 0.3),
+            color: AppColors.accent.withValues(alpha: 0.3),
             blurRadius: 12,
             spreadRadius: 2,
           )
@@ -1358,7 +1296,7 @@ class _BranchDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Enter the expression to evaluate. "response" and "env" variables are available.',
             style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
@@ -1430,7 +1368,6 @@ class _JsonPayloadDialogState extends State<_JsonPayloadDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final size = MediaQuery.of(context).size;
 
@@ -1471,7 +1408,7 @@ class _JsonPayloadDialogState extends State<_JsonPayloadDialog> {
                     gutterStyle: GutterStyle(
                       showLineNumbers: true,
                       showFoldingHandles: true,
-                      background: isDark ? AppColors.darkElevated : Colors.grey[100]!,
+                      background: AppColors.elevated,
                     ),
                     textStyle: const TextStyle(
                       fontFamily: 'JetBrains Mono',

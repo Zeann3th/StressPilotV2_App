@@ -170,21 +170,19 @@ class _PilotWebViewState extends State<PilotWebView> {
   }
 
   Widget _buildDownloadOverlay() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       color: Colors.black.withValues(alpha: 0.5),
       child: Center(
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+            color: AppColors.surface,
             borderRadius: AppRadius.br16,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppColors.accent)),
+              CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppColors.accent)),
               const SizedBox(height: 16),
               Text(
                 'Downloading Plugin...',
@@ -201,7 +199,7 @@ class _PilotWebViewState extends State<PilotWebView> {
                 child: LinearProgressIndicator(
                   value: _downloadProgress > 0 ? _downloadProgress : null,
                   backgroundColor: AppColors.accent.withValues(alpha: 0.1),
-                  valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+                  valueColor: AlwaysStoppedAnimation(AppColors.accent),
                 ),
               ),
             ],

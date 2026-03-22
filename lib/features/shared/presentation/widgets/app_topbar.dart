@@ -9,7 +9,6 @@ import 'dart:io';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
-import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 
 class AppTopBar extends StatefulWidget {
@@ -25,11 +24,9 @@ class AppTopBar extends StatefulWidget {
 class _AppTopBarState extends State<AppTopBar> {
   @override
   Widget build(BuildContext context) {
-    final themeManager = context.watch<ThemeManager>();
     final keymap = context.watch<KeymapProvider>();
-    final isDark = themeManager.isDark;
-    final bg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final bg = AppColors.surface;
+    final border = AppColors.border;
 
     return Container(
       height: 60,
@@ -83,15 +80,6 @@ class _AppTopBarState extends State<AppTopBar> {
             icon: LucideIcons.settings,
             tooltip: _tip('Settings', keymap.getShortcut('app.settings')),
             onTap: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
-          ),
-          const SizedBox(width: 8),
-          _TopBarIcon(
-            icon: themeManager.isDark ? LucideIcons.sun : LucideIcons.moon,
-            tooltip: _tip(
-              themeManager.isDark ? 'Light Mode' : 'Dark Mode',
-              keymap.getShortcut('theme.toggle'),
-            ),
-            onTap: themeManager.toggleTheme,
           ),
           const SizedBox(width: 8),
 
@@ -150,11 +138,10 @@ class _TopBarIconState extends State<_TopBarIcon> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart;
-    final accentHover = isDark ? const Color(0xFF059669) : const Color(0xFF34D399);
+    final accent = AppColors.accent;
+    final accentHover = AppColors.accentHover;
 
-    final iconColor = _isHovered ? accentHover : (isDark ? AppColors.textSecondary : AppColors.textLightSecondary);
+    final iconColor = _isHovered ? accentHover : AppColors.textSecondary;
 
     return ShadTooltip(
       builder: (context) => Text(widget.tooltip),

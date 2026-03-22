@@ -19,9 +19,8 @@ class ProjectTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
 
     return Container(
       decoration: BoxDecoration(
@@ -58,8 +57,7 @@ class ProjectTable extends StatelessWidget {
 class _ProjectTableHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final headerBg = isDark ? AppColors.darkElevated : AppColors.lightElevated;
+    final headerBg = AppColors.elevated;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -120,8 +118,7 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final textColor = AppColors.textPrimary;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -231,7 +228,7 @@ class _ProjectAvatar extends StatelessWidget {
 
   Color _colorForString(String text) {
     if (text.isEmpty) return AppColors.textSecondary;
-    const colors = [
+    final colors = [
       AppColors.accent,
       Color(0xFFEF4444),
       Color(0xFF3B82F6),

@@ -61,7 +61,7 @@ class _PilotToastWidgetState extends State<_PilotToastWidget>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.darkElevated,
+              color: AppColors.elevated,
               borderRadius: AppRadius.br8,
               border: Border.all(color: color.withValues(alpha: 0.5)),
               boxShadow: [

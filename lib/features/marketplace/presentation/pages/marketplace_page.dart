@@ -17,11 +17,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final bg = AppColors.background;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textColor = AppColors.textPrimary;
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {

@@ -18,8 +18,7 @@ class AgentHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final border = AppColors.border;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -33,7 +32,7 @@ class AgentHeader extends StatelessWidget {
             onPressed: onBack,
           ),
           const SizedBox(width: 8),
-          const Icon(LucideIcons.sparkles, size: 18, color: AppColors.darkGreenStart),
+          Icon(LucideIcons.sparkles, size: 18, color: AppColors.accent),
           const SizedBox(width: 12),
           Text('StressPilot AI Agent', style: AppTypography.heading.copyWith(fontSize: 16)),
           const SizedBox(width: 12),
@@ -56,7 +55,7 @@ class _StatusDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, label) = switch (state) {
-      AgentState.ready => (AppColors.darkGreenStart, 'Ready'),
+      AgentState.ready => (AppColors.accent, 'Ready'),
       AgentState.thinking => (Colors.amber, 'Thinking'),
       AgentState.starting => (Colors.blue, 'Starting'),
       AgentState.pendingApproval => (Colors.orange, 'Approval needed'),

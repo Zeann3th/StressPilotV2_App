@@ -177,4 +177,3 @@ class AppNavigator {
     return false;
   }
 }
-

@@ -24,25 +24,24 @@ class EnvironmentManagerDialog extends StatefulWidget {
     String projectName,
   ) {
     final provider = Provider.of<EnvironmentProvider>(context, listen: false);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return showDialog(
       context: context,
       builder: (context) => ChangeNotifierProvider.value(
         value: provider,
         child: Dialog(
-          backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+          backgroundColor: AppColors.surface,
           surfaceTintColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(48),
           shape: RoundedRectangleBorder(
             borderRadius: AppRadius.br12,
-            side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            side: BorderSide(color: AppColors.border),
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+              color: AppColors.background,
               borderRadius: AppRadius.br12,
-              border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+              border: Border.all(color: AppColors.border),
             ),
             child: EnvironmentManagerDialog(
               environmentId: environmentId,
@@ -70,8 +69,6 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Column(
@@ -79,9 +76,9 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              color: AppColors.surface,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              border: Border(bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+              border: Border(bottom: BorderSide(color: AppColors.border)),
             ),
             child: Row(
               children: [
@@ -91,14 +88,14 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
                     Text(
                       'Environment Variables',
                       style: AppTypography.heading.copyWith(
-                        color: isDark ? AppColors.textPrimary : AppColors.textLight,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Project: ${widget.projectName}',
                       style: AppTypography.body.copyWith(
-                        color: isDark ? AppColors.textSecondary : AppColors.textLightSecondary,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -115,7 +112,7 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
             ),
           ),
 
-          const Expanded(child: EnvironmentTable()),
+          Expanded(child: EnvironmentTable()),
         ],
       ),
     );
@@ -139,8 +136,8 @@ class _SaveButton extends StatelessWidget {
               try {
                 await provider.saveChanges(environmentId);
                 AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-                  const SnackBar(
-                    content: Text('Changes saved successfully'),
+                  SnackBar(
+                    content: const Text('Changes saved successfully'),
                     backgroundColor: AppColors.accent,
                   ),
                 );

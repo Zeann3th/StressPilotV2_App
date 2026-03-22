@@ -57,10 +57,9 @@ class PilotDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textPrimary = AppColors.textPrimary;
 
     return Center(
       child: ConstrainedBox(

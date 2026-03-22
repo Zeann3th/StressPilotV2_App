@@ -18,9 +18,7 @@ class WorkspaceFlowTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.darkBorder
-        : AppColors.lightBorder;
+    final border = AppColors.border;
 
     final flowProvider = context.watch<FlowProvider>();
     final flows = flowProvider.flows;
@@ -113,7 +111,7 @@ class _FlowTabState extends State<_FlowTab> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final textColor = AppColors.textPrimary;
 
     final labelColor = widget.isActive
         ? AppColors.accent

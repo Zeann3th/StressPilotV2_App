@@ -9,6 +9,8 @@ class PilotButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final PilotButtonVariant variant;
   final bool compact;
+  final Color? foregroundOverride;
+  final Color? backgroundOverride;
 
   const PilotButton({
     super.key,
@@ -17,6 +19,8 @@ class PilotButton extends StatefulWidget {
     this.onPressed,
     this.variant = PilotButtonVariant.primary,
     this.compact = false,
+    this.foregroundOverride,
+    this.backgroundOverride,
   });
 
   const PilotButton.primary({
@@ -25,6 +29,8 @@ class PilotButton extends StatefulWidget {
     this.icon,
     this.onPressed,
     this.compact = false,
+    this.foregroundOverride,
+    this.backgroundOverride,
   }) : variant = PilotButtonVariant.primary;
 
   const PilotButton.ghost({
@@ -33,6 +39,8 @@ class PilotButton extends StatefulWidget {
     this.icon,
     this.onPressed,
     this.compact = false,
+    this.foregroundOverride,
+    this.backgroundOverride,
   }) : variant = PilotButtonVariant.ghost;
 
   const PilotButton.danger({
@@ -41,6 +49,8 @@ class PilotButton extends StatefulWidget {
     this.icon,
     this.onPressed,
     this.compact = false,
+    this.foregroundOverride,
+    this.backgroundOverride,
   }) : variant = PilotButtonVariant.danger;
 
   @override
@@ -63,11 +73,11 @@ class _PilotButtonState extends State<PilotButton> {
     switch (widget.variant) {
       case PilotButtonVariant.primary:
         if (_isPressed) {
-          bgColor = isDark ? AppColors.darkGreenEnd : AppColors.lightGreenEnd;
+          bgColor = AppColors.accentActive;
         } else if (_isHovered || _isFocused) {
-          bgColor = isDark ? const Color(0xFF059669) : const Color(0xFF34D399);
+          bgColor = AppColors.accentHover;
         } else {
-          bgColor = isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart;
+          bgColor = AppColors.accent;
         }
         textColor = Colors.white;
         borderColor = _isFocused
@@ -77,18 +87,18 @@ class _PilotButtonState extends State<PilotButton> {
 
       case PilotButtonVariant.ghost:
         if (_isPressed) {
-          bgColor = (isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart).withValues(alpha: 0.15);
+          bgColor = AppColors.accent.withValues(alpha: 0.15);
         } else if (_isHovered || _isFocused) {
-          bgColor = (isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart).withValues(alpha: 0.08);
+          bgColor = AppColors.accent.withValues(alpha: 0.08);
         } else {
           bgColor = Colors.transparent;
         }
         textColor = (_isHovered || _isFocused)
-            ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
-            : (isDark ? AppColors.textPrimary : AppColors.textLight);
+            ? AppColors.accent
+            : AppColors.textPrimary;
         borderColor = _isFocused
-            ? (isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart)
-            : (isDark ? AppColors.darkBorder : AppColors.lightBorder);
+            ? AppColors.accent
+            : AppColors.border;
         break;
 
       case PilotButtonVariant.danger:
@@ -104,6 +114,13 @@ class _PilotButtonState extends State<PilotButton> {
             ? AppColors.error
             : AppColors.error.withValues(alpha: 0.4);
         break;
+    }
+
+    if (widget.foregroundOverride != null) {
+      textColor = widget.foregroundOverride!;
+    }
+    if (widget.backgroundOverride != null) {
+      bgColor = widget.backgroundOverride!;
     }
 
     final vPad = widget.compact ? 6.0 : 8.0;

@@ -30,7 +30,7 @@ void main() async {
       stackTrace: stack,
     );
     AppErrorBoundary.saveCrashLog(error, stack);
-    return true; 
+    return true;
   };
 
   const windowOptions = WindowOptions(

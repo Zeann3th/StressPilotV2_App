@@ -64,12 +64,12 @@ class _PilotInputState extends State<PilotInput> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final bgColor = isDark ? AppColors.darkElevated : AppColors.lightElevated;
+    final bgColor = AppColors.elevated;
     final borderColor = widget.borderless
         ? Colors.transparent
         : _isFocused
         ? AppColors.accent
-        : (isDark ? AppColors.darkBorder : AppColors.lightBorder);
+        : AppColors.border;
 
     return AnimatedContainer(
       key: ValueKey(isDark),
@@ -101,7 +101,7 @@ class _PilotInputState extends State<PilotInput> {
           onChanged: widget.onChanged,
           onSubmitted: widget.onSubmitted,
           style: (widget.style ?? AppTypography.body).copyWith(
-            color: isDark ? AppColors.textPrimary : AppColors.textLight,
+            color: AppColors.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: widget.placeholder,

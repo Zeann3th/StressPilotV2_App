@@ -82,7 +82,7 @@ class _SettingsRowState extends State<SettingsRow> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final textColor = AppColors.textPrimary;
 
     final isBool = widget.value.toLowerCase() == 'true' || widget.value.toLowerCase() == 'false';
     final boolValue = widget.value.toLowerCase() == 'true';
@@ -92,31 +92,45 @@ class _SettingsRowState extends State<SettingsRow> {
       onExit: (_) => setState(() => _isHovered = false),
       cursor: isBool ? SystemMouseCursors.basic : SystemMouseCursors.click,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           if (!isBool && !_isEditing) setState(() => _isEditing = true);
         },
         child: AnimatedContainer(
           duration: AppDurations.micro,
           color: _isHovered && !_isEditing && !isBool
-              ? AppColors.accent.withValues(alpha: 0.04)
+              ? (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02))
               : Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                flex: 4,
-                child: Text(
-                  widget.keyName.replaceAll('_', ' '),
-                  style: AppTypography.body.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w500,
-                  ),
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.keyName.replaceAll('_', ' '),
+                      style: AppTypography.body.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      'System Configuration',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                flex: 6,
+                flex: 5,
                 child: isBool
                     ? Align(
                         alignment: Alignment.centerRight,
@@ -124,9 +138,6 @@ class _SettingsRowState extends State<SettingsRow> {
                           value: boolValue,
                           activeThumbColor: AppColors.accent,
                           activeTrackColor: AppColors.accent.withValues(alpha: 0.2),
-                          inactiveThumbColor: Colors.white,
-                          inactiveTrackColor: Colors.grey.withValues(alpha: 0.3),
-                          trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
                           onChanged: (val) => widget.onSave(val.toString()),
                         ),
                       )
@@ -147,24 +158,23 @@ class _SettingsRowState extends State<SettingsRow> {
                               Flexible(
                                 child: Text(
                                   widget.value.isEmpty ? 'Not set' : widget.value,
-                                  style: AppTypography.body.copyWith(
+                                  style: AppTypography.codeSm.copyWith(
                                     color: widget.value.isEmpty
                                         ? AppColors.textMuted
-                                        : AppColors.textSecondary,
+                                        : AppColors.accent,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.right,
                                 ),
                               ),
-                              if (_isHovered) ...[
-                                const SizedBox(width: 6),
-                                const Icon(
-                                  Icons.chevron_right_rounded,
-                                  size: 14,
-                                  color: AppColors.textMuted,
-                                ),
-                              ],
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.edit_rounded,
+                                size: 14,
+                                color: _isHovered ? AppColors.textSecondary : Colors.transparent,
+                              ),
                             ],
                           ),
               ),

@@ -18,8 +18,8 @@ class MetricsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final surface = AppColors.surface;
+    final textColor = AppColors.textPrimary;
 
     return Container(
       padding: const EdgeInsets.all(16),

@@ -17,9 +17,8 @@ class _GithubWebviewPageState extends State<GithubWebviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final textCol = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final bg = AppColors.background;
+    final textCol = AppColors.textPrimary;
 
     return Scaffold(
       backgroundColor: bg,

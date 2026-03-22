@@ -30,16 +30,12 @@ class _AppSkeletonState extends State<AppSkeleton>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = AppColors.background;
+    final surface = AppColors.surface;
+    final shimmerBase = AppColors.border.withValues(alpha: 0.1);
+    final shimmerHighlight = AppColors.surface;
 
-    final bg = isDark ? const Color(0xFF091413) : const Color(0xFFF5F5F7);
-    final surface = isDark ? const Color(0xFF122420) : Colors.white;
-    final shimmerBase = isDark ? const Color(0xFF285A48) : const Color(0xFFE8E8ED);
-    final shimmerHighlight = isDark ? const Color(0xFF408A71) : const Color(0xFFF5F5F7);
-
-    final border = isDark
-        ? AppColors.darkBorder.withValues(alpha: 0.3)
-        : AppColors.lightBorder;
+    final border = AppColors.border;
 
     return Scaffold(
       backgroundColor: bg,
@@ -57,7 +53,7 @@ class _AppSkeletonState extends State<AppSkeleton>
                 border: Border.all(color: border.withValues(alpha: 0.3)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withValues(alpha: 0.05),
                     offset: const Offset(0, 4),
                     blurRadius: 12,
                   ),
@@ -124,8 +120,8 @@ class _AppSkeletonState extends State<AppSkeleton>
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1A332D) : const Color(0xFFF8FAFC),
-                                border: Border.all(color: border),
+                                color: AppColors.background.withValues(alpha: 0.5),
+                                border: Border.all(color: border.withValues(alpha: 0.5)),
                                 borderRadius: AppRadius.br12,
                               ),
                               child: Column(
@@ -161,8 +157,8 @@ class _AppSkeletonState extends State<AppSkeleton>
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1A332D) : const Color(0xFFF8FAFC),
-                                border: Border.all(color: border),
+                                color: AppColors.background.withValues(alpha: 0.5),
+                                border: Border.all(color: border.withValues(alpha: 0.5)),
                                 borderRadius: AppRadius.br12,
                               ),
                               child: Column(

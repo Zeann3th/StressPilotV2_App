@@ -21,10 +21,9 @@ class WorkspaceNodeLibrary extends StatefulWidget {
 class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final bg = AppColors.surface;
 
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final border = AppColors.border;
 
     return Container(
       width: 232,
@@ -142,9 +141,8 @@ class _LogicChipState extends State<_LogicChip> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final chipBg = isDark ? AppColors.darkElevated : AppColors.lightElevated;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final chipBg = AppColors.elevated;
+    final border = AppColors.border;
 
     final dragData = DragData(
       type: widget.type,

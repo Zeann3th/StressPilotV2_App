@@ -34,9 +34,8 @@ class _ProjectEmptyStateState extends State<ProjectEmptyState>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final borderColor = AppColors.border;
+    final textColor = AppColors.textPrimary;
 
     return Center(
       child: Column(
@@ -53,7 +52,7 @@ class _ProjectEmptyStateState extends State<ProjectEmptyState>
               animation: _opacity,
               builder: (context, _) => Opacity(
                 opacity: _opacity.value,
-                child: const Icon(
+                child: Icon(
                   Icons.folder_open_rounded,
                   size: 40,
                   color: AppColors.accent,
@@ -89,8 +88,7 @@ class ProjectErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final textColor = AppColors.textPrimary;
 
     return Center(
       child: Column(

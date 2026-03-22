@@ -119,8 +119,6 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return PilotDialog(
       title: 'Run Flow',
       maxWidth: 600,
@@ -187,10 +185,10 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                  color: AppColors.elevated,
                   borderRadius: AppRadius.br12,
                   border: Border.all(
-                    color: _selectedFile != null ? AppColors.accent : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                    color: _selectedFile != null ? AppColors.accent : AppColors.border,
                   ),
                 ),
                 child: Row(

@@ -112,9 +112,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final bg = AppColors.background;
+    final border = AppColors.border;
 
     return Scaffold(
       backgroundColor: bg,
@@ -128,7 +127,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                color: AppColors.surface,
                 borderRadius: AppRadius.br16,
                 border: Border.all(color: border.withValues(alpha: 0.3)),
                 boxShadow: [
@@ -172,7 +171,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           Expanded(
                             child: Container(
                               decoration: BoxDecoration(
-                                color: isDark ? AppColors.darkElevated : Colors.white,
+                                color: AppColors.elevated,
                                 border: Border.all(color: border.withValues(alpha: 0.3)),
                                 borderRadius: AppRadius.br12,
                               ),
@@ -187,7 +186,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: isDark ? AppColors.darkElevated : Colors.white,
+                                color: AppColors.elevated,
                                 border: Border.all(color: border.withValues(alpha: 0.3)),
                                 borderRadius: AppRadius.br12,
                               ),

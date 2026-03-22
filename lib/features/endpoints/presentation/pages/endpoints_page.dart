@@ -145,12 +145,11 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
   Widget build(BuildContext context) {
     final provider = context.watch<EndpointProvider>();
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
-    final secondaryText = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
+    final bg = AppColors.background;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textColor = AppColors.textPrimary;
+    final secondaryText = AppColors.textSecondary;
 
     return Scaffold(
       backgroundColor: bg,
@@ -166,7 +165,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                 border: Border.all(color: border.withValues(alpha: 0.5)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     offset: const Offset(0, 4),
                     blurRadius: 12,
                   ),
@@ -230,7 +229,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                   hintStyle: TextStyle(fontSize: 12, color: secondaryText),
                                   prefixIcon: Icon(LucideIcons.search, size: 14, color: secondaryText),
                                   filled: true,
-                                  fillColor: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                                  fillColor: AppColors.elevated,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide.none,
@@ -275,7 +274,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                       width: 20, height: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart
+                                        color: AppColors.accent,
                                       ),
                                     ),
                                   )
@@ -296,7 +295,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                                       width: 16, height: 16,
                                                       child: CircularProgressIndicator(
                                                         strokeWidth: 2,
-                                                        color: isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart
+                                                        color: AppColors.accent,
                                                       ),
                                                     )
                                                   : const SizedBox.shrink(),
@@ -313,7 +312,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                             duration: AppDurations.short,
                                             decoration: BoxDecoration(
                                               borderRadius: BorderRadius.circular(10),
-                                              gradient: isSelected ? AppGradients.green(isDark) : null,
+                                              gradient: isSelected ? AppGradients.green(Theme.of(context).brightness == Brightness.dark) : null,
                                             ),
                                             child: Material(
                                               color: Colors.transparent,
@@ -395,9 +394,8 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final secondaryText = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final secondaryText = AppColors.textSecondary;
+    final textColor = AppColors.textPrimary;
 
     return Center(
       child: Column(
@@ -406,9 +404,9 @@ class _EmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              color: AppColors.surface,
               shape: BoxShape.circle,
-              border: Border.all(color: (isDark ? AppColors.darkBorder : AppColors.lightBorder).withValues(alpha: 0.5)),
+              border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
             ),
             child: Icon(
               LucideIcons.box,
@@ -631,7 +629,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     showDialog(
       context: context,
       builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
         return PilotDialog(
           title: 'Export to cURL',
           maxWidth: 600,
@@ -646,7 +643,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                     style: TextStyle(
                       fontFamily: 'JetBrains Mono',
                       fontSize: 13,
-                      color: isDark ? AppColors.textPrimary : AppColors.textLight,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -668,7 +665,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                           child: Icon(
                             LucideIcons.copy,
                             size: 18,
-                            color: (isDark ? AppColors.textPrimary : AppColors.textLight).withValues(alpha: 0.5),
+                            color: AppColors.textPrimary.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -786,13 +783,12 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
-    final secondaryText = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
-    final accentColor = isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart;
+    final bg = AppColors.background;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textColor = AppColors.textPrimary;
+    final secondaryText = AppColors.textSecondary;
+    final accentColor = AppColors.accent;
 
     return Container(
       color: bg,
@@ -863,7 +859,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                         height: 40,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                          color: AppColors.elevated,
                           borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
                           border: Border.all(color: border.withValues(alpha: 0.5)),
                         ),
@@ -893,7 +889,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                         child: Container(
                           height: 40,
                           decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                            color: AppColors.elevated,
                             border: Border(
                               top: BorderSide(color: border.withValues(alpha: 0.5)),
                               bottom: BorderSide(color: border.withValues(alpha: 0.5)),
@@ -983,7 +979,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                             ],
                           ),
                         ),
-                        _buildSettingsTab(isDark, textColor, secondaryText, border),
+                        _buildSettingsTab(textColor, secondaryText, border),
                       ],
                     ),
                   ),
@@ -1042,7 +1038,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     );
   }
 
-  Widget _buildSettingsTab(bool isDark, Color textColor, Color secondaryText, Color border) {
+  Widget _buildSettingsTab(Color textColor, Color secondaryText, Color border) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -1055,7 +1051,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
             hintText: 'e.g., #statusCode == 200 && #body.status == "OK"',
             hintStyle: TextStyle(color: secondaryText.withValues(alpha: 0.5)),
             filled: true,
-            fillColor: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+            fillColor: AppColors.elevated,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
             helperText: 'Available variables: #statusCode, #body, #headers, #responseTime',
             helperStyle: TextStyle(color: secondaryText, fontSize: 11),
@@ -1157,11 +1153,10 @@ class _SegmentedTabControlState extends State<_SegmentedTabControl> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final elevated = isDark ? AppColors.darkElevated : AppColors.lightElevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
-    final secondaryText = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
+    final surface = AppColors.surface;
+    final elevated = AppColors.elevated;
+    final textColor = AppColors.textPrimary;
+    final secondaryText = AppColors.textSecondary;
 
     return Container(
       padding: const EdgeInsets.all(2),
@@ -1192,7 +1187,7 @@ class _SegmentedTabControlState extends State<_SegmentedTabControl> {
                         ]
                       : [],
                   border: isSelected
-                    ? Border.all(color: (isDark ? AppColors.darkBorder : AppColors.lightBorder).withValues(alpha: 0.5))
+                    ? Border.all(color: AppColors.border.withValues(alpha: 0.5))
                     : null,
                 ),
                 alignment: Alignment.center,

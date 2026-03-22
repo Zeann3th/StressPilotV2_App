@@ -17,10 +17,9 @@ class _KeymapSettingsTableState extends State<KeymapSettingsTable> {
   Widget build(BuildContext context) {
     final provider = context.watch<KeymapProvider>();
     final keymap = provider.keymap;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textColor = AppColors.textPrimary;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(32),
@@ -70,14 +69,11 @@ class _KeymapSettingsTableState extends State<KeymapSettingsTable> {
   }
 
   Widget _buildRow(BuildContext context, String actionId, String shortcut) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
-
     return _ShortcutRow(
       label: _humanizeActionId(actionId),
       shortcut: shortcut,
       onTap: () => _editShortcut(context, actionId, shortcut),
-      textColor: textColor,
+      textColor: AppColors.textPrimary,
     );
   }
 
@@ -177,7 +173,7 @@ class _ShortcutRowState extends State<_ShortcutRow> {
                     ),
                     if (_hovered) ...[
                       const SizedBox(width: 8),
-                      const Icon(
+                      Icon(
                         Icons.edit_rounded,
                         size: 14,
                         color: AppColors.textMuted,

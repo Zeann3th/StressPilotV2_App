@@ -22,6 +22,7 @@ import 'package:stress_pilot/features/projects/presentation/provider/canvas_prov
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/agent/presentation/provider/agent_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/layout.dart';
 
 class AppRoot extends StatefulWidget {
@@ -127,6 +128,9 @@ class _AppRootState extends State<AppRoot> {
         ChangeNotifierProvider<RunProvider>.value(
           value: getIt<RunProvider>(),
         ),
+        ChangeNotifierProvider<AgentProvider>.value(
+          value: getIt<AgentProvider>(),
+        ),
         ChangeNotifierProvider<ThemeManager>.value(
           value: getIt<ThemeManager>(),
         ),
@@ -181,6 +185,7 @@ class _AppTheme extends StatelessWidget {
           );
 
     return ShadApp(
+      key: ValueKey(themeManager.currentTheme.id),
       title: 'Stress Pilot',
       debugShowCheckedModeBanner: false,
       navigatorKey: AppNavigator.navigatorKey,

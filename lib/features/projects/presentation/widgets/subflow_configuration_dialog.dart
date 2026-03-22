@@ -74,8 +74,6 @@ class _SubflowConfigurationDialogState extends State<SubflowConfigurationDialog>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return PilotDialog(
       title: 'Configure Subflow',
       maxWidth: 480,
@@ -99,16 +97,16 @@ class _SubflowConfigurationDialogState extends State<SubflowConfigurationDialog>
             Container(
               constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
-                border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                border: Border.all(color: AppColors.border),
                 borderRadius: AppRadius.br8,
-                color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                color: AppColors.elevated,
               ),
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _filteredFlows.length,
                 separatorBuilder: (context, index) => Divider(
                   height: 1,
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  color: AppColors.border,
                 ),
                 itemBuilder: (context, index) {
                   final flow = _filteredFlows[index];

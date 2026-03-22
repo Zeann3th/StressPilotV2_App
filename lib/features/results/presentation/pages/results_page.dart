@@ -225,11 +225,10 @@ class _ResultsPageState extends State<ResultsPage> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResultsProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final textCol = isDark ? AppColors.textPrimary : AppColors.textLight;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final bg = AppColors.background;
+    final surface = AppColors.surface;
+    final textCol = AppColors.textPrimary;
+    final border = AppColors.border;
 
     return Scaffold(
       backgroundColor: bg,
@@ -528,10 +527,9 @@ class _ResultsPageState extends State<ResultsPage> {
             ? AppColors.error
             : AppColors.info);
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textCol = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textCol = AppColors.textPrimary;
 
     return Container(
       padding: const EdgeInsets.all(16),

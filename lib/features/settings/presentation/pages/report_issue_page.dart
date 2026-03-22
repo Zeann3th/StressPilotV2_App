@@ -64,10 +64,9 @@ ${widget.stack ?? 'No stack trace available'}
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final textCol = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final bg = AppColors.background;
+    final surface = AppColors.surface;
+    final textCol = AppColors.textPrimary;
 
     return Scaffold(
       backgroundColor: bg,
@@ -98,7 +97,7 @@ ${widget.stack ?? 'No stack trace available'}
                   color: surface,
                   borderRadius: AppRadius.br12,
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color: AppColors.border,
                   ),
                 ),
                 child: Column(
@@ -124,7 +123,7 @@ ${widget.stack ?? 'No stack trace available'}
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+                        color: AppColors.elevated,
                         borderRadius: AppRadius.br8,
                       ),
                       child: Text(

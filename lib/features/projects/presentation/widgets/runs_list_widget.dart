@@ -82,9 +82,9 @@ class _RunsListWidgetState extends State<RunsListWidget> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textColor = AppColors.textPrimary;
 
     return Column(
       children: [
@@ -138,7 +138,7 @@ class _RunsListWidgetState extends State<RunsListWidget> {
                                   borderRadius: AppRadius.br12,
                                   border: Border.all(color: border),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.play_disabled_rounded,
                                   size: 32,
                                   color: AppColors.textMuted,
@@ -183,8 +183,8 @@ class _RunSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
     final skeletonColor = isDark
         ? Colors.white.withValues(alpha: 0.05)
         : Colors.black.withValues(alpha: 0.05);
@@ -282,10 +282,9 @@ class _RunTileState extends State<_RunTile> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textColor = AppColors.textPrimary;
 
     final status = widget.run.status.toUpperCase();
     final (statusColor, statusIcon) = _statusAppearance(status);
@@ -379,7 +378,7 @@ class _RunTileState extends State<_RunTile> {
                         },
                       ),
               if (status == 'RUNNING')
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   size: 16,
                   color: AppColors.textMuted,

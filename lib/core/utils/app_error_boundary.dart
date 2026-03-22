@@ -48,7 +48,7 @@ class _AppErrorBoundaryState extends State<AppErrorBoundary> {
           });
         }
       });
-      return const SizedBox.shrink(); // Prevent the red screen of death
+      return const SizedBox.shrink();
     };
 
     if (_error != null) {

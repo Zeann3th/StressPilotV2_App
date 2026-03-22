@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
+import 'package:stress_pilot/core/themes/theme_manager.dart';
+import 'package:stress_pilot/core/themes/pilot_theme.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/keymap_settings_table.dart';
+import 'package:stress_pilot/features/settings/presentation/widgets/app_health_section.dart';
 import 'settings_row.dart';
 
 class SettingsTable extends StatefulWidget {
@@ -27,10 +30,9 @@ class _SettingsTableState extends State<SettingsTable> {
   Widget build(BuildContext context) {
     final provider = context.watch<SettingProvider>();
     final configs = provider.configs;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textColor = AppColors.textPrimary;
 
     final Map<String, List<MapEntry<String, String>>> grouped = {};
     for (var entry in configs.entries) {
@@ -40,6 +42,8 @@ class _SettingsTableState extends State<SettingsTable> {
       grouped.putIfAbsent(category, () => []).add(entry);
     }
     final categories = grouped.keys.toList()..sort();
+    categories.insert(0, 'THEME');
+    categories.insert(1, 'HEALTH');
     categories.add('SHORTCUTS');
 
     if (_selectedCategory == null && categories.isNotEmpty) {
@@ -51,23 +55,30 @@ class _SettingsTableState extends State<SettingsTable> {
       children: [
 
         Container(
-          width: 220,
-          margin: const EdgeInsets.only(right: 16),
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: AppRadius.br16,
-            border: Border.all(color: border.withValues(alpha: 0.3)),
-          ),
+          width: 200,
+          margin: const EdgeInsets.only(right: 24),
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            padding: EdgeInsets.zero,
             itemCount: categories.length,
             itemBuilder: (context, index) {
               final cat = categories[index];
               final isSelected = cat == _selectedCategory;
-              return _CategoryItem(
-                label: cat,
-                isSelected: isSelected,
-                onTap: () => setState(() => _selectedCategory = cat),
+
+              IconData icon = Icons.settings_rounded;
+              if (cat == 'THEME') icon = Icons.palette_rounded;
+              if (cat == 'HEALTH') icon = Icons.health_and_safety_rounded;
+              if (cat == 'SHORTCUTS') icon = Icons.keyboard_rounded;
+              if (cat == 'AI MODEL') icon = Icons.auto_awesome_rounded;
+              if (cat == 'DATABASE') icon = Icons.storage_rounded;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: PilotButton.ghost(
+                  label: cat,
+                  icon: icon,
+                  onPressed: () => setState(() => _selectedCategory = cat),
+                  foregroundOverride: isSelected ? AppColors.accent : AppColors.textSecondary,
+                  backgroundOverride: isSelected ? AppColors.accent.withValues(alpha: 0.1) : null,
+                ),
               );
             },
           ),
@@ -79,154 +90,278 @@ class _SettingsTableState extends State<SettingsTable> {
               color: surface,
               borderRadius: AppRadius.br16,
               border: Border.all(color: border.withValues(alpha: 0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  offset: const Offset(0, 4),
+                  blurRadius: 12,
+                ),
+              ],
             ),
             clipBehavior: Clip.antiAlias,
-            child: _selectedCategory == 'SHORTCUTS'
-                ? const KeymapSettingsTable()
-                : SingleChildScrollView(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(32),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 680),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (_selectedCategory != null &&
-                                grouped[_selectedCategory] != null) ...[
-                              Text(
-                                _selectedCategory!,
-                                style: AppTypography.heading.copyWith(
-                                  color: textColor,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _SettingsGroup(
-                                entries: grouped[_selectedCategory]!,
-                                provider: provider,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+            child: _buildContent(grouped, textColor, border),
           ),
         ),
       ],
     );
   }
-}
 
-class _CategoryItem extends StatefulWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
+  Widget _buildContent(Map<String, List<MapEntry<String, String>>> grouped, Color textColor, Color border) {
+    if (_selectedCategory == 'THEME') {
+      return const _ThemeSettings();
+    }
 
-  const _CategoryItem({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
+    if (_selectedCategory == 'HEALTH') {
+      return const SingleChildScrollView(
+        padding: EdgeInsets.all(32),
+        child: AppHealthSection(),
+      );
+    }
 
-  @override
-  State<_CategoryItem> createState() => _CategoryItemState();
-}
+    if (_selectedCategory == 'SHORTCUTS') {
+      return const KeymapSettingsTable();
+    }
 
-class _CategoryItemState extends State<_CategoryItem> {
-  bool _hovered = false;
+    final entries = grouped[_selectedCategory] ?? [];
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Stack(
-          children: [
-            if (widget.isSelected)
-              Positioned(
-                left: 0,
-                top: 3,
-                bottom: 3,
-                child: Container(
-                  width: 3,
-                  decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: AppRadius.br4,
-                  ),
+    return SingleChildScrollView(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(32),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _selectedCategory!,
+                style: AppTypography.heading.copyWith(color: textColor, fontSize: 20),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.br12,
+                  border: Border.all(color: border.withValues(alpha: 0.3)),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    for (int i = 0; i < entries.length; i++) ...[
+                      if (i > 0) Divider(height: 1, color: border.withValues(alpha: 0.1)),
+                      SettingsRow(
+                        keyName: entries[i].key,
+                        value: entries[i].value,
+                        onSave: (val) async {
+                          await context.read<SettingProvider>().setConfig(entries[i].key, val);
+                          if (mounted) {
+                            PilotToast.show(context, 'Setting saved');
+                          }
+                        },
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            AnimatedContainer(
-              duration: AppDurations.micro,
-              margin: const EdgeInsets.only(bottom: 2),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: widget.isSelected
-                    ? AppColors.accent.withValues(alpha: 0.10)
-                    : _hovered
-                    ? AppColors.accent.withValues(alpha: 0.05)
-                    : Colors.transparent,
-                borderRadius: AppRadius.br8,
-              ),
-              child: Text(
-                widget.label,
-                style: AppTypography.body.copyWith(
-                  color: widget.isSelected ? AppColors.accent : textColor,
-                  fontWeight: widget.isSelected
-                      ? FontWeight.w600
-                      : FontWeight.w400,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _SettingsGroup extends StatelessWidget {
-  final List<MapEntry<String, String>> entries;
-  final SettingProvider provider;
+class _ThemeSettings extends StatelessWidget {
+  const _ThemeSettings();
 
-  const _SettingsGroup({required this.entries, required this.provider});
+  @override
+  Widget build(BuildContext context) {
+    final themeManager = context.watch<ThemeManager>();
+    final availableThemes = themeManager.availableThemes;
+    final currentTheme = themeManager.currentTheme;
+    final textColor = AppColors.textPrimary;
+    final border = AppColors.border;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Appearance',
+                style: AppTypography.heading.copyWith(color: textColor, fontSize: 20),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Customize how Stress Pilot looks on your machine.',
+                style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 32),
+              
+              Text('Active Theme', style: AppTypography.label),
+              const SizedBox(height: 12),
+              
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.br12,
+                  border: Border.all(color: border.withValues(alpha: 0.3)),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    for (var theme in availableThemes)
+                      _ThemeOption(
+                        theme: theme,
+                        isSelected: theme.id == currentTheme.id,
+                        onSelect: () => themeManager.setTheme(theme.id),
+                      ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              PilotButton.ghost(
+                label: 'Reload External Themes',
+                icon: Icons.refresh_rounded,
+                onPressed: () => themeManager.loadAvailableThemes(),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'External themes are loaded from ~/.pilot/client/themes/*.json',
+                style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ThemeOption extends StatefulWidget {
+  final PilotTheme theme;
+  final bool isSelected;
+  final VoidCallback onSelect;
+
+  const _ThemeOption({
+    required this.theme,
+    required this.isSelected,
+    required this.onSelect,
+  });
+
+  @override
+  State<_ThemeOption> createState() => _ThemeOptionState();
+}
+
+class _ThemeOptionState extends State<_ThemeOption> {
+  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textColor = AppColors.textPrimary;
+    final border = AppColors.border;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: AppRadius.br12,
-        border: Border.all(color: border, width: 1),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (int i = 0; i < entries.length; i++) ...[
-            if (i > 0) Divider(height: 1, color: border),
-            SettingsRow(
-              keyName: entries[i].key,
-              value: entries[i].value,
-              onSave: (val) async {
-                await provider.setConfig(entries[i].key, val);
-                if (context.mounted) {
-                  PilotToast.show(context, 'Setting saved');
-                }
-              },
+    final bg = widget.isSelected
+        ? AppColors.accent.withValues(alpha: 0.1)
+        : _isHovered
+            ? (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02))
+            : Colors.transparent;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onSelect,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: bg,
+            border: Border(
+              bottom: BorderSide(color: border.withValues(alpha: 0.1)),
             ),
-          ],
-        ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: widget.isSelected ? AppColors.accent : AppColors.textSecondary,
+                    width: 2,
+                  ),
+                ),
+                child: widget.isSelected
+                    ? Center(
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.theme.name,
+                    style: AppTypography.body.copyWith(
+                      color: textColor,
+                      fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  Text(
+                    widget.theme.isDark ? 'Dark Theme' : 'Light Theme',
+                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              _ThemePreview(theme: widget.theme),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+}
+
+class _ThemePreview extends StatelessWidget {
+  final PilotTheme theme;
+  const _ThemePreview({required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = [
+      theme.getColor('background', Colors.grey),
+      theme.getColor('surface', Colors.grey),
+      theme.getColor('accent', Colors.green),
+    ];
+
+    return Row(
+      children: [
+        for (var c in colors)
+          Container(
+            width: 16,
+            height: 16,
+            margin: const EdgeInsets.only(left: 4),
+            decoration: BoxDecoration(
+              color: c,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+          ),
+      ],
     );
   }
 }

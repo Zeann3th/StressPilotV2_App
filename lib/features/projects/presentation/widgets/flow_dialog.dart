@@ -246,14 +246,13 @@ class FlowDialog {
     required List<String> items,
     required ValueChanged<String?> onChanged,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+        color: AppColors.elevated,
         borderRadius: AppRadius.br8,
         border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          color: AppColors.border,
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -264,9 +263,9 @@ class FlowDialog {
               .map((t) => DropdownMenuItem(value: t, child: Text(t)))
               .toList(),
           onChanged: onChanged,
-          dropdownColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+          dropdownColor: AppColors.surface,
           style: AppTypography.body.copyWith(
-            color: isDark ? AppColors.textPrimary : AppColors.textLight,
+            color: AppColors.textPrimary,
           ),
         ),
       ),

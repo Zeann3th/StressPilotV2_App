@@ -8,15 +8,54 @@ import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/system/settings_manager.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/pilot_theme.dart';
 
 class ThemeManager with ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light;
-
+  static const String _defaultThemeId = 'dark';
+  
+  final List<PilotTheme> _availableThemes = [];
+  PilotTheme? _currentTheme;
   ShadThemeData? _currentShadTheme;
 
-  ThemeMode get themeMode => _themeMode;
-  bool get isDark => _themeMode == ThemeMode.dark;
+  List<PilotTheme> get availableThemes => List.unmodifiable(_availableThemes);
+  PilotTheme get currentTheme => _currentTheme ?? _fallbackDark;
+  ThemeMode get themeMode => currentTheme.isDark ? ThemeMode.dark : ThemeMode.light;
+  bool get isDark => currentTheme.isDark;
   ShadThemeData? get currentShadTheme => _currentShadTheme;
+
+  static const _fallbackDark = PilotTheme(
+    id: 'dark',
+    name: 'Dark Forest (Default)',
+    brightness: Brightness.dark,
+    colors: {
+      'background': AppColors.darkBackground,
+      'surface': AppColors.darkSurface,
+      'elevated': AppColors.darkElevated,
+      'border': AppColors.darkBorder,
+      'textPrimary': Color(0xFFF0F6FC),
+      'textSecondary': Color(0xFF8B949E),
+      'accent': AppColors.darkGreenStart,
+      'success': AppColors.success,
+      'error': AppColors.error,
+    },
+  );
+
+  static const _fallbackLight = PilotTheme(
+    id: 'light',
+    name: 'Light (Default)',
+    brightness: Brightness.light,
+    colors: {
+      'background': AppColors.lightBackground,
+      'surface': AppColors.lightSurface,
+      'elevated': AppColors.lightElevated,
+      'border': AppColors.lightBorder,
+      'textPrimary': Color(0xFF111827),
+      'textSecondary': Color(0xFF4B5563),
+      'accent': AppColors.lightGreenStart,
+      'success': AppColors.success,
+      'error': AppColors.error,
+    },
+  );
 
   Future<void> initialize() async {
     final settingsManager = getIt<SettingsManager>();
@@ -24,137 +63,132 @@ class ThemeManager with ChangeNotifier {
       await settingsManager.initialize();
     }
 
-    final themeName = settingsManager.getString('workbench.colorTheme', defaultValue: 'dark');
-    _themeMode = themeName.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.dark;
+    await loadAvailableThemes();
 
-    await _loadCustomTheme(themeName);
+    final themeId = settingsManager.getString('workbench.colorTheme', defaultValue: _defaultThemeId);
+    await setTheme(themeId);
 
     settingsManager.addListener(_onSettingsChanged);
   }
 
   void _onSettingsChanged() {
-    final newTheme = getIt<SettingsManager>().getString('workbench.colorTheme', defaultValue: 'dark');
-    final newMode = newTheme.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.dark;
-
-    if (newMode != _themeMode) {
-      _themeMode = newMode;
-      _loadCustomTheme(newTheme).then((_) => notifyListeners());
+    final newThemeId = getIt<SettingsManager>().getString('workbench.colorTheme', defaultValue: _defaultThemeId);
+    if (newThemeId != currentTheme.id) {
+      setTheme(newThemeId);
     }
   }
 
-  Future<void> _loadCustomTheme(String themeName) async {
+  Future<void> loadAvailableThemes() async {
+    _availableThemes.clear();
+    _availableThemes.add(_fallbackDark);
+    _availableThemes.add(_fallbackLight);
+
     try {
       final String home = Platform.environment['HOME'] ??
                           Platform.environment['USERPROFILE'] ??
                           '/';
-      final file = File(p.join(home, '.pilot', 'client', 'themes', '$themeName.json'));
+      final themesDir = Directory(p.join(home, '.pilot', 'client', 'themes'));
 
-      if (await file.exists()) {
-        final content = await file.readAsString();
-        final json = jsonDecode(content);
-        _currentShadTheme = _parseShadTheme(json);
-      } else {
-        _currentShadTheme = null;
+      if (await themesDir.exists()) {
+        final files = themesDir.listSync().where((e) => e is File && e.path.endsWith('.json'));
+        for (var entity in files) {
+          try {
+            final file = entity as File;
+            final content = await file.readAsString();
+            final json = jsonDecode(content);
+            final id = p.basenameWithoutExtension(file.path);
+            _availableThemes.add(PilotTheme.fromJson(id, json));
+          } catch (e) {
+            AppLogger.warning('Failed to parse theme file ${entity.path}: $e');
+          }
+        }
       }
     } catch (e) {
-      AppLogger.warning('Failed to load custom theme: $e');
-      _currentShadTheme = null;
+      AppLogger.warning('Failed to load external themes: $e');
     }
+    notifyListeners();
   }
 
-  ShadThemeData? _parseShadTheme(Map<String, dynamic> json) {
-    try {
-      final colors = json['colors'] as Map<String, dynamic>? ?? {};
+  Future<void> setTheme(String themeId) async {
+    final theme = _availableThemes.firstWhere(
+      (t) => t.id == themeId,
+      orElse: () => _fallbackDark,
+    );
 
-      Color parseColor(String hexKey, Color fallback) {
-        if (!colors.containsKey(hexKey)) return fallback;
-        final hex = (colors[hexKey] as String).replaceAll('#', '');
-        if (hex.length == 6) {
-          return Color(int.parse('FF$hex', radix: 16));
-        }
-        if (hex.length == 8) {
-          return Color(int.parse(hex, radix: 16));
-        }
-        return fallback;
-      }
-
-      final colorScheme = _themeMode == ThemeMode.dark
-          ? const ShadZincColorScheme.dark(
-              background: AppColors.darkBackground,
-              foreground: AppColors.textPrimary,
-              card: AppColors.darkSurface,
-              cardForeground: AppColors.textPrimary,
-              popover: AppColors.darkSurface,
-              popoverForeground: AppColors.textPrimary,
-              primary: AppColors.darkGreenStart,
-              primaryForeground: Colors.white,
-              secondary: AppColors.darkElevated,
-              secondaryForeground: AppColors.textPrimary,
-              muted: AppColors.darkElevated,
-              mutedForeground: AppColors.textSecondary,
-              accent: AppColors.darkElevated,
-              accentForeground: AppColors.textPrimary,
-              destructive: AppColors.error,
-              destructiveForeground: Colors.white,
-              border: AppColors.darkBorder,
-              input: AppColors.darkBorder,
-              ring: AppColors.darkGreenStart,
-            )
-          : const ShadZincColorScheme.light(
-              background: AppColors.lightBackground,
-              foreground: AppColors.textLight,
-              card: AppColors.lightSurface,
-              cardForeground: AppColors.textLight,
-              popover: AppColors.lightSurface,
-              popoverForeground: AppColors.textLight,
-              primary: AppColors.lightGreenStart,
-              primaryForeground: Colors.white,
-              secondary: AppColors.lightElevated,
-              secondaryForeground: AppColors.textLight,
-              muted: AppColors.lightElevated,
-              mutedForeground: AppColors.textLightSecondary,
-              accent: AppColors.lightElevated,
-              accentForeground: AppColors.textLight,
-              destructive: AppColors.error,
-              destructiveForeground: Colors.white,
-              border: AppColors.lightBorder,
-              input: AppColors.lightBorder,
-              ring: AppColors.lightGreenStart,
-            );
-
-      return ShadThemeData(
-        brightness: _themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light,
-        colorScheme: ShadColorScheme(
-          background: parseColor('background', colorScheme.background),
-          foreground: parseColor('foreground', colorScheme.foreground),
-          card: parseColor('card', colorScheme.card),
-          cardForeground: parseColor('cardForeground', colorScheme.cardForeground),
-          popover: parseColor('popover', colorScheme.popover),
-          popoverForeground: parseColor('popoverForeground', colorScheme.popoverForeground),
-          primary: parseColor('primary', colorScheme.primary),
-          primaryForeground: parseColor('primaryForeground', colorScheme.primaryForeground),
-          secondary: parseColor('secondary', colorScheme.secondary),
-          secondaryForeground: parseColor('secondaryForeground', colorScheme.secondaryForeground),
-          muted: parseColor('muted', colorScheme.muted),
-          mutedForeground: parseColor('mutedForeground', colorScheme.mutedForeground),
-          accent: parseColor('accent', colorScheme.accent),
-          accentForeground: parseColor('accentForeground', colorScheme.accentForeground),
-          destructive: parseColor('destructive', colorScheme.destructive),
-          destructiveForeground: parseColor('destructiveForeground', colorScheme.destructiveForeground),
-          border: parseColor('border', colorScheme.border),
-          input: parseColor('input', colorScheme.input),
-          ring: parseColor('ring', colorScheme.ring),
-          selection: parseColor('selection', colorScheme.selection),
-        ),
-      );
-    } catch (e) {
-      AppLogger.warning('Failed parsing dynamic theme data: $e');
-      return null;
+    _currentTheme = theme;
+    _currentShadTheme = _generateShadTheme(theme);
+    
+    final settingsManager = getIt<SettingsManager>();
+    if (settingsManager.getString('workbench.colorTheme') != themeId) {
+      await settingsManager.setString('workbench.colorTheme', themeId);
     }
+    
+    notifyListeners();
+  }
+
+  ShadThemeData _generateShadTheme(PilotTheme theme) {
+    final isDark = theme.isDark;
+
+    final background = theme.getColor('background', isDark ? AppColors.darkBackground : AppColors.lightBackground);
+    final foreground = theme.getColor('textPrimary', isDark ? const Color(0xFFF0F6FC) : const Color(0xFF111827));
+    final card = theme.getColor('surface', isDark ? AppColors.darkSurface : AppColors.lightSurface);
+    final border = theme.getColor('border', isDark ? AppColors.darkBorder : AppColors.lightBorder);
+    final primary = theme.getColor('accent', isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart);
+    final elevated = theme.getColor('elevated', isDark ? AppColors.darkElevated : AppColors.lightElevated);
+    final textSecondary = theme.getColor('textSecondary', isDark ? const Color(0xFF8B949E) : const Color(0xFF4B5563));
+
+    final colorScheme = isDark
+        ? ShadZincColorScheme.dark(
+      background: background,
+      foreground: foreground,
+      card: card,
+      cardForeground: foreground,
+      popover: card,
+      popoverForeground: foreground,
+      primary: primary,
+      primaryForeground: Colors.white,
+      secondary: elevated,
+      secondaryForeground: foreground,
+      muted: elevated,
+      mutedForeground: textSecondary,
+      accent: elevated,
+      accentForeground: foreground,
+      destructive: theme.getColor('error', AppColors.error),
+      destructiveForeground: Colors.white,
+      border: border,
+      input: border,
+      ring: primary,
+    )
+        : ShadZincColorScheme.light(
+      background: background,
+      foreground: foreground,
+      card: card,
+      cardForeground: foreground,
+      popover: card,
+      popoverForeground: foreground,
+      primary: primary,
+      primaryForeground: Colors.white,
+      secondary: elevated,
+      secondaryForeground: foreground,
+      muted: elevated,
+      mutedForeground: textSecondary,
+      accent: elevated,
+      accentForeground: foreground,
+      destructive: theme.getColor('error', AppColors.error),
+      destructiveForeground: Colors.white,
+      border: border,
+      input: border,
+      ring: primary,
+    );
+
+    return ShadThemeData(
+      brightness: theme.brightness,
+      colorScheme: colorScheme,
+    );
   }
 
   Future<void> toggleTheme() async {
-    final nextTheme = isDark ? 'light' : 'dark';
-    await getIt<SettingsManager>().setString('workbench.colorTheme', nextTheme);
+    final nextThemeId = isDark ? 'light' : 'dark';
+    await setTheme(nextThemeId);
   }
 }

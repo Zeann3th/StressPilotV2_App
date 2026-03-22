@@ -46,81 +46,137 @@ class _AppHealthSectionState extends State<AppHealthSection> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
+    final textColor = AppColors.textPrimary;
 
     if (_lastError == null) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: AppRadius.br12,
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.check_circle_rounded, color: AppColors.success),
-            const SizedBox(width: 12),
-            Text('App is healthy. No recent crashes.',
-                style: AppTypography.body.copyWith(color: textColor)),
-          ],
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('System Health', style: AppTypography.heading.copyWith(color: textColor, fontSize: 20)),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: AppRadius.br12,
+              border: Border.all(color: border.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('System Operational',
+                          style: AppTypography.bodyLg.copyWith(color: textColor, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text('No issues or crashes have been detected recently.',
+                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: AppRadius.br12,
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.warning_amber_rounded, color: AppColors.error),
-              const SizedBox(width: 12),
-              Text('Last App Crash Detected',
-                  style: AppTypography.heading.copyWith(color: AppColors.error)),
-              const Spacer(),
-              Text(_lastCrashTime ?? '',
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('System Health', style: AppTypography.heading.copyWith(color: textColor, fontSize: 20)),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: AppRadius.br12,
+            border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
           ),
-          const SizedBox(height: 12),
-          Text(_lastError ?? '',
-              style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12, color: AppColors.error),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              PilotButton.ghost(
-                label: 'Clear Log',
-                onPressed: _clearLog,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 24),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Recent Crash Detected',
+                            style: AppTypography.bodyLg.copyWith(color: AppColors.error, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 2),
+                        Text('Occurred at ${_lastCrashTime ?? 'Unknown'}',
+                            style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              PilotButton.primary(
-                label: 'Report Issue',
-                icon: Icons.bug_report_rounded,
-                onPressed: () {
-                  AppNavigator.pushNamed(
-                    AppRouter.reportIssueRoute,
-                    arguments: {
-                      'error': _lastError,
-                      'stack': _lastStack,
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: AppRadius.br8,
+                  border: Border.all(color: border.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  _lastError ?? '',
+                  style: AppTypography.codeSm.copyWith(color: AppColors.error.withValues(alpha: 0.8)),
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  PilotButton.ghost(
+                    label: 'Dismiss Log',
+                    onPressed: _clearLog,
+                  ),
+                  const SizedBox(width: 12),
+                  PilotButton.danger(
+                    label: 'Report Issue to GitHub',
+                    icon: Icons.bug_report_rounded,
+                    onPressed: () {
+                      AppNavigator.pushNamed(
+                        AppRouter.reportIssueRoute,
+                        arguments: {
+                          'error': _lastError,
+                          'stack': _lastStack,
+                        },
+                      );
                     },
-                  );
-                },
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -78,9 +78,8 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final bg = AppColors.background;
+    final border = AppColors.border;
     final project = context.watch<ProjectProvider>().selectedProject;
 
     final flows = context.watch<FlowProvider>().flows;
@@ -101,7 +100,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                      color: AppColors.surface,
                       borderRadius: AppRadius.br16,
                       border: Border.all(color: border.withValues(alpha: 0.3)),
                       boxShadow: [
@@ -162,7 +161,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                           Expanded(
                             child: Container(
                               decoration: BoxDecoration(
-                                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                                color: AppColors.surface,
                                 borderRadius: AppRadius.br16,
                                 border: Border.all(color: border.withValues(alpha: 0.3)),
                                 boxShadow: [

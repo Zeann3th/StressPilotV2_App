@@ -145,10 +145,9 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
     }
 
     final endpoint = _endpointDetail;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryTextColor = isDark ? AppColors.textPrimary : AppColors.textLight;
-    final secondaryTextColor = isDark ? AppColors.textSecondary : AppColors.textLightSecondary;
-    final mutedTextColor = isDark ? AppColors.textMuted : AppColors.textLightMuted;
+    final primaryTextColor = AppColors.textPrimary;
+    final secondaryTextColor = AppColors.textSecondary;
+    final mutedTextColor = AppColors.textMuted;
 
     if (endpoint == null) {
       return Center(
@@ -247,7 +246,6 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
   }
 
   Widget _buildCodeBlock(String title, String code) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     String formattedCode = code;
     try {
       final decoded = jsonDecode(code);
@@ -267,9 +265,9 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkElevated : AppColors.lightElevated,
+            color: AppColors.elevated,
             borderRadius: AppRadius.br8,
-            border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            border: Border.all(color: AppColors.border),
           ),
           child: SelectableText(
             formattedCode,

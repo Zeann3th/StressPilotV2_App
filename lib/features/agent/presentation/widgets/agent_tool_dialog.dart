@@ -38,7 +38,6 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
   final _feedbackController = TextEditingController();
   bool _showFeedback = false;
 
-  // Options: 0=Approve, 1=Reject, 2=Feedback
   final _options = ['Approve', 'Reject', 'Give feedback'];
 
   void _handleKeyEvent(KeyEvent event) {
@@ -85,9 +84,8 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final surface = AppColors.surface;
+    final border = AppColors.border;
 
     return KeyboardListener(
       focusNode: FocusNode()..requestFocus(),
@@ -102,7 +100,7 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title
+
               Row(
                 children: [
                   const Icon(LucideIcons.wrench, size: 16, color: Colors.amber),
@@ -112,7 +110,6 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
               ),
               const SizedBox(height: 16),
 
-              // Tool calls list
               ...widget.toolCalls.map((tc) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
@@ -150,7 +147,6 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
 
               const SizedBox(height: 16),
 
-              // Options — keyboard navigable
               Text(
                 'Use ↑↓ or W/S to navigate, Enter to select, Esc to cancel',
                 style: TextStyle(fontSize: 11, color: border),
@@ -160,7 +156,7 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
               ..._options.asMap().entries.map((e) {
                 final selected = e.key == _selectedIndex;
                 final (icon, color) = switch (e.key) {
-                  0 => (LucideIcons.check, AppColors.darkGreenStart),
+                  0 => (LucideIcons.check, AppColors.accent),
                   1 => (LucideIcons.x, Colors.red),
                   _ => (LucideIcons.messageSquare, Colors.blue),
                 };
@@ -205,7 +201,6 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
                 );
               }),
 
-              // Feedback input (shown when "Give feedback" selected)
               if (_showFeedback) ...[
                 const SizedBox(height: 12),
                 ShadInput(

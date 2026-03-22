@@ -24,9 +24,8 @@ class ProjectTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final bg = AppColors.surface;
+    final border = AppColors.border;
 
     return Container(
       height: 60,

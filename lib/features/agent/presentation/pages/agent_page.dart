@@ -30,7 +30,6 @@ class _AgentPageState extends State<AgentPage> {
   }
 
   void _onProviderUpdate() {
-    // Show tool approval dialog when needed
     if (_provider.isPendingApproval && _provider.pendingToolCalls.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -54,25 +53,21 @@ class _AgentPageState extends State<AgentPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-
-    return ChangeNotifierProvider.value(
-      value: _provider,
-      child: Scaffold(
-        backgroundColor: bg,
-        body: Column(
-          children: [
-            const AppTopBar(),
-            Expanded(
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          const AppTopBar(),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
               child: Container(
-                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 decoration: BoxDecoration(
-                  color: surface,
+                  color: AppColors.surface,
                   borderRadius: AppRadius.br16,
-                  border: Border.all(color: border.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.border.withValues(alpha: 0.3),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
@@ -104,8 +99,8 @@ class _AgentPageState extends State<AgentPage> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

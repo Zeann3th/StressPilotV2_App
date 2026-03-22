@@ -13,8 +13,7 @@ class WorkspaceCommandBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.textPrimary : AppColors.textLight;
+    final textColor = AppColors.textPrimary;
 
     final project = context.watch<ProjectProvider>().selectedProject;
 
