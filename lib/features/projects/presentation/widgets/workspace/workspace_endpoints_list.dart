@@ -7,7 +7,7 @@ import 'package:stress_pilot/core/domain/entities/endpoint.dart'
     as domain_endpoint;
 import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_type_badge.dart';
 import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/features/common/data/utility_service.dart';
+import 'package:stress_pilot/features/common/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/core/domain/entities/canvas.dart';
 import '../../../../endpoints/presentation/provider/endpoint_provider.dart';
 
@@ -51,7 +51,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
 
   Future<void> _handleUpload(BuildContext context) async {
     try {
-      final capabilities = await getIt<UtilityService>().getCapabilities();
+      final capabilities = await getIt<UtilityRepository>().getCapabilities();
       final formats = capabilities.parsers
           .expand((p) => p.formats)
           .map((e) => e.toLowerCase().replaceAll('.', ''))

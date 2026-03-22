@@ -4,10 +4,12 @@ import 'package:path/path.dart' as p;
 import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
+import '../../domain/repositories/plugin_repository.dart';
 
-class PluginService {
+class PluginRepositoryImpl implements PluginRepository {
   final Dio _apiClient = HttpClient.getInstance(baseUrl: AppConfig.pluginBaseUrl);
 
+  @override
   Future<List<File>> getInstalledPlugins() async {
     try {
       String? appHome = Platform.environment['PILOT_HOME'];
@@ -45,19 +47,22 @@ class PluginService {
 
       return allPlugins;
     } catch (e) {
-      AppLogger.warning('Failed to list plugins: $e', name: 'PluginService');
+      AppLogger.warning('Failed to list plugins: $e', name: 'PluginRepository');
       return [];
     }
   }
 
+  @override
   Future<void> reloadPlugin(String pluginId) async {
     await _apiClient.post('/api/v1/plugins/$pluginId/reload');
   }
 
+  @override
   Future<void> reloadAllPlugins() async {
     await _apiClient.post('/api/v1/plugins/reload-all');
   }
 
+  @override
   Future<List<dynamic>> listPlugins() async {
     final response = await _apiClient.get('/api/v1/plugins/list');
     return response.data['data'] as List<dynamic>;

@@ -1,19 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/system/logger.dart';
-import 'package:stress_pilot/features/results/domain/models/request_log.dart';
+import '../../domain/models/request_log.dart';
+import '../../domain/repositories/results_repository.dart';
 
-class ResultsRepository {
+class ResultsRepositoryImpl implements ResultsRepository {
   StompClient? _client;
   final _logStreamController = StreamController<List<RequestLog>>.broadcast();
 
+  @override
   Stream<List<RequestLog>> get logStream => _logStreamController.stream;
 
+  @override
   bool get isConnected => _client != null && _client!.connected;
 
+  @override
   void connect() {
     if (_client != null && _client!.connected) return;
 
@@ -63,11 +66,13 @@ class ResultsRepository {
     );
   }
 
+  @override
   void disconnect() {
     _client?.deactivate();
     _client = null;
   }
 
+  @override
   void dispose() {
     disconnect();
     _logStreamController.close();

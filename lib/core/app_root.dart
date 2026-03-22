@@ -9,7 +9,7 @@ import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/session_manager.dart';
-import 'package:stress_pilot/features/marketplace/data/plugin_capability_service.dart';
+import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_capability_repository.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
@@ -59,7 +59,7 @@ class _AppRootState extends State<AppRoot> {
       await getIt<ThemeManager>().initialize();
       await getIt<ProjectProvider>().initialize();
       await getIt<KeymapProvider>().initialize();
-      await getIt<PluginCapabilityService>().initialize();
+      await getIt<PluginCapabilityRepository>().initialize();
 
       if (mounted) {
         setState(() {

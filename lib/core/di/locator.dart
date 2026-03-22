@@ -12,17 +12,25 @@ import 'package:stress_pilot/features/projects/presentation/provider/canvas_prov
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
-import 'package:stress_pilot/features/settings/data/setting_service.dart';
+import 'package:stress_pilot/features/settings/domain/repositories/setting_repository.dart';
+import 'package:stress_pilot/features/settings/data/repositories/setting_repository_impl.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
-import 'package:stress_pilot/features/marketplace/data/plugin_service.dart';
-import 'package:stress_pilot/features/marketplace/data/plugin_capability_service.dart';
-import 'package:stress_pilot/features/common/data/utility_service.dart';
+import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_repository.dart';
+import 'package:stress_pilot/features/marketplace/data/repositories/plugin_repository_impl.dart';
+import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_capability_repository.dart';
+import 'package:stress_pilot/features/marketplace/data/repositories/plugin_capability_repository_impl.dart';
+import 'package:stress_pilot/features/common/domain/repositories/utility_repository.dart';
+import 'package:stress_pilot/features/common/data/repositories/utility_repository_impl.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 
+import 'package:stress_pilot/features/environments/domain/repositories/environment_repository.dart';
+import 'package:stress_pilot/features/environments/data/repositories/environment_repository_impl.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
-import 'package:stress_pilot/features/results/data/results_repository.dart';
+import 'package:stress_pilot/features/results/domain/repositories/results_repository.dart';
+import 'package:stress_pilot/features/results/data/repositories/results_repository_impl.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
-import 'package:stress_pilot/features/common/data/run_service.dart';
+import 'package:stress_pilot/features/common/domain/repositories/run_repository.dart';
+import 'package:stress_pilot/features/common/data/repositories/run_repository_impl.dart';
 import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
 
 final getIt = GetIt.instance;
@@ -31,7 +39,7 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => ProcessManager());
   getIt.registerLazySingleton(() => ThemeManager());
 
-  getIt.registerLazySingleton(() => UtilityService());
+  getIt.registerLazySingleton<UtilityRepository>(() => UtilityRepositoryImpl());
 
   getIt.registerLazySingleton(() => HttpClient.getInstance());
   getIt.registerLazySingleton(() => SessionManager(getIt()));
@@ -43,8 +51,8 @@ void setupDependencies() {
   getIt.registerLazySingleton<FlowRepository>(() => FlowRepositoryImpl());
   getIt.registerLazySingleton(() => FlowProvider());
 
-  getIt.registerLazySingleton(() => SettingService());
-  getIt.registerLazySingleton(() => SettingProvider());
+  getIt.registerLazySingleton<SettingRepository>(() => SettingRepositoryImpl());
+  getIt.registerLazySingleton(() => SettingProvider(getIt()));
 
   getIt.registerLazySingleton(() => SettingsManager());
   getIt.registerLazySingleton(() => KeymapProvider());
@@ -52,17 +60,21 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => EndpointProvider());
 
   getIt.registerLazySingleton(() => CanvasProvider());
-  getIt.registerLazySingleton(() => EnvironmentProvider());
 
-  getIt.registerLazySingleton(() => ResultsRepository());
+  getIt.registerLazySingleton<EnvironmentRepository>(
+      () => EnvironmentRepositoryImpl());
+  getIt.registerLazySingleton(() => EnvironmentProvider(getIt()));
+
+  getIt.registerLazySingleton<ResultsRepository>(() => ResultsRepositoryImpl());
   getIt.registerLazySingleton(
     () => ResultsProvider(getIt(), getIt<FlowRepository>()),
   );
 
-  getIt.registerLazySingleton(() => RunService());
+  getIt.registerLazySingleton<RunRepository>(() => RunRepositoryImpl());
   getIt.registerLazySingleton(() => RunProvider(getIt()));
 
-  getIt.registerLazySingleton(() => PluginService());
-  getIt.registerLazySingleton(() => PluginCapabilityService());
+  getIt.registerLazySingleton<PluginRepository>(() => PluginRepositoryImpl());
+  getIt.registerLazySingleton<PluginCapabilityRepository>(
+      () => PluginCapabilityRepositoryImpl());
   getIt<ResultsProvider>();
 }

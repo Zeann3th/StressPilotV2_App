@@ -12,6 +12,9 @@ class PilotProcess {
   Process? process;
   StreamSubscription? stdoutSub;
   StreamSubscription? stderrSub;
+
+  final List<String> outputBuffer = [];
+
   final StreamController<String> _outputController = StreamController<String>.broadcast();
   final StreamController<List<int>> _rawOutputController = StreamController<List<int>>.broadcast();
 
@@ -21,6 +24,7 @@ class PilotProcess {
   Stream<List<int>> get rawOutput => _rawOutputController.stream;
 
   void addOutput(String data) {
+    outputBuffer.add(data);
     _outputController.add(data);
   }
 
@@ -41,6 +45,7 @@ class PilotProcess {
     await stderrSub?.cancel();
     process?.kill();
     process = null;
+    outputBuffer.clear();
   }
 }
 
@@ -57,6 +62,8 @@ class ProcessManager {
       receiveTimeout: const Duration(seconds: 5),
     ),
   );
+
+  bool get isDebugMode => kDebugMode;
 
   String _getExecutableDir() {
     return kDebugMode
@@ -87,6 +94,17 @@ class ProcessManager {
         assetName,
       );
     }
+  }
+
+  String resolveAgentPath() {
+    final exeName = Platform.isWindows ? 'stresspilot-agent.exe' : 'stresspilot-agent';
+    return _getAssetPath('agent/$exeName');
+  }
+
+  String resolveAgentSourceDir() {
+    return path.normalize(
+      path.join(_getExecutableDir(), '..', 'stresspilot_agent'),
+    );
   }
 
   PilotProcess? getProcess(String name) => _processes[name];
@@ -137,8 +155,7 @@ class ProcessManager {
     String? workingDir;
 
     if (pythonMode || kDebugMode) {
-      // In development, we can run via 'uv run' if the agent source is available
-      final agentSourceDir = path.normalize(path.join(_getExecutableDir(), '..', 'stresspilot_agent'));
+      final agentSourceDir = resolveAgentSourceDir();
       if (await Directory(agentSourceDir).exists()) {
         try {
           process = await Process.start(
@@ -154,9 +171,8 @@ class ProcessManager {
     }
 
     if (process == null) {
-      final String agentExeName = Platform.isWindows ? 'stresspilot-agent.exe' : 'stresspilot-agent';
-      final agentPath = _getAssetPath('agent/$agentExeName');
-      
+      final agentPath = resolveAgentPath();
+
       if (!await File(agentPath).exists()) {
         AppLogger.error('Agent executable not found at $agentPath', name: _logName);
         return;
@@ -187,29 +203,32 @@ class ProcessManager {
   void _setupLogging(PilotProcess p, bool attach) {
     if (!attach) return;
 
-    p.process!.stdout.listen((data) {
+    final stdoutBroadcast = p.process!.stdout.asBroadcastStream();
+    final stderrBroadcast = p.process!.stderr.asBroadcastStream();
+
+    stdoutBroadcast.listen((data) {
       p.addRawOutput(data);
     });
 
-    p.process!.stderr.listen((data) {
+    stderrBroadcast.listen((data) {
       p.addRawOutput(data);
     });
-    
-    p.stdoutSub = p.process!.stdout
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen((line) {
-          p.addOutput(line);
-          AppLogger.info(line.trim(), name: '${p.name}.stdout');
-        });
 
-    p.stderrSub = p.process!.stderr
+    p.stdoutSub = stdoutBroadcast
         .transform(utf8.decoder)
         .transform(const LineSplitter())
         .listen((line) {
-          p.addOutput(line);
-          AppLogger.error(line.trim(), name: '${p.name}.stderr');
-        });
+      p.addOutput(line);
+      AppLogger.info(line.trim(), name: '${p.name}.stdout');
+    });
+
+    p.stderrSub = stderrBroadcast
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .listen((line) {
+      p.addOutput(line);
+      AppLogger.error(line.trim(), name: '${p.name}.stderr');
+    });
   }
 
   Future<void> stopProcess(String name) async {
@@ -237,7 +256,6 @@ class ProcessManager {
       await stopProcess(name);
     }
 
-    // Port-based cleanup for backend
     try {
       if (Platform.isWindows) {
         final result = await Process.run('cmd', ['/c', 'netstat -ano | findstr :52000']);

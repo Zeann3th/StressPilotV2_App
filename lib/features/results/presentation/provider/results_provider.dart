@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/flow_repository.dart';
-import 'package:stress_pilot/features/results/data/results_repository.dart';
+import 'package:stress_pilot/features/results/domain/repositories/results_repository.dart';
 import 'package:stress_pilot/features/results/domain/models/request_log.dart';
 
 class FlSpotData {
@@ -58,7 +58,6 @@ class ResultsProvider extends ChangeNotifier {
     if (!_repository.isConnected) {
       _repository.connect();
     }
-
 
     _allLogs.clear();
     _filteredLogs.clear();

@@ -49,7 +49,7 @@ class _SettingsTableState extends State<SettingsTable> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Sidebar
+
         Container(
           width: 220,
           margin: const EdgeInsets.only(right: 16),
@@ -73,7 +73,6 @@ class _SettingsTableState extends State<SettingsTable> {
           ),
         ),
 
-        // Main Content
         Expanded(
           child: Container(
             decoration: BoxDecoration(

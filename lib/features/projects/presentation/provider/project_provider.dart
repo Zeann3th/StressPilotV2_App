@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stress_pilot/core/domain/entities/paged_response.dart';
 import 'package:stress_pilot/core/domain/entities/project.dart';
 import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/features/common/data/utility_service.dart';
+import 'package:stress_pilot/features/common/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/project_repository.dart';
 import 'package:stress_pilot/features/projects/data/repositories/project_repository_impl.dart';
 
@@ -224,7 +224,7 @@ class ProjectProvider extends ChangeNotifier {
 
   Future<Project> importProject() async {
     try {
-      final capabilities = await getIt<UtilityService>().getCapabilities();
+      final capabilities = await getIt<UtilityRepository>().getCapabilities();
       final formats = capabilities.parsers
           .expand((p) => p.formats)
           .map((e) => e.toLowerCase().replaceAll('.', ''))

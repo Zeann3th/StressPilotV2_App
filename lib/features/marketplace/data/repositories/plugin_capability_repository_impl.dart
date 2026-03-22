@@ -2,33 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:stress_pilot/core/system/logger.dart';
+import '../../domain/models/plugin_capability.dart';
+import '../../domain/repositories/plugin_capability_repository.dart';
 
-class PluginCapability {
-  final String id;
-  final String name;
-  final String category;
-  final List<String> requiredFields;
-
-  PluginCapability({
-    required this.id,
-    required this.name,
-    required this.category,
-    this.requiredFields = const []
-  });
-
-  factory PluginCapability.fromJson(Map<String, dynamic> json) {
-    return PluginCapability(
-      id: json['id'],
-      name: json['name'],
-      category: json['category'],
-      requiredFields: List<String>.from(json['requiredFields'] ?? []),
-    );
-  }
-}
-
-class PluginCapabilityService {
+class PluginCapabilityRepositoryImpl implements PluginCapabilityRepository {
   final List<PluginCapability> _capabilities = [];
 
+  @override
   Future<void> initialize() async {
     _capabilities.clear();
 
@@ -70,13 +50,14 @@ class PluginCapabilityService {
     }
   }
 
+  @override
   List<PluginCapability> get endpointTypes {
     final types = _capabilities.where((e) => e.category == 'endpoint').toList();
-
     final map = {for (var t in types) t.id: t};
     return map.values.toList()..sort((a, b) => a.name.compareTo(b.name));
   }
 
+  @override
   List<PluginCapability> get flowStepTypes {
     final types = _capabilities.where((e) => e.category == 'flow_step').toList();
     final map = {for (var t in types) t.id: t};

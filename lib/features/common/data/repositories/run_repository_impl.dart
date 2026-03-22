@@ -1,13 +1,14 @@
 import 'dart:io';
-
-import 'package:stress_pilot/core/network/http_client.dart';
-import 'package:stress_pilot/core/domain/entities/run.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:stress_pilot/core/network/http_client.dart';
+import 'package:stress_pilot/core/domain/entities/run.dart';
+import '../../domain/repositories/run_repository.dart';
 
-class RunService {
-  final _dio = HttpClient.getInstance();
+class RunRepositoryImpl implements RunRepository {
+  final Dio _dio = HttpClient.getInstance();
 
+  @override
   Future<Run> getLastRun(int flowId) async {
     final response = await _dio.get(
       '/api/v1/runs/last',
@@ -16,6 +17,7 @@ class RunService {
     return Run.fromJson(response.data['data']);
   }
 
+  @override
   Future<List<Run>> getRuns({int? flowId}) async {
     final response = await _dio.get(
       '/api/v1/runs',
@@ -24,11 +26,13 @@ class RunService {
     return (response.data['data'] as List).map((e) => Run.fromJson(e)).toList();
   }
 
+  @override
   Future<Run> getRun(int runId) async {
     final response = await _dio.get('/api/v1/runs/$runId');
     return Run.fromJson(response.data['data']);
   }
 
+  @override
   Future<File?> exportRun(Run run) async {
     try {
       final response = await _dio.get<List<int>>(
@@ -74,6 +78,7 @@ class RunService {
     }
   }
 
+  @override
   Future<void> interruptRun(int runId) async {
     await _dio.delete('/api/v1/runs/$runId');
   }

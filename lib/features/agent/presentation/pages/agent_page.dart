@@ -1,12 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_pty/flutter_pty.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
-import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/common/presentation/widgets/app_topbar.dart';
-import 'dart:async';
-import 'dart:convert';
 import 'package:xterm/xterm.dart';
 
 class AgentPage extends StatefulWidget {
@@ -16,72 +19,101 @@ class AgentPage extends StatefulWidget {
   State<AgentPage> createState() => _AgentPageState();
 }
 
-class _AgentPageState extends State<AgentPage> {
-  final Terminal _terminal = Terminal(
-    maxLines: 10000,
-  );
-  final TerminalController _terminalController = TerminalController();
-  
-  bool _isStarting = true;
-  PilotProcess? _agentProcess;
-  StreamSubscription? _outputSubscription;
+class _AgentPageState extends State<AgentPage> with RouteAware {
+  final terminal = Terminal(maxLines: 10000);
+  final terminalController = TerminalController();
+
+  Pty? pty;
+  bool _isStarting = false;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    _startAgent();
-    
-    _terminal.onOutput = (data) {
-      _agentProcess?.writeRawStdin(utf8.encode(data));
-    };
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && !_initialized) {
+          _initialized = true;
+          _initPty();
+        }
+      });
+    });
   }
 
-  Future<void> _startAgent() async {
-    setState(() {
-      _isStarting = true;
-      _terminal.write('\x1b[1;32m[System] Starting agent...\x1b[0m\r\n');
-    });
+  void _initPty() {
+    if (!mounted) return;
+    setState(() => _isStarting = true);
 
     final pm = getIt<ProcessManager>();
+    final executable = pm.resolveAgentPath();
+
+    // ✅ Check if file actually exists first
+    final file = File(executable);
+    if (!file.existsSync()) {
+      AppLogger.critical('Agent exe not found at: $executable', name: 'AgentPage');
+      terminal.write('\x1b[1;31m[Error] Agent not found at:\x1b[0m\r\n$executable\r\n');
+      if (mounted) setState(() => _isStarting = false);
+      return;
+    }
+
+    AppLogger.info('Agent exe found at: $executable', name: 'AgentPage');
+
     try {
-      await pm.startAgent(pipeMode: false);
-      _agentProcess = pm.getProcess('agent');
-      
-      await _outputSubscription?.cancel();
-      if (_agentProcess != null) {
-        _outputSubscription = _agentProcess!.rawOutput.listen((data) {
-          if (mounted) {
-            setState(() {
-              _terminal.write(utf8.decode(data, allowMalformed: true));
-              _isStarting = false;
-            });
-          }
-        });
-      }
-    } catch (e) {
+      pty = Pty.start(
+        executable,
+        columns: terminal.viewWidth,
+        rows: terminal.viewHeight,
+        environment: {
+          'TERM': 'xterm-256color',
+          'COLORTERM': 'truecolor',
+          'FORCE_COLOR': '3',
+        },
+      );
+
+      pty!.output.listen((data) {
+        terminal.write(String.fromCharCodes(data));
+      });
+
+      pty!.exitCode.then((code) {
+        AppLogger.warning('PTY exited: $code', name: 'AgentPage');
+        if (mounted) {
+          terminal.write('\r\n\x1b[1;31m[System] Process exited (code: $code)\x1b[0m\r\n');
+        }
+      });
+
+      terminal.onOutput = (data) {
+        pty?.write(const Utf8Encoder().convert(data));
+      };
+
+      terminal.onResize = (w, h, pw, ph) {
+        pty?.resize(h, w);
+      };
+
+      if (mounted) setState(() => _isStarting = false);
+    } catch (e, st) {
+      AppLogger.critical('Failed to start PTY', name: 'AgentPage', error: e, stackTrace: st);
       if (mounted) {
-        setState(() {
-          _terminal.write('\x1b[1;31m[Error] Failed to start agent: $e\x1b[0m\r\n');
-          _isStarting = false;
-        });
+        terminal.write('\x1b[1;31m[Error] $e\x1b[0m\r\n');
+        setState(() => _isStarting = false);
       }
     }
   }
 
-  Future<void> _restartAgent() async {
-    final pm = getIt<ProcessManager>();
-    await pm.stopAgent();
-    setState(() {
-      _terminal.write('\r\n\x1b[1;33m[System] Restarting agent...\x1b[0m\r\n');
-      _agentProcess = null;
-    });
-    await _startAgent();
+  void _restart() {
+    pty?.kill();
+    pty = null;
+    _initialized = false;
+    terminal.write('\r\n\x1b[1;33m[System] Restarting...\x1b[0m\r\n');
+    _initialized = true;
+    _initPty();
   }
 
   @override
   void dispose() {
-    _outputSubscription?.cancel();
-    _terminalController.dispose();
+    pty?.kill();
+    pty = null;
+    terminalController.dispose();
     super.dispose();
   }
 
@@ -116,11 +148,13 @@ class _AgentPageState extends State<AgentPage> {
                 borderRadius: AppRadius.br16,
                 child: Column(
                   children: [
-                    // Agent Toolbar/Header
+
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
+                        border: Border(
+                          bottom: BorderSide(color: border.withValues(alpha: 0.3)),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -140,18 +174,23 @@ class _AgentPageState extends State<AgentPage> {
                             const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.darkGreenStart),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.darkGreenStart,
+                              ),
                             )
                           else
                             InkWell(
-                              onTap: _restartAgent,
+                              onTap: _restart,
                               borderRadius: AppRadius.br4,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: AppColors.darkGreenStart.withValues(alpha: 0.1),
                                   borderRadius: AppRadius.br4,
-                                  border: Border.all(color: AppColors.darkGreenStart.withValues(alpha: 0.2)),
+                                  border: Border.all(
+                                    color: AppColors.darkGreenStart.withValues(alpha: 0.2),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -173,28 +212,41 @@ class _AgentPageState extends State<AgentPage> {
                         ],
                       ),
                     ),
-                    
-                    // Terminal Content
+
                     Expanded(
                       child: Container(
                         margin: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0D1117), // GitHub dark theme background
+                          color: const Color(0xFF0D1117),
                           borderRadius: AppRadius.br12,
                           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
                         child: ClipRRect(
                           borderRadius: AppRadius.br12,
-                          child: TerminalView(
-                            _terminal,
-                            controller: _terminalController,
-                            autofocus: true,
-                            backgroundOpacity: 0,
-                            padding: const EdgeInsets.all(16),
-                            textStyle: const TerminalStyle(
-                              fontFamily: 'JetBrains Mono',
-                              fontSize: 13,
-                            ),
+                          child: Stack(
+                            children: [
+
+                              TerminalView(
+                                terminal,
+                                controller: terminalController,
+                                autofocus: true,
+                                hardwareKeyboardOnly: true,
+                                backgroundOpacity: 0,
+                                padding: const EdgeInsets.all(16),
+                                textStyle: const TerminalStyle(
+                                  fontFamily: 'JetBrains Mono',
+                                  fontSize: 13,
+                                ),
+                              ),
+
+                              if (_isStarting)
+                                const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.darkGreenStart,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),

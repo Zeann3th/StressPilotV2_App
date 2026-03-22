@@ -4,7 +4,7 @@ import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/domain/entities/flow.dart' as flow_domain;
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/common/data/utility_service.dart';
+import 'package:stress_pilot/features/common/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 
 class FlowDialog {
@@ -35,7 +35,7 @@ class FlowDialog {
       content: StatefulBuilder(
         builder: (context, setState) {
           return FutureBuilder(
-            future: getIt<UtilityService>().getCapabilities(),
+            future: getIt<UtilityRepository>().getCapabilities(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());

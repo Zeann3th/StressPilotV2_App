@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../data/environment_service.dart';
+import '../../domain/repositories/environment_repository.dart';
 import '../../domain/environment_variable.dart';
 
 class EnvironmentProvider extends ChangeNotifier {
-  final EnvironmentService _service = EnvironmentService();
+  final EnvironmentRepository _repository;
+
+  EnvironmentProvider(this._repository);
 
   List<EnvironmentVariable> _variables = [];
   List<EnvironmentVariable> _originalVariables = [];
@@ -22,7 +24,7 @@ class EnvironmentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final vars = await _service.getVariables(environmentId);
+      final vars = await _repository.getVariables(environmentId);
       _variables = List.from(vars);
 
       _originalVariables = vars.map((e) => e.copyWith()).toList();
@@ -113,7 +115,7 @@ class EnvironmentProvider extends ChangeNotifier {
         return;
       }
 
-      await _service.updateVariables(
+      await _repository.updateVariables(
         environmentId: environmentId,
         added: added,
         updated: updated,

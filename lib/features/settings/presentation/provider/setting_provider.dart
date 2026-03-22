@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stress_pilot/features/settings/data/setting_service.dart';
+import 'package:stress_pilot/features/settings/domain/repositories/setting_repository.dart';
 
 class SettingProvider extends ChangeNotifier {
-  final SettingService _settingService = SettingService();
+  final SettingRepository _settingRepository;
+
+  SettingProvider(this._settingRepository);
 
   Map<String, String> _configs = {};
   bool _isLoading = false;
@@ -28,7 +30,7 @@ class SettingProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _settingService.getAllConfigs();
+      final result = await _settingRepository.getAllConfigs();
       _configs = result;
       await _cacheConfigs();
     } catch (e) {
@@ -41,7 +43,7 @@ class SettingProvider extends ChangeNotifier {
 
   Future<void> setConfig(String key, String value) async {
     try {
-      await _settingService.setConfigValue(key: key, value: value);
+      await _settingRepository.setConfigValue(key: key, value: value);
 
       _configs[key] = value;
       await _cacheConfigs();
@@ -56,7 +58,7 @@ class SettingProvider extends ChangeNotifier {
   Future<String?> getConfig(String key) async {
     if (_configs.containsKey(key)) return _configs[key];
 
-    final value = await _settingService.getConfigValue(key);
+    final value = await _settingRepository.getConfigValue(key);
     if (value != null) {
       _configs[key] = value;
       await _cacheConfigs();

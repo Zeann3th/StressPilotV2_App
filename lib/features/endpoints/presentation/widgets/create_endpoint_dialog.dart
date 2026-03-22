@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/common/data/utility_service.dart';
+import 'package:stress_pilot/features/common/domain/repositories/utility_repository.dart';
 
 import 'package:stress_pilot/features/endpoints/data/curl_parser.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
@@ -48,7 +48,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
 
   Future<void> _loadCapabilities() async {
     try {
-      final capabilities = await getIt<UtilityService>().getCapabilities();
+      final capabilities = await getIt<UtilityRepository>().getCapabilities();
       if (capabilities.endpointExecutors.isNotEmpty) {
         setState(() {
           _availableTypes = capabilities.endpointExecutors;

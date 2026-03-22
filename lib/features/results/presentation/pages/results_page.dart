@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
-import 'package:stress_pilot/features/common/data/run_service.dart';
+import 'package:stress_pilot/features/common/domain/repositories/run_repository.dart';
 import 'package:stress_pilot/core/domain/entities/run.dart';
 import 'package:stress_pilot/features/results/presentation/widgets/metrics_card.dart';
 import 'package:stress_pilot/features/results/presentation/widgets/realtime_chart.dart';
@@ -126,7 +126,7 @@ class _ResultsPageState extends State<ResultsPage> {
   Future<void> _loadRun() async {
     setState(() => _loadingRun = true);
     try {
-      final svc = getIt<RunService>();
+      final svc = getIt<RunRepository>();
       final run = await svc.getRun(widget.runId);
       final isTerminal = _isTerminalStatus(run.status);
 
@@ -166,7 +166,7 @@ class _ResultsPageState extends State<ResultsPage> {
 
   Future<void> _refreshRun() async {
     try {
-      final svc = getIt<RunService>();
+      final svc = getIt<RunRepository>();
       final run = await svc.getRun(widget.runId);
       setState(() {
         _currentRun = run;
@@ -195,7 +195,7 @@ class _ResultsPageState extends State<ResultsPage> {
     if (_currentRun == null) return;
     setState(() => _exporting = true);
     try {
-      final svc = getIt<RunService>();
+      final svc = getIt<RunRepository>();
       final File? file = await svc.exportRun(_currentRun!);
       if (file == null) {
         AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(

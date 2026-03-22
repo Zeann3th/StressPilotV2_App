@@ -7,7 +7,7 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
-import 'package:stress_pilot/features/common/data/run_service.dart';
+import 'package:stress_pilot/features/common/domain/repositories/run_repository.dart';
 import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/core/domain/entities/run.dart';
 
@@ -21,7 +21,7 @@ class RunsListWidget extends StatefulWidget {
 }
 
 class _RunsListWidgetState extends State<RunsListWidget> {
-  final _runService = getIt<RunService>();
+  final _runRepository = getIt<RunRepository>();
   List<Run>? _runs;
   bool _isLoading = false;
   final Set<int> _exportingRunIds = {};
@@ -35,7 +35,7 @@ class _RunsListWidgetState extends State<RunsListWidget> {
   Future<void> _loadRuns() async {
     setState(() => _isLoading = true);
     try {
-      final runs = await _runService.getRuns(flowId: widget.flowId);
+      final runs = await _runRepository.getRuns(flowId: widget.flowId);
       runs.sort((a, b) => b.id.compareTo(a.id));
       setState(() => _runs = runs);
     } catch (e) {
@@ -51,7 +51,7 @@ class _RunsListWidgetState extends State<RunsListWidget> {
     if (_exportingRunIds.contains(run.id)) return;
     setState(() => _exportingRunIds.add(run.id));
     try {
-      final File? file = await _runService.exportRun(run);
+      final File? file = await _runRepository.exportRun(run);
       if (mounted) {
         if (file == null) {
           PilotToast.show(context, 'Export returned empty', isError: true);

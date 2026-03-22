@@ -13,6 +13,7 @@ class CanvasProvider extends ChangeNotifier {
   List<CanvasConnection> _connections = [];
 
   CanvasMode _canvasMode = CanvasMode.move;
+  String? _selectedNodeId;
   String? _selectedSourceNodeId;
   String? _selectedSourceHandle;
   Offset? _tempEndPos;
@@ -27,6 +28,7 @@ class CanvasProvider extends ChangeNotifier {
   List<CanvasConnection> get connections => _connections;
 
   CanvasMode get canvasMode => _canvasMode;
+  String? get selectedNodeId => _selectedNodeId;
   String? get selectedSourceNodeId => _selectedSourceNodeId;
   String? get selectedSourceHandle => _selectedSourceHandle;
   Offset? get tempEndPos => _tempEndPos;
@@ -42,6 +44,12 @@ class CanvasProvider extends ChangeNotifier {
 
   void toggleLock() {
     _isLocked = !_isLocked;
+    notifyListeners();
+  }
+
+  void selectNode(String? nodeId) {
+    if (_isLocked) return;
+    _selectedNodeId = nodeId;
     notifyListeners();
   }
 
@@ -76,6 +84,8 @@ class CanvasProvider extends ChangeNotifier {
     _nodes.removeWhere((n) => n.id == id);
     _connections.removeWhere(
             (c) => c.sourceNodeId == id || c.targetNodeId == id);
+    if (_selectedNodeId == id) _selectedNodeId = null;
+    if (_selectedSourceNodeId == id) _selectedSourceNodeId = null;
     notifyListeners();
   }
 
@@ -89,12 +99,15 @@ class CanvasProvider extends ChangeNotifier {
     if (_isLocked) return;
     _nodes.clear();
     _connections.clear();
+    _selectedNodeId = null;
+    _selectedSourceNodeId = null;
     notifyListeners();
   }
 
   void setCanvasMode(CanvasMode mode) {
     if (_isLocked && mode == CanvasMode.connect) return;
     _canvasMode = mode;
+    _selectedNodeId = null;
     _selectedSourceNodeId = null;
     _selectedSourceHandle = null;
     _tempEndPos = null;

@@ -15,6 +15,7 @@ import 'package:stress_pilot/features/projects/presentation/widgets/subflow_conf
 import 'package:stress_pilot/features/common/presentation/provider/run_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
+import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
@@ -218,85 +219,107 @@ class _CanvasContentState extends State<_CanvasContent>
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Stack(
-      children: [
-
-        Positioned.fill(
-          child: RepaintBoundary(
-            child: CustomPaint(
-              painter: GridPainter(
-                color: colors.onSurface.withValues(alpha: 0.1),
-                scale: 1.0,
-              ),
-            ),
-          ),
-        ),
-
-        Positioned.fill(
-          child: DragTarget<DragData>(
-            onAcceptWithDetails: (details) => _handleDrop(details, context),
-            builder: (context, candidateData, rejectedData) {
-              return InteractiveViewer(
-                transformationController: _transformationController,
-                panEnabled: !canvasProvider.isLocked && canvasProvider.canvasMode == CanvasMode.move,
-                scaleEnabled: !canvasProvider.isLocked,
-                boundaryMargin: const EdgeInsets.all(4000),
-                minScale: 0.1,
-                maxScale: 2.0,
-                constrained: false,
-                child: Container(
-                  width: 8000,
-                  height: 8000,
-                  color: Colors.transparent,
-                  child: Stack(
-                    children: [
-
-                      Positioned.fill(
-                        child: AnimatedBuilder(
-                          animation: _animationController,
-                          builder: (context, child) {
-                            return CustomPaint(
-                              painter: _EdgeOverlayPainter(
-                                nodes: canvasProvider.nodes,
-                                connections: canvasProvider.connections,
-                                animationOffset:
-                                _animationController.value * 14.0,
-                                colors: colors,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-
-                      ...canvasProvider.nodes.map(
-                            (node) =>
-                            _buildNodeWidget(node, canvasProvider, colors),
-                      ),
-                    ],
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.delete): () {
+          if (canvasProvider.selectedNodeId != null) {
+            canvasProvider.removeNode(canvasProvider.selectedNodeId!);
+          }
+        },
+        const SingleActivator(LogicalKeyboardKey.backspace): () {
+          if (canvasProvider.selectedNodeId != null) {
+            canvasProvider.removeNode(canvasProvider.selectedNodeId!);
+          }
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  painter: GridPainter(
+                    color: colors.onSurface.withValues(alpha: 0.1),
+                    scale: 1.0,
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-
-        Positioned(
-          bottom: 32,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              key: _toolbarKey,
-              child: _buildUnifiedToolbar(context, colors, canvasProvider),
+              ),
             ),
-          ),
+            Positioned.fill(
+              child: DragTarget<DragData>(
+                onAcceptWithDetails: (details) => _handleDrop(details, context),
+                builder: (context, candidateData, rejectedData) {
+                  return InteractiveViewer(
+                    transformationController: _transformationController,
+                    panEnabled: !canvasProvider.isLocked &&
+                        canvasProvider.canvasMode == CanvasMode.move,
+                    scaleEnabled: !canvasProvider.isLocked,
+                    boundaryMargin: const EdgeInsets.all(4000),
+                    minScale: 0.1,
+                    maxScale: 2.0,
+                    constrained: false,
+                    child: GestureDetector(
+                      onTap: () {
+                        canvasProvider.selectNode(null);
+                        canvasProvider.selectSourceNode('', ''); // Clear source selection
+                      },
+                      child: Container(
+                        width: 8000,
+                        height: 8000,
+                        color: Colors.transparent,
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: AnimatedBuilder(
+                                animation: _animationController,
+                                builder: (context, child) {
+                                  return CustomPaint(
+                                    painter: _EdgeOverlayPainter(
+                                      nodes: canvasProvider.nodes,
+                                      connections: canvasProvider.connections,
+                                      animationOffset:
+                                          _animationController.value * 14.0,
+                                      colors: colors,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            ...canvasProvider.nodes.map(
+                              (node) =>
+                                  _buildNodeWidget(node, canvasProvider, colors),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Positioned(
+              bottom: 32,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  key: _toolbarKey,
+                  child: _buildUnifiedToolbar(context, colors, canvasProvider),
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildNodeWidget(
       CanvasNode node, CanvasProvider provider, ColorScheme colors) {
+    final isSelected = provider.selectedNodeId == node.id ||
+        provider.selectedSourceNodeId == node.id;
+
     return Positioned(
       left: node.position.dx,
       top: node.position.dy,
@@ -311,6 +334,8 @@ class _CanvasContentState extends State<_CanvasContent>
             } else {
               provider.selectSourceNode(node.id);
             }
+          } else {
+            provider.selectNode(node.id);
           }
         },
         child: MouseRegion(
@@ -323,17 +348,18 @@ class _CanvasContentState extends State<_CanvasContent>
               GestureDetector(
                 onPanUpdate: provider.canvasMode == CanvasMode.move
                     ? (details) {
-                  final scale = _transformationController.value.getMaxScaleOnAxis();
-                  provider.updateNodePosition(
-                    node.id,
-                    node.position + (details.delta / scale),
-                  );
-                }
+                        final scale = _transformationController.value
+                            .getMaxScaleOnAxis();
+                        provider.updateNodePosition(
+                          node.id,
+                          node.position + (details.delta / scale),
+                        );
+                      }
                     : null,
                 child:
-                _NodeBody(node: node, provider: provider, colors: colors),
+                    _NodeBody(node: node, provider: provider, colors: colors),
               ),
-              if (provider.selectedSourceNodeId == node.id)
+              if (isSelected)
                 Positioned.fill(
                   child: IgnorePointer(
                     child: Container(
@@ -341,8 +367,7 @@ class _CanvasContentState extends State<_CanvasContent>
                         borderRadius: BorderRadius.circular(
                           node.type == FlowNodeType.branch ? 8 : 16,
                         ),
-                        border:
-                        Border.all(color: colors.primary, width: 3),
+                        border: Border.all(color: colors.primary, width: 3),
                         boxShadow: [
                           BoxShadow(
                             color: colors.primary.withValues(alpha: 0.3),
@@ -558,10 +583,10 @@ class _CanvasContentState extends State<_CanvasContent>
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildModeButton(
-                  provider, CanvasMode.move, Icons.pan_tool_rounded, 'Pan'),
+                  provider, CanvasMode.move, Icons.back_hand_rounded, 'Pan'),
               const SizedBox(width: 4),
               _buildModeButton(
-                  provider, CanvasMode.connect, Icons.cable_rounded, 'Link'),
+                  provider, CanvasMode.connect, Icons.edit_rounded, 'Link'),
               _ToolbarDivider(borderColor: borderColor.withValues(alpha: 0.3)),
               _ToolbarIcon(
                 tooltip: provider.isLocked ? 'Unlock Canvas' : 'Lock Canvas',
@@ -790,6 +815,14 @@ class _HoverableNodeWrapperState extends State<_HoverableNodeWrapper> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // Invisible layer to extend hover area
+          Positioned(
+            top: -16,
+            right: -16,
+            bottom: -16,
+            left: -16,
+            child: Container(color: Colors.transparent),
+          ),
           widget.child,
           if (_hovered && !widget.provider.isLocked)
             Positioned(
@@ -954,44 +987,33 @@ class _NodeBody extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: methodColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      type.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: methodColor,
-                      ),
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: methodColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  type.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: methodColor,
                   ),
-                  if (node.data['method'] != null) ...[
-                    const SizedBox(width: 4),
-                    Text(
-                      node.data['method'].toString().toUpperCase(),
-                      style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: colors.onSurfaceVariant),
-                    ),
-                  ],
-                ],
+                ),
               ),
-              IconButton(
-                onPressed: () => provider.removeNode(node.id),
-                icon: const Icon(Icons.close, size: 14),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
+              if (node.data['method'] != null) ...[
+                const SizedBox(width: 4),
+                Text(
+                  node.data['method'].toString().toUpperCase(),
+                  style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: colors.onSurfaceVariant),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -1114,57 +1136,41 @@ class _NodeBody extends StatelessWidget {
               ],
             ),
           ),
-
-          Positioned(
-            top: 4,
-            right: 4,
-            child: IconButton(
-              onPressed: () => provider.removeNode(node.id),
-              icon: const Icon(Icons.close, size: 14),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              splashRadius: 12,
-            ),
-          ),
         ],
       ),
     );
   }
 
   Widget _buildStart(BuildContext context) {
-    return _HoverableNodeWrapper(
-      node: node,
-      provider: provider,
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: AppGradients.green(Theme.of(context).brightness == Brightness.dark),
-          borderRadius: AppRadius.br16,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.lightGreenStart.withValues(alpha: 0.3),
-              blurRadius: 12,
-              spreadRadius: 2,
-            )
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
-            Text(
-              'START',
-              style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w900,
-                color: Colors.white.withValues(alpha: 0.9),
-                letterSpacing: 0.5,
-              ),
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: AppGradients.green(Theme.of(context).brightness == Brightness.dark),
+        borderRadius: AppRadius.br16,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.lightGreenStart.withValues(alpha: 0.3),
+            blurRadius: 12,
+            spreadRadius: 2,
+          )
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+          Text(
+            'START',
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w900,
+              color: Colors.white.withValues(alpha: 0.9),
+              letterSpacing: 0.5,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1233,18 +1239,6 @@ class _NodeBody extends StatelessWidget {
               isSelected: provider.selectedSourceNodeId == node.id &&
                   provider.selectedSourceHandle == 'false',
               onTap: () => provider.selectSourceNode(node.id, 'false'),
-            ),
-          ),
-
-          Positioned(
-            top: -12,
-            right: -12,
-            child: IconButton(
-              onPressed: () => provider.removeNode(node.id),
-              icon: const Icon(Icons.close, size: 14),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              splashRadius: 12,
             ),
           ),
         ],

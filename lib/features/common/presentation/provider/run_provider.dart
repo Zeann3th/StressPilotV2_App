@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:local_notifier/local_notifier.dart';
-import 'package:stress_pilot/features/common/data/run_service.dart';
+import 'package:stress_pilot/features/common/domain/repositories/run_repository.dart';
 import 'package:stress_pilot/core/domain/entities/run.dart';
 
 class RunProvider extends ChangeNotifier {
-  final RunService _runService;
+  final RunRepository _runRepository;
 
   final Set<int> _trackedRunIds = {};
   final Map<int, Run> _runningRuns = {};
 
-  RunProvider(this._runService) {
+  RunProvider(this._runRepository) {
     syncRunningRuns();
   }
 
@@ -27,7 +27,7 @@ class RunProvider extends ChangeNotifier {
 
   Future<void> syncRunningRuns() async {
     try {
-      final allRuns = await _runService.getRuns();
+      final allRuns = await _runRepository.getRuns();
       final running = allRuns.where((run) =>
       run.status == 'RUNNING' || run.status == 'STARTING');
 
@@ -59,7 +59,7 @@ class RunProvider extends ChangeNotifier {
       final idsToPoll = List<int>.from(_trackedRunIds);
       for (final runId in idsToPoll) {
         try {
-          final run = await _runService.getRun(runId);
+          final run = await _runRepository.getRun(runId);
 
           if (run.status == 'COMPLETED' || run.status == 'ABORTED') {
             _trackedRunIds.remove(runId);
@@ -94,7 +94,7 @@ class RunProvider extends ChangeNotifier {
 
   Future<void> interruptRun(int runId) async {
     try {
-      await _runService.interruptRun(runId);
+      await _runRepository.interruptRun(runId);
       _trackedRunIds.remove(runId);
       _runningRuns.remove(runId);
       notifyListeners();
@@ -109,7 +109,6 @@ class RunProvider extends ChangeNotifier {
     super.dispose();
   }
 
-  // Legacy compatibility if needed, but updated to use global tracking
   Future<void> checkRunStatus(int flowId) async {
     await syncRunningRuns();
   }

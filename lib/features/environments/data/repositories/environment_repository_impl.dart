@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
-import '../domain/environment_variable.dart';
+import '../../domain/environment_variable.dart';
+import '../../domain/repositories/environment_repository.dart';
 
-class EnvironmentService {
+class EnvironmentRepositoryImpl implements EnvironmentRepository {
   final Dio _dio = HttpClient.getInstance();
 
+  @override
   Future<List<EnvironmentVariable>> getVariables(int environmentId) async {
     final response = await _dio.get(
       '/api/v1/environments/$environmentId/variables',
@@ -17,6 +19,7 @@ class EnvironmentService {
     }
   }
 
+  @override
   Future<void> updateVariables({
     required int environmentId,
     required List<Map<String, dynamic>> added,

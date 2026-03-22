@@ -42,7 +42,7 @@ class LinuxPilotController implements PilotWebViewController {
   LinuxPilotController(this._currentUrl);
 
   Future<void> _open(String url) async {
-    // Use xdg-open directly — avoids snap Firefox spawning issues
+
     await Process.run('xdg-open', [url]);
   }
 
@@ -82,7 +82,7 @@ class PilotWebView extends StatefulWidget {
 
 class _PilotWebViewState extends State<PilotWebView> {
   final bool _isLinux = !kIsWeb && Platform.isLinux;
-  bool _launched = false; // prevent multiple opens on rebuild
+  bool _launched = false;
   bool _isDownloading = false;
   double _downloadProgress = 0;
 
@@ -90,7 +90,7 @@ class _PilotWebViewState extends State<PilotWebView> {
   void initState() {
     super.initState();
     if (_isLinux) {
-      // Open once in initState, not in build
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_launched) {
           _launched = true;
