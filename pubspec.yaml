@@ -123,3 +123,8 @@ inno_bundle:
     - russian
   admin: false
   support_url: https://github.com/Zeann3th/StressPilotV2_App
+  files:
+    - path: tools/jdk
+      destination: jdk
+      source: project
+      required: true

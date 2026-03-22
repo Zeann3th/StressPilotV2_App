@@ -155,7 +155,7 @@ class ProcessManager {
       final profile = kDebugMode ? 'dev' : 'prod';
       final process = await Process.start(
         javaPath,
-        ['-jar', jarPath, '--spring.profiles.active=prod'],
+        ['-jar', jarPath, '--spring.profiles.active=$profile'],
         workingDirectory: workingDir,
       );
 
