@@ -106,3 +106,11 @@ inno_bundle:
   id: a8bea9a0-e96d-11f0-85ae-7f61cad0019a
   publisher: Ly Hien Long
   name: Stress Pilot
+  languages:
+    - english
+    - french
+    - german
+    - japanese
+    - russian
+  admin: false
+  support_url: https://github.com/Zeann3th/StressPilotV2_App
