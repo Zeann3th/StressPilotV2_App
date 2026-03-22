@@ -1,11 +1,38 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/system/logger.dart';
+
+final _kernel32 = Platform.isWindows ? DynamicLibrary.open('kernel32.dll') : null;
+
+final _openProcess = _kernel32?.lookupFunction<
+    IntPtr Function(Uint32, Bool, Uint32),
+    int Function(int, bool, int)>('OpenProcess');
+
+final _terminateProcess = _kernel32?.lookupFunction<
+    Bool Function(IntPtr, Uint32),
+    bool Function(int, int)>('TerminateProcess');
+
+final _closeHandle = _kernel32?.lookupFunction<
+    Bool Function(IntPtr),
+    bool Function(int)>('CloseHandle');
+
+void _winTerminatePid(int pid) {
+  if (_openProcess == null || _terminateProcess == null || _closeHandle == null) return;
+  final handle = _openProcess!(0x0001, false, pid);
+  if (handle == 0) return;
+  try {
+    _terminateProcess!(handle, 1);
+  } finally {
+    _closeHandle!(handle);
+  }
+}
 
 class PilotProcess {
   final String name;
@@ -128,7 +155,7 @@ class ProcessManager {
       final profile = kDebugMode ? 'dev' : 'prod';
       final process = await Process.start(
         javaPath,
-        ['-jar', jarPath, '--spring.profiles.active=$profile'],
+        ['-jar', jarPath, '--spring.profiles.active=prod'],
         workingDirectory: workingDir,
       );
 
@@ -253,7 +280,8 @@ class ProcessManager {
 
   Future<void> forceKill() async {
     for (var name in _processes.keys.toList()) {
-      await stopProcess(name);
+      final p = _processes.remove(name);
+      p?.process?.kill();
     }
 
     try {
@@ -262,10 +290,28 @@ class ProcessManager {
         for (var line in result.stdout.toString().split('\n')) {
           if (line.contains('LISTENING')) {
             final pid = line.trim().split(RegExp(r'\s+')).last;
-            await Process.run('taskkill', ['/F', '/PID', pid, '/T']);
+            if (pid.isNotEmpty) {
+              await Process.run('taskkill', ['/F', '/PID', pid, '/T']);
+            }
           }
         }
       }
     } catch (_) {}
+  }
+
+  void brittleKill() {
+    for (final name in _processes.keys.toList()) {
+      final p = _processes[name];
+      if (p == null || p.process == null) continue;
+      final pid = p.process!.pid;
+      try {
+        if (Platform.isWindows) {
+          _winTerminatePid(pid);
+        } else {
+          p.process!.kill(ProcessSignal.sigkill);
+        }
+      } catch (_) {}
+    }
+    _processes.clear();
   }
 }

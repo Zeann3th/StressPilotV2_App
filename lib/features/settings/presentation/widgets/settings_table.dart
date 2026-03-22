@@ -199,10 +199,10 @@ class _ThemeSettings extends StatelessWidget {
                 style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 32),
-              
+
               Text('Active Theme', style: AppTypography.label),
               const SizedBox(height: 12),
-              
+
               Container(
                 decoration: BoxDecoration(
                   borderRadius: AppRadius.br12,
@@ -220,7 +220,7 @@ class _ThemeSettings extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
               PilotButton.ghost(
                 label: 'Reload External Themes',

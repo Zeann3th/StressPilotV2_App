@@ -282,7 +282,7 @@ packages:
     source: hosted
     version: "1.3.3"
   ffi:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: ffi
       sha256: "6d7fd89431262d8f3125e81b50d3847a091d846eafcd4fdb88dd06f36d705a45"
@@ -435,14 +435,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_markdown:
+  flutter_markdown_plus:
     dependency: "direct main"
     description:
-      name: flutter_markdown
-      sha256: "08fb8315236099ff8e90cb87bb2b935e0a724a3af1623000a9cec930468e0f27"
+      name: flutter_markdown_plus
+      sha256: "039177906850278e8fb1cd364115ee0a46281135932fa8ecea8455522166d2de"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.7+1"
+    version: "1.0.7"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -749,6 +749,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.11.1"
+  menu_base:
+    dependency: transitive
+    description:
+      name: menu_base
+      sha256: "820368014a171bd1241030278e6c2617354f492f5c703d7b7d4570a6b8b84405"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
   meta:
     dependency: transitive
     description:
@@ -1069,6 +1077,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
+  shortid:
+    dependency: transitive
+    description:
+      name: shortid
+      sha256: d0b40e3dbb50497dad107e19c54ca7de0d1a274eb9b4404991e443dadb9ebedb
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.2"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -1174,10 +1190,18 @@ packages:
     dependency: transitive
     description:
       name: theme_extensions_builder_annotation
-      sha256: df0edae633b71d3223853e58d33f4e63ac33990d5c99831ae49bf869ee9fb5ee
+      sha256: "75f28ac85d396d143d111a47c1395b01f3be41b7135f37bd51512921944e4206"
       url: "https://pub.dev"
     source: hosted
-    version: "7.2.0"
+    version: "7.3.0"
+  tray_manager:
+    dependency: "direct main"
+    description:
+      name: tray_manager
+      sha256: c5fd83b0ae4d80be6eaedfad87aaefab8787b333b8ebd064b0e442a81006035b
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.2"
   tuple:
     dependency: transitive
     description:

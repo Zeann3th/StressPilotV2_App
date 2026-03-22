@@ -260,7 +260,7 @@ class _CanvasContentState extends State<_CanvasContent>
                     child: GestureDetector(
                       onTap: () {
                         canvasProvider.selectNode(null);
-                        canvasProvider.selectSourceNode('', ''); // Clear source selection
+                        canvasProvider.selectSourceNode('', '');
                       },
                       child: Container(
                         width: 8000,

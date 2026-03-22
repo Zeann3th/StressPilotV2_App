@@ -12,7 +12,7 @@ import 'package:stress_pilot/core/themes/pilot_theme.dart';
 
 class ThemeManager with ChangeNotifier {
   static const String _defaultThemeId = 'dark';
-  
+
   final List<PilotTheme> _availableThemes = [];
   PilotTheme? _currentTheme;
   ShadThemeData? _currentShadTheme;
@@ -117,12 +117,12 @@ class ThemeManager with ChangeNotifier {
 
     _currentTheme = theme;
     _currentShadTheme = _generateShadTheme(theme);
-    
+
     final settingsManager = getIt<SettingsManager>();
     if (settingsManager.getString('workbench.colorTheme') != themeId) {
       await settingsManager.setString('workbench.colorTheme', themeId);
     }
-    
+
     notifyListeners();
   }
 

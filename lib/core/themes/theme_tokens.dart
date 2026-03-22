@@ -35,15 +35,13 @@ abstract class AppColors {
   static Color get textSecondary => _theme.getColor('textSecondary', _theme.isDark ? const Color(0xFF8B949E) : const Color(0xFF4B5563));
   static Color get textMuted => _theme.getColor('textMuted', _theme.isDark ? const Color(0xFF484F58) : const Color(0xFF9CA3AF));
 
-  // Shared / Universal colors
   static Color get accent => _theme.getColor('accent', _theme.isDark ? darkGreenStart : lightGreenStart);
   static Color get accentHover => accent.withValues(alpha: 0.85);
   static Color get accentActive => accent.withValues(alpha: 0.7);
-  
+
   static Color get darkGreenStartVal => darkGreenStart;
   static Color get lightGreenStartVal => lightGreenStart;
 
-  // Fallbacks for specific hardcoded needs if any
   static const textLight        = Color(0xFF111827);
   static const textLightSecondary = Color(0xFF4B5563);
 }

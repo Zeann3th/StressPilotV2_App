@@ -4,8 +4,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
-// ── Command definitions ───────────────────────────────────────────────────
-
 class AgentCommand {
   final String command;
   final String description;
@@ -28,8 +26,6 @@ const _kCommands = [
   AgentCommand(command: '/clear',    description: 'Clear screen'),
   AgentCommand(command: '/quit',     description: 'Exit the agent'),
 ];
-
-// ── Widget ────────────────────────────────────────────────────────────────
 
 class AgentInputBar extends StatefulWidget {
   final bool enabled;
@@ -129,14 +125,13 @@ class _AgentInputBarState extends State<AgentInputBar> {
     final border = AppColors.border;
     final surface = AppColors.surface;
 
-    // Readable muted text for both themes
     final mutedColor = AppColors.textSecondary;
     final subtleColor = AppColors.textSecondary.withValues(alpha: 0.6);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Suggestions — inline above input ──────────────────────
+
         AnimatedSize(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
@@ -154,7 +149,7 @@ class _AgentInputBarState extends State<AgentInputBar> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Hint row
+
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 5),
@@ -176,7 +171,7 @@ class _AgentInputBarState extends State<AgentInputBar> {
                 Divider(
                     height: 1,
                     color: border.withValues(alpha: 0.15)),
-                // Command rows
+
                 ..._suggestions.asMap().entries.map((e) =>
                     _SuggestionRow(
                       cmd: e.value,
@@ -191,7 +186,6 @@ class _AgentInputBarState extends State<AgentInputBar> {
           ),
         ),
 
-        // ── Input row ─────────────────────────────────────────────
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -238,8 +232,6 @@ class _AgentInputBarState extends State<AgentInputBar> {
   }
 }
 
-// ── Suggestion row ────────────────────────────────────────────────────────
-
 class _SuggestionRow extends StatelessWidget {
   final AgentCommand cmd;
   final bool selected;
@@ -269,7 +261,7 @@ class _SuggestionRow extends StatelessWidget {
             : Colors.transparent,
         child: Row(
           children: [
-            // Command name — fixed width so descriptions align
+
             SizedBox(
               width: 96,
               child: Text(
@@ -283,7 +275,6 @@ class _SuggestionRow extends StatelessWidget {
               ),
             ),
 
-            // Description — explicit readable color, not border color
             Expanded(
               child: Text(
                 cmd.description,
@@ -294,7 +285,6 @@ class _SuggestionRow extends StatelessWidget {
               ),
             ),
 
-            // Usage badge
             if (cmd.usage != null) ...[
               const SizedBox(width: 8),
               Container(
@@ -318,7 +308,6 @@ class _SuggestionRow extends StatelessWidget {
               ),
             ],
 
-            // Enter hint when selected
             if (selected) ...[
               const SizedBox(width: 8),
               Icon(

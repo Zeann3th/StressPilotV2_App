@@ -4,11 +4,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
-import 'dart:io';
 
-import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
-import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 
 class AppTopBar extends StatefulWidget {
@@ -88,22 +85,13 @@ class _AppTopBarState extends State<AppTopBar> {
               final renderBox = context.findRenderObject() as RenderBox?;
               final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
               final pos = renderBox?.localToGlobal(tap.globalPosition) ?? tap.globalPosition;
-              final selected = await showMenu<String>(
+              await showMenu<String>(
                 context: context,
                 position: RelativeRect.fromLTRB(pos.dx, pos.dy, overlay.size.width - pos.dx, overlay.size.height - pos.dy),
                 items: const [
                   PopupMenuItem(value: 'profile', child: Text('Profile')),
-                  PopupMenuItem(value: 'exit', child: Text('Exit')),
                 ],
               );
-
-              if (selected == 'exit') {
-
-                try {
-                  await getIt<ProcessManager>().forceKill();
-                } catch (_) {}
-                exit(0);
-              }
             },
             child: _TopBarIcon(
               icon: LucideIcons.user,
