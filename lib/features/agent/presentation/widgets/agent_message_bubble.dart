@@ -129,7 +129,7 @@ class _MarkdownContent extends StatelessWidget {
         codeblockPadding: const EdgeInsets.all(12),
 
         blockquote: AppTypography.body.copyWith(
-          color: border,
+          color: AppColors.textSecondary,
           fontStyle: FontStyle.italic,
         ),
         blockquoteDecoration: BoxDecoration(

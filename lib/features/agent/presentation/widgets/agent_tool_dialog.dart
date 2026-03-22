@@ -137,7 +137,7 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
                         style: AppTypography.body.copyWith(
                           fontFamily: 'JetBrains Mono',
                           fontSize: 11,
-                          color: border,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -149,7 +149,7 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
 
               Text(
                 'Use ↑↓ or W/S to navigate, Enter to select, Esc to cancel',
-                style: TextStyle(fontSize: 11, color: border),
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
               const SizedBox(height: 8),
 
