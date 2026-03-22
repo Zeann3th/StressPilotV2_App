@@ -83,7 +83,6 @@ dev_dependencies:
 
   # Build / packaging
   flutter_launcher_icons: ^0.14.4
-  inno_bundle: ^0.11.2
 
 flutter:
   uses-material-design: true
@@ -110,21 +109,3 @@ flutter_launcher_icons:
 
   linux:
     generate: true
-
-inno_bundle:
-  id: a8bea9a0-e96d-11f0-85ae-7f61cad0019a
-  publisher: Ly Hien Long
-  name: Stress Pilot
-  languages:
-    - english
-    - french
-    - german
-    - japanese
-    - russian
-  admin: false
-  support_url: https://github.com/Zeann3th/StressPilotV2_App
-  files:
-    - path: tools/jdk
-      destination: jdk
-      source: project
-      required: true

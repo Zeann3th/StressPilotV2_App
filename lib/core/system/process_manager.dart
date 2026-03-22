@@ -100,12 +100,29 @@ class ProcessManager {
 
   String _getJavaExecutable() {
     if (kDebugMode) return 'java';
+
     final executableDir = _getExecutableDir();
-    if (Platform.isWindows) {
-      return path.join(executableDir, 'jdk', 'bin', 'java.exe');
-    } else {
-      return path.join(executableDir, 'jdk', 'bin', 'java');
+    final javaRelPath = Platform.isWindows ? 'jdk\\bin\\java.exe' : 'jdk/bin/java';
+    final bundledJava = path.join(executableDir, javaRelPath);
+
+    if (File(bundledJava).existsSync()) {
+      AppLogger.info('Using bundled JDK: $bundledJava', name: _logName);
+      return bundledJava;
     }
+
+    if (Platform.isWindows) {
+      final localAppData = Platform.environment['LOCALAPPDATA'] ?? '';
+      if (localAppData.isNotEmpty) {
+        final appDataJava = path.join(localAppData, 'StressPilot', 'jdk', 'bin', 'java.exe');
+        if (File(appDataJava).existsSync()) {
+          AppLogger.info('Using StressPilot JDK in AppData: $appDataJava', name: _logName);
+          return appDataJava;
+        }
+      }
+    }
+
+    AppLogger.warning('Bundled JDK not found at $bundledJava, falling back to system java', name: _logName);
+    return 'java';
   }
 
   String _getAssetPath(String assetName) {
