@@ -15,7 +15,6 @@ LicenseFile=LICENSE
 DefaultDirName={autopf}\Stress Pilot
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline dialog
-DisableDirPage=no
 OutputDir=build\windows\x64\installer\Release
 OutputBaseFilename=StressPilot-x86_64-1.0.2-Installer
 SetupIconFile={#TempDir}\..\installer.ico
@@ -24,7 +23,7 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-DisableDirPage=auto
+DisableDirPage=no
 DisableProgramGroupPage=auto
 
 [InstallDelete]
