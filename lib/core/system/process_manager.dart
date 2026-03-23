@@ -201,7 +201,27 @@ class ProcessManager {
     final javaPath = _getJavaExecutable();
     final workingDir = _getExecutableDir();
 
+    // File logger for release mode diagnostics
+    final logDir = Platform.isWindows
+        ? (Platform.environment['APPDATA'] ?? workingDir)
+        : (Platform.environment['HOME'] ?? workingDir);
+    final logFile = File(path.join(logDir, 'stresspilot', 'pilot.log'));
+    await logFile.parent.create(recursive: true);
+    final sink = logFile.openWrite(mode: FileMode.append);
+
+    void fileLog(String msg) {
+      sink.writeln('[${DateTime.now()}] $msg');
+    }
+
+    fileLog('=== startBackend called ===');
+    fileLog('javaPath: $javaPath (exists: ${File(javaPath).existsSync()})');
+    fileLog('jarPath: $jarPath (exists: ${File(jarPath).existsSync()})');
+    fileLog('workingDir: $workingDir');
+
     if (!await File(jarPath).exists()) {
+      fileLog('CRITICAL: JAR file not found, aborting.');
+      await sink.flush();
+      await sink.close();
       AppLogger.critical('JAR file not found at $jarPath', name: _logName);
       return;
     }
@@ -218,15 +238,39 @@ class ProcessManager {
         workingDirectory: workingDir,
       );
 
+      fileLog('Process started PID=${process.pid}');
+
       final pilotProcess = PilotProcess('backend');
       pilotProcess.process = process;
       _processes['backend'] = pilotProcess;
+
+      // Pipe stdout/stderr to file in release, normal logging otherwise
+      if (!kDebugMode) {
+        process.stdout.transform(utf8.decoder).listen((data) {
+          sink.write(data);
+        });
+        process.stderr.transform(utf8.decoder).listen((data) {
+          sink.write('[ERR] $data');
+        });
+        process.exitCode.then((code) async {
+          fileLog('Process exited with code: $code');
+          await sink.flush();
+          await sink.close();
+        });
+      } else {
+        // Close sink early in debug — AppLogger handles it
+        await sink.flush();
+        await sink.close();
+      }
 
       _setupLogging(pilotProcess, attachLogs);
 
       AppLogger.info('Backend started (pid=${process.pid})', name: _logName);
       await _waitForHealth();
     } catch (e, st) {
+      fileLog('FAILED TO START: $e\n$st');
+      await sink.flush();
+      await sink.close();
       AppLogger.critical('Failed to start backend', name: _logName, error: e, stackTrace: st);
       rethrow;
     }
@@ -328,13 +372,25 @@ class ProcessManager {
   }
 
   Future<void> _waitForHealth() async {
-    const int maxAttempts = 20;
+    const int maxAttempts = 30;
+
     for (int i = 0; i < maxAttempts; i++) {
       try {
-        final resp = await _dio.get('/api/v1/utilities/session');
-        if (resp.statusCode == 200) return;
+        final resp = await _dio.get(
+          '/api/v1/utilities/session',
+          options: Options(
+            sendTimeout: const Duration(seconds: 3),
+            receiveTimeout: const Duration(seconds: 3),
+            validateStatus: (_) => true,
+          ),
+        );
+        if (resp.statusCode != null) {
+          AppLogger.info('Backend up after ${i + 1} attempts (status: ${resp.statusCode})', name: _logName);
+          return;
+        }
       } catch (_) {}
-      await Future.delayed(Duration(milliseconds: 500 * (i + 1)));
+
+      await Future.delayed(const Duration(seconds: 1));
     }
     AppLogger.error('Backend health check failed', name: _logName);
   }
