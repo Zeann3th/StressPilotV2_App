@@ -39,7 +39,8 @@ class RunRepositoryImpl implements RunRepository {
         '/api/v1/runs/${run.id}/export',
         options: Options(
           responseType: ResponseType.bytes,
-          receiveTimeout: const Duration(minutes: 2),
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
         ),
       );
 

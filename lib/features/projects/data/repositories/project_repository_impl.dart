@@ -80,6 +80,8 @@ class ProjectRepositoryImpl implements ProjectRepository {
       options: Options(
         responseType: ResponseType.bytes,
         followRedirects: false,
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
       ),
     );
   }
@@ -98,6 +100,8 @@ class ProjectRepositoryImpl implements ProjectRepository {
       data: formData,
       options: Options(
         contentType: 'multipart/form-data',
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
       ),
     );
 

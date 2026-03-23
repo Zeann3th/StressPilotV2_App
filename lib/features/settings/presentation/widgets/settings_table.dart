@@ -7,6 +7,7 @@ import 'package:stress_pilot/core/themes/pilot_theme.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/keymap_settings_table.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/app_health_section.dart';
+import 'package:stress_pilot/features/settings/presentation/widgets/plugin_settings_view.dart';
 import 'settings_row.dart';
 
 class SettingsTable extends StatefulWidget {
@@ -44,6 +45,7 @@ class _SettingsTableState extends State<SettingsTable> {
     final categories = grouped.keys.toList()..sort();
     categories.insert(0, 'THEME');
     categories.insert(1, 'HEALTH');
+    categories.add('PLUGINS');
     categories.add('SHORTCUTS');
 
     if (_selectedCategory == null && categories.isNotEmpty) {
@@ -68,6 +70,7 @@ class _SettingsTableState extends State<SettingsTable> {
               if (cat == 'THEME') icon = Icons.palette_rounded;
               if (cat == 'HEALTH') icon = Icons.health_and_safety_rounded;
               if (cat == 'SHORTCUTS') icon = Icons.keyboard_rounded;
+              if (cat == 'PLUGINS') icon = Icons.extension_rounded;
               if (cat == 'AI MODEL') icon = Icons.auto_awesome_rounded;
               if (cat == 'DATABASE') icon = Icons.storage_rounded;
               return Padding(
@@ -120,6 +123,10 @@ class _SettingsTableState extends State<SettingsTable> {
 
     if (_selectedCategory == 'SHORTCUTS') {
       return const KeymapSettingsTable();
+    }
+
+    if (_selectedCategory == 'PLUGINS') {
+      return const PluginSettingsView();
     }
 
     final entries = grouped[_selectedCategory] ?? [];

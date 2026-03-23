@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 
 class SessionManager {
@@ -11,7 +10,7 @@ class SessionManager {
   bool _isRefreshing = false;
 
   Timer? _keepAliveTimer;
-  Duration _keepAliveInterval = const Duration(minutes: 25);
+  Duration _keepAliveInterval = const Duration(minutes: 5);
 
   SessionManager(this._dio);
 
@@ -25,9 +24,19 @@ class SessionManager {
     _keepAliveTimer = Timer.periodic(_keepAliveInterval, (_) async {
       AppLogger.debug('Auto-refresh timer triggered', name: _logName);
       try {
-        await initializeSession();
+
+        await _dio.get('/api/v1/utilities/session', options: Options(
+          sendTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
+        ));
+        AppLogger.debug('Session keep-alive successful', name: _logName);
       } catch (e) {
-        AppLogger.warning('Auto-refresh failed: $e', name: _logName);
+        AppLogger.warning('Session keep-alive failed, re-initializing...', name: _logName);
+        try {
+          await initializeSession(retry: true);
+        } catch (e2) {
+          AppLogger.error('Session re-initialization failed during auto-refresh', name: _logName, error: e2);
+        }
       }
     });
     AppLogger.info(
@@ -47,30 +56,24 @@ class SessionManager {
   }
 
   Future<bool> waitForHealthCheck({
-    int maxAttempts = 15,
+    int maxAttempts = 20,
     Duration initialInterval = const Duration(seconds: 1),
-    Duration maxInterval = const Duration(seconds: 15),
+    Duration maxInterval = const Duration(seconds: 10),
   }) async {
     AppLogger.info(
-      'Starting health check (max $maxAttempts attempts, exponential backoff)',
+      'Starting session health check (max $maxAttempts attempts)',
       name: _logName,
     );
 
     Duration currentInterval = initialInterval;
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-      AppLogger.debug(
-        'Health check attempt $attempt/$maxAttempts (waiting ${currentInterval.inSeconds}s)...',
-        name: _logName,
-      );
-
       try {
-
         final sessionResponse = await _dio.get(
           '/api/v1/utilities/session',
           options: Options(
-            sendTimeout: const Duration(seconds: 3),
-            receiveTimeout: const Duration(seconds: 3),
+            sendTimeout: const Duration(seconds: 5),
+            receiveTimeout: const Duration(seconds: 5),
             validateStatus: (status) => status != null && status < 500,
           ),
         );
@@ -81,30 +84,14 @@ class SessionManager {
           startAutoRefresh();
           return true;
         }
-
-        final healthResponse = await _dio.get(
-          '/actuator/health',
-          options: Options(
-            sendTimeout: const Duration(seconds: 3),
-            receiveTimeout: const Duration(seconds: 3),
-            validateStatus: (status) => status != null && status < 500,
-          ),
-        );
-
-        if (healthResponse.statusCode == 200 &&
-            healthResponse.data is Map &&
-            healthResponse.data['status'] == 'UP') {
-          AppLogger.info('Backend health is UP!', name: _logName);
-          return true;
-        }
       } on DioException catch (e) {
         AppLogger.debug(
-          'Health check failed: ${e.type} - ${e.message}',
+          'Health check attempt $attempt/$maxAttempts failed: ${e.type} - ${e.message}',
           name: _logName,
         );
       } catch (e) {
         AppLogger.error(
-          'Unexpected error during health check',
+          'Unexpected error during health check attempt $attempt',
           name: _logName,
           error: e,
         );
@@ -112,22 +99,19 @@ class SessionManager {
 
       if (attempt < maxAttempts) {
         await Future.delayed(currentInterval);
-
-        currentInterval = currentInterval * 1.5;
-        if (currentInterval > maxInterval) {
-          currentInterval = maxInterval;
-        }
+        currentInterval = (currentInterval * 1.5);
+        if (currentInterval > maxInterval) currentInterval = maxInterval;
       }
     }
 
     AppLogger.error(
-      'Backend failed to become ready after $maxAttempts attempts',
+      'Backend failed to provide a session after $maxAttempts attempts. App may be unhealthy.',
       name: _logName,
     );
     return false;
   }
 
-  Future<void> initializeSession() async {
+  Future<void> initializeSession({bool retry = false}) async {
     if (_isRefreshing) {
       AppLogger.debug('Session refresh already in progress', name: _logName);
       return;
@@ -137,56 +121,12 @@ class SessionManager {
 
     try {
       await AppLogger.measure('Session initialization', () async {
-        AppLogger.info('Requesting session...', name: _logName);
-
-        final response = await _dio.get(
-          '/api/v1/utilities/session',
-          options: Options(
-            validateStatus: (status) => status != null && status < 500,
-          ),
+        final success = await waitForHealthCheck(
+          maxAttempts: retry ? 5 : 20,
         );
 
-        AppLogger.debug(
-          'Session response: ${response.statusCode} - ${response.data}',
-          name: _logName,
-        );
-
-        if (response.statusCode == 200) {
-          _sessionId = response.data['data']?.toString();
-          AppLogger.info('Session ID: $_sessionId', name: _logName);
-
-          try {
-            final cookieManager = _dio.interceptors
-                .whereType<CookieManager>()
-                .firstOrNull;
-            if (cookieManager == null) {
-              AppLogger.warning('CookieManager not found in interceptors', name: _logName);
-            } else {
-              final cookies = await cookieManager.cookieJar.loadForRequest(
-                Uri.parse('${_dio.options.baseUrl}/api/v1/utilities/session'),
-              );
-
-              AppLogger.debug(
-                'Stored cookies: ${cookies.map((c) => '${c.name}=${c.value}').join(', ')}',
-                name: _logName,
-              );
-            }
-          } catch (e) {
-            AppLogger.warning(
-              'Could not load cookies for logging',
-              name: _logName,
-            );
-          }
-
-          try {
-            startAutoRefresh();
-          } catch (e) {
-            AppLogger.debug('Failed to start auto-refresh: $e', name: _logName);
-          }
-        } else {
-          throw Exception(
-            'Failed to get session: ${response.statusCode} - ${response.data}',
-          );
+        if (!success) {
+          throw Exception('Failed to initialize session after multiple attempts');
         }
       }, name: _logName);
     } finally {

@@ -38,6 +38,14 @@ class AgentRepositoryImpl implements AgentRepository {
       return;
     }
 
+    if (!Platform.isWindows) {
+      try {
+        await Process.run('chmod', ['+x', agentPath]);
+      } catch (e) {
+        AppLogger.warning('Failed to chmod agent: $e', name: 'AgentRepository');
+      }
+    }
+
     try {
       _process = await Process.start(
         agentPath,

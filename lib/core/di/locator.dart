@@ -19,6 +19,8 @@ import 'package:stress_pilot/features/settings/presentation/provider/setting_pro
 import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_repository.dart';
 import 'package:stress_pilot/features/marketplace/data/repositories/plugin_repository_impl.dart';
 import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_capability_repository.dart';
+import 'package:stress_pilot/features/settings/presentation/provider/plugin_settings_provider.dart';
+import 'package:stress_pilot/features/shared/domain/repositories/run_repository.dart';
 import 'package:stress_pilot/features/marketplace/data/repositories/plugin_capability_repository_impl.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/shared/data/repositories/utility_repository_impl.dart';
@@ -30,7 +32,6 @@ import 'package:stress_pilot/features/environments/presentation/provider/environ
 import 'package:stress_pilot/features/results/domain/repositories/results_repository.dart';
 import 'package:stress_pilot/features/results/data/repositories/results_repository_impl.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
-import 'package:stress_pilot/features/shared/domain/repositories/run_repository.dart';
 import 'package:stress_pilot/features/shared/data/repositories/run_repository_impl.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/features/agent/domain/repositories/agent_repository.dart';
@@ -70,7 +71,9 @@ void setupDependencies() {
       () => EnvironmentRepositoryImpl());
   getIt.registerLazySingleton(() => EnvironmentProvider(getIt()));
 
-  getIt.registerLazySingleton<ResultsRepository>(() => ResultsRepositoryImpl());
+  getIt.registerLazySingleton<ResultsRepository>(
+    () => ResultsRepositoryImpl(getIt()),
+  );
   getIt.registerLazySingleton(
     () => ResultsProvider(getIt(), getIt<FlowRepository>()),
   );
@@ -79,6 +82,7 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => RunProvider(getIt()));
 
   getIt.registerLazySingleton<PluginRepository>(() => PluginRepositoryImpl());
+  getIt.registerLazySingleton(() => PluginSettingsProvider(getIt()));
   getIt.registerLazySingleton<PluginCapabilityRepository>(
       () => PluginCapabilityRepositoryImpl());
 

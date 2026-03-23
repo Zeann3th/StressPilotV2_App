@@ -102,6 +102,10 @@ class EndpointRepositoryImpl implements EndpointRepository {
     final response = await _dio.post(
       '/api/v1/endpoints/upload',
       data: formData,
+      options: Options(
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
+      ),
     );
     if (response.statusCode != 204) {
       throw Exception('Failed to upload endpoints');
@@ -116,6 +120,10 @@ class EndpointRepositoryImpl implements EndpointRepository {
     final response = await _dio.post(
       '/api/v1/endpoints/$endpointId/execute',
       data: requestBody,
+      options: Options(
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
+      ),
     );
     if (response.statusCode == 200) {
       return response.data as Map<String, dynamic>;
@@ -133,6 +141,10 @@ class EndpointRepositoryImpl implements EndpointRepository {
       '/api/v1/endpoints/execute-adhoc',
       queryParameters: {'projectId': projectId},
       data: requestBody,
+      options: Options(
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
+      ),
     );
     if (response.statusCode == 200) {
       return response.data as Map<String, dynamic>;

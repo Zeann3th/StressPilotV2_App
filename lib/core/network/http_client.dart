@@ -26,8 +26,8 @@ class HttpClient {
       BaseOptions(
         baseUrl: effectiveBaseUrl,
         headers: {'Content-Type': 'application/json'},
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 60),
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 5),
       ),
     );
 
@@ -137,31 +137,61 @@ class HttpClient {
     _cookieJar?.deleteAll();
   }
 
-  Future<Response> get(Uri uri) async {
-    return await getInstance().get(uri.toString());
+  Future<Response> get(Uri uri, {Duration? timeout}) async {
+    return await getInstance().get(
+      uri.toString(),
+      options: timeout != null
+          ? Options(connectTimeout: timeout, receiveTimeout: timeout)
+          : null,
+    );
   }
 
-  Future<Response> post(Uri uri, {dynamic data}) async {
-    return await getInstance().post(uri.toString(), data: data);
+  Future<Response> post(Uri uri, {dynamic data, Duration? timeout}) async {
+    return await getInstance().post(
+      uri.toString(),
+      data: data,
+      options: timeout != null
+          ? Options(connectTimeout: timeout, receiveTimeout: timeout)
+          : null,
+    );
   }
 
-  Future<Response> patch(Uri uri, {dynamic data}) async {
-    return await getInstance().patch(uri.toString(), data: data);
+  Future<Response> patch(Uri uri, {dynamic data, Duration? timeout}) async {
+    return await getInstance().patch(
+      uri.toString(),
+      data: data,
+      options: timeout != null
+          ? Options(connectTimeout: timeout, receiveTimeout: timeout)
+          : null,
+    );
   }
 
-  Future<Response> delete(Uri uri) async {
-    return await getInstance().delete(uri.toString());
+  Future<Response> delete(Uri uri, {Duration? timeout}) async {
+    return await getInstance().delete(
+      uri.toString(),
+      options: timeout != null
+          ? Options(connectTimeout: timeout, receiveTimeout: timeout)
+          : null,
+    );
   }
 
   Future<Response> upload(
     Uri uri, {
     required Map<String, String> fields,
     required String filePath,
+    Duration? timeout,
   }) async {
     final formData = FormData.fromMap({
       ...fields,
       'file': await MultipartFile.fromFile(filePath),
     });
-    return await getInstance().post(uri.toString(), data: formData);
+    return await getInstance().post(
+      uri.toString(),
+      data: formData,
+      options: Options(
+        connectTimeout: timeout ?? const Duration(seconds: 60),
+        receiveTimeout: timeout ?? const Duration(seconds: 60),
+      ),
+    );
   }
 }

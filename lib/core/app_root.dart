@@ -23,6 +23,7 @@ import 'package:stress_pilot/features/environments/presentation/provider/environ
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/features/agent/presentation/provider/agent_provider.dart';
+import 'package:stress_pilot/features/settings/presentation/provider/plugin_settings_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/layout.dart';
 
 class AppRoot extends StatefulWidget {
@@ -133,6 +134,9 @@ class _AppRootState extends State<AppRoot> {
         ),
         ChangeNotifierProvider<ThemeManager>.value(
           value: getIt<ThemeManager>(),
+        ),
+        ChangeNotifierProvider<PluginSettingsProvider>.value(
+          value: getIt<PluginSettingsProvider>(),
         ),
       ],
       child: _initialized && !_hasError

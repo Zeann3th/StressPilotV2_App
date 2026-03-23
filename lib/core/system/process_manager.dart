@@ -153,6 +153,22 @@ class ProcessManager {
 
   PilotProcess? getProcess(String name) => _processes[name];
 
+  Future<void> _makeExecutable(String filePath) async {
+    if (Platform.isWindows) return;
+    if (!File(filePath).existsSync()) return;
+
+    try {
+      final result = await Process.run('chmod', ['+x', filePath]);
+      if (result.exitCode != 0) {
+        AppLogger.warning('Failed to make executable: $filePath (${result.stderr})', name: _logName);
+      } else {
+        AppLogger.info('Successfully made executable: $filePath', name: _logName);
+      }
+    } catch (e) {
+      AppLogger.warning('Error while making executable: $filePath', name: _logName, error: e);
+    }
+  }
+
   Future<void> startBackend({bool attachLogs = true}) async {
     if (_processes.containsKey('backend')) {
       AppLogger.warning('Backend already running', name: _logName);
@@ -166,6 +182,10 @@ class ProcessManager {
     if (!await File(jarPath).exists()) {
       AppLogger.critical('JAR file not found at $jarPath', name: _logName);
       return;
+    }
+
+    if (!kDebugMode && !javaPath.contains(RegExp(r'java(\.exe)?$'))) {
+      await _makeExecutable(javaPath);
     }
 
     try {
@@ -221,6 +241,8 @@ class ProcessManager {
         AppLogger.error('Agent executable not found at $agentPath', name: _logName);
         return;
       }
+
+      await _makeExecutable(agentPath);
 
       try {
         final List<String> args = pipeMode ? ['--pipe'] : [];

@@ -96,7 +96,11 @@ class FlowRepositoryImpl implements FlowRepository {
     await _dio.post(
       '/api/v1/flows/$flowId/execute',
       data: formData,
-      options: Options(contentType: 'multipart/form-data'),
+      options: Options(
+        contentType: 'multipart/form-data',
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
+      ),
     );
   }
 }

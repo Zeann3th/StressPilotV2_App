@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
-import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/network/http_client.dart';
+import 'package:stress_pilot/features/marketplace/domain/models/plugin_descriptor.dart';
 import '../../domain/repositories/plugin_repository.dart';
 
 class PluginRepositoryImpl implements PluginRepository {
-  final Dio _apiClient = HttpClient.getInstance(baseUrl: AppConfig.pluginBaseUrl);
+  final Dio _apiClient = HttpClient.getInstance();
 
   @override
   Future<List<File>> getInstalledPlugins() async {
@@ -63,8 +63,9 @@ class PluginRepositoryImpl implements PluginRepository {
   }
 
   @override
-  Future<List<dynamic>> listPlugins() async {
+  Future<List<PluginDescriptor>> listPlugins() async {
     final response = await _apiClient.get('/api/v1/plugins/list');
-    return response.data['data'] as List<dynamic>;
+    final List<dynamic> data = response.data['data'] as List<dynamic>;
+    return data.map((e) => PluginDescriptor.fromJson(e as Map<String, dynamic>)).toList();
   }
 }
