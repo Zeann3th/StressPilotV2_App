@@ -117,18 +117,65 @@ class EndpointRepositoryImpl implements EndpointRepository {
     int endpointId,
     Map<String, dynamic> requestBody,
   ) async {
-    final response = await _dio.post(
-      '/api/v1/endpoints/$endpointId/execute',
-      data: requestBody,
-      options: Options(
-        connectTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(seconds: 60),
-      ),
-    );
-    if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
-    } else {
-      throw Exception('Failed to execute endpoint');
+    try {
+      final response = await _dio.post(
+        '/api/v1/endpoints/$endpointId/execute',
+        data: requestBody,
+        options: Options(
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
+        ),
+      );
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        return {
+          'statusCode': response.statusCode ?? 500,
+          'success': false,
+          'message': 'Server error: ${response.statusCode}',
+          'data': {
+            'statusCode': response.statusCode ?? 500,
+            'responseTimeMs': 0,
+            'error': 'Server error ${response.statusCode}'
+          }
+        };
+      }
+    } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final data = Map<String, dynamic>.from(e.response!.data as Map);
+        if (!data.containsKey('statusCode') && data.containsKey('status')) {
+          data['statusCode'] = data['status'];
+        }
+        if (!data.containsKey('data')) {
+          data['data'] = {
+            'statusCode': data['statusCode'] ?? 500,
+            'responseTimeMs': 0,
+            'error': data['message'] ?? data['error'] ?? 'API Error'
+          };
+        }
+        return data;
+      }
+      return {
+        'statusCode': 500,
+        'success': false,
+        'message': e.message ?? 'Unknown error',
+        'data': {
+          'statusCode': 500,
+          'responseTimeMs': 0,
+          'error': e.message ?? 'Unknown error'
+        }
+      };
+    } catch (e) {
+      return {
+        'statusCode': 500,
+        'success': false,
+        'message': e.toString(),
+        'data': {
+          'statusCode': 500,
+          'responseTimeMs': 0,
+          'error': e.toString()
+        }
+      };
     }
   }
 
@@ -137,19 +184,66 @@ class EndpointRepositoryImpl implements EndpointRepository {
     required int projectId,
     required Map<String, dynamic> requestBody,
   }) async {
-    final response = await _dio.post(
-      '/api/v1/endpoints/execute-adhoc',
-      queryParameters: {'projectId': projectId},
-      data: requestBody,
-      options: Options(
-        connectTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(seconds: 60),
-      ),
-    );
-    if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
-    } else {
-      throw Exception('Failed to execute adhoc endpoint');
+    try {
+      final response = await _dio.post(
+        '/api/v1/endpoints/execute-adhoc',
+        queryParameters: {'projectId': projectId},
+        data: requestBody,
+        options: Options(
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
+        ),
+      );
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        return {
+          'statusCode': response.statusCode ?? 500,
+          'success': false,
+          'message': 'Server error: ${response.statusCode}',
+          'data': {
+            'statusCode': response.statusCode ?? 500,
+            'responseTimeMs': 0,
+            'error': 'Server error ${response.statusCode}'
+          }
+        };
+      }
+    } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final data = Map<String, dynamic>.from(e.response!.data as Map);
+        if (!data.containsKey('statusCode') && data.containsKey('status')) {
+          data['statusCode'] = data['status'];
+        }
+        if (!data.containsKey('data')) {
+          data['data'] = {
+            'statusCode': data['statusCode'] ?? 500,
+            'responseTimeMs': 0,
+            'error': data['message'] ?? data['error'] ?? 'API Error'
+          };
+        }
+        return data;
+      }
+      return {
+        'statusCode': 500,
+        'success': false,
+        'message': e.message ?? 'Unknown error',
+        'data': {
+          'statusCode': 500,
+          'responseTimeMs': 0,
+          'error': e.message ?? 'Unknown error'
+        }
+      };
+    } catch (e) {
+      return {
+        'statusCode': 500,
+        'success': false,
+        'message': e.toString(),
+        'data': {
+          'statusCode': 500,
+          'responseTimeMs': 0,
+          'error': e.toString()
+        }
+      };
     }
   }
 }

@@ -121,6 +121,7 @@ files:
 
 	@echo "#!/bin/bash"                                                                      > $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "set -e"                                                                          >> $(PACKAGE_DIR)/DEBIAN/postinst
+	@echo "chmod +x /opt/$(BINARY_NAME)/data/flutter_assets/assets/agent/stresspilot-agent" >> $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "find /opt/$(BINARY_NAME)/jdk/bin -type f -exec chmod 755 {} \;"                 >> $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "find /opt/$(BINARY_NAME)/jdk/lib -name '*.so*' -exec chmod 644 {} \; || true"  >> $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "update-desktop-database /usr/share/applications || true"                        >> $(PACKAGE_DIR)/DEBIAN/postinst
@@ -131,6 +132,8 @@ files:
 	@echo "update-desktop-database /usr/share/applications || true"                        >> $(PACKAGE_DIR)/DEBIAN/prerm
 
 copy:
+	rm -rf $(PACKAGE_DIR)/opt/$(BINARY_NAME)
+	mkdir -p $(PACKAGE_DIR)/opt/$(BINARY_NAME)
 	cp -r $(FLUTTER_BUILD_DIR)/* $(PACKAGE_DIR)/opt/$(BINARY_NAME)/
 	mkdir -p $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk
 	cp -r $(JDK_EXTRACT)/* $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk/
@@ -145,6 +148,7 @@ permissions:
 	chmod 755 $(PACKAGE_DIR)/DEBIAN/postinst
 	chmod 755 $(PACKAGE_DIR)/DEBIAN/prerm
 	chmod +x  $(PACKAGE_DIR)/opt/$(BINARY_NAME)/$(BINARY_NAME)
+	chmod +x  $(PACKAGE_DIR)/opt/$(BINARY_NAME)/data/flutter_assets/assets/agent/stresspilot-agent
 	find $(PACKAGE_DIR)/opt/$(BINARY_NAME)/lib -name "*.so*" -exec chmod 644 {} \; 2>/dev/null || true
 	find $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk/bin -type f -exec chmod 755 {} \;
 	find $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk/lib -name "*.so*" -exec chmod 644 {} \; 2>/dev/null || true

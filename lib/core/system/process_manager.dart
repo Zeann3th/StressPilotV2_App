@@ -142,7 +142,29 @@ class ProcessManager {
 
   String resolveAgentPath() {
     final exeName = Platform.isWindows ? 'stresspilot-agent.exe' : 'stresspilot-agent';
-    return _getAssetPath('agent/$exeName');
+    final standardPath = _getAssetPath('agent/$exeName');
+
+    if (kDebugMode) return standardPath;
+
+    if (File(standardPath).existsSync()) {
+      return standardPath;
+    }
+
+    // Try alternative path (some build/deployment configurations)
+    final String executableDir = File(Platform.resolvedExecutable).parent.path;
+    final altPath = path.join(
+      executableDir,
+      'flutter_assets',
+      'agent',
+      exeName,
+    );
+
+    if (File(altPath).existsSync()) {
+      AppLogger.info('Agent found at alternative path: $altPath', name: _logName);
+      return altPath;
+    }
+
+    return standardPath;
   }
 
   String resolveAgentSourceDir() {
