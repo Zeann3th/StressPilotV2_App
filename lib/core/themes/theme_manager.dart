@@ -57,6 +57,40 @@ class ThemeManager with ChangeNotifier {
     },
   );
 
+  static const _postmanDark = PilotTheme(
+    id: 'postman-dark',
+    name: 'Postman Dark',
+    brightness: Brightness.dark,
+    colors: {
+      'background': Color(0xFF1C1C1C),
+      'surface': Color(0xFF212121),
+      'elevated': Color(0xFF2B2B2B),
+      'border': Color(0xFF333333),
+      'textPrimary': Color(0xFFFFFFFF),
+      'textSecondary': Color(0xFFA6A6A6),
+      'accent': Color(0xFFFF6C37),
+      'success': Color(0xFF0CBB52),
+      'error': Color(0xFFEB2013),
+    },
+  );
+
+  static const _postmanLight = PilotTheme(
+    id: 'postman-light',
+    name: 'Postman Light',
+    brightness: Brightness.light,
+    colors: {
+      'background': Color(0xFFFFFFFF),
+      'surface': Color(0xFFF9F9F9),
+      'elevated': Color(0xFFF2F2F2),
+      'border': Color(0xFFE6E6E6),
+      'textPrimary': Color(0xFF212121),
+      'textSecondary': Color(0xFF6B6B6B),
+      'accent': Color(0xFFFF6C37),
+      'success': Color(0xFF0CBB52),
+      'error': Color(0xFFEB2013),
+    },
+  );
+
   Future<void> initialize() async {
     final settingsManager = getIt<SettingsManager>();
     if (!settingsManager.isInitialized) {
@@ -82,6 +116,8 @@ class ThemeManager with ChangeNotifier {
     _availableThemes.clear();
     _availableThemes.add(_fallbackDark);
     _availableThemes.add(_fallbackLight);
+    _availableThemes.add(_postmanDark);
+    _availableThemes.add(_postmanLight);
 
     try {
       final String home = Platform.environment['HOME'] ??
