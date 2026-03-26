@@ -63,6 +63,7 @@ class ResultsProvider extends ChangeNotifier {
     _filteredLogs.clear();
     _rpsBuckets.clear();
     _rtBuckets.clear();
+    _runStartTime = null;
     _resetMetrics();
     _lastPlottedSecond = -1;
 
@@ -103,6 +104,7 @@ class ResultsProvider extends ChangeNotifier {
   }
 
   double _totalResponseTime = 0;
+  DateTime? _runStartTime;
 
   void _onNewLogs(List<RequestLog> newLogs) {
     _allLogs.addAll(newLogs);
@@ -180,6 +182,18 @@ class ResultsProvider extends ChangeNotifier {
   }
 
   void _updateTotalsIncremental(List<RequestLog> newFilteredLogs) {
+    if (_runStartTime == null && newFilteredLogs.isNotEmpty) {
+      final first = newFilteredLogs.first;
+      if (first.createdAt != null) {
+        try {
+          _runStartTime = DateTime.parse(first.createdAt!);
+        } catch (_) {
+          _runStartTime = DateTime.now();
+        }
+      } else {
+        _runStartTime = DateTime.now();
+      }
+    }
     _totalRequests += newFilteredLogs.length;
     for (var l in newFilteredLogs) {
       if (l.statusCode == null || l.statusCode! >= 400) {
@@ -199,6 +213,18 @@ class ResultsProvider extends ChangeNotifier {
     _totalRequests = _filteredLogs.length;
     _errorCount = 0;
     _totalResponseTime = 0;
+    _runStartTime = null;
+
+    if (_filteredLogs.isNotEmpty) {
+      final first = _filteredLogs.first;
+      if (first.createdAt != null) {
+        try {
+          _runStartTime = DateTime.parse(first.createdAt!);
+        } catch (_) {
+          _runStartTime = DateTime.now();
+        }
+      }
+    }
 
     for (var l in _filteredLogs) {
       if (l.statusCode == null || l.statusCode! >= 400) {
@@ -248,7 +274,14 @@ class ResultsProvider extends ChangeNotifier {
     _rpsPoints.removeWhere((p) => p.x < cutoffX);
     _responseTimePoints.removeWhere((p) => p.x < cutoffX);
 
-    _requestsPerSecond = (_rpsBuckets[lastCompletedSecond] ?? 0).toDouble();
+    if (_runStartTime != null && _totalRequests > 0) {
+      final elapsedSeconds =
+          DateTime.now().difference(_runStartTime!).inMilliseconds / 1000.0;
+      _requestsPerSecond =
+          elapsedSeconds > 0 ? _totalRequests / elapsedSeconds : 0;
+    } else {
+      _requestsPerSecond = 0;
+    }
 
     final now = DateTime.now();
     if (addedNewPoints ||
@@ -271,6 +304,8 @@ class ResultsProvider extends ChangeNotifier {
     _avgResponseTime = 0;
     _totalRequests = 0;
     _errorCount = 0;
+    _totalResponseTime = 0;
+    _runStartTime = null;
     _rpsPoints.clear();
     _responseTimePoints.clear();
     _lastPlottedSecond = -1;

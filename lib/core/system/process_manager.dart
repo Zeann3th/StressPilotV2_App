@@ -191,7 +191,10 @@ class ProcessManager {
     }
   }
 
-  Future<void> startBackend({bool attachLogs = true}) async {
+  Future<void> startBackend({
+    bool attachLogs = true,
+    void Function(int exitCode)? onExit,
+  }) async {
     if (_processes.containsKey('backend')) {
       AppLogger.warning('Backend already running', name: _logName);
       return;
@@ -248,14 +251,21 @@ class ProcessManager {
       if (!kDebugMode) {
         process.stdout.transform(utf8.decoder).listen((data) {
           sink.write(data);
+          AppLogger.debug(data.trim(), name: 'backend.stdout');
         });
         process.stderr.transform(utf8.decoder).listen((data) {
           sink.write('[ERR] $data');
+          AppLogger.error(data.trim(), name: 'backend.stderr');
         });
         process.exitCode.then((code) async {
           fileLog('Process exited with code: $code');
+          AppLogger.error('Backend process exited with code: $code', name: _logName);
           await sink.flush();
           await sink.close();
+          _processes.remove('backend');
+          if (onExit != null) {
+            onExit(code);
+          }
         });
       } else {
         // Close sink early in debug — AppLogger handles it

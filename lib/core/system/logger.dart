@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 
@@ -14,93 +15,123 @@ enum LogLevel {
 
 class AppLogger {
   static const String _defaultName = 'StressPilot';
+  static final Map<String, IOSink> _fileSinks = {};
 
-  static bool enabled = kDebugMode;
+  static bool enabled = true;
 
-  static LogLevel minimumLevel = LogLevel.debug;
+  static LogLevel minimumLevel = kDebugMode ? LogLevel.debug : LogLevel.info;
 
   static void debug(
-      String message, {
-        String? name,
-        Object? error,
-        StackTrace? stackTrace,
-      }) {
+    String message, {
+    String? name,
+    Object? error,
+    StackTrace? stackTrace,
+    String? filePath,
+  }) {
     _log(
       message,
       level: LogLevel.debug,
       name: name,
       error: error,
       stackTrace: stackTrace,
+      filePath: filePath,
     );
   }
 
   static void info(
-      String message, {
-        String? name,
-        Object? error,
-        StackTrace? stackTrace,
-      }) {
+    String message, {
+    String? name,
+    Object? error,
+    StackTrace? stackTrace,
+    String? filePath,
+  }) {
     _log(
       message,
       level: LogLevel.info,
       name: name,
       error: error,
       stackTrace: stackTrace,
+      filePath: filePath,
     );
   }
 
   static void warning(
-      String message, {
-        String? name,
-        Object? error,
-        StackTrace? stackTrace,
-      }) {
+    String message, {
+    String? name,
+    Object? error,
+    StackTrace? stackTrace,
+    String? filePath,
+  }) {
     _log(
       message,
       level: LogLevel.warning,
       name: name,
       error: error,
       stackTrace: stackTrace,
+      filePath: filePath,
     );
   }
 
   static void error(
-      String message, {
-        String? name,
-        Object? error,
-        StackTrace? stackTrace,
-      }) {
+    String message, {
+    String? name,
+    Object? error,
+    StackTrace? stackTrace,
+    String? filePath,
+  }) {
     _log(
       message,
       level: LogLevel.error,
       name: name,
       error: error,
       stackTrace: stackTrace,
+      filePath: filePath,
     );
   }
 
   static void critical(
-      String message, {
-        String? name,
-        Object? error,
-        StackTrace? stackTrace,
-      }) {
+    String message, {
+    String? name,
+    Object? error,
+    StackTrace? stackTrace,
+    String? filePath,
+  }) {
     _log(
       message,
       level: LogLevel.critical,
       name: name,
       error: error,
       stackTrace: stackTrace,
+      filePath: filePath,
     );
   }
 
+  static Future<void> _logToFile(String filePath, String message) async {
+    try {
+      IOSink? sink = _fileSinks[filePath];
+      if (sink == null) {
+        final file = File(filePath);
+        if (!await file.parent.exists()) {
+          await file.parent.create(recursive: true);
+        }
+        sink = file.openWrite(mode: FileMode.append);
+        _fileSinks[filePath] = sink;
+      }
+      sink.writeln('[${DateTime.now().toIso8601String()}] $message');
+    } catch (e) {
+      // Fallback to print if file logging fails to avoid recursion
+      print('Failed to log to file $filePath: $e');
+    }
+  }
+
   static void _log(
-      String message, {
-        required LogLevel level,
-        String? name,
-        Object? error,
-        StackTrace? stackTrace,
-      }) {
+    String message, {
+    required LogLevel level,
+    String? name,
+    Object? error,
+    StackTrace? stackTrace,
+    String? filePath,
+  }) {
     if (!enabled || level.value < minimumLevel.value) return;
 
     final logName = name ?? _defaultName;
@@ -114,10 +145,18 @@ class AppLogger {
       stackTrace: stackTrace,
     );
 
+    final timestamp = DateTime.now().toIso8601String();
+    final prefix = _getLevelPrefix(level);
+    final formattedMessage = '$prefix [$logName] $message';
+
+    if (filePath != null) {
+      _logToFile(filePath, formattedMessage);
+      if (error != null) _logToFile(filePath, '  Error: $error');
+      if (stackTrace != null) _logToFile(filePath, '  Stack: $stackTrace');
+    }
+
     if (kDebugMode) {
-      final timestamp = DateTime.now().toIso8601String();
-      final prefix = _getLevelPrefix(level);
-      print('[$timestamp] $prefix [$logName] $message');
+      print('[$timestamp] $formattedMessage');
       if (error != null) {
         print('  Error: $error');
       }
@@ -140,6 +179,14 @@ class AppLogger {
       case LogLevel.critical:
         return 'CRIT';
     }
+  }
+
+  static Future<void> dispose() async {
+    for (final sink in _fileSinks.values) {
+      await sink.flush();
+      await sink.close();
+    }
+    _fileSinks.clear();
   }
 
   static Future<T> measure<T>(

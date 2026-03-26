@@ -85,7 +85,7 @@ class SessionManager {
           return true;
         }
       } on DioException catch (e) {
-        AppLogger.debug(
+        AppLogger.warning(
           'Health check attempt $attempt/$maxAttempts failed: ${e.type} - ${e.message}',
           name: _logName,
         );

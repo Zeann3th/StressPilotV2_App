@@ -10,6 +10,7 @@ class HttpClient {
   static final Map<String, Dio> _dioInstances = {};
   static CookieJar? _cookieJar;
   static SessionManager? _sessionManager;
+  static String? logFilePath;
 
   static Dio getInstance({SessionManager? sessionManager, String? baseUrl}) {
     if (sessionManager != null) {
@@ -34,6 +35,19 @@ class HttpClient {
     final jar = CookieJar();
 
     dio.interceptors.add(CookieManager(jar));
+
+    // Error logging in release too
+    dio.interceptors.add(InterceptorsWrapper(
+      onError: (error, handler) {
+        AppLogger.error(
+          'HTTP Error: ${error.type} - ${error.message} (Path: ${error.requestOptions.path})',
+          name: 'HTTP',
+          error: error.error,
+          filePath: logFilePath,
+        );
+        return handler.next(error);
+      },
+    ));
 
     dio.interceptors.add(
       InterceptorsWrapper(
@@ -79,7 +93,12 @@ class HttpClient {
                 'Session refresh already in progress, waiting...',
                 name: 'HTTP',
               );
-              await Future.delayed(const Duration(milliseconds: 500));
+
+              int attempts = 0;
+              while (_sessionManager?.isRefreshing == true && attempts < 20) {
+                await Future.delayed(const Duration(milliseconds: 500));
+                attempts++;
+              }
 
               try {
                 final response = await dio.fetch(error.requestOptions);
