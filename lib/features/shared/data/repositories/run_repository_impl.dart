@@ -27,7 +27,7 @@ class RunRepositoryImpl implements RunRepository {
   }
 
   @override
-  Future<Run> getRun(int runId) async {
+  Future<Run> getRun(String runId) async {
     final response = await _dio.get('/api/v1/runs/$runId');
     return Run.fromJson(response.data['data']);
   }
@@ -80,7 +80,7 @@ class RunRepositoryImpl implements RunRepository {
   }
 
   @override
-  Future<void> interruptRun(int runId) async {
+  Future<void> interruptRun(String runId) async {
     await _dio.delete('/api/v1/runs/$runId');
   }
 }

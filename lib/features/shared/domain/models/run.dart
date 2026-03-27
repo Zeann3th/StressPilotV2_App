@@ -1,5 +1,5 @@
 class Run {
-  final int id;
+  final String id;
   final int flowId;
   final String status;
   final int threads;
@@ -21,7 +21,7 @@ class Run {
 
   factory Run.fromJson(Map<String, dynamic> json) {
     return Run(
-      id: json['id'],
+      id: json['id'].toString(),
       flowId: json['flowId'],
       status: json['status'] ?? '',
       threads: json['threads'] ?? 0,

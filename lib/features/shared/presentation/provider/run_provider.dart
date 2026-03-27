@@ -7,8 +7,8 @@ import 'package:stress_pilot/features/shared/domain/models/run.dart';
 class RunProvider extends ChangeNotifier {
   final RunRepository _runRepository;
 
-  final Set<int> _trackedRunIds = {};
-  final Map<int, Run> _runningRuns = {};
+  final Set<String> _trackedRunIds = {};
+  final Map<String, Run> _runningRuns = {};
 
   RunProvider(this._runRepository) {
     syncRunningRuns();
@@ -19,7 +19,7 @@ class RunProvider extends ChangeNotifier {
 
   List<Run> get runningRuns => _runningRuns.values.toList();
 
-  Future<void> trackRun(int runId) async {
+  Future<void> trackRun(String runId) async {
     if (_trackedRunIds.contains(runId)) return;
     _trackedRunIds.add(runId);
     _startGlobalPolling();
@@ -56,7 +56,7 @@ class RunProvider extends ChangeNotifier {
 
   Future<void> _pollAllTrackedRuns() async {
     while (_isPolling && _trackedRunIds.isNotEmpty) {
-      final idsToPoll = List<int>.from(_trackedRunIds);
+      final idsToPoll = List<String>.from(_trackedRunIds);
       for (final runId in idsToPoll) {
         try {
           final run = await _runRepository.getRun(runId);
@@ -92,7 +92,7 @@ class RunProvider extends ChangeNotifier {
     _isPolling = false;
   }
 
-  Future<void> interruptRun(int runId) async {
+  Future<void> interruptRun(String runId) async {
     try {
       await _runRepository.interruptRun(runId);
       _trackedRunIds.remove(runId);

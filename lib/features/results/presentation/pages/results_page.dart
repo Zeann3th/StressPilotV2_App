@@ -17,7 +17,7 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
 
 class ResultsPage extends StatefulWidget {
-  final int runId;
+  final String runId;
 
   const ResultsPage({super.key, required this.runId});
 

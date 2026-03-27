@@ -74,7 +74,7 @@ class FlowRepositoryImpl implements FlowRepository {
   }
 
   @override
-  Future<void> runFlow({
+  Future<String> runFlow({
     required int flowId,
     required RunFlowRequest runFlowRequest,
     MultipartFile? file,
@@ -93,7 +93,7 @@ class FlowRepositoryImpl implements FlowRepository {
       formData.files.add(MapEntry('file', file));
     }
 
-    await _dio.post(
+    final response = await _dio.post(
       '/api/v1/flows/$flowId/execute',
       data: formData,
       options: Options(
@@ -102,5 +102,6 @@ class FlowRepositoryImpl implements FlowRepository {
         receiveTimeout: const Duration(seconds: 60),
       ),
     );
+    return response.data['data'].toString();
   }
 }

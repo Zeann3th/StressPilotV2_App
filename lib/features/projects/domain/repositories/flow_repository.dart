@@ -9,5 +9,5 @@ abstract class FlowRepository {
   Future<Flow> updateFlow({required int flowId, String? name, String? description});
   Future<void> deleteFlow(int flowId);
   Future<List<FlowStep>> configureFlow(int flowId, List<FlowStep> steps);
-  Future<void> runFlow({required int flowId, required RunFlowRequest runFlowRequest, MultipartFile? file});
+  Future<String> runFlow({required int flowId, required RunFlowRequest runFlowRequest, MultipartFile? file});
 }

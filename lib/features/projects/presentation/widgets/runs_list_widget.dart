@@ -24,7 +24,7 @@ class _RunsListWidgetState extends State<RunsListWidget> {
   final _runRepository = getIt<RunRepository>();
   List<Run>? _runs;
   bool _isLoading = false;
-  final Set<int> _exportingRunIds = {};
+  final Set<String> _exportingRunIds = {};
 
   @override
   void initState() {

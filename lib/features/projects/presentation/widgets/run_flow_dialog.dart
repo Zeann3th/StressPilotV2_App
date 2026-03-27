@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
 
@@ -98,18 +99,18 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
     if (!mounted) return;
 
     try {
-      await context.read<FlowProvider>().runFlow(
+      final runId = await context.read<FlowProvider>().runFlow(
         flowId: widget.flowId,
         runFlowRequest: request,
         file: multipartFile,
       );
 
       if (!mounted) return;
-      await context.read<RunProvider>().syncRunningRuns();
+      await context.read<RunProvider>().trackRun(runId);
 
       if (!mounted) return;
       Navigator.of(context).pop();
-      PilotToast.show(context, 'Flow execution started');
+      AppNavigator.pushNamed(AppRouter.resultsRoute, arguments: {'runId': runId});
     } catch (e) {
       if (mounted) {
         PilotToast.show(context, 'Error: $e', isError: true);

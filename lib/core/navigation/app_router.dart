@@ -74,7 +74,7 @@ class AppRouter {
         );
       case resultsRoute:
         final args = settings.arguments as Map<String, dynamic>;
-        return buildRoute(ResultsPage(runId: args['runId']));
+        return buildRoute(ResultsPage(runId: args['runId'] as String));
       case marketplaceRoute:
         return buildRoute(const MarketplacePage());
       case agentRoute:

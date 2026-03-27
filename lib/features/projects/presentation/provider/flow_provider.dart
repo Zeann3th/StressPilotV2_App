@@ -206,13 +206,13 @@ class FlowProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> runFlow({
+  Future<String> runFlow({
     required int flowId,
     required flow_domain.RunFlowRequest runFlowRequest,
     MultipartFile? file,
   }) async {
     try {
-      await _flowRepository.runFlow(
+      return await _flowRepository.runFlow(
         flowId: flowId,
         runFlowRequest: runFlowRequest,
         file: file,

@@ -54,7 +54,7 @@ class ResultsProvider extends ChangeNotifier {
   List<FlSpotData> get responseTimePoints => _responseTimePoints;
   List<FlSpotData> get rpsPoints => _rpsPoints;
 
-  void setRun(int runId, int flowId, {bool isCompleted = false}) async {
+  void setRun(String runId, int flowId, {bool isCompleted = false}) async {
     if (!_repository.isConnected) {
       _repository.connect();
     }
