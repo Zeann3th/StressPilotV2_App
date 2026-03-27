@@ -222,12 +222,18 @@ class _CanvasContentState extends State<_CanvasContent>
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.delete): () {
-          if (canvasProvider.selectedNodeId != null) {
+          if (_highlightedConnectionId != null) {
+            canvasProvider.removeConnection(_highlightedConnectionId!);
+            setState(() => _highlightedConnectionId = null);
+          } else if (canvasProvider.selectedNodeId != null) {
             canvasProvider.removeNode(canvasProvider.selectedNodeId!);
           }
         },
         const SingleActivator(LogicalKeyboardKey.backspace): () {
-          if (canvasProvider.selectedNodeId != null) {
+          if (_highlightedConnectionId != null) {
+            canvasProvider.removeConnection(_highlightedConnectionId!);
+            setState(() => _highlightedConnectionId = null);
+          } else if (canvasProvider.selectedNodeId != null) {
             canvasProvider.removeNode(canvasProvider.selectedNodeId!);
           }
         },
@@ -269,12 +275,6 @@ class _CanvasContentState extends State<_CanvasContent>
                         if (conn != null) {
                           _didTapConnection = true;
                           setState(() => _highlightedConnectionId = conn.id);
-                          Future.delayed(const Duration(milliseconds: 180), () {
-                            if (mounted) {
-                              canvasProvider.removeConnection(conn.id);
-                              setState(() => _highlightedConnectionId = null);
-                            }
-                          });
                         } else {
                           _didTapConnection = false;
                           if (_highlightedConnectionId != null) {
