@@ -552,10 +552,13 @@ class _ResultsPageState extends State<ResultsPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Run #${_currentRun!.id}',
-                style: AppTypography.heading.copyWith(
-                  color: textCol,
+              Flexible(
+                child: Text(
+                  'Run #${_currentRun!.id}',
+                  style: AppTypography.heading.copyWith(
+                    color: textCol,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(

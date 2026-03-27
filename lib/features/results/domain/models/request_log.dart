@@ -19,13 +19,20 @@ class RequestLog {
     this.createdAt,
   });
 
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
   factory RequestLog.fromJson(Map<String, dynamic> json) {
     return RequestLog(
-      id: json['id'],
-      runId: json['runId'],
-      endpointId: json['endpointId'],
-      statusCode: json['statusCode'],
-      responseTime: json['responseTime'],
+      id: _parseInt(json['id']),
+      runId: _parseInt(json['runId']),
+      endpointId: _parseInt(json['endpointId']),
+      statusCode: _parseInt(json['statusCode']),
+      responseTime: _parseInt(json['responseTime']),
       request: json['request'],
       response: json['response'],
       createdAt: json['createdAt'],
