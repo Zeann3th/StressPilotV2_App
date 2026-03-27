@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-
-import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/core/themes/components/components.dart';
-
-import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/global_search_dropdown.dart';
 
 class AppTopBar extends StatefulWidget {
   final TextEditingController? searchController;
@@ -47,16 +45,8 @@ class _AppTopBarState extends State<AppTopBar> {
           const Spacer(),
 
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 350),
-            child: SizedBox(
-              height: 36,
-              child: PilotInput(
-                controller: widget.searchController,
-                onSubmitted: widget.onSearchSubmitted,
-                placeholder: 'Search projects, endpoints...',
-                prefixIcon: Icons.search_rounded,
-              ),
-            ),
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: const GlobalSearchDropdown(),
           ),
 
           const Spacer(),
