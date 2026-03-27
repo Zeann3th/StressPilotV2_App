@@ -1,11 +1,7 @@
-import 'dart:io' hide HttpClient;
-import 'package:path/path.dart' as path;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-
-import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
@@ -50,13 +46,6 @@ class _AppRootState extends State<AppRoot> {
     try {
       AppLogger.info('Starting application initialization', name: 'AppRoot');
 
-      if (!kDebugMode) {
-        final workingDir = File(Platform.resolvedExecutable).parent.path;
-        final logDir = Platform.isWindows
-            ? (Platform.environment['APPDATA'] ?? workingDir)
-            : (Platform.environment['HOME'] ?? workingDir);
-        HttpClient.logFilePath = path.join(logDir, 'stresspilot', 'http.log');
-      }
 
       final appStateManager = getIt<AppStateManager>();
 

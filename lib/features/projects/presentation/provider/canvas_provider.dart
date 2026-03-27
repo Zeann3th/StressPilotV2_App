@@ -8,6 +8,8 @@ import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
 
 enum CanvasMode { move, connect }
 
+enum ConnectionLineStyle { straight, curved, orthogonal }
+
 class CanvasProvider extends ChangeNotifier {
   List<CanvasNode> _nodes = [];
   List<CanvasConnection> _connections = [];
@@ -21,6 +23,8 @@ class CanvasProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isSaving = false;
   bool _isLocked = false;
+
+  ConnectionLineStyle _lineStyle = ConnectionLineStyle.curved;
 
   String? _loadedFlowId;
 
@@ -36,6 +40,13 @@ class CanvasProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   bool get isLocked => _isLocked;
+  ConnectionLineStyle get lineStyle => _lineStyle;
+
+  void cycleLineStyle() {
+    final styles = ConnectionLineStyle.values;
+    _lineStyle = styles[(styles.indexOf(_lineStyle) + 1) % styles.length];
+    notifyListeners();
+  }
 
   void setTempEndPos(Offset? pos) {
     _tempEndPos = pos;
@@ -132,7 +143,7 @@ class CanvasProvider extends ChangeNotifier {
       return;
     }
 
-    if (_selectedSourceNodeId == targetNodeId) return;
+    // Allow self-loops (node connecting to itself)
 
     ConnectionType connType = ConnectionType.defaultType;
     if (_selectedSourceHandle == 'true') connType = ConnectionType.trueType;

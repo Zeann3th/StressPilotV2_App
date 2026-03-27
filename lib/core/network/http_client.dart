@@ -10,8 +10,6 @@ class HttpClient {
   static final Map<String, Dio> _dioInstances = {};
   static CookieJar? _cookieJar;
   static SessionManager? _sessionManager;
-  static String? logFilePath;
-
   static Dio getInstance({SessionManager? sessionManager, String? baseUrl}) {
     if (sessionManager != null) {
       _sessionManager = sessionManager;
@@ -43,7 +41,6 @@ class HttpClient {
           'HTTP Error: ${error.type} - ${error.message} (Path: ${error.requestOptions.path})',
           name: 'HTTP',
           error: error.error,
-          filePath: logFilePath,
         );
         return handler.next(error);
       },

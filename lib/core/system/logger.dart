@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 
@@ -15,7 +14,6 @@ enum LogLevel {
 
 class AppLogger {
   static const String _defaultName = 'StressPilot';
-  static final Map<String, IOSink> _fileSinks = {};
 
   static bool enabled = true;
 
@@ -26,16 +24,8 @@ class AppLogger {
     String? name,
     Object? error,
     StackTrace? stackTrace,
-    String? filePath,
   }) {
-    _log(
-      message,
-      level: LogLevel.debug,
-      name: name,
-      error: error,
-      stackTrace: stackTrace,
-      filePath: filePath,
-    );
+    _log(message, level: LogLevel.debug, name: name, error: error, stackTrace: stackTrace);
   }
 
   static void info(
@@ -43,16 +33,8 @@ class AppLogger {
     String? name,
     Object? error,
     StackTrace? stackTrace,
-    String? filePath,
   }) {
-    _log(
-      message,
-      level: LogLevel.info,
-      name: name,
-      error: error,
-      stackTrace: stackTrace,
-      filePath: filePath,
-    );
+    _log(message, level: LogLevel.info, name: name, error: error, stackTrace: stackTrace);
   }
 
   static void warning(
@@ -60,16 +42,8 @@ class AppLogger {
     String? name,
     Object? error,
     StackTrace? stackTrace,
-    String? filePath,
   }) {
-    _log(
-      message,
-      level: LogLevel.warning,
-      name: name,
-      error: error,
-      stackTrace: stackTrace,
-      filePath: filePath,
-    );
+    _log(message, level: LogLevel.warning, name: name, error: error, stackTrace: stackTrace);
   }
 
   static void error(
@@ -77,16 +51,8 @@ class AppLogger {
     String? name,
     Object? error,
     StackTrace? stackTrace,
-    String? filePath,
   }) {
-    _log(
-      message,
-      level: LogLevel.error,
-      name: name,
-      error: error,
-      stackTrace: stackTrace,
-      filePath: filePath,
-    );
+    _log(message, level: LogLevel.error, name: name, error: error, stackTrace: stackTrace);
   }
 
   static void critical(
@@ -94,34 +60,8 @@ class AppLogger {
     String? name,
     Object? error,
     StackTrace? stackTrace,
-    String? filePath,
   }) {
-    _log(
-      message,
-      level: LogLevel.critical,
-      name: name,
-      error: error,
-      stackTrace: stackTrace,
-      filePath: filePath,
-    );
-  }
-
-  static Future<void> _logToFile(String filePath, String message) async {
-    try {
-      IOSink? sink = _fileSinks[filePath];
-      if (sink == null) {
-        final file = File(filePath);
-        if (!await file.parent.exists()) {
-          await file.parent.create(recursive: true);
-        }
-        sink = file.openWrite(mode: FileMode.append);
-        _fileSinks[filePath] = sink;
-      }
-      sink.writeln('[${DateTime.now().toIso8601String()}] $message');
-    } catch (e) {
-      // Fallback to print if file logging fails to avoid recursion
-      print('Failed to log to file $filePath: $e');
-    }
+    _log(message, level: LogLevel.critical, name: name, error: error, stackTrace: stackTrace);
   }
 
   static void _log(
@@ -130,7 +70,6 @@ class AppLogger {
     String? name,
     Object? error,
     StackTrace? stackTrace,
-    String? filePath,
   }) {
     if (!enabled || level.value < minimumLevel.value) return;
 
@@ -144,49 +83,6 @@ class AppLogger {
       error: error,
       stackTrace: stackTrace,
     );
-
-    final timestamp = DateTime.now().toIso8601String();
-    final prefix = _getLevelPrefix(level);
-    final formattedMessage = '$prefix [$logName] $message';
-
-    if (filePath != null) {
-      _logToFile(filePath, formattedMessage);
-      if (error != null) _logToFile(filePath, '  Error: $error');
-      if (stackTrace != null) _logToFile(filePath, '  Stack: $stackTrace');
-    }
-
-    if (kDebugMode) {
-      print('[$timestamp] $formattedMessage');
-      if (error != null) {
-        print('  Error: $error');
-      }
-      if (stackTrace != null) {
-        print('  Stack: $stackTrace');
-      }
-    }
-  }
-
-  static String _getLevelPrefix(LogLevel level) {
-    switch (level) {
-      case LogLevel.debug:
-        return 'DEBUG';
-      case LogLevel.info:
-        return 'INFO';
-      case LogLevel.warning:
-        return 'WARN';
-      case LogLevel.error:
-        return 'ERROR';
-      case LogLevel.critical:
-        return 'CRIT';
-    }
-  }
-
-  static Future<void> dispose() async {
-    for (final sink in _fileSinks.values) {
-      await sink.flush();
-      await sink.close();
-    }
-    _fileSinks.clear();
   }
 
   static Future<T> measure<T>(
@@ -200,10 +96,7 @@ class AppLogger {
     try {
       final result = await function();
       stopwatch.stop();
-      info(
-        'Completed: $operation in ${stopwatch.elapsedMilliseconds}ms',
-        name: name,
-      );
+      info('Completed: $operation in ${stopwatch.elapsedMilliseconds}ms', name: name);
       return result;
     } catch (e, st) {
       stopwatch.stop();

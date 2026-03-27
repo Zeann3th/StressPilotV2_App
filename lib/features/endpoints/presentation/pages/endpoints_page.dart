@@ -498,6 +498,8 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   async_timer.Timer? _debounce;
 
   bool? _isSuccess;
+  bool _showRaw = false;
+  double _responsePanelHeight = 260.0;
 
   late TabController _reqTabCtrl;
 
@@ -931,103 +933,150 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                 ),
 
                 Expanded(
-                  flex: 3,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border(top: BorderSide(color: border.withValues(alpha: 0.3))),
-                    ),
-                    child: TabBarView(
-                      controller: _reqTabCtrl,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: KeyValueEditor(data: _params, onChanged: (d) => _params = d),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(1),
-                          child: Stack(
-                            children: [
-                              TextField(
-                                controller: _bodyCtrl,
-                                maxLines: null,
-                                expands: true,
-                                style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: textColor),
-                                decoration: InputDecoration(
-                                  hintText: 'Request Body (JSON)',
-                                  hintStyle: TextStyle(color: secondaryText),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.all(16),
-                                  fillColor: bg.withValues(alpha: 0.3),
-                                  filled: true,
+                  child: LayoutBuilder(
+                    builder: (ctx, constraints) {
+                      final totalH = constraints.maxHeight;
+                      final respH = _responsePanelHeight.clamp(80.0, totalH - 80.0);
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border(top: BorderSide(color: border.withValues(alpha: 0.3))),
+                              ),
+                              child: TabBarView(
+                                controller: _reqTabCtrl,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: KeyValueEditor(data: _params, onChanged: (d) => _params = d),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(1),
+                                    child: Stack(
+                                      children: [
+                                        TextField(
+                                          controller: _bodyCtrl,
+                                          maxLines: null,
+                                          expands: true,
+                                          style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: textColor),
+                                          decoration: InputDecoration(
+                                            hintText: 'Request Body (JSON)',
+                                            hintStyle: TextStyle(color: secondaryText),
+                                            border: InputBorder.none,
+                                            contentPadding: const EdgeInsets.all(16),
+                                            fillColor: bg.withValues(alpha: 0.3),
+                                            filled: true,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 8,
+                                          right: 16,
+                                          child: PilotButton.ghost(
+                                            label: 'Beautify',
+                                            icon: LucideIcons.sparkles,
+                                            onPressed: _beautifyJson,
+                                            compact: true,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  _buildSettingsTab(textColor, secondaryText, border),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Draggable divider
+                          MouseRegion(
+                            cursor: SystemMouseCursors.resizeRow,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onVerticalDragUpdate: (d) {
+                                setState(() {
+                                  _responsePanelHeight = (_responsePanelHeight - d.delta.dy)
+                                      .clamp(80.0, totalH - 80.0);
+                                });
+                              },
+                              child: Container(
+                                height: 8,
+                                color: border.withValues(alpha: 0.4),
+                                alignment: Alignment.center,
+                                child: Container(
+                                  width: 36,
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: secondaryText.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
                                 ),
                               ),
-                              Positioned(
-                                top: 8,
-                                right: 16,
-                                child: PilotButton.ghost(
-                                  label: 'Beautify',
-                                  icon: LucideIcons.sparkles,
-                                  onPressed: _beautifyJson,
-                                  compact: true,
-                                ),
+                            ),
+                          ),
+
+                          // Response panel
+                          SizedBox(
+                            height: respH,
+                            child: Container(
+                              color: bg,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: surface,
+                                      border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        _buildRespTab('Response', !_showRaw, secondaryText),
+                                        const SizedBox(width: 4),
+                                        _buildRespTab('Raw', _showRaw, secondaryText),
+                                        const Spacer(),
+                                        if (_isLoading)
+                                          Text('${_elapsedMs}ms', style: TextStyle(color: accentColor, fontSize: 12, fontFamily: 'JetBrains Mono')),
+                                        if (_statusCode != null && !_isLoading) ...[
+                                          _buildStatusBadge(_isSuccess == true, _statusCode!),
+                                          const SizedBox(width: 10),
+                                          Text('${_responseTime}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono')),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _response == null
+                                        ? _buildResponseEmptyState(secondaryText)
+                                        : _showRaw
+                                            ? SingleChildScrollView(
+                                                padding: const EdgeInsets.all(16),
+                                                child: SelectableText(
+                                                  _getRawResponse(_response!),
+                                                  style: TextStyle(
+                                                    fontFamily: 'JetBrains Mono',
+                                                    fontSize: 12,
+                                                    color: textColor,
+                                                  ),
+                                                ),
+                                              )
+                                            : SingleChildScrollView(
+                                                padding: const EdgeInsets.all(16),
+                                                child: JsonViewer(json: _getResponseData(_response!)),
+                                              ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                        _buildSettingsTab(textColor, secondaryText, border),
-                      ],
-                    ),
-                  ),
-                ),
-
-                Container(
-                  height: 1,
-                  color: border.withValues(alpha: 0.5),
-                ),
-
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    color: bg,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: surface,
-                            border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
-                          ),
-                          child: Row(
-                            children: [
-                              Text('Response', style: TextStyle(color: secondaryText, fontWeight: FontWeight.w600, fontSize: 12)),
-                              const Spacer(),
-                              if (_isLoading) ...[
-                                Text('${_elapsedMs}ms', style: TextStyle(color: accentColor, fontSize: 12, fontFamily: 'JetBrains Mono')),
-                              ],
-                              if (_statusCode != null && !_isLoading) ...[
-                                _buildStatusBadge(_isSuccess == true, _statusCode!),
-                                const SizedBox(width: 12),
-                                Text('${_responseTime}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono')),
-                              ],
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: _response == null
-                              ? _buildResponseEmptyState(secondaryText)
-                              : SingleChildScrollView(
-                                  padding: const EdgeInsets.all(16),
-                                  child: JsonViewer(json: _filterResponse(_response!)),
-                                ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
@@ -1103,24 +1152,63 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     );
   }
 
-  Map<String, dynamic> _filterResponse(Map<String, dynamic> r) {
-    final filtered = <String, dynamic>{};
-    if (r.containsKey('message')) filtered['message'] = r['message'];
-    if (r.containsKey('data')) {
-      filtered['data'] = r['data'];
-    } else if (r.containsKey('body')) {
-      filtered['data'] = r['body'];
-    } else if (r.containsKey('error')) {
-      filtered['error'] = r['error'];
-    }
-
-    if (filtered.isEmpty) {
-      final metadataKeys = ['statusCode', 'success', 'responseTimeMs', 'timestamp', 'headers'];
-      final cleaned = Map<String, dynamic>.from(r);
-      cleaned.removeWhere((k, v) => metadataKeys.contains(k));
+  // Returns only the actual API response data (data.data), excluding all metadata
+  Map<String, dynamic> _getResponseData(Map<String, dynamic> r) {
+    if (r.containsKey('error')) return {'error': r['error']};
+    final outerData = r['data'];
+    if (outerData is Map<String, dynamic>) {
+      final innerData = outerData['data'];
+      if (innerData is Map<String, dynamic>) return innerData;
+      // Fallback: show outer data minus known metadata
+      final cleaned = Map<String, dynamic>.from(outerData);
+      cleaned.removeWhere((k, _) => const {
+        'statusCode', 'success', 'responseTimeMs', 'message', 'rawResponse'
+      }.contains(k));
       return cleaned;
     }
-    return filtered;
+    return r;
+  }
+
+  String _getRawResponse(Map<String, dynamic> r) {
+    final outerData = r['data'];
+    if (outerData is Map<String, dynamic>) {
+      final raw = outerData['rawResponse'];
+      if (raw is String) {
+        // Try to pretty-print if it's valid JSON
+        try {
+          final decoded = jsonDecode(raw);
+          return const JsonEncoder.withIndent('  ').convert(decoded);
+        } catch (_) {
+          return raw;
+        }
+      }
+    }
+    return const JsonEncoder.withIndent('  ').convert(r);
+  }
+
+  Widget _buildRespTab(String label, bool active, Color secondaryText) {
+    return GestureDetector(
+      onTap: () => setState(() => _showRaw = label == 'Raw'),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: active ? AppColors.accent.withValues(alpha: 0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: active ? AppColors.accent.withValues(alpha: 0.4) : Colors.transparent,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? AppColors.accent : secondaryText,
+            fontSize: 12,
+            fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
   }
 }
 

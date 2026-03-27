@@ -103,6 +103,8 @@ class _CanvasContentState extends State<_CanvasContent>
   CanvasProvider? _canvasProvider;
 
   bool _initialLoadScheduled = false;
+  String? _highlightedConnectionId;
+  bool _didTapConnection = false;
 
   final GlobalKey _toolbarKey = GlobalKey();
 
@@ -258,7 +260,33 @@ class _CanvasContentState extends State<_CanvasContent>
                     maxScale: 2.0,
                     constrained: false,
                     child: GestureDetector(
+                      onTapDown: (details) {
+                        final conn = _findConnectionAt(
+                          details.localPosition,
+                          canvasProvider.connections,
+                          canvasProvider.nodes,
+                        );
+                        if (conn != null) {
+                          _didTapConnection = true;
+                          setState(() => _highlightedConnectionId = conn.id);
+                          Future.delayed(const Duration(milliseconds: 180), () {
+                            if (mounted) {
+                              canvasProvider.removeConnection(conn.id);
+                              setState(() => _highlightedConnectionId = null);
+                            }
+                          });
+                        } else {
+                          _didTapConnection = false;
+                          if (_highlightedConnectionId != null) {
+                            setState(() => _highlightedConnectionId = null);
+                          }
+                        }
+                      },
                       onTap: () {
+                        if (_didTapConnection) {
+                          _didTapConnection = false;
+                          return;
+                        }
                         canvasProvider.selectNode(null);
                         canvasProvider.selectSourceNode('', '');
                       },
@@ -279,6 +307,8 @@ class _CanvasContentState extends State<_CanvasContent>
                                       animationOffset:
                                           _animationController.value * 14.0,
                                       colors: Theme.of(context).colorScheme,
+                                      lineStyle: canvasProvider.lineStyle,
+                                      highlightedConnectionId: _highlightedConnectionId,
                                     ),
                                   );
                                 },
@@ -584,6 +614,13 @@ class _CanvasContentState extends State<_CanvasContent>
                   provider, CanvasMode.connect, Icons.edit_rounded, 'Link'),
               _ToolbarDivider(borderColor: borderColor.withValues(alpha: 0.3)),
               _ToolbarIcon(
+                tooltip: 'Line: ${_lineStyleLabel(provider.lineStyle)}',
+                onTap: () => provider.cycleLineStyle(),
+                icon: _lineStyleIcon(provider.lineStyle),
+                color: AppColors.textMuted,
+              ),
+              _ToolbarDivider(borderColor: borderColor.withValues(alpha: 0.3)),
+              _ToolbarIcon(
                 tooltip: provider.isLocked ? 'Unlock Canvas' : 'Lock Canvas',
                 onTap: () => provider.toggleLock(),
                 icon: provider.isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
@@ -748,6 +785,62 @@ class _CanvasContentState extends State<_CanvasContent>
     });
   }
 
+  CanvasConnection? _findConnectionAt(
+    Offset pos,
+    List<CanvasConnection> connections,
+    List<CanvasNode> nodes,
+  ) {
+    const hitRadius = 12.0;
+    final nodeMap = {for (final n in nodes) n.id: n};
+
+    // Don't match if tap is inside a node bounding box
+    for (final node in nodes) {
+      final rect = Rect.fromLTWH(
+        node.position.dx, node.position.dy,
+        node.actualWidth, node.actualHeight,
+      );
+      if (rect.inflate(4).contains(pos)) return null;
+    }
+
+    for (final conn in connections) {
+      final source = nodeMap[conn.sourceNodeId];
+      final target = nodeMap[conn.targetNodeId];
+      if (source == null || target == null) continue;
+
+      final start = source.position + Offset(source.actualWidth / 2, source.actualHeight / 2);
+      final end = target.position + Offset(target.actualWidth / 2, target.actualHeight / 2);
+
+      if (_distToSegment(pos, start, end) < hitRadius) return conn;
+    }
+    return null;
+  }
+
+  double _distToSegment(Offset p, Offset a, Offset b) {
+    final ab = b - a;
+    final abLenSq = ab.dx * ab.dx + ab.dy * ab.dy;
+    if (abLenSq < 0.001) return (p - a).distance;
+    final t = ((p - a).dx * ab.dx + (p - a).dy * ab.dy) / abLenSq;
+    final clamped = t.clamp(0.0, 1.0);
+    final closest = Offset(a.dx + ab.dx * clamped, a.dy + ab.dy * clamped);
+    return (p - closest).distance;
+  }
+
+  IconData _lineStyleIcon(ConnectionLineStyle s) {
+    switch (s) {
+      case ConnectionLineStyle.straight: return Icons.remove_rounded;
+      case ConnectionLineStyle.curved: return Icons.waves_rounded;
+      case ConnectionLineStyle.orthogonal: return Icons.route_rounded;
+    }
+  }
+
+  String _lineStyleLabel(ConnectionLineStyle s) {
+    switch (s) {
+      case ConnectionLineStyle.straight: return 'Straight';
+      case ConnectionLineStyle.curved: return 'Curved';
+      case ConnectionLineStyle.orthogonal: return 'Box';
+    }
+  }
+
   Widget _buildModeButton(
       CanvasProvider provider,
       CanvasMode mode,
@@ -789,73 +882,205 @@ class _EdgeOverlayPainter extends CustomPainter {
   final List<CanvasConnection> connections;
   final double animationOffset;
   final ColorScheme colors;
+  final ConnectionLineStyle lineStyle;
+  final String? highlightedConnectionId;
 
   _EdgeOverlayPainter({
     required this.nodes,
     required this.connections,
     required this.animationOffset,
     required this.colors,
+    required this.lineStyle,
+    this.highlightedConnectionId,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = colors.primary.withValues(alpha: 0.8)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+    final nodeMap = {for (final n in nodes) n.id: n};
 
     for (final conn in connections) {
-      final sourceNode =
-          nodes.where((n) => n.id == conn.sourceNodeId).firstOrNull;
-      final targetNode =
-          nodes.where((n) => n.id == conn.targetNodeId).firstOrNull;
-      if (sourceNode == null || targetNode == null) continue;
+      final source = nodeMap[conn.sourceNodeId];
+      final target = nodeMap[conn.targetNodeId];
+      if (source == null || target == null) continue;
 
-      final start = sourceNode.position +
-          Offset(sourceNode.actualWidth / 2, sourceNode.actualHeight / 2);
-      final end = targetNode.position +
-          Offset(targetNode.actualWidth / 2, targetNode.actualHeight / 2);
+      final isHighlighted = conn.id == highlightedConnectionId;
+      final lineColor = isHighlighted
+          ? Colors.red.withValues(alpha: 0.9)
+          : colors.primary.withValues(alpha: 0.8);
 
-      _drawAnimatedDashes(canvas, start, end, paint);
+      final paint = Paint()
+        ..color = lineColor
+        ..strokeWidth = isHighlighted ? 3.0 : 2.0
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
 
-      if (sourceNode.type == FlowNodeType.branch) {
-        _drawLabel(
-          canvas,
-          start,
-          end,
-          conn.type == ConnectionType.trueType ? 'T' : 'F',
-        );
+      final sourceCenter = source.position + Offset(source.actualWidth / 2, source.actualHeight / 2);
+      final targetCenter = target.position + Offset(target.actualWidth / 2, target.actualHeight / 2);
+
+      // Handle self-loops
+      if (conn.sourceNodeId == conn.targetNodeId) {
+        _drawSelfLoop(canvas, source, paint, lineColor);
+        continue;
+      }
+
+      late Path path;
+      late Offset arrowTip;
+      late Offset arrowFrom;
+
+      switch (lineStyle) {
+        case ConnectionLineStyle.straight:
+          final start = _edgePoint(source, targetCenter);
+          final end = _edgePoint(target, sourceCenter);
+          path = Path()..moveTo(start.dx, start.dy)..lineTo(end.dx, end.dy);
+          arrowTip = end;
+          arrowFrom = start;
+          break;
+
+        case ConnectionLineStyle.curved:
+          final start = _edgePoint(source, targetCenter);
+          final end = _edgePoint(target, sourceCenter);
+          final startDir = _exitDir(source, targetCenter);
+          final endDir = _exitDir(target, sourceCenter);
+          final cp1 = start + _dirOffset(startDir, _cpDist(start, end));
+          final cp2 = end + _dirOffset(endDir, _cpDist(start, end));
+          path = Path()
+            ..moveTo(start.dx, start.dy)
+            ..cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, end.dx, end.dy);
+          arrowTip = end;
+          arrowFrom = cp2;
+          break;
+
+        case ConnectionLineStyle.orthogonal:
+          final start = _edgePoint(source, targetCenter);
+          final end = _edgePoint(target, sourceCenter);
+          final startDir = _exitDir(source, targetCenter);
+          final endDir = _exitDir(target, sourceCenter);
+          final pts = _orthoPts(start, end, startDir, endDir);
+          path = Path()..moveTo(start.dx, start.dy);
+          for (final p in pts) { path.lineTo(p.dx, p.dy); }
+          arrowTip = end;
+          arrowFrom = pts.length >= 2 ? pts[pts.length - 2] : start;
+          break;
+      }
+
+      _drawDashed(canvas, path, paint);
+      _drawArrow(canvas, arrowTip, arrowFrom, lineColor);
+
+      if (source.type == FlowNodeType.branch) {
+        _drawLabel(canvas, sourceCenter, targetCenter,
+            conn.type == ConnectionType.trueType ? 'T' : 'F');
       }
     }
   }
 
-  void _drawAnimatedDashes(
-      Canvas canvas, Offset start, Offset end, Paint paint) {
-    final path = Path()
-      ..moveTo(start.dx, start.dy)
-      ..lineTo(end.dx, end.dy);
+  double _cpDist(Offset a, Offset b) =>
+      ((b.dx - a.dx).abs() + (b.dy - a.dy).abs()).clamp(60.0, 300.0) * 0.45;
 
-    const dashWidth = 8.0;
-    const dashSpace = 6.0;
-
-    for (final metric in path.computeMetrics()) {
-      double distance = -animationOffset % (dashWidth + dashSpace);
-      while (distance < metric.length) {
-        final s = distance.clamp(0.0, metric.length);
-        final e = (distance + dashWidth).clamp(0.0, metric.length);
-        if (s < e) canvas.drawPath(metric.extractPath(s, e), paint);
-        distance += dashWidth + dashSpace;
-      }
+  Offset _edgePoint(CanvasNode node, Offset toward) {
+    final center = node.position + Offset(node.actualWidth / 2, node.actualHeight / 2);
+    final dx = toward.dx - center.dx;
+    final dy = toward.dy - center.dy;
+    if (dx.abs() > dy.abs()) {
+      return dx > 0
+          ? node.position + Offset(node.actualWidth, node.actualHeight / 2)
+          : node.position + Offset(0, node.actualHeight / 2);
+    } else {
+      return dy > 0
+          ? node.position + Offset(node.actualWidth / 2, node.actualHeight)
+          : node.position + Offset(node.actualWidth / 2, 0);
     }
   }
 
-  void _drawLabel(
-      Canvas canvas, Offset start, Offset end, String text) {
-    final mid = Offset(
-      (start.dx * 3 + end.dx) / 4,
-      (start.dy * 3 + end.dy) / 4,
+  AxisDirection _exitDir(CanvasNode node, Offset toward) {
+    final center = node.position + Offset(node.actualWidth / 2, node.actualHeight / 2);
+    final dx = toward.dx - center.dx;
+    final dy = toward.dy - center.dy;
+    if (dx.abs() > dy.abs()) {
+      return dx > 0 ? AxisDirection.right : AxisDirection.left;
+    } else {
+      return dy > 0 ? AxisDirection.down : AxisDirection.up;
+    }
+  }
+
+  Offset _dirOffset(AxisDirection dir, double dist) {
+    switch (dir) {
+      case AxisDirection.right: return Offset(dist, 0);
+      case AxisDirection.left: return Offset(-dist, 0);
+      case AxisDirection.down: return Offset(0, dist);
+      case AxisDirection.up: return Offset(0, -dist);
+    }
+  }
+
+  List<Offset> _orthoPts(Offset start, Offset end, AxisDirection sd, AxisDirection ed) {
+    const m = 24.0;
+    final p1 = start + _dirOffset(sd, m);
+    final p2 = end + _dirOffset(ed, m);
+    final pts = <Offset>[p1];
+    final midX = (p1.dx + p2.dx) / 2;
+    final midY = (p1.dy + p2.dy) / 2;
+    final sv = sd == AxisDirection.up || sd == AxisDirection.down;
+    final ev = ed == AxisDirection.up || ed == AxisDirection.down;
+    if (sv == ev) {
+      if (sv) {
+        pts.add(Offset(p1.dx, midY));
+        pts.add(Offset(p2.dx, midY));
+      } else {
+        pts.add(Offset(midX, p1.dy));
+        pts.add(Offset(midX, p2.dy));
+      }
+    } else {
+      pts.add(sv ? Offset(p1.dx, p2.dy) : Offset(p2.dx, p1.dy));
+    }
+    pts.add(p2);
+    pts.add(end);
+    return pts;
+  }
+
+  void _drawSelfLoop(Canvas canvas, CanvasNode node, Paint paint, Color color) {
+    final cx = node.position.dx + node.actualWidth / 2;
+    final top = node.position.dy;
+    final loopRect = Rect.fromCenter(
+      center: Offset(cx, top - 24),
+      width: 40,
+      height: 32,
     );
+    final path = Path()..addArc(loopRect, 0, 2 * 3.14159265);
+    _drawDashed(canvas, path, paint);
+    _drawArrow(canvas, Offset(cx + 20, top - 24), Offset(cx + 20, top - 8), color);
+  }
+
+  void _drawDashed(Canvas canvas, Path path, Paint paint) {
+    const dashW = 8.0;
+    const dashGap = 6.0;
+    for (final metric in path.computeMetrics()) {
+      double d = -animationOffset % (dashW + dashGap);
+      while (d < metric.length) {
+        final s = d.clamp(0.0, metric.length);
+        final e = (d + dashW).clamp(0.0, metric.length);
+        if (s < e) canvas.drawPath(metric.extractPath(s, e), paint);
+        d += dashW + dashGap;
+      }
+    }
+  }
+
+  void _drawArrow(Canvas canvas, Offset tip, Offset from, Color color) {
+    if ((tip - from).distance < 1.0) return;
+    final angle = (tip - from).direction;
+    const sz = 7.0;
+    final p = Path()
+      ..moveTo(0, 0)
+      ..lineTo(-sz * 1.5, -sz * 0.8)
+      ..lineTo(-sz * 1.5, sz * 0.8)
+      ..close();
+    canvas.save();
+    canvas.translate(tip.dx, tip.dy);
+    canvas.rotate(angle);
+    canvas.drawPath(p, Paint()..color = color..style = PaintingStyle.fill);
+    canvas.restore();
+  }
+
+  void _drawLabel(Canvas canvas, Offset start, Offset end, String text) {
+    final mid = Offset((start.dx * 3 + end.dx) / 4, (start.dy * 3 + end.dy) / 4);
     final tp = TextPainter(
       text: TextSpan(
         text: text,
