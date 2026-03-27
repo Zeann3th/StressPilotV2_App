@@ -360,7 +360,7 @@ class _SearchDropdownPanel extends StatelessWidget {
         sections.add(_ResultItem(
           title: endpoint.name,
           subtitle: endpoint.url ?? endpoint.grpcServiceName ?? endpoint.graphqlOperationType,
-          badge: endpoint.httpMethod,
+          badge: endpoint.type,
           icon: LucideIcons.zap,
           onTap: () => onEndpointTap(endpoint),
         ));
@@ -516,7 +516,7 @@ class _ResultItemState extends State<_ResultItem> {
               ),
               if (widget.badge != null) ...[
                 const SizedBox(width: 8),
-                _MethodBadge(method: widget.badge!),
+                _TypeBadge(type: widget.badge!),
               ],
             ],
           ),
@@ -526,30 +526,44 @@ class _ResultItemState extends State<_ResultItem> {
   }
 }
 
-class _MethodBadge extends StatelessWidget {
-  final String method;
+class _TypeBadge extends StatelessWidget {
+  final String type;
 
-  const _MethodBadge({required this.method});
+  const _TypeBadge({required this.type});
 
   Color get _color {
-    switch (method.toUpperCase()) {
-      case 'GET':
-        return const Color(0xFF2F81F7);
-      case 'POST':
-        return const Color(0xFF238636);
-      case 'PUT':
-        return const Color(0xFFD29922);
-      case 'PATCH':
-        return const Color(0xFF8957E5);
-      case 'DELETE':
-        return const Color(0xFFF85149);
+    switch (type.toUpperCase()) {
+      case 'HTTP':
+        return const Color(0xFF3B82F6);
+      case 'GRPC':
+        return const Color(0xFF06B6D4);
+      case 'WS':
+      case 'WSS':
+      case 'WEBSOCKET':
+        return const Color(0xFFF59E0B);
+      case 'GRAPHQL':
+        return const Color(0xFFEC4899);
+      case 'JDBC':
+      case 'SQL':
+        return const Color(0xFF6366F1);
+      case 'JS':
+      case 'JAVASCRIPT':
+        return const Color(0xFFF59E0B);
       default:
-        return AppColors.textMuted;
+        return HSLColor.fromAHSL(
+          1.0,
+          (type.hashCode.abs() % 360).toDouble(),
+          0.65,
+          0.55,
+        ).toColor();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final label = type.toUpperCase().length > 5
+        ? type.toUpperCase().substring(0, 5)
+        : type.toUpperCase();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -558,7 +572,7 @@ class _MethodBadge extends StatelessWidget {
         border: Border.all(color: _color.withValues(alpha: 0.3)),
       ),
       child: Text(
-        method.toUpperCase(),
+        label,
         style: AppTypography.label.copyWith(
           fontSize: 10,
           color: _color,

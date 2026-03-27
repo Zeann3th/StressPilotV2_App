@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow;
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart'
     as domain_endpoint;
@@ -27,6 +30,9 @@ class WorkspaceEndpointsList extends StatefulWidget {
 
 class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
   late ScrollController _scrollCtrl;
+  final TextEditingController _searchCtrl = TextEditingController();
+  Timer? _debounce;
+  String _query = '';
 
   @override
   void initState() {
@@ -40,7 +46,15 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
     });
   }
 
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      setState(() => _query = value.trim().toLowerCase());
+    });
+  }
+
   void _onScroll() {
+    if (_query.isNotEmpty) return;
     final provider = context.read<EndpointProvider>();
     if (!provider.hasMore || provider.isLoadingMore) return;
     if (_scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels <
@@ -92,8 +106,10 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _scrollCtrl.removeListener(_onScroll);
     _scrollCtrl.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -106,31 +122,73 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final endpoints = endpointProvider.endpoints;
+    final allEndpoints = endpointProvider.endpoints;
+    final endpoints = _query.isEmpty
+        ? allEndpoints
+        : allEndpoints
+            .where((e) =>
+                e.name.toLowerCase().contains(_query) ||
+                (e.url?.toLowerCase().contains(_query) ?? false) ||
+                e.type.toLowerCase().contains(_query))
+            .toList();
 
     return Column(
       children: [
+        // Header row
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(14, 10, 8, 4),
           child: Row(
             children: [
               Text(
                 'ENDPOINTS',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: colors.onSurfaceVariant,
-                  letterSpacing: 0.5,
-                ),
+                style: AppTypography.label.copyWith(color: AppColors.textMuted),
               ),
               const Spacer(),
               IconButton(
-                icon: const Icon(Icons.upload_file, size: 18),
+                icon: Icon(Icons.upload_file, size: 16, color: AppColors.textMuted),
                 tooltip: 'Import Endpoints',
                 onPressed: () => _handleUpload(context),
                 visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
               ),
             ],
+          ),
+        ),
+
+        // Search box
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
+          child: SizedBox(
+            height: 30,
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: _onSearchChanged,
+              style: AppTypography.caption.copyWith(color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'Search endpoints...',
+                hintStyle: AppTypography.caption.copyWith(color: AppColors.textMuted),
+                prefixIcon: Icon(Icons.search_rounded, size: 14, color: AppColors.textMuted),
+                prefixIconConstraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                filled: true,
+                fillColor: AppColors.elevated,
+                contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                border: OutlineInputBorder(
+                  borderRadius: AppRadius.br8,
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: AppRadius.br8,
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: AppRadius.br8,
+                  borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+                ),
+                isDense: true,
+              ),
+              cursorColor: AppColors.accent,
+            ),
           ),
         ),
 
@@ -147,15 +205,15 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
           child: endpoints.isEmpty
               ? Center(
                   child: Text(
-                    'No endpoints',
+                    _query.isEmpty ? 'No endpoints' : 'No results',
                     style: TextStyle(color: colors.onSurfaceVariant),
                   ),
                 )
               : ListView.builder(
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemCount:
-                      endpoints.length + (endpointProvider.hasMore ? 1 : 0),
+                  itemCount: endpoints.length +
+                      (_query.isEmpty && endpointProvider.hasMore ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index >= endpoints.length) {
                       return Padding(

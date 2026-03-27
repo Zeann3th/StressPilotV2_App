@@ -84,17 +84,9 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
           const SizedBox(height: 1),
 
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SectionHeader(label: 'ENDPOINTS'),
-                Expanded(
-                  child: WorkspaceEndpointsList(
-                    selectedFlow: widget.selectedFlow,
-                    projectId: widget.projectId,
-                  ),
-                ),
-              ],
+            child: WorkspaceEndpointsList(
+              selectedFlow: widget.selectedFlow,
+              projectId: widget.projectId,
             ),
           ),
         ],
