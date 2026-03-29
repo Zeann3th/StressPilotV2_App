@@ -23,8 +23,13 @@ import 'package:stress_pilot/core/themes/components/components.dart';
 
 class ProjectEndpointsPage extends StatefulWidget {
   final Project project;
+  final Endpoint? initialEndpoint;
 
-  const ProjectEndpointsPage({super.key, required this.project});
+  const ProjectEndpointsPage({
+    super.key,
+    required this.project,
+    this.initialEndpoint,
+  });
 
   @override
   State<ProjectEndpointsPage> createState() => _ProjectEndpointsPageState();
@@ -40,6 +45,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
   @override
   void initState() {
     super.initState();
+    _selectedEndpoint = widget.initialEndpoint;
     _scrollCtrl = ScrollController();
     _scrollCtrl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -308,37 +314,64 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
 
                                         return Padding(
                                           padding: const EdgeInsets.only(bottom: 4),
-                                          child: AnimatedContainer(
-                                            duration: AppDurations.short,
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(10),
-                                              gradient: isSelected ? AppGradients.green(Theme.of(context).brightness == Brightness.dark) : null,
-                                            ),
-                                            child: Material(
-                                              color: Colors.transparent,
-                                              borderRadius: BorderRadius.circular(10),
-                                              child: InkWell(
-                                                onTap: () => setState(() => _selectedEndpoint = ep),
+                                          child: PilotContextMenu(
+                                            items: [
+                                              PilotContextMenuItem(
+                                                label: 'Clone',
+                                                icon: LucideIcons.copy,
+                                                onTap: () async {
+                                                  final cloned = await provider.cloneEndpoint(ep);
+                                                  if (!context.mounted) return;
+                                                  setState(() => _selectedEndpoint = cloned);
+                                                  PilotToast.show(context, 'Endpoint cloned');
+                                                },
+                                              ),
+                                              PilotContextMenuItem.divider(),
+                                              PilotContextMenuItem(
+                                                label: 'Delete',
+                                                icon: LucideIcons.trash2,
+                                                onTap: () async {
+                                                  await provider.deleteEndpoint(ep.id, widget.project.id);
+                                                  if (!context.mounted) return;
+                                                  if (_selectedEndpoint?.id == ep.id) {
+                                                    setState(() => _selectedEndpoint = null);
+                                                  }
+                                                  PilotToast.show(context, 'Endpoint deleted');
+                                                },
+                                              ),
+                                            ],
+                                            child: AnimatedContainer(
+                                              duration: AppDurations.short,
+                                              decoration: BoxDecoration(
                                                 borderRadius: BorderRadius.circular(10),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                                  child: Row(
-                                                    children: [
-                                                      EndpointTypeBadge(type: ep.type, compact: true, inverse: isSelected),
-                                                      const SizedBox(width: 10),
-                                                      Expanded(
-                                                        child: Text(
-                                                          ep.name,
-                                                          style: TextStyle(
-                                                            fontSize: 13,
-                                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                                            color: isSelected ? Colors.white : textColor,
+                                                gradient: isSelected ? AppGradients.green(Theme.of(context).brightness == Brightness.dark) : null,
+                                              ),
+                                              child: Material(
+                                                color: Colors.transparent,
+                                                borderRadius: BorderRadius.circular(10),
+                                                child: InkWell(
+                                                  onTap: () => setState(() => _selectedEndpoint = ep),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                                    child: Row(
+                                                      children: [
+                                                        EndpointTypeBadge(type: ep.type, compact: true, inverse: isSelected),
+                                                        const SizedBox(width: 10),
+                                                        Expanded(
+                                                          child: Text(
+                                                            ep.name,
+                                                            style: TextStyle(
+                                                              fontSize: 13,
+                                                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                                              color: isSelected ? Colors.white : textColor,
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
                                                           ),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
                                                         ),
-                                                      ),
-                                                    ],
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
                                               ),

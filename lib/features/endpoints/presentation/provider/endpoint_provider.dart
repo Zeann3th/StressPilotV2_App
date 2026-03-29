@@ -108,6 +108,29 @@ class EndpointProvider extends ChangeNotifier {
     await loadEndpoints(projectId: projectId);
   }
 
+  Future<Endpoint> cloneEndpoint(Endpoint endpoint) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final data = endpoint.toJson();
+      data.remove('id'); // Remove original ID
+      data['name'] = '${endpoint.name} copy';
+
+      final created = await _endpointRepository.createEndpoint(data);
+      await loadEndpoints(projectId: endpoint.projectId);
+      _isLoading = false;
+      notifyListeners();
+      return created;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   void clearEndpoints() {
     _endpoints = [];
     notifyListeners();

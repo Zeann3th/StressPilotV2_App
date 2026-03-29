@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
@@ -122,6 +123,17 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
         ),
       ),
       actions: [
+        if (_endpointDetail != null)
+          PilotButton.ghost(
+            label: 'Navigate to Endpoint',
+            icon: LucideIcons.externalLink,
+            onPressed: () {
+              Navigator.of(context).pop({
+                'action': 'navigate',
+                'endpoint': _endpointDetail,
+              });
+            },
+          ),
         PilotButton.ghost(
           label: 'Cancel',
           onPressed: () => Navigator.of(context).pop(),

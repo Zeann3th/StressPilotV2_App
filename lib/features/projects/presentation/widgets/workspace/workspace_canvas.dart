@@ -25,7 +25,12 @@ import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
 import 'canvas_painters.dart';
 
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/pages/endpoints_page.dart';
+import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart' as domain_endpoint;
+
 class WorkspaceCanvas extends StatelessWidget {
+
   final flow.Flow? selectedFlow;
 
   const WorkspaceCanvas({super.key, required this.selectedFlow});
@@ -471,35 +476,52 @@ class _CanvasContentState extends State<_CanvasContent>
       builder: (context) => NodeConfigurationDialog(node: node),
     );
 
-    if (result != null && mounted) {
-      final canvasProvider = context.read<CanvasProvider>();
-      final flowProvider = context.read<FlowProvider>();
-      final endpointProvider = context.read<EndpointProvider>();
+    if (result == null || !mounted) return;
 
-      canvasProvider.updateNodeData(node.id, result);
+    if (result['action'] == 'navigate') {
+      final endpoint = result['endpoint'] as domain_endpoint.Endpoint;
+      final projectProvider = context.read<ProjectProvider>();
+      final project = projectProvider.selectedProject;
 
-      final scaffoldMessenger =
-          AppNavigator.scaffoldMessengerKey.currentState;
-      final theme = Theme.of(context);
-
-      try {
-        await canvasProvider.saveFlowConfiguration(
-          int.parse(widget.flowId),
-          flowProvider,
-          endpoints: endpointProvider.endpoints,
-          flows: flowProvider.flows,
-        );
-        scaffoldMessenger?.showSnackBar(
-          const SnackBar(content: Text('Node configuration saved')),
-        );
-      } catch (e) {
-        scaffoldMessenger?.showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: theme.colorScheme.error,
+      if (project != null) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ProjectEndpointsPage(
+              project: project,
+              initialEndpoint: endpoint,
+            ),
           ),
         );
       }
+      return;
+    }
+
+    final canvasProvider = context.read<CanvasProvider>();
+    final flowProvider = context.read<FlowProvider>();
+    final endpointProvider = context.read<EndpointProvider>();
+
+    canvasProvider.updateNodeData(node.id, result);
+
+    final scaffoldMessenger = AppNavigator.scaffoldMessengerKey.currentState;
+    final theme = Theme.of(context);
+
+    try {
+      await canvasProvider.saveFlowConfiguration(
+        int.parse(widget.flowId),
+        flowProvider,
+        endpoints: endpointProvider.endpoints,
+        flows: flowProvider.flows,
+      );
+      scaffoldMessenger?.showSnackBar(
+        const SnackBar(content: Text('Node configuration saved')),
+      );
+    } catch (e) {
+      scaffoldMessenger?.showSnackBar(
+        SnackBar(
+          content: Text('Failed to save: $e'),
+          backgroundColor: theme.colorScheme.error,
+        ),
+      );
     }
   }
 
