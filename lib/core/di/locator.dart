@@ -20,6 +20,9 @@ import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_rep
 import 'package:stress_pilot/features/marketplace/data/repositories/plugin_repository_impl.dart';
 import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_capability_repository.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/plugin_settings_provider.dart';
+import 'package:stress_pilot/features/settings/domain/repositories/function_repository.dart';
+import 'package:stress_pilot/features/settings/data/repositories/function_repository_impl.dart';
+import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/run_repository.dart';
 import 'package:stress_pilot/features/marketplace/data/repositories/plugin_capability_repository_impl.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
@@ -83,6 +86,8 @@ void setupDependencies() {
 
   getIt.registerLazySingleton<PluginRepository>(() => PluginRepositoryImpl());
   getIt.registerLazySingleton(() => PluginSettingsProvider(getIt()));
+  getIt.registerLazySingleton<FunctionRepository>(() => FunctionRepositoryImpl());
+  getIt.registerLazySingleton(() => FunctionSettingsProvider(getIt()));
   getIt.registerLazySingleton<PluginCapabilityRepository>(
       () => PluginCapabilityRepositoryImpl());
 
