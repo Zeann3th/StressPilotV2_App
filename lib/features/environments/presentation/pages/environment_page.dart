@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
@@ -31,47 +29,6 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EnvironmentProvider>().loadVariables(widget.environmentId);
-      _showTutorial();
-    });
-  }
-
-  void _showTutorial() {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
-      TutorialHelper.showTutorialIfFirstTime(
-        context: context,
-        prefKey: 'tutorial_environment',
-        targets: [
-          TargetFocus(
-            identify: "EnvironmentHeader",
-            keyTarget: _headerKey,
-            shape: ShapeLightFocus.RRect,
-            alignSkip: Alignment.topRight,
-            contents: [
-              TargetContent(
-                align: ContentAlign.bottom,
-                builder: (context, controller) {
-                  return const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Environment Settings",
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Manage your environment variables here. Don't forget to save changes!",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      );
     });
   }
 

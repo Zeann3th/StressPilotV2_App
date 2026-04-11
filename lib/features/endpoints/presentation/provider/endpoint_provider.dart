@@ -115,7 +115,7 @@ class EndpointProvider extends ChangeNotifier {
 
     try {
       final data = endpoint.toJson();
-      data.remove('id'); // Remove original ID
+      data.remove('id');
       data['name'] = '${endpoint.name} copy';
 
       final created = await _endpointRepository.createEndpoint(data);

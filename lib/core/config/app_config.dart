@@ -4,4 +4,5 @@ class AppConfig {
   static const String pluginCmsBaseUrl = "https://plugins-cms.stresspilot.zeann3th.com";
   static const String version = "0.1.0";
   static const String githubIssuesUrl = "https://github.com/Zeann3th/StressPilotV2_App/issues/new";
+  static const String updateCheckUrl = "https://raw.githubusercontent.com/Zeann3th/StressPilotV2_App/refs/heads/master/update.json";
 }

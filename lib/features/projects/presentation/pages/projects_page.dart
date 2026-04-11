@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
-import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_topbar.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/runs_list_widget.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import '../provider/project_provider.dart';
 import '../widgets/project/project_table.dart';
 import '../widgets/project/project_empty_states.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/runs_list_widget.dart';
-import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class ProjectsPage extends StatefulWidget {
   final int? initialFlowId;
@@ -32,75 +31,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjectProvider>().loadProjects();
-      _showTutorial();
-    });
-  }
-
-  void _showTutorial() {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
-      TutorialHelper.showTutorialIfFirstTime(
-        context: context,
-        prefKey: 'tutorial_projects',
-        targets: [
-          TargetFocus(
-            identify: "ProjectTopBar",
-            keyTarget: _topBarKey,
-            shape: ShapeLightFocus.RRect,
-            alignSkip: Alignment.topRight,
-            contents: [
-              TargetContent(
-                align: ContentAlign.bottom,
-                builder: (context, controller) {
-                  return const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Manage Projects",
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Here you can create, import, export, and search your projects.",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-          TargetFocus(
-            identify: "AnalyticsPanel",
-            keyTarget: _analyticsKey,
-            shape: ShapeLightFocus.RRect,
-            alignSkip: Alignment.topRight,
-            contents: [
-              TargetContent(
-                align: ContentAlign.top,
-                builder: (context, controller) {
-                  return const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Analytics Dashboard",
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "View realtime charts and KPIs of your stress tests here.",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      );
     });
   }
 
@@ -190,21 +120,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                 border: Border.all(color: border.withValues(alpha: 0.3)),
                                 borderRadius: AppRadius.br12,
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Analytics', style: AppTypography.heading),
-                                  const SizedBox(height: 12),
-                                  Expanded(
-                                    child: Center(
-                                      child: Text(
-                                        'Charts and KPIs will appear here (mock)',
-                                        style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              child: const RecentPagesWidget(),
                             ),
                           ),
                         ],

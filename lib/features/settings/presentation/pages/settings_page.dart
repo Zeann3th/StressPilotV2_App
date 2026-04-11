@@ -4,7 +4,6 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/settings_table.dart';
-import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 
 import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
 
@@ -47,17 +46,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 Text(
                   'Settings',
                   style: AppTypography.heading.copyWith(color: textColor),
-                ),
-                const Spacer(),
-                PilotButton.ghost(
-                  label: 'Reset Tutorials',
-                  icon: Icons.refresh_rounded,
-                  onPressed: () async {
-                    await TutorialHelper.resetTutorials();
-                    if (context.mounted) {
-                      PilotToast.show(context, 'Tutorials reset successfully');
-                    }
-                  },
                 ),
               ],
             ),

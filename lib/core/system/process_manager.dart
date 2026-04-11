@@ -150,7 +150,6 @@ class ProcessManager {
       return standardPath;
     }
 
-    // Try alternative path (some build/deployment configurations)
     final String executableDir = File(Platform.resolvedExecutable).parent.path;
     final altPath = path.join(
       executableDir,
@@ -204,7 +203,6 @@ class ProcessManager {
     final javaPath = _getJavaExecutable();
     final workingDir = _getExecutableDir();
 
-    // File logger for release mode diagnostics
     final logDir = Platform.isWindows
         ? (Platform.environment['APPDATA'] ?? workingDir)
         : (Platform.environment['HOME'] ?? workingDir);
@@ -247,7 +245,6 @@ class ProcessManager {
       pilotProcess.process = process;
       _processes['backend'] = pilotProcess;
 
-      // Pipe stdout/stderr to file in release, normal logging otherwise
       if (!kDebugMode) {
         process.stdout.transform(utf8.decoder).listen((data) {
           sink.write(data);
@@ -268,7 +265,7 @@ class ProcessManager {
           }
         });
       } else {
-        // Close sink early in debug — AppLogger handles it
+
         await sink.flush();
         await sink.close();
       }

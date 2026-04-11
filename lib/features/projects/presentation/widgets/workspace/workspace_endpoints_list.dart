@@ -134,7 +134,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
 
     return Column(
       children: [
-        // Header row
+
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 8, 4),
           child: Row(
@@ -156,7 +156,6 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
           ),
         ),
 
-        // Search box
         Padding(
           padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
           child: SizedBox(

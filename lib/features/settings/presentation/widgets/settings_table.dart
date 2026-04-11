@@ -41,14 +41,28 @@ class _SettingsTableState extends State<SettingsTable> {
       final parts = entry.key.split('_');
       String category = parts.length > 1 ? parts.first.toUpperCase() : 'GENERAL';
       if (entry.key.startsWith('AI_MODEL')) category = 'AI MODEL';
+      
+      // Special grouping for CONFIGURATIONS
+      if (category == 'HTTP' || category == 'FLOW' || category == 'BREAKPOINT') {
+        category = 'CONFIGURATIONS';
+      }
+      
       grouped.putIfAbsent(category, () => []).add(entry);
     }
-    final categories = grouped.keys.toList()..sort();
-    categories.insert(0, 'THEME');
-    categories.insert(1, 'HEALTH');
-    categories.add('PLUGINS');
-    categories.add('FUNCTIONS');
-    categories.add('SHORTCUTS');
+
+    final categories = [
+      'HEALTH',
+      'THEME',
+      'SHORTCUTS',
+      'CONFIGURATIONS',
+      'FUNCTIONS',
+      'PLUGINS',
+    ];
+
+    // Ensure any remaining dynamic categories (like AI MODEL, DATABASE) are added at the end
+    final staticCats = categories.toSet();
+    final dynamicCats = grouped.keys.where((c) => !staticCats.contains(c)).toList()..sort();
+    categories.addAll(dynamicCats);
 
     if (_selectedCategory == null && categories.isNotEmpty) {
       _selectedCategory = categories.first;
@@ -74,6 +88,7 @@ class _SettingsTableState extends State<SettingsTable> {
               if (cat == 'SHORTCUTS') icon = Icons.keyboard_rounded;
               if (cat == 'PLUGINS') icon = Icons.extension_rounded;
               if (cat == 'FUNCTIONS') icon = Icons.functions_rounded;
+              if (cat == 'CONFIGURATIONS') icon = Icons.tune_rounded;
               if (cat == 'AI MODEL') icon = Icons.auto_awesome_rounded;
               if (cat == 'DATABASE') icon = Icons.storage_rounded;
               return Padding(
@@ -136,6 +151,45 @@ class _SettingsTableState extends State<SettingsTable> {
       return const FunctionSettingsView();
     }
 
+    if (_selectedCategory == 'CONFIGURATIONS') {
+      final entries = grouped['CONFIGURATIONS'] ?? [];
+      final flowEntries = entries.where((e) => e.key.startsWith('FLOW') || e.key.startsWith('BREAKPOINT')).toList();
+      final httpEntries = entries.where((e) => e.key.startsWith('HTTP')).toList();
+
+      return SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(32),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Configurations',
+                  style: AppTypography.heading.copyWith(color: textColor, fontSize: 20),
+                ),
+                const SizedBox(height: 24),
+                
+                if (flowEntries.isNotEmpty) ...[
+                  Text('Flow', style: AppTypography.label),
+                  const SizedBox(height: 12),
+                  _buildSettingsContainer(flowEntries, border),
+                  const SizedBox(height: 32),
+                ],
+
+                if (httpEntries.isNotEmpty) ...[
+                  Text('HTTP', style: AppTypography.label),
+                  const SizedBox(height: 12),
+                  _buildSettingsContainer(httpEntries, border),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final entries = grouped[_selectedCategory] ?? [];
 
     return SingleChildScrollView(
@@ -152,33 +206,37 @@ class _SettingsTableState extends State<SettingsTable> {
                 style: AppTypography.heading.copyWith(color: textColor, fontSize: 20),
               ),
               const SizedBox(height: 24),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: AppRadius.br12,
-                  border: Border.all(color: border.withValues(alpha: 0.3)),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  children: [
-                    for (int i = 0; i < entries.length; i++) ...[
-                      if (i > 0) Divider(height: 1, color: border.withValues(alpha: 0.1)),
-                      SettingsRow(
-                        keyName: entries[i].key,
-                        value: entries[i].value,
-                        onSave: (val) async {
-                          await context.read<SettingProvider>().setConfig(entries[i].key, val);
-                          if (mounted) {
-                            PilotToast.show(context, 'Setting saved');
-                          }
-                        },
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+              _buildSettingsContainer(entries, border),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsContainer(List<MapEntry<String, String>> entries, Color border) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.br12,
+        border: Border.all(color: border.withValues(alpha: 0.3)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (int i = 0; i < entries.length; i++) ...[
+            if (i > 0) Divider(height: 1, color: border.withValues(alpha: 0.1)),
+            SettingsRow(
+              keyName: entries[i].key,
+              value: entries[i].value,
+              onSave: (val) async {
+                await context.read<SettingProvider>().setConfig(entries[i].key, val);
+                if (mounted) {
+                  PilotToast.show(context, 'Setting saved');
+                }
+              },
+            ),
+          ],
+        ],
       ),
     );
   }

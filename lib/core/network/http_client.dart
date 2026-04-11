@@ -34,7 +34,6 @@ class HttpClient {
 
     dio.interceptors.add(CookieManager(jar));
 
-    // Error logging in release too
     dio.interceptors.add(InterceptorsWrapper(
       onError: (error, handler) {
         AppLogger.error(

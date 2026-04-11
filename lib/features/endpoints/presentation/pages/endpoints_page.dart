@@ -5,8 +5,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-import 'package:stress_pilot/core/utils/tutorial_helper.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/endpoints//data/curl_parser.dart';
@@ -51,75 +49,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EndpointProvider>().loadEndpoints(
         projectId: widget.project.id,
-      );
-      _showTutorial();
-    });
-  }
-
-  void _showTutorial() {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
-      TutorialHelper.showTutorialIfFirstTime(
-        context: context,
-        prefKey: 'tutorial_endpoint',
-        targets: [
-          TargetFocus(
-            identify: "EndpointsSidebar",
-            keyTarget: _sidebarKey,
-            shape: ShapeLightFocus.RRect,
-            alignSkip: Alignment.topRight,
-            contents: [
-              TargetContent(
-                align: ContentAlign.right,
-                builder: (context, controller) {
-                  return const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Endpoints List",
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Manage all your API endpoints here. You can create, search, and select endpoints to edit.",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-          TargetFocus(
-            identify: "EndpointWorkspace",
-            keyTarget: _workspaceKey,
-            shape: ShapeLightFocus.RRect,
-            alignSkip: Alignment.topRight,
-            contents: [
-              TargetContent(
-                align: ContentAlign.left,
-                builder: (context, controller) {
-                  return const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Workspace",
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Configure your request details, headers, body, and view the response directly here.",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
       );
     });
   }
@@ -1026,7 +955,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                             ),
                           ),
 
-                          // Draggable divider
                           MouseRegion(
                             cursor: SystemMouseCursors.resizeRow,
                             child: GestureDetector(
@@ -1053,7 +981,6 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                             ),
                           ),
 
-                          // Response panel
                           SizedBox(
                             height: respH,
                             child: Container(
@@ -1185,14 +1112,13 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     );
   }
 
-  // Returns only the actual API response data (data.data), excluding all metadata
   Map<String, dynamic> _getResponseData(Map<String, dynamic> r) {
     if (r.containsKey('error')) return {'error': r['error']};
     final outerData = r['data'];
     if (outerData is Map<String, dynamic>) {
       final innerData = outerData['data'];
       if (innerData is Map<String, dynamic>) return innerData;
-      // Fallback: show outer data minus known metadata
+
       final cleaned = Map<String, dynamic>.from(outerData);
       cleaned.removeWhere((k, _) => const {
         'statusCode', 'success', 'responseTimeMs', 'message', 'rawResponse'
@@ -1207,7 +1133,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     if (outerData is Map<String, dynamic>) {
       final raw = outerData['rawResponse'];
       if (raw is String) {
-        // Try to pretty-print if it's valid JSON
+
         try {
           final decoded = jsonDecode(raw);
           return const JsonEncoder.withIndent('  ').convert(decoded);

@@ -9,7 +9,7 @@ class FunctionRepositoryImpl implements FunctionRepository {
   @override
   Future<List<UserFunction>> getAllFunctions() async {
     final response = await _dio.get('/api/v1/functions');
-    // data is Page object, content is the list
+
     final data = response.data['data'];
     if (data is Map && data.containsKey('content')) {
       final List<dynamic> content = data['content'];

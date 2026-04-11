@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/endpoints/presentation/pages/endpoints_page.dart';
 import 'package:stress_pilot/features/environments/presentation/pages/environment_page.dart';
@@ -8,8 +9,6 @@ import 'package:stress_pilot/features/projects/presentation/pages/projects_page.
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
-import 'package:stress_pilot/features/settings/presentation/pages/report_issue_page.dart';
-import 'package:stress_pilot/features/settings/presentation/pages/github_webview_page.dart';
 import 'package:stress_pilot/features/marketplace/presentation/pages/marketplace_page.dart';
 import 'package:stress_pilot/features/agent/presentation/pages/agent_page.dart';
 
@@ -17,8 +16,6 @@ class AppRouter {
   static const String projectsRoute = '/';
   static const String workspaceRoute = '/workspace';
   static const String settingsRoute = '/settings';
-  static const String reportIssueRoute = '/settings/report_issue';
-  static const String githubWebviewRoute = '/settings/github_webview';
   static const String projectEndpointsRoute = '/project/endpoints';
   static const String projectEnvironmentRoute = '/project/environment';
   static const String resultsRoute = '/results';
@@ -50,15 +47,6 @@ class AppRouter {
         return buildRoute(const ProjectWorkspacePage());
       case settingsRoute:
         return buildRoute(const SettingsPage());
-      case reportIssueRoute:
-        final args = settings.arguments as Map<String, dynamic>?;
-        return buildRoute(ReportIssuePage(
-          error: args?['error'] as String?,
-          stack: args?['stack'] as String?,
-        ));
-      case githubWebviewRoute:
-        final args = settings.arguments as Map<String, dynamic>;
-        return buildRoute(GithubWebviewPage(url: args['url'] as String));
       case projectEndpointsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         return buildRoute(
@@ -135,6 +123,13 @@ class AppNavigator {
         _areArgumentsEqual(routeObserver.currentArguments, arguments)) {
       return Future.value(null);
     }
+    
+    if (arguments is Map<String, dynamic>?) {
+      NavigationTracker.trackPage(routeName, arguments: arguments);
+    } else {
+      NavigationTracker.trackPage(routeName);
+    }
+
     return navigatorKey.currentState!.pushNamed<T>(
       routeName,
       arguments: arguments,
@@ -150,6 +145,13 @@ class AppNavigator {
         _areArgumentsEqual(routeObserver.currentArguments, arguments)) {
       return Future.value(null);
     }
+
+    if (arguments is Map<String, dynamic>?) {
+      NavigationTracker.trackPage(routeName, arguments: arguments);
+    } else {
+      NavigationTracker.trackPage(routeName);
+    }
+
     return navigatorKey.currentState!.pushReplacementNamed<T, TO>(
       routeName,
       result: result,

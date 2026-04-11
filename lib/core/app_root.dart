@@ -25,6 +25,7 @@ import 'package:stress_pilot/features/agent/presentation/provider/agent_provider
 import 'package:stress_pilot/features/settings/presentation/provider/plugin_settings_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/layout.dart';
+import 'package:stress_pilot/core/updater/update_dialog.dart';
 
 class AppRoot extends StatefulWidget {
   const AppRoot({super.key});
@@ -46,7 +47,6 @@ class _AppRootState extends State<AppRoot> {
   Future<void> _init() async {
     try {
       AppLogger.info('Starting application initialization', name: 'AppRoot');
-
 
       final appStateManager = getIt<AppStateManager>();
 
@@ -215,9 +215,30 @@ class _AppTheme extends StatelessWidget {
       builder: (context, child) {
         return ScaffoldMessenger(
           key: AppNavigator.scaffoldMessengerKey,
-          child: child!,
+          child: _UpdateCheckWrapper(child: child!),
         );
       },
     );
   }
+}
+
+class _UpdateCheckWrapper extends StatefulWidget {
+  final Widget child;
+  const _UpdateCheckWrapper({required this.child});
+
+  @override
+  State<_UpdateCheckWrapper> createState() => _UpdateCheckWrapperState();
+}
+
+class _UpdateCheckWrapperState extends State<_UpdateCheckWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateDialog.checkAndShow(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

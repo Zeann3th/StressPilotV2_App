@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
@@ -41,6 +41,16 @@ class _AppHealthSectionState extends State<AppHealthSection> {
       _lastStack = null;
       _lastCrashTime = null;
     });
+  }
+
+  Future<void> _copyError() async {
+    if (_lastError != null) {
+      final text = 'Error: $_lastError\n\nStack Trace:\n${_lastStack ?? 'N/A'}';
+      await Clipboard.setData(ClipboardData(text: text));
+      if (mounted) {
+        PilotToast.show(context, 'Full error log copied');
+      }
+    }
   }
 
   @override
@@ -134,20 +144,34 @@ class _AppHealthSectionState extends State<AppHealthSection> {
                 ],
               ),
               const SizedBox(height: 20),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.03),
-                  borderRadius: AppRadius.br8,
-                  border: Border.all(color: border.withValues(alpha: 0.2)),
-                ),
-                child: Text(
-                  _lastError ?? '',
-                  style: AppTypography.codeSm.copyWith(color: AppColors.error.withValues(alpha: 0.8)),
-                  maxLines: 5,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.03),
+                      borderRadius: AppRadius.br8,
+                      border: Border.all(color: border.withValues(alpha: 0.2)),
+                    ),
+                    child: Text(
+                      _lastError ?? '',
+                      style: AppTypography.codeSm.copyWith(color: AppColors.error.withValues(alpha: 0.8)),
+                      maxLines: 5,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: PilotButton.ghost(
+                      icon: Icons.content_copy_rounded,
+                      onPressed: _copyError,
+                      compact: true,
+                      foregroundOverride: AppColors.textSecondary.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               Row(
@@ -156,20 +180,6 @@ class _AppHealthSectionState extends State<AppHealthSection> {
                   PilotButton.ghost(
                     label: 'Dismiss Log',
                     onPressed: _clearLog,
-                  ),
-                  const SizedBox(width: 12),
-                  PilotButton.danger(
-                    label: 'Report Issue to GitHub',
-                    icon: Icons.bug_report_rounded,
-                    onPressed: () {
-                      AppNavigator.pushNamed(
-                        AppRouter.reportIssueRoute,
-                        arguments: {
-                          'error': _lastError,
-                          'stack': _lastStack,
-                        },
-                      );
-                    },
                   ),
                 ],
               ),

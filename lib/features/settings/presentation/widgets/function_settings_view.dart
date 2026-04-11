@@ -38,7 +38,7 @@ class _FunctionSettingsViewState extends State<FunctionSettingsView> {
 
     return Row(
       children: [
-        // Left Side: List of function names
+
         Container(
           width: 300,
           decoration: BoxDecoration(
@@ -81,7 +81,6 @@ class _FunctionSettingsViewState extends State<FunctionSettingsView> {
           ),
         ),
 
-        // Right Side: Details and Editor
         Expanded(
           child: selected == null
               ? Center(
@@ -213,10 +212,10 @@ class _FunctionDetailEditorState extends State<_FunctionDetailEditor> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.function.id == null ? 'New Function' : 'Edit Function', 
+                    Text(widget.function.id == null ? 'New Function' : 'Edit Function',
                       style: AppTypography.heading.copyWith(fontSize: 24)),
                     if (widget.function.updatedAt != null)
-                      Text('Last updated: ${widget.function.updatedAt}', 
+                      Text('Last updated: ${widget.function.updatedAt}',
                         style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
@@ -265,16 +264,16 @@ class _FunctionDetailEditorState extends State<_FunctionDetailEditor> {
           const SizedBox(height: 32),
           const Divider(),
           const SizedBox(height: 24),
-          
+
           Text('Function Name', style: AppTypography.label),
           const SizedBox(height: 8),
           PilotInput(
             controller: _nameController,
             placeholder: 'Enter function name (e.g. processResponse)',
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           Text('Description', style: AppTypography.label),
           const SizedBox(height: 8),
           PilotInput(

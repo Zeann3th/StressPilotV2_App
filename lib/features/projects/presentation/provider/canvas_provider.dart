@@ -143,8 +143,6 @@ class CanvasProvider extends ChangeNotifier {
       return;
     }
 
-    // Allow self-loops (node connecting to itself)
-
     ConnectionType connType = ConnectionType.defaultType;
     if (_selectedSourceHandle == 'true') connType = ConnectionType.trueType;
     if (_selectedSourceHandle == 'false') connType = ConnectionType.falseType;

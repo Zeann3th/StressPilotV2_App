@@ -14,6 +14,7 @@ import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/navigation_item.dart';
 
 class _SearchResults {
   final List<Project> projects;
@@ -331,7 +332,7 @@ class _SearchDropdownPanel extends StatelessWidget {
     if (results.projects.isNotEmpty) {
       sections.add(_SectionLabel(label: 'Projects', icon: LucideIcons.folder));
       for (final project in results.projects) {
-        sections.add(_ResultItem(
+        sections.add(NavigationItem(
           title: project.name,
           subtitle: project.description.isNotEmpty ? project.description : null,
           icon: LucideIcons.folder,
@@ -344,7 +345,7 @@ class _SearchDropdownPanel extends StatelessWidget {
       if (sections.isNotEmpty) sections.add(_Divider());
       sections.add(_SectionLabel(label: 'Flows', icon: LucideIcons.gitBranch));
       for (final flow in results.flows) {
-        sections.add(_ResultItem(
+        sections.add(NavigationItem(
           title: flow.name,
           subtitle: flow.description,
           icon: LucideIcons.gitBranch,
@@ -357,7 +358,7 @@ class _SearchDropdownPanel extends StatelessWidget {
       if (sections.isNotEmpty) sections.add(_Divider());
       sections.add(_SectionLabel(label: 'Endpoints', icon: LucideIcons.zap));
       for (final endpoint in results.endpoints) {
-        sections.add(_ResultItem(
+        sections.add(NavigationItem(
           title: endpoint.name,
           subtitle: endpoint.url ?? endpoint.grpcServiceName ?? endpoint.graphqlOperationType,
           badge: endpoint.type,
@@ -442,143 +443,6 @@ class _Divider extends StatelessWidget {
       height: 1,
       thickness: 1,
       color: AppColors.border.withValues(alpha: 0.3),
-    );
-  }
-}
-
-class _ResultItem extends StatefulWidget {
-  final String title;
-  final String? subtitle;
-  final String? badge;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _ResultItem({
-    required this.title,
-    this.subtitle,
-    this.badge,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  State<_ResultItem> createState() => _ResultItemState();
-}
-
-class _ResultItemState extends State<_ResultItem> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: AppDurations.micro,
-          color: _hovered
-              ? AppColors.accent.withValues(alpha: 0.08)
-              : Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: Row(
-            children: [
-              Icon(widget.icon, size: 14, color: AppColors.textSecondary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (widget.subtitle != null && widget.subtitle!.isNotEmpty) ...[
-                      const SizedBox(height: 1),
-                      Text(
-                        widget.subtitle!,
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textMuted,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (widget.badge != null) ...[
-                const SizedBox(width: 8),
-                _TypeBadge(type: widget.badge!),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TypeBadge extends StatelessWidget {
-  final String type;
-
-  const _TypeBadge({required this.type});
-
-  Color get _color {
-    switch (type.toUpperCase()) {
-      case 'HTTP':
-        return const Color(0xFF3B82F6);
-      case 'GRPC':
-        return const Color(0xFF06B6D4);
-      case 'WS':
-      case 'WSS':
-      case 'WEBSOCKET':
-        return const Color(0xFFF59E0B);
-      case 'GRAPHQL':
-        return const Color(0xFFEC4899);
-      case 'JDBC':
-      case 'SQL':
-        return const Color(0xFF6366F1);
-      case 'JS':
-      case 'JAVASCRIPT':
-        return const Color(0xFFF59E0B);
-      default:
-        return HSLColor.fromAHSL(
-          1.0,
-          (type.hashCode.abs() % 360).toDouble(),
-          0.65,
-          0.55,
-        ).toColor();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final label = type.toUpperCase().length > 5
-        ? type.toUpperCase().substring(0, 5)
-        : type.toUpperCase();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.12),
-        borderRadius: AppRadius.br4,
-        border: Border.all(color: _color.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.label.copyWith(
-          fontSize: 10,
-          color: _color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
     );
   }
 }
