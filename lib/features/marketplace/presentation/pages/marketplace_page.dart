@@ -50,40 +50,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 ),
                 child: ClipRRect(
                   borderRadius: AppRadius.br16,
-                  child: Column(
+                  child: Stack(
                     children: [
-                      Container(
-                        height: 60,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: surface,
-                          border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3), width: 1)),
-                        ),
-                        child: Row(
-                          children: [
-                            PilotButton.ghost(
-                              icon: Icons.arrow_back_rounded,
-                              onPressed: () {
-                                webViewController?.setVisible(false);
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Marketplace',
-                              style: AppTypography.heading.copyWith(color: textColor),
-                            ),
-                            const Spacer(),
-                            PilotButton.ghost(
-                              icon: Icons.refresh_rounded,
-                              onPressed: () {
-                                webViewController?.reload();
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
+                      Positioned.fill(
                         child: PilotWebView(
                           initialUrl: AppConfig.pluginCmsBaseUrl,
                           onWebViewCreated: (controller) {
@@ -91,6 +60,31 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               webViewController = controller;
                             });
                           },
+                        ),
+                      ),
+                      Positioned(
+                        top: 12,
+                        left: 12,
+                        child: PilotButton.ghost(
+                          icon: Icons.arrow_back_rounded,
+                          onPressed: () {
+                            webViewController?.setVisible(false);
+                            Navigator.of(context).pop();
+                          },
+                          backgroundOverride: Colors.transparent,
+                          foregroundOverride: textColor.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: PilotButton.ghost(
+                          icon: Icons.refresh_rounded,
+                          onPressed: () {
+                            webViewController?.reload();
+                          },
+                          backgroundOverride: Colors.transparent,
+                          foregroundOverride: textColor.withValues(alpha: 0.6),
                         ),
                       ),
                     ],

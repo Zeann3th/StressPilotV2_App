@@ -105,23 +105,11 @@ class _SettingsTableState extends State<SettingsTable> {
           ),
         ),
 
+        VerticalDivider(width: 1, thickness: 1, color: border.withValues(alpha: 0.15)),
+        const SizedBox(width: 24),
+
         Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: AppRadius.br16,
-              border: Border.all(color: border.withValues(alpha: 0.3)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  offset: const Offset(0, 4),
-                  blurRadius: 12,
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: _buildContent(grouped, textColor, border),
-          ),
+          child: _buildContent(grouped, textColor, border),
         ),
       ],
     );

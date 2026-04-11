@@ -39,54 +39,40 @@ class _AppTopBarState extends State<AppTopBar> {
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-
-          const Spacer(),
-
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 380),
-            child: const GlobalSearchDropdown(),
+          // Centered Search Bar
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: const GlobalSearchDropdown(),
+            ),
           ),
 
-          const Spacer(),
-
-          _TopBarIcon(
-            icon: LucideIcons.sparkles,
-            tooltip: 'AI Agent',
-            onTap: () => AppNavigator.pushNamed(AppRouter.agentRoute),
-          ),
-          const SizedBox(width: 8),
-          _TopBarIcon(
-            icon: LucideIcons.shoppingBag,
-            tooltip: 'Marketplace',
-            onTap: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
-          ),
-          const SizedBox(width: 8),
-          _TopBarIcon(
-            icon: LucideIcons.settings,
-            tooltip: _tip('Settings', keymap.getShortcut('app.settings')),
-            onTap: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
-          ),
-          const SizedBox(width: 8),
-
-          GestureDetector(
-            onTapDown: (tap) async {
-              final renderBox = context.findRenderObject() as RenderBox?;
-              final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-              final pos = renderBox?.localToGlobal(tap.globalPosition) ?? tap.globalPosition;
-              await showMenu<String>(
-                context: context,
-                position: RelativeRect.fromLTRB(pos.dx, pos.dy, overlay.size.width - pos.dx, overlay.size.height - pos.dy),
-                items: const [
-                  PopupMenuItem(value: 'profile', child: Text('Profile')),
-                ],
-              );
-            },
-            child: _TopBarIcon(
-              icon: LucideIcons.user,
-              tooltip: 'Profile',
-              onTap: () {},
+          // Action Icons
+          Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _TopBarIcon(
+                  icon: LucideIcons.sparkles,
+                  tooltip: 'AI Agent',
+                  onTap: () => AppNavigator.pushNamed(AppRouter.agentRoute),
+                ),
+                const SizedBox(width: 8),
+                _TopBarIcon(
+                  icon: LucideIcons.shoppingBag,
+                  tooltip: 'Marketplace',
+                  onTap: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
+                ),
+                const SizedBox(width: 8),
+                _TopBarIcon(
+                  icon: LucideIcons.settings,
+                  tooltip: _tip('Settings', keymap.getShortcut('app.settings')),
+                  onTap: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
+                ),
+              ],
             ),
           ),
         ],
