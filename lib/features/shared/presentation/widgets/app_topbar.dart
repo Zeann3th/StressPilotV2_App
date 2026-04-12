@@ -41,7 +41,7 @@ class _AppTopBarState extends State<AppTopBar> {
       ),
       child: Stack(
         children: [
-          // Centered Search Bar
+
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
@@ -49,7 +49,6 @@ class _AppTopBarState extends State<AppTopBar> {
             ),
           ),
 
-          // Action Icons
           Align(
             alignment: Alignment.centerRight,
             child: Row(

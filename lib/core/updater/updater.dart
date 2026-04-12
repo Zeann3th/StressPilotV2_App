@@ -20,6 +20,10 @@ class UpdateInfo {
 class AppUpdater {
   static bool _hasChecked = false;
 
+  static void resetCheck() {
+    _hasChecked = false;
+  }
+
   static Future<UpdateInfo?> check() async {
     if (_hasChecked) return null;
     _hasChecked = true;

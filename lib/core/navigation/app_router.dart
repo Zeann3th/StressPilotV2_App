@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/endpoints/presentation/pages/endpoints_page.dart';
 import 'package:stress_pilot/features/environments/presentation/pages/environment_page.dart';
@@ -123,12 +122,6 @@ class AppNavigator {
         _areArgumentsEqual(routeObserver.currentArguments, arguments)) {
       return Future.value(null);
     }
-    
-    if (arguments is Map<String, dynamic>?) {
-      NavigationTracker.trackPage(routeName, arguments: arguments);
-    } else {
-      NavigationTracker.trackPage(routeName);
-    }
 
     return navigatorKey.currentState!.pushNamed<T>(
       routeName,
@@ -146,19 +139,12 @@ class AppNavigator {
       return Future.value(null);
     }
 
-    if (arguments is Map<String, dynamic>?) {
-      NavigationTracker.trackPage(routeName, arguments: arguments);
-    } else {
-      NavigationTracker.trackPage(routeName);
-    }
-
     return navigatorKey.currentState!.pushReplacementNamed<T, TO>(
       routeName,
       result: result,
       arguments: arguments,
     );
   }
-
   static void pop<T extends Object?>([T? result]) {
     navigatorKey.currentState?.pop<T>(result);
   }

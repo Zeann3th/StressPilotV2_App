@@ -1,145 +1,114 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
-import '../../domain/models/agent_message.dart';
-import '../../domain/repositories/agent_repository.dart';
+import 'dart:convert';
+import 'dart:io';
 
-const _uuid = Uuid();
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_pty/flutter_pty.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:xterm/xterm.dart';
 
 class AgentProvider extends ChangeNotifier {
-  final AgentRepository _repository;
-  StreamSubscription? _eventSub;
+  final terminal = Terminal(maxLines: 10000);
+  Pty? _pty;
+  bool _isInitialized = false;
+  bool _isLoading = false;
+  String? _error;
 
-  AgentProvider(this._repository) {
-    _eventSub = _repository.events.listen(_handleEvent);
+  bool get isInitialized => _isInitialized;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  AgentProvider() {
+    _initTerminal();
   }
 
-  AgentState get state => _repository.currentState;
+  void _initTerminal() {
+    // Forward terminal input to PTY
+    terminal.onOutput = (data) {
+      _pty?.write(utf8.encode(data));
+    };
 
-  String? _currentThreadId;
-  String get currentThreadId =>
-      _currentThreadId ?? 't-${_uuid.v4().substring(0, 8)}';
-
-  final List<AgentMessage> _messages = [];
-  List<AgentMessage> get messages => List.unmodifiable(_messages);
-
-  List<ToolCall> _pendingToolCalls = [];
-  List<ToolCall> get pendingToolCalls => List.unmodifiable(_pendingToolCalls);
-
-  bool get isReady => state == AgentState.ready;
-  bool get isThinking => state == AgentState.thinking;
-  bool get isPendingApproval => state == AgentState.pendingApproval;
-
-  void _handleEvent(AgentEvent event) {
-    if (event is AgentStateEvent) {
-      notifyListeners();
-    } else if (event is AgentMessageEvent) {
-      if (event.threadId != null) _currentThreadId = event.threadId;
-      _upsertAgentMessage(event.content, event.status);
-    } else if (event is AgentSystemEvent) {
-      _addSystem(event.message, isError: event.isError);
-    } else if (event is AgentToolCallEvent) {
-      _currentThreadId = event.threadId;
-      _pendingToolCalls = event.toolCalls;
-      notifyListeners();
-    }
+    // Handle terminal resize
+    terminal.onResize = (cols, rows, _, __) {
+      _pty?.resize(rows, cols);
+    };
   }
 
-  Future<void> start() => _repository.start();
+  Future<void> ensureStarted() async {
+    if (_isInitialized || _isLoading) return;
+    await restart();
+  }
 
-  Future<void> sendMessage(String text) async {
-    if (!isReady) return;
-
-    _currentThreadId ??= 't-${_uuid.v4().substring(0, 8)}';
-
-    _messages.add(AgentMessage(
-      id: _uuid.v4(),
-      role: MessageRole.user,
-      content: text,
-      timestamp: DateTime.now(),
-    ));
+  Future<void> restart() async {
+    _isLoading = true;
+    _error = null;
     notifyListeners();
 
-    _upsertAgentMessage('', MessageStatus.thinking);
-    _repository.sendMessage(text, currentThreadId);
-  }
+    try {
+      // Kill existing process
+      _pty?.kill();
+      _pty = null;
+      
+      // Clear terminal buffer
+      terminal.buffer.clear();
+      terminal.buffer.setCursor(0, 0);
 
-  Future<void> approve({bool approved = true, String feedback = ''}) async {
-    if (!isPendingApproval) return;
-    _repository.approve(
-        threadId: currentThreadId, approved: approved, feedback: feedback);
-  }
-
-  void newSession() {
-    _currentThreadId = 't-${_uuid.v4().substring(0, 8)}';
-    _messages.clear();
-    _pendingToolCalls = [];
-    _addSystem('New session started');
-    notifyListeners();
-  }
-
-  String? _thinkingMessageId;
-
-  void _upsertAgentMessage(String content, MessageStatus status) {
-    if (_thinkingMessageId != null) {
-      final idx = _messages.indexWhere((m) => m.id == _thinkingMessageId);
-      if (idx != -1) {
-        if (status == MessageStatus.done && content.isEmpty) {
-          _messages.removeAt(idx);
-          _thinkingMessageId = null;
-        } else {
-          _messages[idx] =
-              _messages[idx].copyWith(content: content, status: status);
-          if (status == MessageStatus.done) _thinkingMessageId = null;
-        }
-        notifyListeners();
-        return;
+      final supportDir = await getApplicationSupportDirectory();
+      final agentDir = Directory(p.join(supportDir.path, 'agent'));
+      if (!await agentDir.exists()) {
+        await agentDir.create(recursive: true);
       }
-    }
 
-    if (content.isEmpty && status == MessageStatus.thinking) {
-      final msg = AgentMessage(
-        id: _uuid.v4(),
-        role: MessageRole.agent,
-        content: '',
-        status: MessageStatus.thinking,
-        timestamp: DateTime.now(),
+      final agentPath = p.join(agentDir.path, 'stresspilot-agent.exe');
+      final agentFile = File(agentPath);
+
+      // Extract agent from assets
+      final assetData = await rootBundle.load('assets/agent/stresspilot-agent.exe');
+      if (!await agentFile.exists() || await agentFile.length() != assetData.lengthInBytes) {
+        final bytes = assetData.buffer.asUint8List(assetData.offsetInBytes, assetData.lengthInBytes);
+        await agentFile.writeAsBytes(bytes);
+      }
+
+      // Initialize PTY
+      _pty = Pty.start(
+        agentPath,
+        columns: terminal.viewWidth,
+        rows: terminal.viewHeight,
+        environment: {
+          'TERM': 'xterm-256color',
+          'COLORTERM': 'truecolor',
+        },
       );
-      _thinkingMessageId = msg.id;
-      _messages.add(msg);
-      notifyListeners();
-      return;
-    }
 
-    if (content.isNotEmpty) {
-      final msg = AgentMessage(
-        id: _uuid.v4(),
-        role: MessageRole.agent,
-        content: content,
-        status: status,
-        timestamp: DateTime.now(),
+      // PTY -> Terminal
+      _pty!.output.listen(
+        (data) {
+          terminal.write(utf8.decode(data));
+        },
+        onError: (e) {
+          _error = e.toString();
+          notifyListeners();
+        },
+        onDone: () {
+          _isInitialized = false;
+          notifyListeners();
+        }
       );
-      if (status == MessageStatus.thinking) _thinkingMessageId = msg.id;
-      _messages.add(msg);
+
+      _isInitialized = true;
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
-  }
-
-  void _addSystem(String content, {bool isError = false}) {
-    _messages.add(AgentMessage(
-      id: _uuid.v4(),
-      role: MessageRole.system,
-      content: content,
-      status: isError ? MessageStatus.error : MessageStatus.done,
-      timestamp: DateTime.now(),
-    ));
-    notifyListeners();
   }
 
   @override
   void dispose() {
-    _eventSub?.cancel();
-    _repository.stop();
+    _pty?.kill();
     super.dispose();
   }
 }

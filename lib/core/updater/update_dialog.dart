@@ -6,9 +6,25 @@ class UpdateDialog extends StatefulWidget {
 
   const UpdateDialog({super.key, required this.info});
 
-  static Future<void> checkAndShow(BuildContext context) async {
+  static Future<void> checkAndShow(BuildContext context, {bool manual = false}) async {
+    if (manual) {
+      AppUpdater.resetCheck();
+    }
     final update = await AppUpdater.check();
-    if (update == null || !context.mounted) return;
+    if (!context.mounted) return;
+
+    if (update == null) {
+      if (manual) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Stress Pilot is already up to date.'),
+            behavior: SnackBarBehavior.floating,
+            width: 320,
+          ),
+        );
+      }
+      return;
+    }
 
     showDialog(
       context: context,

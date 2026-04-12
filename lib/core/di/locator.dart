@@ -37,8 +37,6 @@ import 'package:stress_pilot/features/results/data/repositories/results_reposito
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
 import 'package:stress_pilot/features/shared/data/repositories/run_repository_impl.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
-import 'package:stress_pilot/features/agent/domain/repositories/agent_repository.dart';
-import 'package:stress_pilot/features/agent/data/repositories/agent_repository_impl.dart';
 import 'package:stress_pilot/features/agent/presentation/provider/agent_provider.dart';
 
 final getIt = GetIt.instance;
@@ -91,8 +89,7 @@ void setupDependencies() {
   getIt.registerLazySingleton<PluginCapabilityRepository>(
       () => PluginCapabilityRepositoryImpl());
 
-  getIt.registerLazySingleton<AgentRepository>(() => AgentRepositoryImpl());
-  getIt.registerLazySingleton(() => AgentProvider(getIt()));
+  getIt.registerLazySingleton(() => AgentProvider());
 
   getIt<ResultsProvider>();
 }

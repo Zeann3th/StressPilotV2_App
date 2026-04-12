@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/features/shared/domain/models/paged_response.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/core/di/locator.dart';
@@ -94,6 +95,8 @@ class ProjectProvider extends ChangeNotifier {
   Future<void> selectProject(Project project) async {
     _selectedProject = project;
     notifyListeners();
+
+    NavigationTracker.trackProject(project.name, project.description, project.toJson());
 
     final prefs = await SharedPreferences.getInstance();
     final jsonString = jsonEncode(project.toJson());

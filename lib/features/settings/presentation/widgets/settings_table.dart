@@ -6,7 +6,7 @@ import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/core/themes/pilot_theme.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/keymap_settings_table.dart';
-import 'package:stress_pilot/features/settings/presentation/widgets/app_health_section.dart';
+import 'package:stress_pilot/features/settings/presentation/widgets/app_about_section.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/plugin_settings_view.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/function_settings_view.dart';
 import 'settings_row.dart';
@@ -32,7 +32,6 @@ class _SettingsTableState extends State<SettingsTable> {
   Widget build(BuildContext context) {
     final provider = context.watch<SettingProvider>();
     final configs = provider.configs;
-    final surface = AppColors.surface;
     final border = AppColors.border;
     final textColor = AppColors.textPrimary;
 
@@ -41,17 +40,16 @@ class _SettingsTableState extends State<SettingsTable> {
       final parts = entry.key.split('_');
       String category = parts.length > 1 ? parts.first.toUpperCase() : 'GENERAL';
       if (entry.key.startsWith('AI_MODEL')) category = 'AI MODEL';
-      
-      // Special grouping for CONFIGURATIONS
+
       if (category == 'HTTP' || category == 'FLOW' || category == 'BREAKPOINT') {
         category = 'CONFIGURATIONS';
       }
-      
+
       grouped.putIfAbsent(category, () => []).add(entry);
     }
 
     final categories = [
-      'HEALTH',
+      'ABOUT',
       'THEME',
       'SHORTCUTS',
       'CONFIGURATIONS',
@@ -59,7 +57,6 @@ class _SettingsTableState extends State<SettingsTable> {
       'PLUGINS',
     ];
 
-    // Ensure any remaining dynamic categories (like AI MODEL, DATABASE) are added at the end
     final staticCats = categories.toSet();
     final dynamicCats = grouped.keys.where((c) => !staticCats.contains(c)).toList()..sort();
     categories.addAll(dynamicCats);
@@ -84,7 +81,7 @@ class _SettingsTableState extends State<SettingsTable> {
 
               IconData icon = Icons.settings_rounded;
               if (cat == 'THEME') icon = Icons.palette_rounded;
-              if (cat == 'HEALTH') icon = Icons.health_and_safety_rounded;
+              if (cat == 'ABOUT') icon = Icons.info_outline_rounded;
               if (cat == 'SHORTCUTS') icon = Icons.keyboard_rounded;
               if (cat == 'PLUGINS') icon = Icons.extension_rounded;
               if (cat == 'FUNCTIONS') icon = Icons.functions_rounded;
@@ -120,10 +117,10 @@ class _SettingsTableState extends State<SettingsTable> {
       return const _ThemeSettings();
     }
 
-    if (_selectedCategory == 'HEALTH') {
+    if (_selectedCategory == 'ABOUT') {
       return const SingleChildScrollView(
         padding: EdgeInsets.all(32),
-        child: AppHealthSection(),
+        child: AppAboutSection(),
       );
     }
 
@@ -158,7 +155,7 @@ class _SettingsTableState extends State<SettingsTable> {
                   style: AppTypography.heading.copyWith(color: textColor, fontSize: 20),
                 ),
                 const SizedBox(height: 24),
-                
+
                 if (flowEntries.isNotEmpty) ...[
                   Text('Flow', style: AppTypography.label),
                   const SizedBox(height: 12),

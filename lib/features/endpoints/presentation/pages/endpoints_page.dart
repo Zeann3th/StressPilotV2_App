@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/endpoints//data/curl_parser.dart';
@@ -279,7 +280,18 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                                 color: Colors.transparent,
                                                 borderRadius: BorderRadius.circular(10),
                                                 child: InkWell(
-                                                  onTap: () => setState(() => _selectedEndpoint = ep),
+                                                  onTap: () {
+                                                    setState(() => _selectedEndpoint = ep);
+                                                    NavigationTracker.trackEndpoint(
+                                                      ep.name,
+                                                      ep.url ?? ep.grpcServiceName ?? ep.graphqlOperationType,
+                                                      ep.type,
+                                                      {
+                                                        'project': widget.project.toJson(),
+                                                        'initialEndpoint': ep.toJson(),
+                                                      },
+                                                    );
+                                                  },
                                                   borderRadius: BorderRadius.circular(10),
                                                   child: Padding(
                                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

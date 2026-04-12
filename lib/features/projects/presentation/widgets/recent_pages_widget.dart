@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/navigation_item.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/projects/domain/models/project.dart';
+import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 
 class RecentPagesWidget extends StatefulWidget {
   const RecentPagesWidget({super.key});
@@ -12,22 +17,48 @@ class RecentPagesWidget extends StatefulWidget {
 }
 
 class _RecentPagesWidgetState extends State<RecentPagesWidget> {
-  List<RecentPage> _recentPages = [];
+  List<RecentPage> _recentItems = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadRecentPages();
+    _loadRecentItems();
   }
 
-  Future<void> _loadRecentPages() async {
-    final pages = await NavigationTracker.getRecentPages();
+  Future<void> _loadRecentItems() async {
+    final items = await NavigationTracker.getRecentItems();
     if (mounted) {
       setState(() {
-        _recentPages = pages;
+        _recentItems = items;
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _onItemTap(RecentPage item) async {
+    final projectProvider = context.read<ProjectProvider>();
+    final flowProvider = context.read<FlowProvider>();
+
+    switch (item.type) {
+      case RecentEntityType.project:
+        final project = Project.fromJson(item.arguments);
+        await projectProvider.selectProject(project);
+        AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
+        break;
+      case RecentEntityType.flow:
+        final flow = flow_domain.Flow.fromJson(item.arguments);
+        await flowProvider.selectFlow(flow);
+        AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
+        break;
+      case RecentEntityType.endpoint:
+        final project = Project.fromJson(item.arguments['project'] as Map<String, dynamic>);
+        await projectProvider.selectProject(project);
+        AppNavigator.pushNamed(
+          AppRouter.projectEndpointsRoute,
+          arguments: item.arguments,
+        );
+        break;
     }
   }
 
@@ -37,7 +68,7 @@ class _RecentPagesWidgetState extends State<RecentPagesWidget> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_recentPages.isEmpty) {
+    if (_recentItems.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -67,21 +98,24 @@ class _RecentPagesWidgetState extends State<RecentPagesWidget> {
         Expanded(
           child: ListView.separated(
             padding: EdgeInsets.zero,
-            itemCount: _recentPages.length,
-            separatorBuilder: (_, _) => Divider(
+            itemCount: _recentItems.length,
+            separatorBuilder: (_, __) => Divider(
               height: 1,
               thickness: 1,
-              color: AppColors.border.withValues(alpha: 0.3),
+              color: AppColors.border.withValues(alpha: 0.15),
             ),
             itemBuilder: (context, index) {
-              final page = _recentPages[index];
-              return NavigationItem(
-                title: page.title,
-                icon: page.icon,
-                compact: true,
-                onTap: () {
-                  AppNavigator.pushNamed(page.route, arguments: page.arguments);
-                },
+              final item = _recentItems[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: NavigationItem(
+                  title: item.title,
+                  subtitle: item.subtitle,
+                  badge: item.badge,
+                  icon: item.icon,
+                  compact: false,
+                  onTap: () => _onItemTap(item),
+                ),
               );
             },
           ),
