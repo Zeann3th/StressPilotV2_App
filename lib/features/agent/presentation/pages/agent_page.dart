@@ -75,10 +75,10 @@ class _AgentPageState extends State<AgentPage> {
                 borderRadius: AppRadius.br16,
                 child: Stack(
                   children: [
-                    // Terminal View
+
                     Positioned.fill(
                       child: Container(
-                        color: const Color(0xFF0D1117), // GitHub Dark background
+                        color: const Color(0xFF0D1117),
                         child: provider.isLoading && !provider.isInitialized
                             ? const Center(child: CircularProgressIndicator())
                             : TerminalView(
@@ -91,7 +91,6 @@ class _AgentPageState extends State<AgentPage> {
                       ),
                     ),
 
-                    // Immersive Floating Back Button
                     Positioned(
                       top: 12,
                       left: 12,
@@ -103,7 +102,6 @@ class _AgentPageState extends State<AgentPage> {
                       ),
                     ),
 
-                    // Immersive Floating Refresh Button (Restart Agent)
                     Positioned(
                       top: 12,
                       right: 12,

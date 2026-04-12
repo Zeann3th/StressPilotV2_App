@@ -25,12 +25,11 @@ class AgentProvider extends ChangeNotifier {
   }
 
   void _initTerminal() {
-    // Forward terminal input to PTY
+
     terminal.onOutput = (data) {
       _pty?.write(utf8.encode(data));
     };
 
-    // Handle terminal resize
     terminal.onResize = (cols, rows, _, __) {
       _pty?.resize(rows, cols);
     };
@@ -47,11 +46,10 @@ class AgentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Kill existing process
+
       _pty?.kill();
       _pty = null;
-      
-      // Clear terminal buffer
+
       terminal.buffer.clear();
       terminal.buffer.setCursor(0, 0);
 
@@ -64,14 +62,12 @@ class AgentProvider extends ChangeNotifier {
       final agentPath = p.join(agentDir.path, 'stresspilot-agent.exe');
       final agentFile = File(agentPath);
 
-      // Extract agent from assets
       final assetData = await rootBundle.load('assets/agent/stresspilot-agent.exe');
       if (!await agentFile.exists() || await agentFile.length() != assetData.lengthInBytes) {
         final bytes = assetData.buffer.asUint8List(assetData.offsetInBytes, assetData.lengthInBytes);
         await agentFile.writeAsBytes(bytes);
       }
 
-      // Initialize PTY
       _pty = Pty.start(
         agentPath,
         columns: terminal.viewWidth,
@@ -82,7 +78,6 @@ class AgentProvider extends ChangeNotifier {
         },
       );
 
-      // PTY -> Terminal
       _pty!.output.listen(
         (data) {
           terminal.write(utf8.decode(data));
