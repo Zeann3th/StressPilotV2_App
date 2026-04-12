@@ -11,16 +11,6 @@ DEPENDS     := libgtk-3-0 (>= 3.18), libblkid1 (>= 2.27), liblzma5 (>= 5.1)
 SECTION     := utils
 PRIORITY    := optional
 
-# JDK Linux
-JDK_URL     := https://aka.ms/download-jdk/microsoft-jdk-25-linux-x64.tar.gz
-JDK_ARCHIVE := /tmp/openjdk-25.tar.gz
-JDK_EXTRACT := /tmp/jdk-25
-
-# JDK Windows
-JDK_WIN_URL     := https://aka.ms/download-jdk/microsoft-jdk-25-windows-x64.zip
-JDK_WIN_ARCHIVE := build/jdk25.zip
-JDK_WIN_EXTRACT := build/jdk-win
-
 # Paths
 DIST_ROOT         := dist
 PACKAGE_DIR       := $(DIST_ROOT)/$(APP_NAME)_$(VERSION)_$(ARCH)
@@ -34,8 +24,8 @@ ICON_SRC  := $(FLUTTER_BUILD_DIR)/data/flutter_assets/assets/images/logo.png
 ICON_DEST := $(PACKAGE_DIR)/usr/share/pixmaps/$(APP_NAME).png
 
 .PHONY: all build-windows build-linux \
-        clean fetch-jdk fetch-jdk-win flutter-build-linux structure files copy permissions deb \
-        install lint clean-cache nuke help
+        clean flutter-build-linux structure files copy permissions deb \
+        install lint help
 
 # ==============================================================================
 # Default: show help
@@ -45,48 +35,21 @@ all: help
 # ==============================================================================
 # Windows build pipeline
 # ==============================================================================
-build-windows: fetch-jdk-win
+build-windows:
 	flutter build windows --release
-	@echo "Bundling JDK to $(RELEASE_DIR)/jdk..."
-	@powershell -Command "if (Test-Path '$(RELEASE_DIR)/jdk') { Remove-Item -Recurse -Force '$(RELEASE_DIR)/jdk' }; New-Item -ItemType Directory -Path '$(RELEASE_DIR)/jdk' -Force"
-	@powershell -Command "Copy-Item -Path '$(JDK_WIN_EXTRACT)/*' -Destination '$(RELEASE_DIR)/jdk/' -Recurse -Force"
 	"$(INNO_COMPILER)" "$(ISS_FILE)"
 	@echo Build complete (Windows)
-
-fetch-jdk-win:
-	@echo "Fetching Windows JDK 25..."
-	@powershell -Command "if (!(Test-Path 'build')) { New-Item -ItemType Directory -Path 'build' }"
-	@powershell -Command "if (!(Test-Path '$(JDK_WIN_ARCHIVE)')) { echo 'Downloading JDK 25 for Windows...'; curl.exe -L --fail -o '$(JDK_WIN_ARCHIVE)' '$(JDK_WIN_URL)' } else { echo '(cached) $(JDK_WIN_ARCHIVE) already exists, skipping.' }"
-	@powershell -Command "if (Test-Path '$(JDK_WIN_EXTRACT)') { Remove-Item -Recurse -Force '$(JDK_WIN_EXTRACT)' }"
-	@powershell -Command "New-Item -ItemType Directory -Path '$(JDK_WIN_EXTRACT)' -Force"
-	@powershell -Command "Expand-Archive -Path '$(JDK_WIN_ARCHIVE)' -DestinationPath '$(JDK_WIN_EXTRACT)' -Force"
-	@echo "Flattening Windows JDK..."
-	@powershell -Command "$$sub = Get-ChildItem -Path '$(JDK_WIN_EXTRACT)' -Directory | Select-Object -First 1; if ($$sub) { Get-ChildItem $$sub.FullName | Move-Item -Destination '$(JDK_WIN_EXTRACT)' -Force; Remove-Item $$sub.FullName -Recurse -Force }"
-	@echo "JDK ready at $(JDK_WIN_EXTRACT)"
 
 # ==============================================================================
 # Linux build pipeline
 # ==============================================================================
-build-linux: fetch-jdk flutter-build-linux structure files copy permissions deb
+build-linux: flutter-build-linux structure files copy permissions deb
 	@echo "Build complete (Linux)"
 	@echo "Output: $(DEB_FILE)"
 
 # ==============================================================================
 # Linux steps
 # ==============================================================================
-fetch-jdk:
-	@echo "Fetching JDK 25..."
-	@if [ ! -f "$(JDK_ARCHIVE)" ]; then \
-		echo "Downloading JDK 25..."; \
-		curl -L --fail -o $(JDK_ARCHIVE) $(JDK_URL); \
-	else \
-		echo "(cached) $(JDK_ARCHIVE) already exists, skipping."; \
-	fi
-	@rm -rf $(JDK_EXTRACT)
-	@mkdir -p $(JDK_EXTRACT)
-	@tar -xzf $(JDK_ARCHIVE) -C $(JDK_EXTRACT) --strip-components=1
-	@echo "JDK ready at $(JDK_EXTRACT)"
-
 flutter-build-linux:
 	flutter build linux --release
 
@@ -122,8 +85,6 @@ files:
 	@echo "#!/bin/bash"                                                                      > $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "set -e"                                                                          >> $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "chmod +x /opt/$(BINARY_NAME)/data/flutter_assets/assets/agent/stresspilot-agent" >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo "find /opt/$(BINARY_NAME)/jdk/bin -type f -exec chmod 755 {} \;"                 >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo "find /opt/$(BINARY_NAME)/jdk/lib -name '*.so*' -exec chmod 644 {} \; || true"  >> $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "update-desktop-database /usr/share/applications || true"                        >> $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "gtk-update-icon-cache /usr/share/pixmaps || true"                               >> $(PACKAGE_DIR)/DEBIAN/postinst
 
@@ -135,8 +96,6 @@ copy:
 	rm -rf $(PACKAGE_DIR)/opt/$(BINARY_NAME)
 	mkdir -p $(PACKAGE_DIR)/opt/$(BINARY_NAME)
 	cp -r $(FLUTTER_BUILD_DIR)/* $(PACKAGE_DIR)/opt/$(BINARY_NAME)/
-	mkdir -p $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk
-	cp -r $(JDK_EXTRACT)/* $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk/
 	@if [ -f "$(ICON_SRC)" ]; then \
 		cp $(ICON_SRC) $(ICON_DEST); \
 	else \
@@ -150,8 +109,6 @@ permissions:
 	chmod +x  $(PACKAGE_DIR)/opt/$(BINARY_NAME)/$(BINARY_NAME)
 	chmod +x  $(PACKAGE_DIR)/opt/$(BINARY_NAME)/data/flutter_assets/assets/agent/stresspilot-agent
 	find $(PACKAGE_DIR)/opt/$(BINARY_NAME)/lib -name "*.so*" -exec chmod 644 {} \; 2>/dev/null || true
-	find $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk/bin -type f -exec chmod 755 {} \;
-	find $(PACKAGE_DIR)/opt/$(BINARY_NAME)/jdk/lib -name "*.so*" -exec chmod 644 {} \; 2>/dev/null || true
 
 deb:
 	fakeroot dpkg-deb --build $(PACKAGE_DIR)
@@ -163,12 +120,6 @@ deb:
 clean:
 	flutter clean
 	rm -rf $(DIST_ROOT)
-
-clean-cache:
-	@rm -f $(JDK_ARCHIVE)
-	@rm -rf $(JDK_EXTRACT)
-
-nuke: clean clean-cache
 
 lint:
 	@if command -v lintian &> /dev/null; then \
@@ -187,13 +138,9 @@ help:
 	@echo ""
 	@echo "Usage: make <target>"
 	@echo ""
-	@echo "  make build-windows    Flutter build + copy JDK + compile installer"
-	@echo "  make build-linux      Flutter build + fetch JDK + .deb package"
+	@echo "  make build-windows    Flutter build + compile installer"
+	@echo "  make build-linux      Flutter build + .deb package"
 	@echo ""
 	@echo "Optional:"
 	@echo "  make clean            Remove dist/ and flutter build cache"
-	@echo "  make clean-cache      Remove cached JDK (Linux)"
-	@echo "  make nuke             Full clean including cache"
-	@echo "  make lint             Run lintian on the .deb (Linux)"
-	@echo "  make install          Install .deb locally for testing (Linux)"
 	@echo ""

@@ -92,37 +92,131 @@ class ProcessManager {
 
   bool get isDebugMode => kDebugMode;
 
+  static Future<int?> _getJavaVersion(String javaPath) async {
+    try {
+      final result = await Process.run(javaPath, ['-version'],
+          stderrEncoding: const SystemEncoding());
+
+      final output = result.stderr as String;
+
+      final match = RegExp(r'version "(\d+)(\.\d+)?').firstMatch(output);
+      if (match != null) {
+        final versionStr = match.group(1)!;
+        if (versionStr == '1') {
+
+          final subVersion = match.group(2);
+          if (subVersion != null && subVersion.startsWith('.8')) {
+            return 8;
+          }
+        }
+        return int.tryParse(versionStr);
+      }
+    } catch (_) {}
+    return null;
+  }
+
   String _getExecutableDir() {
     return kDebugMode
         ? Directory.current.path
         : File(Platform.resolvedExecutable).parent.path;
   }
 
-  String _getJavaExecutable() {
+  Future<String> _getJavaExecutable() async {
     if (kDebugMode) return 'java';
 
-    final executableDir = _getExecutableDir();
-    final javaRelPath = Platform.isWindows ? 'jdk\\bin\\java.exe' : 'jdk/bin/java';
-    final bundledJava = path.join(executableDir, javaRelPath);
+    try {
+      return await _findBestSystemJava();
+    } catch (e) {
+      AppLogger.warning('Smart Java search failed: $e. Falling back to system "java" command.', name: _logName);
+      return 'java';
+    }
+  }
 
-    if (File(bundledJava).existsSync()) {
-      AppLogger.info('Using bundled JDK: $bundledJava', name: _logName);
-      return bundledJava;
+  Future<String> _findBestSystemJava() async {
+    const int targetVersion = 25;
+    const int minVersion = 21;
+
+    final List<String> candidates = [];
+    if (Platform.isWindows) {
+      candidates.addAll(_getWindowsJavaPaths());
+    } else if (Platform.isLinux) {
+      candidates.addAll(_getLinuxJavaPaths());
+    } else if (Platform.isMacOS) {
+      candidates.addAll(_getMacOSJavaPaths());
     }
 
-    if (Platform.isWindows) {
-      final localAppData = Platform.environment['LOCALAPPDATA'] ?? '';
-      if (localAppData.isNotEmpty) {
-        final appDataJava = path.join(localAppData, 'StressPilot', 'jdk', 'bin', 'java.exe');
-        if (File(appDataJava).existsSync()) {
-          AppLogger.info('Using StressPilot JDK in AppData: $appDataJava', name: _logName);
-          return appDataJava;
-        }
+    String? bestPath;
+    int bestVersion = -1;
+
+    for (final p in candidates) {
+      if (!File(p).existsSync()) continue;
+      final version = await _getJavaVersion(p);
+      if (version == null) continue;
+
+      if (version == targetVersion) {
+        AppLogger.info('Found target Java $targetVersion at $p', name: _logName);
+        return p;
+      }
+
+      if (version >= minVersion && version > bestVersion) {
+        bestVersion = version;
+        bestPath = p;
       }
     }
 
-    AppLogger.warning('Bundled JDK not found at $bundledJava, falling back to system java', name: _logName);
-    return 'java';
+    if (bestPath != null) {
+      AppLogger.info('Using best available Java ($bestVersion) at $bestPath', name: _logName);
+      return bestPath;
+    }
+
+    throw Exception('No compatible Java version found (target: $targetVersion, minimum: $minVersion)');
+  }
+
+  List<String> _getWindowsJavaPaths() {
+    final List<String> paths = [];
+    final programFiles = Platform.environment['ProgramFiles'] ?? 'C:\\Program Files';
+    final javaDir = Directory(path.join(programFiles, 'Java'));
+
+    if (javaDir.existsSync()) {
+      try {
+        final jdks = javaDir.listSync().whereType<Directory>().toList();
+        for (var jdk in jdks) {
+          paths.add(path.join(jdk.path, 'bin', 'java.exe'));
+        }
+      } catch (_) {}
+    }
+
+    return paths;
+  }
+
+  List<String> _getLinuxJavaPaths() {
+    final List<String> paths = ['/usr/bin/java', '/usr/local/bin/java'];
+    final jvmDir = Directory('/usr/lib/jvm');
+
+    if (jvmDir.existsSync()) {
+      try {
+        final jdks = jvmDir.listSync().whereType<Directory>().toList();
+        for (var jdk in jdks) {
+          paths.add(path.join(jdk.path, 'bin', 'java'));
+        }
+      } catch (_) {}
+    }
+    return paths;
+  }
+
+  List<String> _getMacOSJavaPaths() {
+    final List<String> paths = ['/usr/bin/java', '/usr/local/bin/java'];
+    final jvmDir = Directory('/Library/Java/JavaVirtualMachines');
+
+    if (jvmDir.existsSync()) {
+      try {
+        final jdks = jvmDir.listSync().whereType<Directory>().toList();
+        for (var jdk in jdks) {
+          paths.add(path.join(jdk.path, 'Contents', 'Home', 'bin', 'java'));
+        }
+      } catch (_) {}
+    }
+    return paths;
   }
 
   String _getAssetPath(String assetName) {
@@ -200,7 +294,7 @@ class ProcessManager {
     }
 
     final jarPath = _getAssetPath('core/app.jar');
-    final javaPath = _getJavaExecutable();
+    final javaPath = await _getJavaExecutable();
     final workingDir = _getExecutableDir();
 
     final logDir = Platform.isWindows

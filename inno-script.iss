@@ -41,7 +41,6 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#ReleaseDir}\stress_pilot.exe";                        DestDir: "{app}";      Flags: ignoreversion
-Source: "{#ReleaseDir}\jdk\*";                                   DestDir: "{app}\jdk";  Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#ReleaseDir}\data\*";                                  DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#ReleaseDir}\flutter_inappwebview_windows_plugin.dll"; DestDir: "{app}";      Flags: ignoreversion
 Source: "{#ReleaseDir}\flutter_windows.dll";                     DestDir: "{app}";      Flags: ignoreversion
