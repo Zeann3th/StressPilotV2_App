@@ -86,6 +86,13 @@ class _AppRootState extends State<AppRoot> {
           _initialized = true;
           _hasError = false;
         });
+
+        // Trigger update check on startup
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            UpdateDialog.checkAndShow(context);
+          }
+        });
       }
 
       AppLogger.info('Application initialized (Offline Mode compatible)', name: 'AppRoot');
@@ -215,30 +222,9 @@ class _AppTheme extends StatelessWidget {
       builder: (context, child) {
         return ScaffoldMessenger(
           key: AppNavigator.scaffoldMessengerKey,
-          child: _UpdateCheckWrapper(child: child!),
+          child: child!,
         );
       },
     );
   }
-}
-
-class _UpdateCheckWrapper extends StatefulWidget {
-  final Widget child;
-  const _UpdateCheckWrapper({required this.child});
-
-  @override
-  State<_UpdateCheckWrapper> createState() => _UpdateCheckWrapperState();
-}
-
-class _UpdateCheckWrapperState extends State<_UpdateCheckWrapper> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      UpdateDialog.checkAndShow(context);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }

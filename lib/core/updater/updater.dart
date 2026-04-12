@@ -3,7 +3,9 @@ import 'package:dio/dio.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:stress_pilot/core/config/app_config.dart';
+import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/system/logger.dart';
+import 'package:stress_pilot/core/system/process_manager.dart';
 
 class UpdateInfo {
   final String version;
@@ -107,12 +109,19 @@ class AppUpdater {
   }
 
   static Future<void> _install(String filePath) async {
-    if (Platform.isWindows) {
+    AppLogger.info('Killing backend before update...', name: 'Updater');
+    try {
+      await getIt<ProcessManager>().forceKill();
+      // Small delay to ensure processes are fully terminated and files unlocked
+      await Future.delayed(const Duration(milliseconds: 500));
+    } catch (e) {
+      AppLogger.warning('Failed to kill backend during update: $e', name: 'Updater');
+    }
 
+    if (Platform.isWindows) {
       await Process.start(filePath, ['/SILENT'], runInShell: false);
       exit(0);
     } else if (Platform.isLinux) {
-
       await Process.start('pkexec', ['dpkg', '-i', filePath], runInShell: false);
       exit(0);
     } else if (Platform.isMacOS) {
