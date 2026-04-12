@@ -87,6 +87,7 @@ dev_dependencies:
 
   # Build / packaging
   flutter_launcher_icons: ^0.14.4
+  inno_bundle: ^0.11.2
 
 flutter:
   uses-material-design: true
@@ -113,3 +114,7 @@ flutter_launcher_icons:
 
   linux:
     generate: true
+
+inno_bundle:
+  id: 4399bf90-3627-11f1-9054-af078c8f3ecb
+  publisher: "Zeann3th"
