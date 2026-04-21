@@ -115,12 +115,14 @@ class EndpointRepositoryImpl implements EndpointRepository {
   @override
   Future<Map<String, dynamic>> executeEndpoint(
     int endpointId,
-    Map<String, dynamic> requestBody,
-  ) async {
+    Map<String, dynamic> requestBody, {
+    CancelToken? cancelToken,
+  }) async {
     try {
       final response = await _dio.post(
         '/api/v1/endpoints/$endpointId/execute',
         data: requestBody,
+        cancelToken: cancelToken,
         options: Options(
           connectTimeout: const Duration(seconds: 60),
           receiveTimeout: const Duration(seconds: 60),
@@ -141,6 +143,8 @@ class EndpointRepositoryImpl implements EndpointRepository {
         };
       }
     } on DioException catch (e) {
+      if (CancelToken.isCancel(e)) rethrow;
+
       if (e.response?.data is Map<String, dynamic>) {
         final data = Map<String, dynamic>.from(e.response!.data as Map);
         if (!data.containsKey('statusCode') && data.containsKey('status')) {
@@ -183,12 +187,14 @@ class EndpointRepositoryImpl implements EndpointRepository {
   Future<Map<String, dynamic>> executeAdhocEndpoint({
     required int projectId,
     required Map<String, dynamic> requestBody,
+    CancelToken? cancelToken,
   }) async {
     try {
       final response = await _dio.post(
         '/api/v1/endpoints/execute-adhoc',
         queryParameters: {'projectId': projectId},
         data: requestBody,
+        cancelToken: cancelToken,
         options: Options(
           connectTimeout: const Duration(seconds: 60),
           receiveTimeout: const Duration(seconds: 60),

@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 class KeyValueEditor extends StatefulWidget {
   final Map<String, String> data;
   final ValueChanged<Map<String, String>> onChanged;
+  final ScrollController? controller;
 
   const KeyValueEditor({
     super.key,
     required this.data,
     required this.onChanged,
+    this.controller,
   });
 
   @override
@@ -18,6 +20,10 @@ class KeyValueEditor extends StatefulWidget {
 class _KeyValueEditorState extends State<KeyValueEditor> {
   late List<MapEntry<TextEditingController, TextEditingController>>
   _controllers;
+  ScrollController? _internalScrollController;
+
+  ScrollController get _effectiveController =>
+      widget.controller ?? (_internalScrollController ??= ScrollController());
 
   @override
   void initState() {
@@ -63,8 +69,15 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
   }
 
   @override
+  void dispose() {
+    _internalScrollController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListView.separated(
+      controller: _effectiveController,
       itemCount: _controllers.length,
       separatorBuilder: (c, i) =>
           Divider(height: 1, color: Theme.of(context).dividerTheme.color),

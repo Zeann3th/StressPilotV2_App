@@ -24,6 +24,7 @@ import 'package:stress_pilot/features/shared/presentation/provider/run_provider.
 import 'package:stress_pilot/features/agent/presentation/provider/agent_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/plugin_settings_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
+import 'package:stress_pilot/features/scheduling/presentation/provider/scheduling_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/layout.dart';
 import 'package:stress_pilot/core/updater/update_dialog.dart';
 
@@ -158,7 +159,11 @@ class _AppRootState extends State<AppRoot> {
         ChangeNotifierProvider<FunctionSettingsProvider>.value(
           value: getIt<FunctionSettingsProvider>(),
         ),
-      ],
+        ChangeNotifierProvider<SchedulingProvider>.value(
+          value: getIt<SchedulingProvider>(),
+        ),
+        ],
+
       child: _initialized && !_hasError
           ? const GlobalShortcutListener(
               child: _AppTheme(),

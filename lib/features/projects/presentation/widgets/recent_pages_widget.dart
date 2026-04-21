@@ -99,7 +99,7 @@ class _RecentPagesWidgetState extends State<RecentPagesWidget> {
           child: ListView.separated(
             padding: EdgeInsets.zero,
             itemCount: _recentItems.length,
-            separatorBuilder: (_, __) => Divider(
+            separatorBuilder: (context, index) => Divider(
               height: 1,
               thickness: 1,
               color: AppColors.border.withValues(alpha: 0.15),

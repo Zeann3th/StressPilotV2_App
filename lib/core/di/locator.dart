@@ -23,6 +23,9 @@ import 'package:stress_pilot/features/settings/presentation/provider/plugin_sett
 import 'package:stress_pilot/features/settings/domain/repositories/function_repository.dart';
 import 'package:stress_pilot/features/settings/data/repositories/function_repository_impl.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
+import 'package:stress_pilot/features/scheduling/domain/repositories/schedule_repository.dart';
+import 'package:stress_pilot/features/scheduling/data/repositories/schedule_repository_impl.dart';
+import 'package:stress_pilot/features/scheduling/presentation/provider/scheduling_provider.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/run_repository.dart';
 import 'package:stress_pilot/features/marketplace/data/repositories/plugin_capability_repository_impl.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
@@ -86,6 +89,8 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => PluginSettingsProvider(getIt()));
   getIt.registerLazySingleton<FunctionRepository>(() => FunctionRepositoryImpl());
   getIt.registerLazySingleton(() => FunctionSettingsProvider(getIt()));
+  getIt.registerLazySingleton<ScheduleRepository>(() => ScheduleRepositoryImpl());
+  getIt.registerLazySingleton(() => SchedulingProvider(getIt()));
   getIt.registerLazySingleton<PluginCapabilityRepository>(
       () => PluginCapabilityRepositoryImpl());
 

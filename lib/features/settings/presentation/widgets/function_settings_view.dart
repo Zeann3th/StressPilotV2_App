@@ -16,6 +16,8 @@ class FunctionSettingsView extends StatefulWidget {
 }
 
 class _FunctionSettingsViewState extends State<FunctionSettingsView> {
+  final ScrollController _listScrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -23,6 +25,12 @@ class _FunctionSettingsViewState extends State<FunctionSettingsView> {
       if (!mounted) return;
       await context.read<FunctionSettingsProvider>().loadFunctions();
     });
+  }
+
+  @override
+  void dispose() {
+    _listScrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -65,6 +73,7 @@ class _FunctionSettingsViewState extends State<FunctionSettingsView> {
               ),
               Expanded(
                 child: ListView.builder(
+                  controller: _listScrollController,
                   itemCount: functions.length,
                   itemBuilder: (context, index) {
                     final func = functions[index];
@@ -237,10 +246,10 @@ class _FunctionDetailEditorState extends State<_FunctionDetailEditor> {
                         ],
                       ),
                     );
-                    if (confirmed == true && mounted) {
+                    if (confirmed == true && context.mounted) {
                       final provider = context.read<FunctionSettingsProvider>();
                       await provider.deleteFunction(widget.function.id!);
-                      if (mounted) PilotToast.show(context, 'Function deleted');
+                      if (context.mounted) PilotToast.show(context, 'Function deleted');
                     }
                   },
                 ),
@@ -256,7 +265,7 @@ class _FunctionDetailEditorState extends State<_FunctionDetailEditor> {
                     body: _codeController.text,
                   );
                   await provider.saveFunction(updated);
-                  if (mounted) PilotToast.show(context, 'Function saved successfully');
+                  if (context.mounted) PilotToast.show(context, 'Function saved successfully');
                 },
               ),
             ],

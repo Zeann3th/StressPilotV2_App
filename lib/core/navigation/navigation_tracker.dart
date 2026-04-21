@@ -60,21 +60,10 @@ class RecentPage {
       other is RecentPage &&
           runtimeType == other.runtimeType &&
           type == other.type &&
-          title == other.title &&
-          _mapEquals(arguments, other.arguments);
+          title == other.title;
 
   @override
-  int get hashCode => title.hashCode ^ type.hashCode ^ arguments.length;
-
-  static bool _mapEquals(Map<String, dynamic>? m1, Map<String, dynamic>? m2) {
-    if (m1 == m2) return true;
-    if (m1 == null || m2 == null) return false;
-    if (m1.length != m2.length) return false;
-    for (final key in m1.keys) {
-      if (!m2.containsKey(key) || m1[key] != m2[key]) return false;
-    }
-    return true;
-  }
+  int get hashCode => title.hashCode ^ type.hashCode;
 }
 
 class NavigationTracker {

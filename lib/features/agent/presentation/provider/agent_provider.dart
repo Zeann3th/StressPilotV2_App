@@ -30,7 +30,7 @@ class AgentProvider extends ChangeNotifier {
       _pty?.write(utf8.encode(data));
     };
 
-    terminal.onResize = (cols, rows, _, __) {
+    terminal.onResize = (cols, rows, _, _) {
       _pty?.resize(rows, cols);
     };
   }

@@ -54,6 +54,17 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
     });
   }
 
+  @override
+  void didUpdateWidget(ProjectEndpointsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialEndpoint != null &&
+        oldWidget.initialEndpoint?.id != widget.initialEndpoint?.id) {
+      setState(() {
+        _selectedEndpoint = widget.initialEndpoint;
+      });
+    }
+  }
+
   void _onScroll() {
     final provider = context.read<EndpointProvider>();
     if (!provider.hasMore || provider.isLoadingMore) return;
@@ -143,7 +154,7 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                                   ),
                                 ),
                                 PilotButton.ghost(
-                                  icon: LucideIcons.layers,
+                                  icon: LucideIcons.settings2,
                                   compact: true,
                                   onPressed: () => EnvironmentManagerDialog.show(
                                     context,
@@ -475,7 +486,20 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   bool _showRaw = false;
   double _responsePanelHeight = 260.0;
 
+  int _currentSearchMatchIndex = 0;
+  int _totalMatchesCount = 0;
+
   late TabController _reqTabCtrl;
+  late ScrollController _responseScrollCtrl;
+  late ScrollController _settingsScrollCtrl;
+  late ScrollController _paramsScrollCtrl;
+  late ScrollController _headersScrollCtrl;
+  late ScrollController _bodyScrollCtrl;
+
+  // Search support
+  final TextEditingController _searchCtrl = TextEditingController();
+  bool _showSearch = false;
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -483,8 +507,30 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     _urlCtrl = TextEditingController(text: widget.endpoint.url ?? '');
     _nameCtrl = TextEditingController(text: widget.endpoint.name);
     _method = widget.endpoint.httpMethod ?? 'GET';
+    _responseScrollCtrl = ScrollController();
+    _settingsScrollCtrl = ScrollController();
+    _paramsScrollCtrl = ScrollController();
+    _headersScrollCtrl = ScrollController();
+    _bodyScrollCtrl = ScrollController();
+
+    // Load cached results from provider
+    final provider = context.read<EndpointProvider>();
+    final cachedResult = provider.getExecutionResult(widget.endpoint.id);
+    if (cachedResult != null) {
+      _response = cachedResult;
+      final responseData = cachedResult.containsKey('data') && cachedResult['data'] is Map
+          ? cachedResult['data'] as Map<String, dynamic>
+          : cachedResult;
+
+      _statusCode = responseData['statusCode'];
+      _responseTime = responseData['responseTimeMs'];
+      if (responseData.containsKey('success')) {
+        _isSuccess = responseData['success'] as bool?;
+      }
+    }
 
     String bodyText = '';
+
     if (widget.endpoint.body != null) {
       if (widget.endpoint.body is String) {
         bodyText = widget.endpoint.body;
@@ -522,6 +568,11 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     _bodyCtrl.dispose();
     _successConditionCtrl.dispose();
     _reqTabCtrl.dispose();
+    _responseScrollCtrl.dispose();
+    _settingsScrollCtrl.dispose();
+    _paramsScrollCtrl.dispose();
+    _headersScrollCtrl.dispose();
+    _bodyScrollCtrl.dispose();
     super.dispose();
   }
 
@@ -602,6 +653,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
   void _showExportCurlDialog() {
     final curlCommand = _generateCurlCommand();
+    final scrollCtrl = ScrollController();
     showDialog(
       context: context,
       builder: (context) {
@@ -612,14 +664,19 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
             constraints: const BoxConstraints(maxHeight: 400),
             child: Stack(
               children: [
-                SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
-                  child: SelectableText(
-                    curlCommand,
-                    style: TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 13,
-                      color: AppColors.textPrimary,
+                Scrollbar(
+                  controller: scrollCtrl,
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    controller: scrollCtrl,
+                    padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+                    child: SelectableText(
+                      curlCommand,
+                      style: TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 13,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                 ),
@@ -700,6 +757,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
   }
 
   Future<void> _send() async {
+    final provider = context.read<EndpointProvider>();
     setState(() {
       _isLoading = true;
       _response = null;
@@ -718,24 +776,21 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
         }
       } catch (_) {}
 
-      final result = await context
-          .read<EndpointProvider>()
-          .executeEndpoint(widget.endpoint.id, {
-            'url': _urlCtrl.text,
-            'httpMethod': _method,
-            'body': bodyPayload,
-            'httpHeaders': _headers,
-            'httpParameters': _params,
-            'variables': _variables,
-            'successCondition': _successConditionCtrl.text,
-          });
+      final result = await provider.executeEndpoint(widget.endpoint.id, {
+        'url': _urlCtrl.text,
+        'httpMethod': _method,
+        'body': bodyPayload,
+        'httpHeaders': _headers,
+        'httpParameters': _params,
+        'variables': _variables,
+        'successCondition': _successConditionCtrl.text,
+      });
 
       if (!mounted) return;
       _stopTimer();
 
       setState(() {
         _response = result;
-
         final responseData = result.containsKey('data') && result['data'] is Map
             ? result['data'] as Map<String, dynamic>
             : result;
@@ -755,6 +810,14 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _stop() {
+    context.read<EndpointProvider>().cancelExecution(widget.endpoint.id);
+    setState(() {
+      _isLoading = false;
+      _stopTimer();
+    });
   }
 
   @override
@@ -886,11 +949,12 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                           ),
                         ),
                       ),
-                      PilotButton.primary(
-                        label: 'Send',
-                        icon: LucideIcons.send,
-                        onPressed: _isLoading ? null : _send,
+                      PilotButton(
+                        label: _isLoading ? 'Stop' : 'Send',
+                        icon: _isLoading ? LucideIcons.square : LucideIcons.send,
+                        onPressed: _isLoading ? _stop : _send,
                         compact: false,
+                        variant: _isLoading ? PilotButtonVariant.danger : PilotButtonVariant.primary,
                       ),
                     ],
                   ),
@@ -907,150 +971,284 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
                 ),
 
                 Expanded(
-                  child: LayoutBuilder(
-                    builder: (ctx, constraints) {
-                      final totalH = constraints.maxHeight;
-                      final respH = _responsePanelHeight.clamp(80.0, totalH - 80.0);
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border(top: BorderSide(color: border.withValues(alpha: 0.3))),
-                              ),
-                              child: TabBarView(
-                                controller: _reqTabCtrl,
-                                physics: const NeverScrollableScrollPhysics(),
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: KeyValueEditor(data: _params, onChanged: (d) => _params = d),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(1),
-                                    child: Stack(
-                                      children: [
-                                        TextField(
-                                          controller: _bodyCtrl,
-                                          maxLines: null,
-                                          expands: true,
-                                          style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: textColor),
-                                          decoration: InputDecoration(
-                                            hintText: 'Request Body (JSON)',
-                                            hintStyle: TextStyle(color: secondaryText),
-                                            border: InputBorder.none,
-                                            contentPadding: const EdgeInsets.all(16),
-                                            fillColor: bg.withValues(alpha: 0.3),
-                                            filled: true,
-                                          ),
-                                        ),
-                                        Positioned(
-                                          top: 8,
-                                          right: 16,
-                                          child: PilotButton.ghost(
-                                            label: 'Beautify',
-                                            icon: LucideIcons.sparkles,
-                                            onPressed: _beautifyJson,
-                                            compact: true,
-                                          ),
-                                        ),
-                                      ],
+                  child: KeyboardListener(
+                    focusNode: FocusNode(),
+                    onKeyEvent: (event) {
+                      if (event is KeyDownEvent &&
+                          event.logicalKey == LogicalKeyboardKey.keyF &&
+                          (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed)) {
+                        setState(() {
+                          _showSearch = !_showSearch;
+                          if (_showSearch) {
+                            _searchFocusNode.requestFocus();
+                          } else {
+                            _searchCtrl.clear();
+                          }
+                        });
+                      }
+                    },
+                    child: LayoutBuilder(
+                      builder: (ctx, constraints) {
+                        final totalH = constraints.maxHeight;
+                        final respH = _responsePanelHeight.clamp(80.0, totalH - 80.0);
+                        return Column(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border(top: BorderSide(color: border.withValues(alpha: 0.3))),
+                                ),
+                                child: TabBarView(
+                                  controller: _reqTabCtrl,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: KeyValueEditor(
+                                        data: _params,
+                                        onChanged: (d) => _params = d,
+                                        controller: _paramsScrollCtrl,
+                                      ),
                                     ),
-                                  ),
-                                  _buildSettingsTab(textColor, secondaryText, border),
-                                ],
+                                    Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: KeyValueEditor(
+                                        data: _headers,
+                                        onChanged: (d) => _headers = d,
+                                        controller: _headersScrollCtrl,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(1),
+                                      child: Stack(
+                                        children: [
+                                          TextField(
+                                            controller: _bodyCtrl,
+                                            scrollController: _bodyScrollCtrl,
+                                            maxLines: null,
+                                            expands: true,
+                                            style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, color: textColor),
+                                            decoration: InputDecoration(
+                                              hintText: 'Request Body (JSON)',
+                                              hintStyle: TextStyle(color: secondaryText),
+                                              border: InputBorder.none,
+                                              contentPadding: const EdgeInsets.all(16),
+                                              fillColor: bg.withValues(alpha: 0.3),
+                                              filled: true,
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: 8,
+                                            right: 16,
+                                            child: PilotButton.ghost(
+                                              label: 'Beautify',
+                                              icon: LucideIcons.sparkles,
+                                              onPressed: _beautifyJson,
+                                              compact: true,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    _buildSettingsTab(textColor, secondaryText, border),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
 
-                          MouseRegion(
-                            cursor: SystemMouseCursors.resizeRow,
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onVerticalDragUpdate: (d) {
-                                setState(() {
-                                  _responsePanelHeight = (_responsePanelHeight - d.delta.dy)
-                                      .clamp(80.0, totalH - 80.0);
-                                });
-                              },
-                              child: Container(
-                                height: 8,
-                                color: border.withValues(alpha: 0.4),
-                                alignment: Alignment.center,
+                            MouseRegion(
+                              cursor: SystemMouseCursors.resizeRow,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onVerticalDragUpdate: (d) {
+                                  setState(() {
+                                    _responsePanelHeight = (_responsePanelHeight - d.delta.dy)
+                                        .clamp(80.0, totalH - 80.0);
+                                  });
+                                },
                                 child: Container(
-                                  width: 36,
-                                  height: 3,
-                                  decoration: BoxDecoration(
-                                    color: secondaryText.withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(2),
+                                  height: 8,
+                                  color: border.withValues(alpha: 0.4),
+                                  alignment: Alignment.center,
+                                  child: Container(
+                                    width: 36,
+                                    height: 3,
+                                    decoration: BoxDecoration(
+                                      color: secondaryText.withValues(alpha: 0.3),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          SizedBox(
-                            height: respH,
-                            child: Container(
-                              color: bg,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: surface,
-                                      border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        _buildRespTab('Response', !_showRaw, secondaryText),
-                                        const SizedBox(width: 4),
-                                        _buildRespTab('Raw', _showRaw, secondaryText),
-                                        const Spacer(),
-                                        if (_isLoading)
-                                          Text('${_elapsedMs}ms', style: TextStyle(color: accentColor, fontSize: 12, fontFamily: 'JetBrains Mono')),
-                                        if (_statusCode != null && !_isLoading) ...[
-                                          _buildStatusBadge(_isSuccess == true, _statusCode!),
-                                          const SizedBox(width: 10),
-                                          Text('${_responseTime}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono')),
+                            SizedBox(
+                              height: respH,
+                              child: Container(
+                                color: bg,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: surface,
+                                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          _buildRespTab('Response', !_showRaw, secondaryText),
+                                          const SizedBox(width: 4),
+                                          _buildRespTab('Raw', _showRaw, secondaryText),
+                                          const Spacer(),
+                                          if (_isLoading)
+                                            Text('${_elapsedMs}ms', style: TextStyle(color: accentColor, fontSize: 12, fontFamily: 'JetBrains Mono')),
+                                          if (_statusCode != null && !_isLoading) ...[
+                                            _buildStatusBadge(_isSuccess == true, _statusCode!),
+                                            const SizedBox(width: 10),
+                                            Text('${_responseTime}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono')),
+                                          ],
+                                          const SizedBox(width: 8),
+                                          PilotButton.ghost(
+                                            icon: LucideIcons.search,
+                                            compact: true,
+                                            onPressed: () {
+                                              setState(() {
+                                                _showSearch = !_showSearch;
+                                                if (_showSearch) _searchFocusNode.requestFocus();
+                                              });
+                                            },
+                                          ),
                                         ],
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                  Expanded(
-                                    child: _response == null
-                                        ? _buildResponseEmptyState(secondaryText)
-                                        : _showRaw
-                                            ? SingleChildScrollView(
-                                                padding: const EdgeInsets.all(16),
-                                                child: SelectableText(
-                                                  _getRawResponse(_response!),
-                                                  style: TextStyle(
-                                                    fontFamily: 'JetBrains Mono',
-                                                    fontSize: 12,
-                                                    color: textColor,
-                                                  ),
+                                    if (_showSearch)
+                                      Container(
+                                        height: 38,
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: surface,
+                                          border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.1))),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(LucideIcons.search, size: 14, color: secondaryText),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: TextField(
+                                                controller: _searchCtrl,
+                                                focusNode: _searchFocusNode,
+                                                textInputAction: TextInputAction.next,
+                                                decoration: const InputDecoration(
+                                                  hintText: 'Find in response...',
+                                                  border: InputBorder.none,
+                                                  isDense: true,
                                                 ),
-                                              )
-                                            : SingleChildScrollView(
-                                                padding: const EdgeInsets.all(16),
-                                                child: JsonViewer(json: _getResponseData(_response!)),
+                                                style: TextStyle(fontSize: 13, color: textColor),
+                                                onChanged: (v) {
+                                                  setState(() {
+                                                    _currentSearchMatchIndex = 0;
+                                                  });
+                                                },
+                                                onSubmitted: (_) {
+                                                  if (_totalMatchesCount > 0) {
+                                                    setState(() {
+                                                      _currentSearchMatchIndex = (_currentSearchMatchIndex + 1) % _totalMatchesCount;
+                                                    });
+                                                    _searchFocusNode.requestFocus();
+                                                  }
+                                                },
                                               ),
-                                  ),
-                                ],
+                                            ),
+                                            if (_totalMatchesCount > 0) ...[
+                                              Text(
+                                                '${_currentSearchMatchIndex + 1} / $_totalMatchesCount',
+                                                style: TextStyle(fontSize: 11, color: secondaryText, fontFamily: 'JetBrains Mono'),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              PilotButton.ghost(
+                                                icon: LucideIcons.chevronUp,
+                                                compact: true,
+                                                onPressed: () {
+                                                  if (_totalMatchesCount > 0) {
+                                                    setState(() {
+                                                      _currentSearchMatchIndex = (_currentSearchMatchIndex - 1 + _totalMatchesCount) % _totalMatchesCount;
+                                                    });
+                                                  }
+                                                },
+                                              ),
+                                              PilotButton.ghost(
+                                                icon: LucideIcons.chevronDown,
+                                                compact: true,
+                                                onPressed: () {
+                                                  if (_totalMatchesCount > 0) {
+                                                    setState(() {
+                                                      _currentSearchMatchIndex = (_currentSearchMatchIndex + 1) % _totalMatchesCount;
+                                                    });
+                                                  }
+                                                },
+                                              ),
+                                              const VerticalDivider(width: 16, indent: 8, endIndent: 8),
+                                            ],
+                                            PilotButton.ghost(
+                                              icon: LucideIcons.x,
+                                              compact: true,
+                                              onPressed: () => setState(() {
+                                                _showSearch = false;
+                                                _searchCtrl.clear();
+                                                _totalMatchesCount = 0;
+                                                _currentSearchMatchIndex = 0;
+                                              }),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    Expanded(
+                                      child: _response == null
+                                          ? _buildResponseEmptyState(secondaryText)
+                                          : Scrollbar(
+                                              controller: _responseScrollCtrl,
+                                              thumbVisibility: true,
+                                              child: _showRaw
+                                                  ? SingleChildScrollView(
+                                                      controller: _responseScrollCtrl,
+                                                      padding: const EdgeInsets.all(16),
+                                                      child: SelectableText(
+                                                        _getRawResponse(_response!),
+                                                        style: TextStyle(
+                                                          fontFamily: 'JetBrains Mono',
+                                                          fontSize: 12,
+                                                          color: textColor,
+                                                        ),
+                                                      ),
+                                                    )
+                                                  : SingleChildScrollView(
+                                                      controller: _responseScrollCtrl,
+                                                      padding: const EdgeInsets.all(16),
+                                                      child: JsonViewer(
+                                                        json: _getResponseData(_response!),
+                                                        searchQuery: _searchCtrl.text,
+                                                        activeMatchIndex: _currentSearchMatchIndex,
+                                                        onMatchesCountChanged: (count) {
+                                                          if (_totalMatchesCount != count) {
+                                                            setState(() => _totalMatchesCount = count);
+                                                          }
+                                                        },
+                                                      ),
+                                                    ),
+                                            ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
+
               ],
             ),
           ),
@@ -1061,6 +1259,7 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
 
   Widget _buildSettingsTab(Color textColor, Color secondaryText, Color border) {
     return ListView(
+      controller: _settingsScrollCtrl,
       padding: const EdgeInsets.all(16),
       children: [
         Text('Success Condition (SpEL)', style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13)),
@@ -1089,7 +1288,11 @@ class _EndpointWorkspaceState extends State<_EndpointWorkspace>
             border: Border.all(color: border.withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: KeyValueEditor(data: _variables, onChanged: (d) => _variables = d),
+          child: KeyValueEditor(
+            data: _variables,
+            onChanged: (d) => _variables = d,
+            controller: _settingsScrollCtrl,
+          ),
         ),
       ],
     );

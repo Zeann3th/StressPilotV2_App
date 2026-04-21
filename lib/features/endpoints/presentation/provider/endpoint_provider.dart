@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stress_pilot/features/endpoints/domain/repositories/endpoint_repository.dart';
@@ -18,6 +19,11 @@ class EndpointProvider extends ChangeNotifier {
 
   bool _isExecuting = false;
   String? _error;
+
+  // Caching execution results in memory
+  final Map<int, Map<String, dynamic>> _executionResults = {};
+  // Track active cancel tokens
+  final Map<int, CancelToken> _cancelTokens = {};
 
   String _getCacheKey(int projectId) => 'endpoints_project_${projectId}_json';
 
@@ -48,6 +54,13 @@ class EndpointProvider extends ChangeNotifier {
   bool get isExecuting => _isExecuting;
 
   String? get error => _error;
+
+  Map<String, dynamic>? getExecutionResult(int endpointId) => _executionResults[endpointId];
+
+  void clearExecutionResult(int endpointId) {
+    _executionResults.remove(endpointId);
+    notifyListeners();
+  }
 
   Future<void> loadEndpoints({required int projectId, int pageSize = 20}) async {
     _isLoading = true;
@@ -182,6 +195,7 @@ class EndpointProvider extends ChangeNotifier {
     try {
       await _endpointRepository.deleteEndpoint(id);
       await loadEndpoints(projectId: projectId);
+      _executionResults.remove(id);
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -218,17 +232,50 @@ class EndpointProvider extends ChangeNotifier {
     Map<String, dynamic> body,
   ) async {
     _isExecuting = true;
+    final cancelToken = CancelToken();
+    _cancelTokens[endpointId] = cancelToken;
     notifyListeners();
 
     try {
-      final result = await _endpointRepository.executeEndpoint(endpointId, body);
+      final result = await _endpointRepository.executeEndpoint(
+        endpointId,
+        body,
+        cancelToken: cancelToken,
+      );
+      _executionResults[endpointId] = result;
       _isExecuting = false;
+      _cancelTokens.remove(endpointId);
       notifyListeners();
       return result;
+    } on DioException catch (e) {
+      _isExecuting = false;
+      _cancelTokens.remove(endpointId);
+      if (CancelToken.isCancel(e)) {
+        final canceledResult = {
+          'error': 'Request cancelled',
+          'isCancelled': true,
+        };
+        _executionResults[endpointId] = canceledResult;
+        notifyListeners();
+        return canceledResult;
+      }
+      notifyListeners();
+      rethrow;
     } catch (e) {
       _isExecuting = false;
+      _cancelTokens.remove(endpointId);
       notifyListeners();
       rethrow;
     }
   }
+
+  void cancelExecution(int endpointId) {
+    _cancelTokens[endpointId]?.cancel('User cancelled');
+    _cancelTokens.remove(endpointId);
+    _isExecuting = false;
+    notifyListeners();
+  }
+
+  bool isEndpointExecuting(int endpointId) => _cancelTokens.containsKey(endpointId);
 }
+

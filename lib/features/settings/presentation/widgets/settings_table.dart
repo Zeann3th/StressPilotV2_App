@@ -9,6 +9,7 @@ import 'package:stress_pilot/features/settings/presentation/widgets/keymap_setti
 import 'package:stress_pilot/features/settings/presentation/widgets/app_about_section.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/plugin_settings_view.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/function_settings_view.dart';
+import 'package:stress_pilot/features/scheduling/presentation/widgets/task_scheduling_view.dart';
 import 'settings_row.dart';
 
 class SettingsTable extends StatefulWidget {
@@ -54,6 +55,7 @@ class _SettingsTableState extends State<SettingsTable> {
       'SHORTCUTS',
       'CONFIGURATIONS',
       'FUNCTIONS',
+      'TASK SCHEDULING',
       'PLUGINS',
     ];
 
@@ -85,6 +87,7 @@ class _SettingsTableState extends State<SettingsTable> {
               if (cat == 'SHORTCUTS') icon = Icons.keyboard_rounded;
               if (cat == 'PLUGINS') icon = Icons.extension_rounded;
               if (cat == 'FUNCTIONS') icon = Icons.functions_rounded;
+              if (cat == 'TASK SCHEDULING') icon = Icons.schedule_rounded;
               if (cat == 'CONFIGURATIONS') icon = Icons.tune_rounded;
               if (cat == 'AI MODEL') icon = Icons.auto_awesome_rounded;
               if (cat == 'DATABASE') icon = Icons.storage_rounded;
@@ -134,6 +137,10 @@ class _SettingsTableState extends State<SettingsTable> {
 
     if (_selectedCategory == 'FUNCTIONS') {
       return const FunctionSettingsView();
+    }
+
+    if (_selectedCategory == 'TASK SCHEDULING') {
+      return const TaskSchedulingView();
     }
 
     if (_selectedCategory == 'CONFIGURATIONS') {
