@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/endpoints/presentation/pages/endpoints_page.dart';
@@ -28,10 +29,7 @@ class AppRouter {
     }
 
     if (settings.name == workspaceRoute) {
-      final projectProvider = Provider.of<ProjectProvider>(
-        AppNavigator.navigatorKey.currentContext!,
-        listen: false,
-      );
+      final projectProvider = getIt<ProjectProvider>();
       if (projectProvider.selectedProject == null) {
         return buildRoute(const ProjectsPage());
       }

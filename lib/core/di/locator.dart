@@ -13,6 +13,7 @@ import 'package:stress_pilot/features/projects/presentation/provider/canvas_prov
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/settings/domain/repositories/setting_repository.dart';
 import 'package:stress_pilot/features/settings/data/repositories/setting_repository_impl.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
@@ -68,6 +69,7 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => KeymapProvider());
 
   getIt.registerLazySingleton(() => EndpointProvider());
+  getIt.registerLazySingleton(() => WorkspaceTabProvider());
 
   getIt.registerLazySingleton(() => CanvasProvider());
 

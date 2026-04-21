@@ -15,6 +15,7 @@ import 'package:stress_pilot/features/projects/presentation/provider/project_pro
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/core/input/global_shortcut_listener.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
@@ -38,6 +39,7 @@ class AppRoot extends StatefulWidget {
 class _AppRootState extends State<AppRoot> {
   bool _initialized = false;
   bool _hasError = false;
+  String _initialRoute = AppRouter.projectsRoute;
 
   @override
   void initState() {
@@ -86,6 +88,9 @@ class _AppRootState extends State<AppRoot> {
         setState(() {
           _initialized = true;
           _hasError = false;
+          _initialRoute = getIt<ProjectProvider>().hasSelectedProject 
+              ? AppRouter.workspaceRoute 
+              : AppRouter.projectsRoute;
         });
 
         // Trigger update check on startup
@@ -132,6 +137,9 @@ class _AppRootState extends State<AppRoot> {
         ChangeNotifierProvider<EndpointProvider>.value(
           value: getIt<EndpointProvider>(),
         ),
+        ChangeNotifierProvider<WorkspaceTabProvider>.value(
+          value: getIt<WorkspaceTabProvider>(),
+        ),
         ChangeNotifierProvider<CanvasProvider>.value(
           value: getIt<CanvasProvider>(),
         ),
@@ -165,8 +173,8 @@ class _AppRootState extends State<AppRoot> {
         ],
 
       child: _initialized && !_hasError
-          ? const GlobalShortcutListener(
-              child: _AppTheme(),
+          ? GlobalShortcutListener(
+              child: _AppTheme(initialRoute: _initialRoute),
             )
           : const _AppLoadingTheme(),
     );
@@ -196,7 +204,8 @@ class _AppLoadingTheme extends StatelessWidget {
 }
 
 class _AppTheme extends StatelessWidget {
-  const _AppTheme();
+  final String initialRoute;
+  const _AppTheme({required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +232,7 @@ class _AppTheme extends StatelessWidget {
       theme: themeManager.currentShadTheme ?? defaultShadTheme,
       darkTheme: themeManager.currentShadTheme ?? defaultShadTheme,
       onGenerateRoute: AppRouter.generateRoute,
-      initialRoute: AppRouter.projectsRoute,
+      initialRoute: initialRoute,
       builder: (context, child) {
         return ScaffoldMessenger(
           key: AppNavigator.scaffoldMessengerKey,

@@ -11,83 +11,32 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/pilot_theme.dart';
 
 class ThemeManager with ChangeNotifier {
-  static const String _defaultThemeId = 'dark';
+  static const String _defaultThemeId = 'fleet';
 
   final List<PilotTheme> _availableThemes = [];
   PilotTheme? _currentTheme;
   ShadThemeData? _currentShadTheme;
 
   List<PilotTheme> get availableThemes => List.unmodifiable(_availableThemes);
-  PilotTheme get currentTheme => _currentTheme ?? _fallbackDark;
+  PilotTheme get currentTheme => _currentTheme ?? _fleetTheme;
   ThemeMode get themeMode => currentTheme.isDark ? ThemeMode.dark : ThemeMode.light;
   bool get isDark => currentTheme.isDark;
   ShadThemeData? get currentShadTheme => _currentShadTheme;
 
-  static const _fallbackDark = PilotTheme(
-    id: 'dark',
-    name: 'Dark Forest (Default)',
+  static const _fleetTheme = PilotTheme(
+    id: 'fleet',
+    name: 'JetBrains Fleet',
     brightness: Brightness.dark,
     colors: {
-      'background': AppColors.darkBackground,
-      'surface': AppColors.darkSurface,
-      'elevated': AppColors.darkElevated,
-      'border': AppColors.darkBorder,
-      'textPrimary': Color(0xFFF0F6FC),
-      'textSecondary': Color(0xFF8B949E),
-      'accent': AppColors.darkGreenStart,
-      'success': AppColors.success,
+      'background': AppColors.baseBackground,
+      'surface': AppColors.sidebarBackground,
+      'elevated': AppColors.elevatedSurface,
+      'border': AppColors.border,
+      'textPrimary': AppColors.textPrimary,
+      'textSecondary': AppColors.textSecondary,
+      'accent': AppColors.accent,
+      'success': AppColors.methodGet,
       'error': AppColors.error,
-    },
-  );
-
-  static const _fallbackLight = PilotTheme(
-    id: 'light',
-    name: 'Light (Default)',
-    brightness: Brightness.light,
-    colors: {
-      'background': AppColors.lightBackground,
-      'surface': AppColors.lightSurface,
-      'elevated': AppColors.lightElevated,
-      'border': AppColors.lightBorder,
-      'textPrimary': Color(0xFF111827),
-      'textSecondary': Color(0xFF4B5563),
-      'accent': AppColors.lightGreenStart,
-      'success': AppColors.success,
-      'error': AppColors.error,
-    },
-  );
-
-  static const _postmanDark = PilotTheme(
-    id: 'postman-dark',
-    name: 'Postman Dark',
-    brightness: Brightness.dark,
-    colors: {
-      'background': Color(0xFF1C1C1C),
-      'surface': Color(0xFF212121),
-      'elevated': Color(0xFF2B2B2B),
-      'border': Color(0xFF333333),
-      'textPrimary': Color(0xFFFFFFFF),
-      'textSecondary': Color(0xFFA6A6A6),
-      'accent': Color(0xFFFF6C37),
-      'success': Color(0xFF0CBB52),
-      'error': Color(0xFFEB2013),
-    },
-  );
-
-  static const _postmanLight = PilotTheme(
-    id: 'postman-light',
-    name: 'Postman Light',
-    brightness: Brightness.light,
-    colors: {
-      'background': Color(0xFFFFFFFF),
-      'surface': Color(0xFFF9F9F9),
-      'elevated': Color(0xFFF2F2F2),
-      'border': Color(0xFFE6E6E6),
-      'textPrimary': Color(0xFF212121),
-      'textSecondary': Color(0xFF6B6B6B),
-      'accent': Color(0xFFFF6C37),
-      'success': Color(0xFF0CBB52),
-      'error': Color(0xFFEB2013),
     },
   );
 
@@ -114,10 +63,7 @@ class ThemeManager with ChangeNotifier {
 
   Future<void> loadAvailableThemes() async {
     _availableThemes.clear();
-    _availableThemes.add(_fallbackDark);
-    _availableThemes.add(_fallbackLight);
-    _availableThemes.add(_postmanDark);
-    _availableThemes.add(_postmanLight);
+    _availableThemes.add(_fleetTheme);
 
     try {
       final String home = Platform.environment['HOME'] ??
@@ -148,7 +94,7 @@ class ThemeManager with ChangeNotifier {
   Future<void> setTheme(String themeId) async {
     final theme = _availableThemes.firstWhere(
       (t) => t.id == themeId,
-      orElse: () => _fallbackDark,
+      orElse: () => _fleetTheme,
     );
 
     _currentTheme = theme;
@@ -165,13 +111,13 @@ class ThemeManager with ChangeNotifier {
   ShadThemeData _generateShadTheme(PilotTheme theme) {
     final isDark = theme.isDark;
 
-    final background = theme.getColor('background', isDark ? AppColors.darkBackground : AppColors.lightBackground);
-    final foreground = theme.getColor('textPrimary', isDark ? const Color(0xFFF0F6FC) : const Color(0xFF111827));
-    final card = theme.getColor('surface', isDark ? AppColors.darkSurface : AppColors.lightSurface);
-    final border = theme.getColor('border', isDark ? AppColors.darkBorder : AppColors.lightBorder);
-    final primary = theme.getColor('accent', isDark ? AppColors.darkGreenStart : AppColors.lightGreenStart);
-    final elevated = theme.getColor('elevated', isDark ? AppColors.darkElevated : AppColors.lightElevated);
-    final textSecondary = theme.getColor('textSecondary', isDark ? const Color(0xFF8B949E) : const Color(0xFF4B5563));
+    final background = theme.getColor('background', AppColors.baseBackground);
+    final foreground = theme.getColor('textPrimary', AppColors.textPrimary);
+    final card = theme.getColor('surface', AppColors.sidebarBackground);
+    final border = theme.getColor('border', AppColors.border);
+    final primary = theme.getColor('accent', AppColors.accent);
+    final elevated = theme.getColor('elevated', AppColors.elevatedSurface);
+    final textSecondary = theme.getColor('textSecondary', AppColors.textSecondary);
 
     final colorScheme = isDark
         ? ShadZincColorScheme.dark(
@@ -179,18 +125,18 @@ class ThemeManager with ChangeNotifier {
       foreground: foreground,
       card: card,
       cardForeground: foreground,
-      popover: card,
+      popover: elevated,
       popoverForeground: foreground,
       primary: primary,
-      primaryForeground: Colors.white,
+      primaryForeground: foreground,
       secondary: elevated,
       secondaryForeground: foreground,
       muted: elevated,
       mutedForeground: textSecondary,
-      accent: elevated,
+      accent: AppColors.activeItem,
       accentForeground: foreground,
       destructive: theme.getColor('error', AppColors.error),
-      destructiveForeground: Colors.white,
+      destructiveForeground: foreground,
       border: border,
       input: border,
       ring: primary,
@@ -200,18 +146,18 @@ class ThemeManager with ChangeNotifier {
       foreground: foreground,
       card: card,
       cardForeground: foreground,
-      popover: card,
+      popover: elevated,
       popoverForeground: foreground,
       primary: primary,
-      primaryForeground: Colors.white,
+      primaryForeground: foreground,
       secondary: elevated,
       secondaryForeground: foreground,
       muted: elevated,
       mutedForeground: textSecondary,
-      accent: elevated,
+      accent: AppColors.activeItem,
       accentForeground: foreground,
       destructive: theme.getColor('error', AppColors.error),
-      destructiveForeground: Colors.white,
+      destructiveForeground: foreground,
       border: border,
       input: border,
       ring: primary,
@@ -220,11 +166,12 @@ class ThemeManager with ChangeNotifier {
     return ShadThemeData(
       brightness: theme.brightness,
       colorScheme: colorScheme,
+      disableTransition: true,
     );
   }
 
   Future<void> toggleTheme() async {
-    final nextThemeId = isDark ? 'light' : 'dark';
-    await setTheme(nextThemeId);
+    // Fleet doesn't have a light mode in this spec
   }
 }
+
