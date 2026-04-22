@@ -63,6 +63,11 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
+            color: widget.isActive ? AppColors.activeItem : Colors.transparent,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(4),
+              topRight: Radius.circular(4),
+            ),
             border: Border(
               bottom: BorderSide(
                 color: widget.isActive ? AppColors.accent : Colors.transparent,

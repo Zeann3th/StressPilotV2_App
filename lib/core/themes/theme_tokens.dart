@@ -66,6 +66,35 @@ abstract class AppDurations {
   static const medium = Duration(milliseconds: 200);
 }
 
+abstract class AppShadows {
+  // Panel shadow — sidebar, floating elements
+  static List<BoxShadow> get panel => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.25),
+      blurRadius: 8,
+      offset: const Offset(2, 0),
+    ),
+  ];
+
+  // Card shadow — dialogs, popovers
+  static List<BoxShadow> get card => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.3),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
+    ),
+  ];
+
+  // Subtle — tab bar, action bar
+  static List<BoxShadow> get subtle => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.15),
+      blurRadius: 4,
+      offset: const Offset(0, 1),
+    ),
+  ];
+}
+
 abstract class AppRadius {
   static const r4  = Radius.circular(4);
   static const r6  = Radius.circular(6);

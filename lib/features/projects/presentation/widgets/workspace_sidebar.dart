@@ -20,7 +20,10 @@ class WorkspaceSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: width,
-      color: AppColors.sidebarBackground,
+      decoration: BoxDecoration(
+        color: AppColors.sidebarBackground,
+        boxShadow: AppShadows.panel,
+      ),
       child: Column(
         children: [
           Expanded(

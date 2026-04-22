@@ -117,6 +117,7 @@ class _PanelContainer extends StatelessWidget {
         color: AppColors.sidebarBackground,
         borderRadius: AppRadius.br6,
         border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.card,
       ),
       child: child,
     );

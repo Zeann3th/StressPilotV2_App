@@ -94,19 +94,28 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                   ),
                 ),
                 Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(),
-                    child: Column(
-                      children: [
-                        const WorkspaceTabBar(),
-                        _ActionBar(
-                          project: project,
-                          activeTab: activeTab,
-                        ),
-                        Expanded(
-                          child: _buildTabContent(activeTab),
-                        ),
-                      ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.baseBackground,
+                        borderRadius: AppRadius.br6,
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: AppShadows.subtle,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        children: [
+                          const WorkspaceTabBar(),
+                          _ActionBar(
+                            project: project,
+                            activeTab: activeTab,
+                          ),
+                          Expanded(
+                            child: _buildTabContent(activeTab),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
