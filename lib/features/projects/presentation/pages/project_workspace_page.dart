@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
+import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
@@ -14,6 +15,7 @@ import 'package:stress_pilot/features/projects/presentation/widgets/workspace_na
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace_sidebar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace_tab_bar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_canvas.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dialog.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/endpoint_editor.dart';
 
 class ProjectWorkspacePage extends StatefulWidget {
@@ -97,23 +99,10 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                     child: Column(
                       children: [
                         const WorkspaceTabBar(),
-                        if (project != null && project.environmentId != 0)
-                          Container(
-                            height: 28,
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                            decoration: BoxDecoration(
-                              border: Border(bottom: BorderSide(color: AppColors.divider)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                _EnvBadge(
-                                  environmentId: project.environmentId,
-                                  projectName: project.name,
-                                ),
-                              ],
-                            ),
-                          ),
+                        _ActionBar(
+                          project: project,
+                          activeTab: activeTab,
+                        ),
                         Expanded(
                           child: _buildTabContent(activeTab),
                         ),
@@ -164,67 +153,160 @@ class _EmptyTabState extends StatelessWidget {
   }
 }
 
-class _EnvBadge extends StatefulWidget {
-  final int environmentId;
-  final String projectName;
+class _ActionBar extends StatelessWidget {
+  final Project? project;
+  final WorkspaceTab? activeTab;
 
-  const _EnvBadge({
-    required this.environmentId,
-    required this.projectName,
-  });
+  const _ActionBar({required this.project, required this.activeTab});
 
   @override
-  State<_EnvBadge> createState() => _EnvBadgeState();
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.sidebarBackground,
+        border: Border(bottom: BorderSide(color: AppColors.divider)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          _PlayStopButton(project: project, activeTab: activeTab),
+          const SizedBox(width: AppSpacing.xs),
+          if (project != null && project!.environmentId != 0)
+            _EnvIconButton(
+              environmentId: project!.environmentId,
+              projectName: project!.name,
+            ),
+        ],
+      ),
+    );
+  }
 }
 
-class _EnvBadgeState extends State<_EnvBadge> {
+class _EnvIconButton extends StatefulWidget {
+  final int environmentId;
+  final String projectName;
+  const _EnvIconButton({required this.environmentId, required this.projectName});
+
+  @override
+  State<_EnvIconButton> createState() => _EnvIconButtonState();
+}
+
+class _EnvIconButtonState extends State<_EnvIconButton> {
   bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: () {
-          AppNavigator.pushNamed(
+    return Tooltip(
+      message: 'Environment',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: () => AppNavigator.pushNamed(
             AppRouter.projectEnvironmentRoute,
             arguments: {
               'environmentId': widget.environmentId,
               'projectName': widget.projectName,
             },
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: 3,
-            horizontal: 8,
           ),
-          decoration: BoxDecoration(
-            color: _isHovered ? AppColors.hoverItem : AppColors.elevatedSurface,
-            borderRadius: AppRadius.br4,
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                LucideIcons.settings2,
-                size: 12,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'ENV',
-                style: AppTypography.codeSm.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
+          child: Container(
+            width: 28,
+            height: 24,
+            decoration: BoxDecoration(
+              color: _isHovered ? AppColors.hoverItem : Colors.transparent,
+              borderRadius: AppRadius.br4,
+            ),
+            child: Icon(
+              LucideIcons.settings2,
+              size: 14,
+              color: _isHovered ? AppColors.accent : AppColors.textSecondary,
+            ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _PlayStopButton extends StatefulWidget {
+  final Project? project;
+  final WorkspaceTab? activeTab;
+  const _PlayStopButton({required this.project, required this.activeTab});
+
+  @override
+  State<_PlayStopButton> createState() => _PlayStopButtonState();
+}
+
+class _PlayStopButtonState extends State<_PlayStopButton> {
+  bool _isHovered = false;
+
+  bool get _isFlow => widget.activeTab?.type == WorkspaceTabType.flow;
+  bool get _isEndpoint => widget.activeTab?.type == WorkspaceTabType.endpoint;
+
+  @override
+  Widget build(BuildContext context) {
+    final endpointProvider = context.watch<EndpointProvider>();
+
+    final endpoint = _isEndpoint ? widget.activeTab!.data as Endpoint : null;
+    final isExecuting = endpoint != null && endpointProvider.isEndpointExecuting(endpoint.id);
+
+    final bool canAct = widget.activeTab != null && widget.project != null;
+    final IconData icon = isExecuting ? LucideIcons.squareStop : LucideIcons.play;
+    final Color iconColor = canAct
+        ? (isExecuting ? AppColors.error : AppColors.methodGet)
+        : AppColors.textDisabled;
+
+    final String tooltip = isExecuting
+        ? 'Stop'
+        : (_isFlow ? 'Run Flow' : (_isEndpoint ? 'Run Endpoint' : 'Run'));
+
+    return Tooltip(
+      message: tooltip,
+      child: MouseRegion(
+        cursor: canAct ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: canAct ? () => _handleTap(context, endpointProvider, isExecuting, endpoint) : null,
+          child: AnimatedContainer(
+            duration: AppDurations.micro,
+            width: 28,
+            height: 24,
+            decoration: BoxDecoration(
+              color: _isHovered && canAct ? AppColors.hoverItem : Colors.transparent,
+              borderRadius: AppRadius.br4,
+            ),
+            child: Icon(icon, size: 14, color: iconColor),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleTap(
+    BuildContext context,
+    EndpointProvider endpointProvider,
+    bool isExecuting,
+    Endpoint? endpoint,
+  ) {
+    if (_isFlow) {
+      final flow = widget.activeTab!.data as flow_domain.Flow;
+      showDialog(
+        context: context,
+        builder: (_) => RunFlowDialog(flowId: flow.id),
+      );
+      return;
+    }
+
+    if (_isEndpoint && endpoint != null) {
+      if (isExecuting) {
+        endpointProvider.cancelExecution(endpoint.id);
+      } else {
+        endpointProvider.executeEndpoint(endpoint.id, {});
+      }
+    }
   }
 }
