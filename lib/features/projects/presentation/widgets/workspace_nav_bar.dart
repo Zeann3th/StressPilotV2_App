@@ -29,18 +29,21 @@ class WorkspaceNavBar extends StatelessWidget {
           const Spacer(),
           
           // Right: Marketplace · Settings · Agent
-          _NavButton(
-            label: 'Marketplace',
+          _NavIconButton(
+            icon: LucideIcons.shoppingBag,
+            tooltip: 'Marketplace',
             onPressed: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
           ),
-          _NavDivider(),
-          _NavButton(
-            label: 'Settings',
+          const SizedBox(width: 4),
+          _NavIconButton(
+            icon: LucideIcons.settings,
+            tooltip: 'Settings',
             onPressed: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
           ),
-          _NavDivider(),
-          _NavButton(
-            label: 'Agent',
+          const SizedBox(width: 4),
+          _NavIconButton(
+            icon: LucideIcons.sparkles,
+            tooltip: 'Agent',
             onPressed: () => AppNavigator.pushNamed(AppRouter.agentRoute),
           ),
         ],
@@ -49,47 +52,53 @@ class WorkspaceNavBar extends StatelessWidget {
   }
 }
 
-class _NavButton extends StatefulWidget {
-  final String label;
+class _NavIconButton extends StatefulWidget {
+  final IconData icon;
+  final String tooltip;
   final VoidCallback onPressed;
 
-  const _NavButton({required this.label, required this.onPressed});
+  const _NavIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
 
   @override
-  State<_NavButton> createState() => _NavButtonState();
+  State<_NavIconButton> createState() => _NavIconButtonState();
 }
 
-class _NavButtonState extends State<_NavButton> {
+class _NavIconButtonState extends State<_NavIconButton> {
   bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onPressed,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-          child: Text(
-            widget.label,
-            style: AppTypography.body.copyWith(
+    return ShadTooltip(
+      builder: (context) => Text(
+        widget.tooltip,
+        style: AppTypography.caption.copyWith(color: AppColors.textPrimary),
+      ),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: widget.onPressed,
+          child: AnimatedContainer(
+            duration: AppDurations.micro,
+            width: 32,
+            height: 28,
+            decoration: BoxDecoration(
+              color: _isHovered ? AppColors.hoverItem : Colors.transparent,
+              borderRadius: AppRadius.br4,
+            ),
+            child: Icon(
+              widget.icon,
+              size: 16,
               color: _isHovered ? AppColors.accent : AppColors.textSecondary,
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _NavDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      '·',
-      style: AppTypography.body.copyWith(color: AppColors.textDisabled),
     );
   }
 }
