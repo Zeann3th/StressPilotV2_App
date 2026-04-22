@@ -231,13 +231,7 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
       final project = await ProjectRepositoryImpl().getProjectDetail(endpoint.projectId);
       if (!mounted) return;
       await projectProvider.selectProject(project);
-      AppNavigator.pushNamed(
-        AppRouter.projectEndpointsRoute,
-        arguments: {
-          'project': project,
-          'initialEndpoint': endpoint,
-        },
-      );
+      AppNavigator.pushNamed(AppRouter.workspaceRoute);
     } catch (_) {}
   }
 

@@ -54,10 +54,7 @@ class _RecentPagesWidgetState extends State<RecentPagesWidget> {
       case RecentEntityType.endpoint:
         final project = Project.fromJson(item.arguments['project'] as Map<String, dynamic>);
         await projectProvider.selectProject(project);
-        AppNavigator.pushNamed(
-          AppRouter.projectEndpointsRoute,
-          arguments: item.arguments,
-        );
+        AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
         break;
     }
   }

@@ -76,10 +76,7 @@ class _GlobalShortcutListenerState extends State<GlobalShortcutListener> {
       case 'project.endpoints':
         final project = getIt<ProjectProvider>().selectedProject;
         if (project != null) {
-          AppNavigator.pushNamed(
-             AppRouter.projectEndpointsRoute,
-             arguments: {'project': project},
-          );
+          AppNavigator.pushNamed(AppRouter.workspaceRoute);
         }
         return true;
 

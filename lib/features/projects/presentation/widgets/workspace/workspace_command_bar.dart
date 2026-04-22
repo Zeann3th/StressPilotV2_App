@@ -56,10 +56,7 @@ class WorkspaceCommandBar extends StatelessWidget {
               compact: true,
               onPressed: () {
                 if (project != null) {
-                  AppNavigator.pushNamed(
-                    AppRouter.projectEndpointsRoute,
-                    arguments: {'project': project},
-                  );
+                  AppNavigator.pushNamed(AppRouter.workspaceRoute);
                 }
               },
             ),

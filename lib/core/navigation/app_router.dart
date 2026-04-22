@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/features/projects/domain/models/project.dart';
-import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
-import 'package:stress_pilot/features/endpoints/presentation/pages/endpoints_page.dart';
 import 'package:stress_pilot/features/environments/presentation/pages/environment_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
-import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
+import 'package:stress_pilot/features/projects/presentation/pages/recent_activity_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
@@ -17,7 +13,6 @@ class AppRouter {
   static const String projectsRoute = '/';
   static const String workspaceRoute = '/workspace';
   static const String settingsRoute = '/settings';
-  static const String projectEndpointsRoute = '/project/endpoints';
   static const String projectEnvironmentRoute = '/project/environment';
   static const String resultsRoute = '/results';
   static const String marketplaceRoute = '/marketplace';
@@ -31,41 +26,17 @@ class AppRouter {
     if (settings.name == workspaceRoute) {
       final projectProvider = getIt<ProjectProvider>();
       if (projectProvider.selectedProject == null) {
-        return buildRoute(const ProjectsPage());
+        return buildRoute(const RecentActivityPage());
       }
     }
 
     switch (settings.name) {
       case projectsRoute:
-        final args = settings.arguments as Map<String, dynamic>?;
-        return buildRoute(
-          ProjectsPage(initialFlowId: args?['initialFlowId'] as int?),
-        );
+        return buildRoute(const RecentActivityPage());
       case workspaceRoute:
         return buildRoute(const ProjectWorkspacePage());
       case settingsRoute:
         return buildRoute(const SettingsPage());
-      case projectEndpointsRoute:
-        final args = settings.arguments as Map<String, dynamic>;
-        final projectData = args['project'];
-        final project = projectData is Project
-            ? projectData
-            : Project.fromJson(projectData as Map<String, dynamic>);
-
-        final initialEndpointData = args['initialEndpoint'];
-        Endpoint? initialEndpoint;
-        if (initialEndpointData != null) {
-          initialEndpoint = initialEndpointData is Endpoint
-              ? initialEndpointData
-              : Endpoint.fromJson(initialEndpointData as Map<String, dynamic>);
-        }
-
-        return buildRoute(
-          ProjectEndpointsPage(
-            project: project,
-            initialEndpoint: initialEndpoint,
-          ),
-        );
       case projectEnvironmentRoute:
         final args = settings.arguments as Map<String, dynamic>;
         return buildRoute(
