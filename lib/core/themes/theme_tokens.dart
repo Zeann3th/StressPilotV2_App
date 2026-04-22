@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 abstract class AppColors {
   // Fleet Base Palette
@@ -103,14 +104,16 @@ abstract class AppSpacing {
 abstract class AppTypography {
   static const _mono = 'JetBrains Mono';
 
-  static TextStyle get caption  => TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
-  static TextStyle get body     => TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
-  static TextStyle get bodyMd   => TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
-  static TextStyle get bodyLg   => TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
-  static TextStyle get heading  => TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
-  static TextStyle get title    => TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
-  static TextStyle get label    => TextStyle(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.2, color: AppColors.textSecondary);
+  // Human-readable UI text — Montserrat
+  static TextStyle get caption => GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
+  static TextStyle get body    => GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
+  static TextStyle get bodyMd  => GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
+  static TextStyle get bodyLg  => GoogleFonts.montserrat(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
+  static TextStyle get heading => GoogleFonts.montserrat(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
+  static TextStyle get title   => GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
+  static TextStyle get label   => GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.3, color: AppColors.textSecondary);
 
+  // Code / paths / keys — JetBrains Mono (unchanged)
   static TextStyle get codeSm   => TextStyle(fontFamily: _mono, fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
   static TextStyle get code     => TextStyle(fontFamily: _mono, fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
   static TextStyle get codePath => TextStyle(fontFamily: _mono, fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
