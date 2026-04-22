@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/widgets/create_endpoint_dialog.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/flow_dialog.dart';
 
 class WorkspaceSidebar extends StatelessWidget {
   const WorkspaceSidebar({super.key});
@@ -55,6 +59,32 @@ class _SidebarSection extends StatefulWidget {
 class _SidebarSectionState extends State<_SidebarSection> {
   bool _isExpanded = true;
 
+  void _handleAdd(BuildContext context) {
+    switch (widget.type) {
+      case _SectionType.endpoints:
+        final projectId = context.read<ProjectProvider>().selectedProject?.id;
+        if (projectId == null) return;
+        showDialog<void>(
+          context: context,
+          builder: (_) => CreateEndpointDialog(projectId: projectId),
+        );
+      case _SectionType.flows:
+        FlowDialog.showCreateDialog(
+          context,
+          onCreate: (name, description, type, projectId) async {
+            await context.read<FlowProvider>().createFlow(
+              flow_domain.CreateFlowRequest(
+                name: name,
+                description: description,
+                type: type,
+                projectId: projectId,
+              ),
+            );
+          },
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -64,9 +94,7 @@ class _SidebarSectionState extends State<_SidebarSection> {
           title: widget.title,
           isExpanded: _isExpanded,
           onToggle: () => setState(() => _isExpanded = !_isExpanded),
-          onAdd: () {
-            // TODO: Implement add logic
-          },
+          onAdd: () => _handleAdd(context),
         ),
         if (_isExpanded) ...[
           if (widget.type == _SectionType.endpoints)
@@ -135,20 +163,70 @@ class _EndpointList extends StatelessWidget {
     final endpointProvider = context.watch<EndpointProvider>();
     final endpoints = endpointProvider.endpoints;
     final selectedEndpoint = endpointProvider.selectedEndpoint;
+    final projectId =
+        context.read<ProjectProvider>().selectedProject?.id ?? 0;
+
+    void openTab(Endpoint e) {
+      endpointProvider.selectEndpoint(e);
+      context.read<WorkspaceTabProvider>().openTab(
+        WorkspaceTab(
+          id: 'endpoint_${e.id}',
+          name: e.name,
+          type: WorkspaceTabType.endpoint,
+          data: e,
+        ),
+      );
+    }
 
     return Column(
       children: endpoints.map((e) => _EndpointRow(
         endpoint: e,
         isSelected: selectedEndpoint?.id == e.id,
-        onTap: () {
-          endpointProvider.selectEndpoint(e);
-          context.read<WorkspaceTabProvider>().openTab(
-            WorkspaceTab(
-              id: 'endpoint_${e.id}',
-              name: e.name,
-              type: WorkspaceTabType.endpoint,
-              data: e,
+        onTap: () => openTab(e),
+        onEdit: () => openTab(e),
+        onDelete: () {
+          PilotDialog.show(
+            context: context,
+            title: 'Delete Endpoint',
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Are you sure you want to delete "${e.name}"?',
+                  style: AppTypography.body,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'This action cannot be undone.',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
             ),
+            actions: [
+              PilotButton.ghost(
+                label: 'Cancel',
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              PilotButton.danger(
+                label: 'Delete',
+                onPressed: () async {
+                  try {
+                    await endpointProvider.deleteEndpoint(e.id, projectId);
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                      PilotToast.show(context, 'Endpoint deleted');
+                    }
+                  } catch (err) {
+                    if (context.mounted) {
+                      PilotToast.show(context, 'Error: $err', isError: true);
+                    }
+                  }
+                },
+              ),
+            ],
           );
         },
       )).toList(),
@@ -165,19 +243,43 @@ class _FlowList extends StatelessWidget {
     final flows = flowProvider.flows;
     final selectedFlow = flowProvider.selectedFlow;
 
+    void openTab(flow_domain.Flow f) {
+      flowProvider.selectFlow(f);
+      context.read<WorkspaceTabProvider>().openTab(
+        WorkspaceTab(
+          id: 'flow_${f.id}',
+          name: f.name,
+          type: WorkspaceTabType.flow,
+          data: f,
+        ),
+      );
+    }
+
     return Column(
       children: flows.map((f) => _FlowRow(
         flow: f,
         isSelected: selectedFlow?.id == f.id,
-        onTap: () {
-          flowProvider.selectFlow(f);
-          context.read<WorkspaceTabProvider>().openTab(
-            WorkspaceTab(
-              id: 'flow_${f.id}',
-              name: f.name,
-              type: WorkspaceTabType.flow,
-              data: f,
-            ),
+        onTap: () => openTab(f),
+        onEdit: () {
+          FlowDialog.showEditDialog(
+            context,
+            flow: f,
+            onUpdate: (id, name, description) async {
+              await flowProvider.updateFlow(
+                flowId: id,
+                name: name,
+                description: description,
+              );
+            },
+          );
+        },
+        onDelete: () {
+          FlowDialog.showDeleteDialog(
+            context,
+            flow: f,
+            onDelete: (id) async {
+              await flowProvider.deleteFlow(id);
+            },
           );
         },
       )).toList(),
@@ -189,11 +291,15 @@ class _EndpointRow extends StatefulWidget {
   final Endpoint endpoint;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _EndpointRow({
     required this.endpoint,
     required this.isSelected,
     required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -237,6 +343,10 @@ class _EndpointRowState extends State<_EndpointRow> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (_isHovered) ...[
+                _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
+                _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
+              ],
             ],
           ),
         ),
@@ -260,11 +370,15 @@ class _FlowRow extends StatefulWidget {
   final flow_domain.Flow flow;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _FlowRow({
     required this.flow,
     required this.isSelected,
     required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -309,6 +423,10 @@ class _FlowRowState extends State<_FlowRow> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (_isHovered) ...[
+                _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
+                _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
+              ],
             ],
           ),
         ),
