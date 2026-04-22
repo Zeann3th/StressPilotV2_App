@@ -25,6 +25,9 @@ class ProjectWorkspacePage extends StatefulWidget {
 
 class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   int? _lastLoadedProjectId;
+  double _sidebarWidth = 260;
+  static const double _minSidebarWidth = 180;
+  static const double _maxSidebarWidth = 480;
 
   @override
   void initState() {
@@ -65,12 +68,32 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
           Expanded(
             child: Row(
               children: [
-                const WorkspaceSidebar(),
+                WorkspaceSidebar(width: _sidebarWidth),
+                // Drag handle between sidebar and content
+                MouseRegion(
+                  cursor: SystemMouseCursors.resizeColumn,
+                  child: GestureDetector(
+                    onHorizontalDragUpdate: (details) {
+                      setState(() {
+                        _sidebarWidth = (_sidebarWidth + details.delta.dx)
+                            .clamp(_minSidebarWidth, _maxSidebarWidth);
+                      });
+                    },
+                    child: Container(
+                      width: 4,
+                      color: Colors.transparent,
+                      child: Center(
+                        child: Container(
+                          width: 1,
+                          color: AppColors.divider,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: AppColors.divider)),
-                    ),
+                    decoration: const BoxDecoration(),
                     child: Column(
                       children: [
                         const WorkspaceTabBar(),

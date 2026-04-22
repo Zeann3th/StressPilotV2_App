@@ -13,12 +13,13 @@ import 'package:stress_pilot/features/projects/presentation/provider/workspace_t
 import 'package:stress_pilot/features/projects/presentation/widgets/flow_dialog.dart';
 
 class WorkspaceSidebar extends StatelessWidget {
-  const WorkspaceSidebar({super.key});
+  final double width;
+  const WorkspaceSidebar({super.key, this.width = 260});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 260,
+      width: width,
       color: AppColors.sidebarBackground,
       child: Column(
         children: [
