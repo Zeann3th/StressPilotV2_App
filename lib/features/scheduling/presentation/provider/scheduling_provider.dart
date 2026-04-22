@@ -88,8 +88,8 @@ class SchedulingProvider extends ChangeNotifier {
   }
 
   void createNew() {
-    // We don't have a full Schedule object for new ones yet, so we use a dummy or just state
-    _selectedSchedule = null; 
+
+    _selectedSchedule = null;
     notifyListeners();
   }
 }

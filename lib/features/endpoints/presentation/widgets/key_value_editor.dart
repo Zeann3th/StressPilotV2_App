@@ -35,7 +35,24 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
   void didUpdateWidget(KeyValueEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.data != oldWidget.data) {
-      _initControllers();
+
+      bool needsRebuild = false;
+      if (widget.data.length != _controllers.length - 1) {
+        needsRebuild = true;
+      } else {
+        final entries = widget.data.entries.toList();
+        for (int i = 0; i < entries.length; i++) {
+          if (_controllers[i].key.text != entries[i].key ||
+              _controllers[i].value.text != entries[i].value) {
+            needsRebuild = true;
+            break;
+          }
+        }
+      }
+
+      if (needsRebuild) {
+        _initControllers();
+      }
     }
   }
 

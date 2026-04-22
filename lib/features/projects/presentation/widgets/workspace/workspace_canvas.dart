@@ -7,7 +7,6 @@ import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/node_configuration_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/subflow_configuration_dialog.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
@@ -23,8 +22,7 @@ import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
 import 'canvas_painters.dart';
 
-import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
-import 'package:stress_pilot/features/endpoints/presentation/pages/endpoints_page.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart' as domain_endpoint;
 
 class WorkspaceCanvas extends StatelessWidget {
@@ -436,19 +434,14 @@ class _CanvasContentState extends State<_CanvasContent>
 
     if (result['action'] == 'navigate') {
       final endpoint = result['endpoint'] as domain_endpoint.Endpoint;
-      final projectProvider = context.read<ProjectProvider>();
-      final project = projectProvider.selectedProject;
-
-      if (project != null) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ProjectEndpointsPage(
-              project: project,
-              initialEndpoint: endpoint,
+      context.read<WorkspaceTabProvider>().openTab(
+            WorkspaceTab(
+              id: endpoint.id.toString(),
+              name: endpoint.name,
+              type: WorkspaceTabType.endpoint,
+              data: endpoint,
             ),
-          ),
-        );
-      }
+          );
       return;
     }
 
@@ -548,17 +541,6 @@ class _CanvasContentState extends State<_CanvasContent>
       context: context,
       builder: (context) =>
           _JsonPayloadDialog(initialValue: initialValue, provider: provider),
-    );
-  }
-
-  void _showRunDialog(BuildContext context) {
-    final flowProvider = context.read<FlowProvider>();
-    showDialog(
-      context: context,
-      builder: (_) => ChangeNotifierProvider.value(
-        value: flowProvider,
-        child: RunFlowDialog(flowId: int.parse(widget.flowId)),
-      ),
     );
   }
 
@@ -695,8 +677,6 @@ class _CanvasContentState extends State<_CanvasContent>
                     : AppColors.textSecondary,
                 loading: provider.isSaving,
               ),
-              const SizedBox(width: 8),
-              _RunButton(onTap: () => _showRunDialog(context)),
             ],
           ),
         ),
@@ -1721,24 +1701,6 @@ class _ToolbarIconState extends State<_ToolbarIcon> {
                 : Icon(widget.icon, size: 16, color: widget.color),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _RunButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _RunButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: const Icon(Icons.play_arrow_rounded, size: 16),
-      label: const Text('Run'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.accent,
-        foregroundColor: Colors.white,
       ),
     );
   }

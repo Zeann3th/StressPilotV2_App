@@ -504,7 +504,7 @@ class ProcessManager {
 
     try {
       if (Platform.isWindows) {
-        // 1. Kill by port
+
         final result = await Process.run('cmd', ['/c', 'netstat -ano | findstr :52000']);
         for (var line in result.stdout.toString().split('\n')) {
           if (line.contains('LISTENING')) {
@@ -515,8 +515,6 @@ class ProcessManager {
           }
         }
 
-        // 2. Kill by command line (specifically for app.jar)
-        // This ensures we catch it even if it's on a different port or not yet listening
         await Process.run('powershell', [
           '-NoProfile',
           '-Command',

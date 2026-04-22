@@ -2,30 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 abstract class AppColors {
-  // Fleet Base Palette
+
   static const baseBackground    = Color(0xFF1E1F22);
   static const sidebarBackground = Color(0xFF23242A);
   static const elevatedSurface   = Color(0xFF2B2C33);
   static const activeItem        = Color(0xFF383A47);
   static const hoverItem         = Color(0xFF2E2F38);
-  static const accent            = Color(0xFF7B68EE); // Muted Indigo
+  static const accent            = Color(0xFF7B68EE);
   static const accentHover       = Color(0xFF8B7BEE);
-  
-  static const border            = Color(0x14FFFFFF); // rgba(255,255,255,0.08)
-  static const divider           = Color(0x0FFFFFFF); // rgba(255,255,255,0.06)
+
+  static const border            = Color(0x14FFFFFF);
+  static const divider           = Color(0x0FFFFFFF);
 
   static const textPrimary       = Color(0xFFDCD9D0);
   static const textSecondary     = Color(0xFF7E7C75);
   static const textDisabled      = Color(0xFF4A4845);
 
-  // Method Badges
   static const methodGet         = Color(0xFF57A64A);
   static const methodPost        = Color(0xFF4B8FD4);
   static const methodPut         = Color(0xFFC8A84B);
   static const methodDelete      = Color(0xFFC25151);
   static const methodPatch       = Color(0xFF8B68D4);
 
-  static const error             = Color(0xFFD2504B); // Muted Red
+  static const error             = Color(0xFFD2504B);
 
   static Color get background => baseBackground;
   static Color get surface => sidebarBackground;
@@ -38,21 +37,17 @@ abstract class AppColors {
 
   static Color get accentColor => accent;
 
-  // Alias — same as textDisabled, used across codebase
   static Color get textMuted => textDisabled;
 
-  // Semantic aliases
-  static const success = methodGet;           // Color(0xFF57A64A)
-  static const warning = methodPut;           // Color(0xFFC8A84B)
-  static const info    = methodPost;          // Color(0xFF4B8FD4)
+  static const success = methodGet;
+  static const warning = methodPut;
+  static const info    = methodPost;
 
-  // Pressed-state accent
   static const accentActive = Color(0xFF6A58D6);
 }
 
 abstract class AppGradients {
-  // Fleet uses solid colors — gradient helpers return a linear gradient from
-  // the same colour to itself so existing call sites keep compiling.
+
   static LinearGradient green([bool isDark = true]) => const LinearGradient(
         colors: [AppColors.accent, AppColors.accent],
         begin: Alignment.topLeft,
@@ -67,7 +62,7 @@ abstract class AppDurations {
 }
 
 abstract class AppShadows {
-  // Panel shadow — sidebar, floating elements
+
   static List<BoxShadow> get panel => [
     BoxShadow(
       color: Colors.black.withValues(alpha: 0.25),
@@ -76,7 +71,6 @@ abstract class AppShadows {
     ),
   ];
 
-  // Card shadow — dialogs, popovers
   static List<BoxShadow> get card => [
     BoxShadow(
       color: Colors.black.withValues(alpha: 0.3),
@@ -85,7 +79,6 @@ abstract class AppShadows {
     ),
   ];
 
-  // Subtle — tab bar, action bar
   static List<BoxShadow> get subtle => [
     BoxShadow(
       color: Colors.black.withValues(alpha: 0.15),
@@ -104,7 +97,6 @@ abstract class AppRadius {
   static const br6  = BorderRadius.all(r6);
   static const br8  = BorderRadius.all(r8);
 
-  // Fleet caps radius at 8px — these aliases keep call sites compiling at spec-correct values
   static const r12 = r8;
   static const r16 = r8;
   static const br12 = br8;
@@ -119,7 +111,6 @@ abstract class AppSpacing {
   static const xl   = 24.0;
   static const xxl  = 32.0;
 
-  // Fleet Density
   static const sidebarRowHeight = 32.0;
   static const tabBarHeight     = 36.0;
   static const navBarHeight      = 40.0;
@@ -133,7 +124,6 @@ abstract class AppSpacing {
 abstract class AppTypography {
   static const _mono = 'JetBrains Mono';
 
-  // Human-readable UI text — Montserrat
   static TextStyle get caption => GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
   static TextStyle get body    => GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
   static TextStyle get bodyMd  => GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
@@ -142,9 +132,7 @@ abstract class AppTypography {
   static TextStyle get title   => GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
   static TextStyle get label   => GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.3, color: AppColors.textSecondary);
 
-  // Code / paths / keys — JetBrains Mono (unchanged)
   static TextStyle get codeSm   => TextStyle(fontFamily: _mono, fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
   static TextStyle get code     => TextStyle(fontFamily: _mono, fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
   static TextStyle get codePath => TextStyle(fontFamily: _mono, fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
 }
-

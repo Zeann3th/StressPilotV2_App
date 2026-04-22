@@ -23,12 +23,11 @@ class WorkspaceNavBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Left: Project Name (clickable project picker)
+
           _ProjectNameButton(projectName: project?.name ?? 'No Project'),
-          
+
           const Spacer(),
-          
-          // Right: Marketplace · Settings · Agent
+
           _NavIconButton(
             icon: LucideIcons.shoppingBag,
             tooltip: 'Marketplace',
@@ -118,13 +117,13 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
     final provider = context.read<ProjectProvider>();
     await provider.loadProjects();
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     final projects = provider.projects;
     if (projects.isEmpty) return;
 
-    final RenderBox? button = context.findRenderObject() as RenderBox?;
-    final RenderBox? overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final RenderBox? button = this.context.findRenderObject() as RenderBox?;
+    final RenderBox? overlay = Overlay.of(this.context).context.findRenderObject() as RenderBox?;
     if (button == null || overlay == null) return;
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
@@ -135,7 +134,7 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
     );
 
     final selected = await showMenu<int>(
-      context: context,
+      context: this.context,
       position: position,
       color: AppColors.elevatedSurface,
       elevation: 8,
@@ -157,9 +156,9 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
       )).toList(),
     );
 
-    if (selected != null && context.mounted) {
+    if (selected != null && mounted) {
       final project = projects.firstWhere((p) => p.id == selected);
-      await context.read<ProjectProvider>().selectProject(project);
+      await provider.selectProject(project);
     }
   }
 

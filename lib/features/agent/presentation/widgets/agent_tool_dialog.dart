@@ -37,8 +37,15 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
   int _selectedIndex = 0;
   final _feedbackController = TextEditingController();
   bool _showFeedback = false;
+  final _keyboardFocusNode = FocusNode();
 
   final _options = ['Approve', 'Reject', 'Give feedback'];
+
+  @override
+  void initState() {
+    super.initState();
+    _keyboardFocusNode.requestFocus();
+  }
 
   void _handleKeyEvent(KeyEvent event) {
     if (event is! KeyDownEvent) return;
@@ -79,6 +86,7 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
   @override
   void dispose() {
     _feedbackController.dispose();
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -88,7 +96,7 @@ class _AgentToolDialogState extends State<AgentToolDialog> {
     final border = AppColors.border;
 
     return KeyboardListener(
-      focusNode: FocusNode()..requestFocus(),
+      focusNode: _keyboardFocusNode,
       onKeyEvent: _handleKeyEvent,
       child: Dialog(
         backgroundColor: surface,

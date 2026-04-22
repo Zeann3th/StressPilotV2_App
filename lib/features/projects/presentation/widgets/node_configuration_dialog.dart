@@ -7,6 +7,7 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart' as domain_endpoint;
+import 'package:stress_pilot/features/endpoints/presentation/widgets/key_value_editor.dart';
 
 class NodeConfigurationDialog extends StatefulWidget {
   final CanvasNode node;
@@ -23,13 +24,18 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
   late TabController _tabController;
   late Map<String, dynamic> _preProcessor;
   late Map<String, dynamic> _postProcessor;
+  
+  // SPEL logic fields
+  late TextEditingController _successConditionCtrl;
+  Map<String, String> _variables = {};
+
   domain_endpoint.Endpoint? _endpointDetail;
   bool _isLoadingEndpoint = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
 
     _preProcessor = Map<String, dynamic>.from(
       widget.node.data['preProcessor'] ?? {},
@@ -37,6 +43,15 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
     _postProcessor = Map<String, dynamic>.from(
       widget.node.data['postProcessor'] ?? {},
     );
+
+    _successConditionCtrl = TextEditingController(
+      text: widget.node.data['successCondition']?.toString() ?? '',
+    );
+    
+    final vars = widget.node.data['variables'];
+    if (vars is Map) {
+      _variables = vars.map((k, v) => MapEntry(k.toString(), v.toString()));
+    }
 
     _fetchEndpointDetails();
   }
@@ -65,25 +80,24 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
   @override
   void dispose() {
     _tabController.dispose();
+    _successConditionCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
     return PilotDialog(
       title: 'Node Configuration',
-      maxWidth: 800,
+      maxWidth: 900,
       content: SizedBox(
-        height: 500,
+        height: 600,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'ID: ${widget.node.id}',
               style: AppTypography.caption.copyWith(
-                color: colors.onSurfaceVariant,
+                color: AppColors.textMuted,
               ),
             ),
             const SizedBox(height: 16),
@@ -93,12 +107,14 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
                 Tab(text: 'Details'),
                 Tab(text: 'Pre-Processor'),
                 Tab(text: 'Post-Processor'),
+                Tab(text: 'Advanced (SPEL)'),
               ],
               labelColor: AppColors.accent,
               unselectedLabelColor: AppColors.textSecondary,
               indicatorColor: AppColors.accent,
               labelStyle: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
               unselectedLabelStyle: AppTypography.body,
+              isScrollable: true,
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -116,6 +132,7 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
                     data: _postProcessor,
                     onChanged: (data) => _postProcessor = data,
                   ),
+                  _buildAdvancedTab(),
                 ],
               ),
             ),
@@ -144,8 +161,46 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
             Navigator.of(context).pop({
               'preProcessor': _preProcessor,
               'postProcessor': _postProcessor,
+              'successCondition': _successConditionCtrl.text,
+              'variables': _variables,
             });
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAdvancedTab() {
+    final textColor = AppColors.textPrimary;
+    final secondaryText = AppColors.textSecondary;
+    
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('Success Condition (SpEL)', style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13)),
+        const SizedBox(height: 8),
+        PilotInput(
+          controller: _successConditionCtrl,
+          placeholder: 'e.g., #statusCode == 200 && #body.status == "OK"',
+          maxLines: 3,
+        ),
+        const SizedBox(height: 8),
+        Text('Available variables: #statusCode, #body, #headers, #responseTime', 
+          style: TextStyle(color: secondaryText, fontSize: 11)),
+        
+        const SizedBox(height: 32),
+        Text('Result Variables (Extract to Flow)', style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13)),
+        const SizedBox(height: 8),
+        Container(
+          constraints: const BoxConstraints(minHeight: 200, maxHeight: 300),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: KeyValueEditor(
+            data: _variables,
+            onChanged: (d) => setState(() => _variables = d),
+          ),
         ),
       ],
     );

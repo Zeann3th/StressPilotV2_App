@@ -112,7 +112,7 @@ class AppUpdater {
     AppLogger.info('Killing backend before update...', name: 'Updater');
     try {
       await getIt<ProcessManager>().forceKill();
-      // Small delay to ensure processes are fully terminated and files unlocked
+
       await Future.delayed(const Duration(milliseconds: 500));
     } catch (e) {
       AppLogger.warning('Failed to kill backend during update: $e', name: 'Updater');

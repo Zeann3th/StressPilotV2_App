@@ -12,4 +12,3 @@ abstract class EndpointRepository {
   Future<Map<String, dynamic>> executeEndpoint(int endpointId, Map<String, dynamic> requestBody, {CancelToken? cancelToken});
   Future<Map<String, dynamic>> executeAdhocEndpoint({required int projectId, required Map<String, dynamic> requestBody, CancelToken? cancelToken});
 }
-
