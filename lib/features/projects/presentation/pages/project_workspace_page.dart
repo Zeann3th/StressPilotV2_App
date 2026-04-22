@@ -6,15 +6,15 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
-import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace_nav_bar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace_sidebar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace_tab_bar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_canvas.dart';
-import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_editor.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/endpoint_editor.dart';
 
 class ProjectWorkspacePage extends StatefulWidget {
   const ProjectWorkspacePage({super.key});

@@ -44,7 +44,7 @@ class _JsonViewerState extends State<JsonViewer> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (widget.activeMatchIndex < 0 || widget.activeMatchIndex >= _matchKeys.length) return;
-      
+
       final key = _matchKeys[widget.activeMatchIndex];
       final context = key.currentContext;
       if (context != null) {
@@ -62,7 +62,7 @@ class _JsonViewerState extends State<JsonViewer> {
   Widget build(BuildContext context) {
     // ALWAYS clear keys before generating new spans to avoid duplication
     _matchKeys.clear();
-    
+
     final jsonString = const JsonEncoder.withIndent('  ').convert(widget.json);
     final spans = _highlightJson(jsonString, context);
 
@@ -165,8 +165,8 @@ class _JsonViewerState extends State<JsonViewer> {
         child: Container(
           key: key,
           decoration: BoxDecoration(
-            color: isActive 
-              ? Colors.orange.withValues(alpha: 0.8) 
+            color: isActive
+              ? Colors.orange.withValues(alpha: 0.8)
               : Colors.yellow.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(2),
           ),

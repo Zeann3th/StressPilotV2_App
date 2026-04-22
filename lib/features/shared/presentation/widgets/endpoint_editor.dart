@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
-import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/json_viewer.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/widgets/json_viewer.dart';
 
 class EndpointEditor extends StatefulWidget {
   final Endpoint endpoint;
@@ -20,15 +20,15 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
   late TextEditingController _nameCtrl;
   late String _method;
   late TextEditingController _bodyCtrl;
-  
+
   Map<String, String> _headers = {};
   Map<String, String> _params = {};
-  
+
   Map<String, dynamic>? _response;
   bool _isLoading = false;
   int? _statusCode;
   int? _responseTime;
-  
+
   late TabController _reqTabCtrl;
 
   @override
@@ -37,7 +37,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     _urlCtrl = TextEditingController(text: widget.endpoint.url ?? '');
     _nameCtrl = TextEditingController(text: widget.endpoint.name);
     _method = widget.endpoint.httpMethod ?? 'GET';
-    
+
     String bodyText = '';
     if (widget.endpoint.body != null) {
       if (widget.endpoint.body is String) {
@@ -138,7 +138,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
               ],
             ),
           ),
-          
+
           // Tabs
           Container(
             height: 32,

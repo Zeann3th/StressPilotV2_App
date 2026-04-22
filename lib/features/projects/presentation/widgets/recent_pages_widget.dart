@@ -4,8 +4,8 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/navigation_item.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 

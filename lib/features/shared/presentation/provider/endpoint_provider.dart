@@ -285,4 +285,3 @@ class EndpointProvider extends ChangeNotifier {
 
   bool isEndpointExecuting(int endpointId) => _cancelTokens.containsKey(endpointId);
 }
-

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' hide Flow;
 import 'package:stress_pilot/features/projects/domain/models/flow.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart' as domain_endpoint;
 import 'package:uuid/uuid.dart';
 

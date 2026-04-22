@@ -8,7 +8,7 @@ import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/runs_list_widget.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import '../provider/project_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
 import '../widgets/project/project_table.dart';
 import '../widgets/project/project_empty_states.dart';
 

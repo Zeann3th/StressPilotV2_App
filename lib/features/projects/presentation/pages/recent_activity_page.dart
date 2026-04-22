@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/runs_list_widget.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';

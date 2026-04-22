@@ -5,7 +5,7 @@ import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
 
 class FlowDialog {
   static void showCreateDialog(
