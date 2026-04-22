@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
@@ -54,6 +55,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   @override
   Widget build(BuildContext context) {
     final activeTab = context.watch<WorkspaceTabProvider>().activeTab;
+    final project = context.watch<ProjectProvider>().selectedProject;
 
     return Scaffold(
       backgroundColor: AppColors.baseBackground,
@@ -72,6 +74,23 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                     child: Column(
                       children: [
                         const WorkspaceTabBar(),
+                        if (project != null && project.environmentId != 0)
+                          Container(
+                            height: 28,
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                            decoration: BoxDecoration(
+                              border: Border(bottom: BorderSide(color: AppColors.divider)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                _EnvBadge(
+                                  environmentId: project.environmentId,
+                                  projectName: project.name,
+                                ),
+                              ],
+                            ),
+                          ),
                         Expanded(
                           child: _buildTabContent(activeTab),
                         ),
@@ -117,6 +136,71 @@ class _EmptyTabState extends StatelessWidget {
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EnvBadge extends StatefulWidget {
+  final int environmentId;
+  final String projectName;
+
+  const _EnvBadge({
+    required this.environmentId,
+    required this.projectName,
+  });
+
+  @override
+  State<_EnvBadge> createState() => _EnvBadgeState();
+}
+
+class _EnvBadgeState extends State<_EnvBadge> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: () {
+          AppNavigator.pushNamed(
+            AppRouter.projectEnvironmentRoute,
+            arguments: {
+              'environmentId': widget.environmentId,
+              'projectName': widget.projectName,
+            },
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            vertical: 3,
+            horizontal: 8,
+          ),
+          decoration: BoxDecoration(
+            color: _isHovered ? AppColors.hoverItem : AppColors.elevatedSurface,
+            borderRadius: AppRadius.br4,
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                LucideIcons.settings2,
+                size: 12,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'ENV',
+                style: AppTypography.codeSm.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
