@@ -42,6 +42,9 @@ abstract class AppColors {
   static Color get muted => textDisabled;
 
   static Color get accentColor => accent;
+
+  // Alias — same as textDisabled, used across codebase
+  static Color get textMuted => textDisabled;
 }
 
 abstract class AppGradients {
@@ -62,6 +65,12 @@ abstract class AppRadius {
   static const br4  = BorderRadius.all(r4);
   static const br6  = BorderRadius.all(r6);
   static const br8  = BorderRadius.all(r8);
+
+  // Fleet caps radius at 8px — these aliases keep call sites compiling at spec-correct values
+  static const r12 = r8;
+  static const r16 = r8;
+  static const br12 = br8;
+  static const br16 = br8;
 }
 
 abstract class AppSpacing {
