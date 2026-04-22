@@ -1,14 +1,11 @@
 import 'dart:convert';
-import 'dart:async' as async_timer;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/json_viewer.dart';
-import 'package:stress_pilot/features/endpoints/data/curl_parser.dart';
 
 class EndpointEditor extends StatefulWidget {
   final Endpoint endpoint;

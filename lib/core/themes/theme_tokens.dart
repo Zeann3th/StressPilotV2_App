@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/core/themes/theme_manager.dart';
-import 'package:stress_pilot/core/themes/pilot_theme.dart';
 
 abstract class AppColors {
   // Fleet Base Palette
@@ -29,8 +25,6 @@ abstract class AppColors {
   static const methodPatch       = Color(0xFF8B68D4);
 
   static const error             = Color(0xFFD2504B); // Muted Red
-
-  static PilotTheme get _theme => getIt<ThemeManager>().currentTheme;
 
   static Color get background => baseBackground;
   static Color get surface => sidebarBackground;

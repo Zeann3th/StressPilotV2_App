@@ -45,6 +45,22 @@ Think of this as a painter pass over the whole codebase: same structure, new coa
 - **No new dependencies** unless strictly needed for a layout primitive already in use.
 - All colors, text styles, and spacing come from the token file. No inline styling that isn't already there.
 
+### Shared rule (feature-first enforcement)
+
+If a widget, provider, or service is used by **more than one feature**, it lives in `lib/features/shared/`. Never duplicate cross-feature code inside a single feature folder.
+
+| Used by | Lives in |
+|---------|----------|
+| One feature only | `lib/features/<feature>/presentation/widgets/` |
+| Two or more features | `lib/features/shared/presentation/widgets/` |
+| Core infrastructure (theme, routing, DI) | `lib/core/` |
+
+When creating new widgets during this UI pass:
+- Check if the widget will be reused across features before placing it
+- If yes → `lib/features/shared/presentation/widgets/`
+- If no → keep it in its feature folder
+- Never put feature-specific widgets in `lib/core/`
+
 ---
 
 ## Design system — Fleet
@@ -254,3 +270,16 @@ The goal: every screen looks like it belongs to the same app and that app looks 
 11. Re-skin remaining screens (settings, plugins, recent activity, env vars, dialogs)
 12. Remove obsolete routes and dead code
 13. Smoke-test every nav path
+
+---
+
+## Mandatory quality gate
+
+After **every task** that touches Dart code, run:
+
+```bash
+cd /home/longlh20/Workspace/wasted/StressPilot/stresspilot_super_app && flutter analyze lib/
+```
+
+**Do not commit and do not move to the next task until `flutter analyze` exits with no errors.**
+Warnings are acceptable; errors are not. Fix all errors before proceeding.
