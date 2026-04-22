@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
 import 'package:stress_pilot/features/marketplace/presentation/widgets/pilot_webview.dart';
 
 class MarketplacePage extends StatefulWidget {
@@ -27,10 +27,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
         backgroundColor: AppColors.baseBackground,
         body: Column(
           children: [
-            const AppTopBar(),
+            const FleetPageBar(title: 'Marketplace'),
             Expanded(
               child: Container(
-                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 decoration: BoxDecoration(
                   color: AppColors.sidebarBackground,
                   borderRadius: AppRadius.br8,

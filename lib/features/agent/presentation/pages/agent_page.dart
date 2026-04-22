@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
 import 'package:xterm/xterm.dart';
 import '../provider/agent_provider.dart';
 
@@ -47,32 +47,15 @@ class _AgentPageState extends State<AgentPage> {
   Widget build(BuildContext context) {
     final provider = context.watch<AgentProvider>();
     final bg = AppColors.background;
-    final surface = AppColors.surface;
-    final border = AppColors.border;
     final textColor = AppColors.textPrimary;
 
     return Scaffold(
       backgroundColor: bg,
       body: Column(
         children: [
-          const AppTopBar(),
+          const FleetPageBar(title: 'Agent'),
           Expanded(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: AppRadius.br16,
-                border: Border.all(color: border.withValues(alpha: 0.3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: AppRadius.br16,
+            child: ClipRect(
                 child: Stack(
                   children: [
 
@@ -133,7 +116,6 @@ class _AgentPageState extends State<AgentPage> {
                   ],
                 ),
               ),
-            ),
           ),
         ],
       ),

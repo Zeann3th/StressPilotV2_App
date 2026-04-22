@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/endpoints//data/curl_parser.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
@@ -102,25 +102,9 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
       backgroundColor: bg,
       body: Column(
         children: [
-          const AppTopBar(),
+          const FleetPageBar(title: 'Endpoints'),
           Expanded(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: AppRadius.br16,
-                border: Border.all(color: border.withValues(alpha: 0.5)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: AppRadius.br16,
-                child: Row(
+            child: Row(
                   children: [
 
                     Container(
@@ -362,8 +346,6 @@ class _ProjectEndpointsPageState extends State<ProjectEndpointsPage> {
                     ),
                   ],
                 ),
-              ),
-            ),
           ),
         ],
       ),

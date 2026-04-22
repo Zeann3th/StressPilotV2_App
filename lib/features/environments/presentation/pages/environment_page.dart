@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 
 class EnvironmentPage extends StatefulWidget {
@@ -21,7 +21,6 @@ class EnvironmentPage extends StatefulWidget {
 }
 
 class _EnvironmentPageState extends State<EnvironmentPage> {
-  final GlobalKey _headerKey = GlobalKey();
   final GlobalKey _tableKey = GlobalKey();
 
   @override
@@ -38,39 +37,16 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
       backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
-          const AppTopBar(),
+          FleetPageBar(
+            title: 'Environment — ${widget.projectName}',
+            actions: [_SaveButton(environmentId: widget.environmentId)],
+          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    key: _headerKey,
-                    children: [
-                      PilotButton.ghost(
-                        icon: Icons.arrow_back_rounded,
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Environment Variables",
-                            style: AppTypography.label.copyWith(color: AppColors.textSecondary),
-                          ),
-                          Text(
-                            widget.projectName,
-                            style: AppTypography.title.copyWith(color: AppColors.textPrimary, fontSize: 22),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      _SaveButton(environmentId: widget.environmentId),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
                   Expanded(
                     child: Container(
                       key: _tableKey,

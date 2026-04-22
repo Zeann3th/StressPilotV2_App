@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_topbar.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
@@ -49,28 +49,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
       backgroundColor: bg,
       body: Column(
         children: [
-          AppTopBar(
-            searchController: _searchController,
-            onSearchSubmitted: _handleSearch,
-          ),
+          const FleetPageBar(title: 'Projects', showBack: false),
           Expanded(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: AppRadius.br16,
-                border: Border.all(color: border.withValues(alpha: 0.3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: AppRadius.br16,
-                child: Column(
+            child: Column(
                   children: [
                     Expanded(
                       child: Column(
@@ -128,8 +109,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     ),
                   ],
                 ),
-              ),
-            ),
           ),
         ],
       ),
