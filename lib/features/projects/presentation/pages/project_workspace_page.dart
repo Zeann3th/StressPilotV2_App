@@ -110,7 +110,7 @@ class _EmptyTabState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(LucideIcons.layout, size: 48, color: AppColors.textDisabled),
+          Icon(LucideIcons.layoutDashboard, size: 48, color: AppColors.textDisabled),
           const SizedBox(height: 16),
           Text(
             'Select an endpoint or open a flow',

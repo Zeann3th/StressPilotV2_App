@@ -166,7 +166,6 @@ class ThemeManager with ChangeNotifier {
     return ShadThemeData(
       brightness: theme.brightness,
       colorScheme: colorScheme,
-      disableTransition: true,
     );
   }
 

@@ -17,6 +17,7 @@ class EndpointProvider extends ChangeNotifier {
   int _pageSize = 20;
   bool _hasMore = true;
 
+  Endpoint? _selectedEndpoint;
   bool _isExecuting = false;
   String? _error;
 
@@ -46,6 +47,12 @@ class EndpointProvider extends ChangeNotifier {
   }
 
   List<Endpoint> get endpoints => _endpoints;
+  Endpoint? get selectedEndpoint => _selectedEndpoint;
+
+  void selectEndpoint(Endpoint endpoint) {
+    _selectedEndpoint = endpoint;
+    notifyListeners();
+  }
 
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;

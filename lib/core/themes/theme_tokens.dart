@@ -45,10 +45,24 @@ abstract class AppColors {
 
   // Alias — same as textDisabled, used across codebase
   static Color get textMuted => textDisabled;
+
+  // Semantic aliases
+  static const success = methodGet;           // Color(0xFF57A64A)
+  static const warning = methodPut;           // Color(0xFFC8A84B)
+  static const info    = methodPost;          // Color(0xFF4B8FD4)
+
+  // Pressed-state accent
+  static const accentActive = Color(0xFF6A58D6);
 }
 
 abstract class AppGradients {
-  // Fleet uses solid colors, no gradients
+  // Fleet uses solid colors — gradient helpers return a linear gradient from
+  // the same colour to itself so existing call sites keep compiling.
+  static LinearGradient green([bool isDark = true]) => const LinearGradient(
+        colors: [AppColors.accent, AppColors.accent],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
 }
 
 abstract class AppDurations {
@@ -98,7 +112,9 @@ abstract class AppTypography {
   static TextStyle get caption  => TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
   static TextStyle get body     => TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
   static TextStyle get bodyMd   => TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
+  static TextStyle get bodyLg   => TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
   static TextStyle get heading  => TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
+  static TextStyle get title    => TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
   static TextStyle get label    => TextStyle(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.2, color: AppColors.textSecondary);
 
   static TextStyle get codeSm   => TextStyle(fontFamily: _mono, fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textPrimary);

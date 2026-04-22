@@ -88,7 +88,7 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
               const SizedBox(width: 8),
               if (_isHovered || widget.isActive)
                 GestureDetector(
-                  onTap: (e) {
+                  onTap: () {
                     widget.onClose();
                   },
                   child: Icon(

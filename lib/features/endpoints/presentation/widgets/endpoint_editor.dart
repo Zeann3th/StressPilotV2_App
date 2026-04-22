@@ -136,7 +136,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                 const SizedBox(width: 8),
                 ShadButton(
                   onPressed: _isLoading ? null : _send,
-                  text: Text(_isLoading ? 'Stop' : 'Send'),
+                  child: Text(_isLoading ? 'Stop' : 'Send'),
                 ),
               ],
             ),
