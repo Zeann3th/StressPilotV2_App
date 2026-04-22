@@ -30,17 +30,18 @@ class EnvironmentManagerDialog extends StatefulWidget {
       builder: (context) => ChangeNotifierProvider.value(
         value: provider,
         child: Dialog(
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.elevatedSurface,
           surfaceTintColor: Colors.transparent,
+          elevation: 0,
           insetPadding: const EdgeInsets.all(48),
           shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.br12,
+            borderRadius: AppRadius.br8,
             side: BorderSide(color: AppColors.border),
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: AppRadius.br12,
+              color: AppColors.elevatedSurface,
+              borderRadius: AppRadius.br8,
               border: Border.all(color: AppColors.border),
             ),
             child: EnvironmentManagerDialog(
@@ -76,8 +77,8 @@ class _EnvironmentManagerDialogState extends State<EnvironmentManagerDialog> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              color: AppColors.elevatedSurface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
               border: Border(bottom: BorderSide(color: AppColors.border)),
             ),
             child: Row(

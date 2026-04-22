@@ -17,7 +17,6 @@ class _KeymapSettingsTableState extends State<KeymapSettingsTable> {
   Widget build(BuildContext context) {
     final provider = context.watch<KeymapProvider>();
     final keymap = provider.keymap;
-    final surface = AppColors.surface;
     final border = AppColors.border;
     final textColor = AppColors.textPrimary;
 
@@ -46,8 +45,8 @@ class _KeymapSettingsTableState extends State<KeymapSettingsTable> {
               const SizedBox(height: 16),
               Container(
                 decoration: BoxDecoration(
-                  color: surface,
-                  borderRadius: AppRadius.br12,
+                  color: AppColors.sidebarBackground,
+                  borderRadius: AppRadius.br8,
                   border: Border.all(color: border, width: 1),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -56,7 +55,7 @@ class _KeymapSettingsTableState extends State<KeymapSettingsTable> {
                     for (final entry in keymap.entries) ...[
                       _buildRow(context, entry.key, entry.value),
                       if (entry.key != keymap.keys.last)
-                        Divider(height: 1, color: border),
+                        Divider(height: 1, color: AppColors.divider),
                     ]
                   ],
                 ),
@@ -238,7 +237,7 @@ class _ShortcutListenerState extends State<_ShortcutListener> {
             decoration: BoxDecoration(
               color: AppColors.accent.withValues(alpha: 0.05),
               border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
-              borderRadius: AppRadius.br12,
+              borderRadius: AppRadius.br8,
             ),
             alignment: Alignment.center,
             child: Text(

@@ -68,8 +68,6 @@ class _AppAboutSectionState extends State<AppAboutSection> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = AppColors.surface;
     final border = AppColors.border;
     final textColor = AppColors.textPrimary;
 
@@ -80,13 +78,13 @@ class _AppAboutSectionState extends State<AppAboutSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Version', style: AppTypography.heading.copyWith(color: textColor, fontSize: 20)),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: surface,
-                borderRadius: AppRadius.br12,
-                border: Border.all(color: border.withValues(alpha: 0.3)),
+                color: AppColors.sidebarBackground,
+                borderRadius: AppRadius.br8,
+                border: Border.all(color: border),
               ),
               child: Row(
                 children: [
@@ -123,24 +121,24 @@ class _AppAboutSectionState extends State<AppAboutSection> {
                 ],
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 12),
             Text('System Health', style: AppTypography.heading.copyWith(color: textColor, fontSize: 20)),
-            const SizedBox(height: 24),
-            _buildHealthStatus(surface, border, textColor, isDark),
+            const SizedBox(height: 12),
+            _buildHealthStatus(border, textColor),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHealthStatus(Color surface, Color border, Color textColor, bool isDark) {
+  Widget _buildHealthStatus(Color border, Color textColor) {
     if (_lastError == null) {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: surface,
-          borderRadius: AppRadius.br12,
-          border: Border.all(color: border.withValues(alpha: 0.3)),
+          color: AppColors.sidebarBackground,
+          borderRadius: AppRadius.br8,
+          border: Border.all(color: border),
         ),
         child: Row(
           children: [
@@ -173,8 +171,8 @@ class _AppAboutSectionState extends State<AppAboutSection> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: surface,
-        borderRadius: AppRadius.br12,
+        color: AppColors.sidebarBackground,
+        borderRadius: AppRadius.br8,
         border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -212,9 +210,9 @@ class _AppAboutSectionState extends State<AppAboutSection> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.03),
+                  color: AppColors.elevatedSurface,
                   borderRadius: AppRadius.br8,
-                  border: Border.all(color: border.withValues(alpha: 0.2)),
+                  border: Border.all(color: border),
                 ),
                 child: Text(
                   _lastError ?? '',

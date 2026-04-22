@@ -17,11 +17,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = AppColors.background;
-    final surface = AppColors.surface;
-    final border = AppColors.border;
-    final textColor = AppColors.textPrimary;
-
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
@@ -29,7 +24,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
         }
       },
       child: Scaffold(
-        backgroundColor: bg,
+        backgroundColor: AppColors.baseBackground,
         body: Column(
           children: [
             const AppTopBar(),
@@ -37,19 +32,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
               child: Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 decoration: BoxDecoration(
-                  color: surface,
-                  borderRadius: AppRadius.br16,
-                  border: Border.all(color: border.withValues(alpha: 0.3)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      offset: const Offset(0, 4),
-                      blurRadius: 12,
-                    ),
-                  ],
+                  color: AppColors.sidebarBackground,
+                  borderRadius: AppRadius.br8,
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: ClipRRect(
-                  borderRadius: AppRadius.br16,
+                  borderRadius: AppRadius.br8,
                   child: Stack(
                     children: [
                       Positioned.fill(
@@ -72,7 +60,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             Navigator.of(context).pop();
                           },
                           backgroundOverride: Colors.transparent,
-                          foregroundOverride: textColor.withValues(alpha: 0.6),
+                          foregroundOverride: AppColors.textPrimary.withValues(alpha: 0.6),
                         ),
                       ),
                       Positioned(
@@ -84,7 +72,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             webViewController?.reload();
                           },
                           backgroundOverride: Colors.transparent,
-                          foregroundOverride: textColor.withValues(alpha: 0.6),
+                          foregroundOverride: AppColors.textPrimary.withValues(alpha: 0.6),
                         ),
                       ),
                     ],

@@ -35,7 +35,7 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
           const AppTopBar(),
@@ -58,7 +58,7 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
                         children: [
                           Text(
                             "Environment Variables",
-                            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                            style: AppTypography.label.copyWith(color: AppColors.textSecondary),
                           ),
                           Text(
                             widget.projectName,
@@ -70,24 +70,17 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
                       _SaveButton(environmentId: widget.environmentId),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
                   Expanded(
                     child: Container(
                       key: _tableKey,
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: AppRadius.br16,
-                        border: Border.all(color: AppColors.border.withValues(alpha: 0.3)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            offset: const Offset(0, 4),
-                            blurRadius: 12,
-                          ),
-                        ],
+                        color: AppColors.sidebarBackground,
+                        borderRadius: AppRadius.br8,
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: const ClipRRect(
-                        borderRadius: AppRadius.br16,
+                        borderRadius: AppRadius.br8,
                         child: EnvironmentTable(),
                       ),
                     ),

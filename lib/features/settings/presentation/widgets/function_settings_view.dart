@@ -238,11 +238,17 @@ class _FunctionDetailEditorState extends State<_FunctionDetailEditor> {
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Delete Function'),
-                        content: Text('Are you sure you want to delete "${widget.function.name}"?'),
+                        backgroundColor: AppColors.elevatedSurface,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppRadius.br8,
+                          side: BorderSide(color: AppColors.border),
+                        ),
+                        title: Text('Delete Function', style: AppTypography.heading.copyWith(color: AppColors.textPrimary)),
+                        content: Text('Are you sure you want to delete "${widget.function.name}"?', style: AppTypography.body.copyWith(color: AppColors.textSecondary)),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.redAccent))),
+                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel', style: AppTypography.body.copyWith(color: AppColors.textSecondary))),
+                          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete', style: AppTypography.body.copyWith(color: AppColors.error))),
                         ],
                       ),
                     );

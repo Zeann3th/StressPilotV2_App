@@ -105,7 +105,7 @@ class _SettingsTableState extends State<SettingsTable> {
           ),
         ),
 
-        VerticalDivider(width: 1, thickness: 1, color: border.withValues(alpha: 0.15)),
+        VerticalDivider(width: 1, thickness: 1, color: border),
         const SizedBox(width: 24),
 
         Expanded(
@@ -209,14 +209,14 @@ class _SettingsTableState extends State<SettingsTable> {
   Widget _buildSettingsContainer(List<MapEntry<String, String>> entries, Color border) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: AppRadius.br12,
-        border: Border.all(color: border.withValues(alpha: 0.3)),
+        borderRadius: AppRadius.br8,
+        border: Border.all(color: border),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           for (int i = 0; i < entries.length; i++) ...[
-            if (i > 0) Divider(height: 1, color: border.withValues(alpha: 0.1)),
+            if (i > 0) Divider(height: 1, color: AppColors.divider),
             SettingsRow(
               keyName: entries[i].key,
               value: entries[i].value,
@@ -269,8 +269,8 @@ class _ThemeSettings extends StatelessWidget {
 
               Container(
                 decoration: BoxDecoration(
-                  borderRadius: AppRadius.br12,
-                  border: Border.all(color: border.withValues(alpha: 0.3)),
+                  borderRadius: AppRadius.br8,
+                  border: Border.all(color: border),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Column(
@@ -324,14 +324,13 @@ class _ThemeOptionState extends State<_ThemeOption> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = AppColors.textPrimary;
     final border = AppColors.border;
 
     final bg = widget.isSelected
         ? AppColors.accent.withValues(alpha: 0.1)
         : _isHovered
-            ? (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02))
+            ? AppColors.hoverItem
             : Colors.transparent;
 
     return MouseRegion(
@@ -345,7 +344,7 @@ class _ThemeOptionState extends State<_ThemeOption> {
           decoration: BoxDecoration(
             color: bg,
             border: Border(
-              bottom: BorderSide(color: border.withValues(alpha: 0.1)),
+              bottom: BorderSide(color: border),
             ),
           ),
           child: Row(
@@ -422,7 +421,7 @@ class _ThemePreview extends StatelessWidget {
             decoration: BoxDecoration(
               color: c,
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              border: Border.all(color: AppColors.border),
             ),
           ),
       ],

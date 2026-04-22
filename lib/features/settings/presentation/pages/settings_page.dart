@@ -26,13 +26,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = AppColors.background;
-    final surface = AppColors.surface;
-    final border = AppColors.border;
-    final textColor = AppColors.textPrimary;
-
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
           const AppTopBar(),
@@ -40,27 +35,20 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               decoration: BoxDecoration(
-                color: surface,
-                borderRadius: AppRadius.br16,
-                border: Border.all(color: border.withValues(alpha: 0.3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
+                color: AppColors.sidebarBackground,
+                borderRadius: AppRadius.br8,
+                border: Border.all(color: AppColors.border),
               ),
               child: ClipRRect(
-                borderRadius: AppRadius.br16,
+                borderRadius: AppRadius.br8,
                 child: Column(
                   children: [
                     Container(
                       height: 60,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: surface,
-                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.3), width: 1)),
+                        color: AppColors.sidebarBackground,
+                        border: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
                       ),
                       child: Row(
                         children: [
@@ -71,7 +59,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           const SizedBox(width: 12),
                           Text(
                             'Settings',
-                            style: AppTypography.heading.copyWith(color: textColor),
+                            style: AppTypography.heading.copyWith(color: AppColors.textPrimary),
                           ),
                         ],
                       ),

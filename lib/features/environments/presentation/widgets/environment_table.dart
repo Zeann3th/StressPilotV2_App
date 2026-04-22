@@ -19,7 +19,6 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
   Widget build(BuildContext context) {
     final provider = context.watch<EnvironmentProvider>();
     final variables = provider.variables;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final border = AppColors.border;
 
     final filtered = variables.where((v) {
@@ -53,14 +52,13 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
         ),
 
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.03)
-                : Colors.black.withValues(alpha: 0.03),
+            color: AppColors.elevatedSurface,
             border: Border(
-              top: BorderSide(color: border.withValues(alpha: 0.3)),
-              bottom: BorderSide(color: border.withValues(alpha: 0.3)),
+              top: BorderSide(color: border),
+              bottom: BorderSide(color: border),
             ),
           ),
           child: Row(
@@ -69,7 +67,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 width: 60,
                 child: Text(
                   'STATUS',
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
                 ),
               ),
               const SizedBox(width: 16),
@@ -77,7 +75,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 flex: 1,
                 child: Text(
                   'VARIABLE KEY',
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
                 ),
               ),
               const SizedBox(width: 16),
@@ -85,7 +83,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 flex: 2,
                 child: Text(
                   'VALUE',
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
                 ),
               ),
               const SizedBox(width: 48),
@@ -209,7 +207,6 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final border = AppColors.border;
     final textColor = AppColors.textPrimary;
 
@@ -218,14 +215,13 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
       onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
         duration: AppDurations.micro,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
-          color: _isHovered
-              ? (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02))
-              : Colors.transparent,
+          color: _isHovered ? AppColors.hoverItem : Colors.transparent,
           border: widget.isLast
               ? null
-              : Border(bottom: BorderSide(color: border.withValues(alpha: 0.15))),
+              : Border(bottom: BorderSide(color: border)),
         ),
         child: Row(
           children: [
