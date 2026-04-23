@@ -75,31 +75,31 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
             child: BottomPanelShell(
               isOpen: _isAgentOpen,
               panel: const _AgentPanel(),
-              body: Row(
-                children: [
-                  WorkspaceSidebar(width: _sidebarWidth),
-                  // Drag handle
-                  MouseRegion(
-                    cursor: SystemMouseCursors.resizeColumn,
-                    child: GestureDetector(
-                      onHorizontalDragUpdate: (details) {
-                        setState(() {
-                          _sidebarWidth = (_sidebarWidth + details.delta.dx)
-                              .clamp(_minSidebarWidth, _maxSidebarWidth);
-                        });
-                      },
-                      child: Container(
-                        width: 4,
-                        color: Colors.transparent,
-                        child: Center(
-                          child: Container(width: 1, color: AppColors.divider),
+              body: Padding(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: Row(
+                  children: [
+                    WorkspaceSidebar(width: _sidebarWidth),
+                    // Drag handle
+                    MouseRegion(
+                      cursor: SystemMouseCursors.resizeColumn,
+                      child: GestureDetector(
+                        onHorizontalDragUpdate: (details) {
+                          setState(() {
+                            _sidebarWidth = (_sidebarWidth + details.delta.dx)
+                                .clamp(_minSidebarWidth, _maxSidebarWidth);
+                          });
+                        },
+                        child: Container(
+                          width: 6,
+                          color: Colors.transparent,
+                          child: Center(
+                            child: Container(width: 1, color: AppColors.divider),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
+                    Expanded(
                       child: Container(
                         decoration: BoxDecoration(
                           color: AppColors.baseBackground,
@@ -116,8 +116,8 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

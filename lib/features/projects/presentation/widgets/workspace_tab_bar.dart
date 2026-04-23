@@ -60,10 +60,13 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: AppDurations.micro,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
-            color: widget.isActive ? AppColors.activeItem : Colors.transparent,
+            color: widget.isActive
+                ? AppColors.activeItem
+                : (_isHovered ? AppColors.hoverItem : Colors.transparent),
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(4),
               topRight: Radius.circular(4),
@@ -80,30 +83,25 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
             children: [
               Icon(
                 widget.tab.type == WorkspaceTabType.flow ? LucideIcons.gitFork : LucideIcons.link,
-                size: 14,
+                size: 13,
                 color: widget.isActive ? AppColors.accent : AppColors.textSecondary,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Text(
                 widget.tab.name,
                 style: AppTypography.body.copyWith(
                   color: widget.isActive ? AppColors.textPrimary : AppColors.textSecondary,
+                  fontSize: 12,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               if (_isHovered || widget.isActive)
                 GestureDetector(
-                  onTap: () {
-                    widget.onClose();
-                  },
-                  child: Icon(
-                    LucideIcons.x,
-                    size: 14,
-                    color: AppColors.textSecondary,
-                  ),
+                  onTap: widget.onClose,
+                  child: Icon(LucideIcons.x, size: 12, color: AppColors.textSecondary),
                 )
               else
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
             ],
           ),
         ),
