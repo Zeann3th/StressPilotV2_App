@@ -11,8 +11,8 @@ abstract class AppColors {
   static const accent            = Color(0xFF7B68EE); // Muted Indigo
   static const accentHover       = Color(0xFF8B7BEE);
   
-  static const border            = Color(0x14FFFFFF); // rgba(255,255,255,0.08)
-  static const divider           = Color(0x0FFFFFFF); // rgba(255,255,255,0.06)
+  static const border            = Color(0x1FFFFFFF); // rgba(255,255,255,0.12)
+  static const divider           = Color(0x14FFFFFF); // rgba(255,255,255,0.08)
 
   static const textPrimary       = Color(0xFFDCD9D0);
   static const textSecondary     = Color(0xFF7E7C75);
@@ -133,14 +133,14 @@ abstract class AppSpacing {
 abstract class AppTypography {
   static const _mono = 'JetBrains Mono';
 
-  // Human-readable UI text — Montserrat
-  static TextStyle get caption => GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
-  static TextStyle get body    => GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
-  static TextStyle get bodyMd  => GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
-  static TextStyle get bodyLg  => GoogleFonts.montserrat(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
-  static TextStyle get heading => GoogleFonts.montserrat(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
-  static TextStyle get title   => GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
-  static TextStyle get label   => GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.3, color: AppColors.textSecondary);
+  // Human-readable UI text — Inter
+  static TextStyle get caption => GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
+  static TextStyle get body    => GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
+  static TextStyle get bodyMd  => GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
+  static TextStyle get bodyLg  => GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
+  static TextStyle get heading => GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
+  static TextStyle get title   => GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
+  static TextStyle get label   => GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.3, color: AppColors.textSecondary);
 
   // Code / paths / keys — JetBrains Mono (unchanged)
   static TextStyle get codeSm   => TextStyle(fontFamily: _mono, fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
