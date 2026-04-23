@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/window/window_manager.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
@@ -18,19 +20,26 @@ class WorkspaceNavBar extends StatelessWidget {
     final project = context.watch<ProjectProvider>().selectedProject;
     final activeTab = context.watch<WorkspaceTabProvider>().activeTab;
 
-    return Container(
-      height: AppSpacing.navBarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.baseBackground,
-        border: Border(
-          bottom: BorderSide(color: AppColors.divider),
+    return MoveWindow(
+      child: Container(
+        height: AppSpacing.navBarHeight,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.baseBackground,
+          border: Border(
+            bottom: BorderSide(color: AppColors.divider),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          // Left: Play + Env controls
-          _PlayStopButton(project: project, activeTab: activeTab),
+        child: Row(
+          children: [
+            // Left: Window buttons (Linux + Windows only)
+            if (WindowSetup.isSupported) ...[
+              const _WindowButtons(),
+              const SizedBox(width: 8),
+            ],
+
+            // Left: Play + Env controls
+            _PlayStopButton(project: project, activeTab: activeTab),
           if (project != null && project.environmentId != 0) ...[
             const SizedBox(width: 4),
             _EnvIconButton(
@@ -341,5 +350,79 @@ class _PlayStopButtonState extends State<_PlayStopButton> {
         endpointProvider.executeEndpoint(endpoint.id, transientState);
       }
     }
+  }
+}
+
+class _WindowButtons extends StatelessWidget {
+  const _WindowButtons();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _TrafficLight(
+          color: const Color(0xFFFF5F57),
+          hoverIcon: LucideIcons.x,
+          onTap: () => appWindow.close(),
+        ),
+        const SizedBox(width: 6),
+        _TrafficLight(
+          color: const Color(0xFFFFBD2E),
+          hoverIcon: LucideIcons.minus,
+          onTap: () => appWindow.minimize(),
+        ),
+        const SizedBox(width: 6),
+        _TrafficLight(
+          color: const Color(0xFF28C840),
+          hoverIcon: LucideIcons.maximize,
+          onTap: () => appWindow.maximizeOrRestore(),
+        ),
+      ],
+    );
+  }
+}
+
+class _TrafficLight extends StatefulWidget {
+  final Color color;
+  final IconData hoverIcon;
+  final VoidCallback onTap;
+  const _TrafficLight({required this.color, required this.hoverIcon, required this.onTap});
+
+  @override
+  State<_TrafficLight> createState() => _TrafficLightState();
+}
+
+class _TrafficLightState extends State<_TrafficLight> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: widget.color,
+            shape: BoxShape.circle,
+            border: Border.all(color: widget.color.withValues(alpha: 0.7), width: 0.5),
+          ),
+          child: _isHovered
+              ? Center(
+                  child: Icon(
+                    widget.hoverIcon,
+                    size: 8,
+                    color: Colors.black.withValues(alpha: 0.5),
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
   }
 }

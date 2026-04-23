@@ -26,10 +26,14 @@ import 'package:stress_pilot/features/agent/presentation/provider/agent_provider
 import 'package:stress_pilot/features/settings/presentation/provider/plugin_settings_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
 import 'package:stress_pilot/features/scheduling/presentation/provider/scheduling_provider.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/layout.dart';
 import 'package:stress_pilot/core/updater/update_dialog.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/layout.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:stress_pilot/core/window/window_manager.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class AppRoot extends StatefulWidget {
+
   const AppRoot({super.key});
 
   @override
@@ -194,11 +198,16 @@ class _AppLoadingTheme extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShadApp(
+    Widget child = ShadApp(
       title: 'Stress Pilot',
       debugShowCheckedModeBanner: false,
       home: const AppSkeleton(),
     );
+
+    if (WindowSetup.isSupported) {
+      child = WindowBorder(color: AppColors.border, width: 1, child: child);
+    }
+    return child;
   }
 }
 
