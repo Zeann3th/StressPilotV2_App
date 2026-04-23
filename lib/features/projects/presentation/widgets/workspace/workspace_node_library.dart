@@ -3,6 +3,7 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'workspace_endpoints_list.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/sidebar_section_header.dart';
 
 class WorkspaceNodeLibrary extends StatefulWidget {
   final int projectId;
@@ -43,7 +44,7 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          _SectionHeader(label: 'LOGIC'),
+          SidebarSectionHeader(label: 'LOGIC'),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
             child: Wrap(
@@ -90,22 +91,6 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String label;
-  const _SectionHeader({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
-      child: Text(
-        label,
-        style: AppTypography.label.copyWith(color: AppColors.textMuted),
       ),
     );
   }

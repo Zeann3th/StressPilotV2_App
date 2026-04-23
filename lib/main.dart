@@ -1,11 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/app_root.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/system/process_manager.dart';
 import 'package:stress_pilot/core/system/shutdown_handler.dart';
 import 'package:stress_pilot/core/system/app_error_boundary.dart';
-import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/window/window_manager.dart';
 import 'package:window_manager/window_manager.dart' as wm;
 import 'package:local_notifier/local_notifier.dart';

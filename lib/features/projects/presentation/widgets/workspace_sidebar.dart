@@ -11,41 +11,95 @@ import 'package:stress_pilot/features/shared/domain/repositories/utility_reposit
 import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/create_endpoint_dialog.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
+import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/flow_dialog.dart';
 
-class WorkspaceSidebar extends StatelessWidget {
+import 'package:stress_pilot/features/shared/presentation/widgets/sidebar_section_header.dart';
+
+class WorkspaceSidebar extends StatefulWidget {
   final double width;
-  const WorkspaceSidebar({super.key, this.width = 260});
+  final VoidCallback onCollapse;
+
+  const WorkspaceSidebar({
+    super.key,
+    this.width = 260,
+    required this.onCollapse,
+  });
+
+  @override
+  State<WorkspaceSidebar> createState() => _WorkspaceSidebarState();
+}
+
+class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
+  final _searchCtrl = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: width,
+      width: widget.width,
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(0),
-          bottomRight: Radius.circular(0),
-        ),
         boxShadow: AppShadows.panel,
       ),
       child: Column(
         children: [
+          // Sidebar Toolbar
+          Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.divider)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchCtrl,
+                    style: AppTypography.body.copyWith(fontSize: 12),
+                    decoration: InputDecoration(
+                      hintText: 'Search...',
+                      hintStyle: AppTypography.body.copyWith(
+                        color: AppColors.textDisabled,
+                        fontSize: 12,
+                      ),
+                      prefixIcon: const Icon(LucideIcons.search, size: 14),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                    onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+                  ),
+                ),
+                _IconButton(
+                  icon: LucideIcons.minus,
+                  onTap: widget.onCollapse,
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-              children: const [
+              children: [
                 _SidebarSection(
                   title: 'Endpoints',
                   type: _SectionType.endpoints,
+                  searchQuery: _searchQuery,
                 ),
-                SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.md),
                 _SidebarSection(
                   title: 'Flows',
                   type: _SectionType.flows,
+                  searchQuery: _searchQuery,
                 ),
               ],
             ),
@@ -61,8 +115,13 @@ enum _SectionType { endpoints, flows }
 class _SidebarSection extends StatefulWidget {
   final String title;
   final _SectionType type;
+  final String searchQuery;
 
-  const _SidebarSection({required this.title, required this.type});
+  const _SidebarSection({
+    required this.title, 
+    required this.type,
+    required this.searchQuery,
+  });
 
   @override
   State<_SidebarSection> createState() => _SidebarSectionState();
@@ -72,29 +131,33 @@ class _SidebarSectionState extends State<_SidebarSection> {
   bool _isExpanded = true;
 
   void _handleAdd(BuildContext context) {
-    switch (widget.type) {
-      case _SectionType.endpoints:
-        final projectId = context.read<ProjectProvider>().selectedProject?.id;
-        if (projectId == null) return;
-        showDialog<void>(
-          context: context,
-          builder: (_) => CreateEndpointDialog(projectId: projectId),
-        );
-      case _SectionType.flows:
-        FlowDialog.showCreateDialog(
-          context,
-          onCreate: (name, description, type, projectId) async {
-            await context.read<FlowProvider>().createFlow(
-              flow_domain.CreateFlowRequest(
-                name: name,
-                description: description,
-                type: type,
-                projectId: projectId,
-              ),
-            );
-          },
-        );
-    }
+    Future.microtask(() {
+      switch (widget.type) {
+        case _SectionType.endpoints:
+          final projectId = context.read<ProjectProvider>().selectedProject?.id;
+          if (projectId == null) return;
+          showDialog<void>(
+            context: context,
+            builder: (_) => CreateEndpointDialog(projectId: projectId),
+          );
+          break;
+        case _SectionType.flows:
+          FlowDialog.showCreateDialog(
+            context,
+            onCreate: (name, description, type, projectId) async {
+              await context.read<FlowProvider>().createFlow(
+                flow_domain.CreateFlowRequest(
+                  name: name,
+                  description: description,
+                  type: type,
+                  projectId: projectId,
+                ),
+              );
+            },
+          );
+          break;
+      }
+    });
   }
 
   Future<void> _handleUpload(BuildContext context) async {
@@ -113,22 +176,35 @@ class _SidebarSectionState extends State<_SidebarSection> {
 
       final filePath = result?.files.firstOrNull?.path;
       if (filePath != null) {
-        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(content: Text('Uploading endpoints...')),
+        if (!context.mounted) return;
+        Future.microtask(() {
+          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+            const SnackBar(content: Text('Uploading endpoints...')),
+          );
+        });
+        if (!context.mounted) return;
+        final selectedProject = context.read<ProjectProvider>().selectedProject;
+        if (selectedProject == null) return;
+        final provider = context.read<EndpointProvider>();
+        await provider.uploadEndpointsFile(
+          filePath: filePath,
+          projectId: selectedProject.id,
         );
         if (!context.mounted) return;
-        await context.read<EndpointProvider>().uploadEndpointsFile(
-          filePath: filePath,
-          projectId: context.read<ProjectProvider>().selectedProject?.id ?? 0,
-        );
-        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(content: Text('Endpoints uploaded successfully')),
-        );
+        Future.microtask(() {
+          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+            const SnackBar(content: Text('Endpoints uploaded successfully')),
+          );
+        });
       }
     } catch (e) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.red),
-      );
+      if (context.mounted) {
+        Future.microtask(() {
+          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+            SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.red),
+          );
+        });
+      }
     }
   }
 
@@ -137,85 +213,45 @@ class _SidebarSectionState extends State<_SidebarSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(
-          title: widget.title,
+        SidebarSectionHeader(
+          label: widget.title,
           isExpanded: _isExpanded,
           onToggle: () => setState(() => _isExpanded = !_isExpanded),
-          onAdd: () => _handleAdd(context),
-          onUpload: widget.type == _SectionType.endpoints
-              ? () => _handleUpload(context)
-              : null,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.type == _SectionType.endpoints)
+                _IconButton(
+                  icon: LucideIcons.upload,
+                  onTap: () => _handleUpload(context),
+                ),
+              _IconButton(
+                icon: LucideIcons.plus,
+                onTap: () => _handleAdd(context),
+              ),
+            ],
+          ),
         ),
         if (_isExpanded) ...[
           if (widget.type == _SectionType.endpoints)
-            const _EndpointList()
+            _EndpointList(searchQuery: widget.searchQuery)
           else
-            const _FlowList(),
+            _FlowList(searchQuery: widget.searchQuery),
         ],
       ],
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final bool isExpanded;
-  final VoidCallback onToggle;
-  final VoidCallback onAdd;
-  final VoidCallback? onUpload;
-
-  const _SectionHeader({
-    required this.title,
-    required this.isExpanded,
-    required this.onToggle,
-    required this.onAdd,
-    this.onUpload,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onToggle,
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        child: Row(
-          children: [
-            Icon(
-              isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
-              size: 14,
-              color: AppColors.textSecondary,
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                title.toUpperCase(),
-                style: AppTypography.label.copyWith(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-            if (onUpload != null)
-              _IconButton(icon: LucideIcons.upload, onTap: onUpload!),
-            _IconButton(
-              icon: LucideIcons.plus,
-              onTap: onAdd,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _EndpointList extends StatelessWidget {
-  const _EndpointList();
+  final String searchQuery;
+  const _EndpointList({required this.searchQuery});
 
   @override
   Widget build(BuildContext context) {
     final endpointProvider = context.watch<EndpointProvider>();
-    final endpoints = endpointProvider.endpoints;
+    final endpoints = endpointProvider.endpoints.where((e) =>
+        e.name.toLowerCase().contains(searchQuery)).toList();
     final selectedEndpoint = endpointProvider.selectedEndpoint;
     final projectId =
         context.read<ProjectProvider>().selectedProject?.id ?? 0;
@@ -237,7 +273,29 @@ class _EndpointList extends StatelessWidget {
         endpoint: e,
         isSelected: selectedEndpoint?.id == e.id,
         onTap: () => openTab(e),
-        onEdit: () => openTab(e),
+        onEdit: () {
+          // Show rename dialog
+          final ctrl = TextEditingController(text: e.name);
+          PilotDialog.show(
+            context: context,
+            title: 'Rename Endpoint',
+            content: PilotInput(controller: ctrl, autofocus: true),
+            actions: [
+              PilotButton.ghost(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+              PilotButton.primary(
+                label: 'Rename',
+                onPressed: () {
+                  if (ctrl.text.trim().isNotEmpty) {
+                    endpointProvider.updateEndpoint(e.id, {'name': ctrl.text.trim()});
+                    context.read<WorkspaceTabProvider>().renameTab(
+                      'endpoint_${e.id}', WorkspaceTabType.endpoint, ctrl.text.trim());
+                  }
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
         onDelete: () {
           PilotDialog.show(
             context: context,
@@ -289,12 +347,14 @@ class _EndpointList extends StatelessWidget {
 }
 
 class _FlowList extends StatelessWidget {
-  const _FlowList();
+  final String searchQuery;
+  const _FlowList({required this.searchQuery});
 
   @override
   Widget build(BuildContext context) {
     final flowProvider = context.watch<FlowProvider>();
-    final flows = flowProvider.flows;
+    final flows = flowProvider.flows.where((f) =>
+        f.name.toLowerCase().contains(searchQuery)).toList();
     final selectedFlow = flowProvider.selectedFlow;
 
     void openTab(flow_domain.Flow f) {
@@ -324,6 +384,10 @@ class _FlowList extends StatelessWidget {
                 name: name,
                 description: description,
               );
+              if (context.mounted) {
+                context.read<WorkspaceTabProvider>().renameTab(
+                  'flow_$id', WorkspaceTabType.flow, name);
+              }
             },
           );
         },
@@ -333,6 +397,10 @@ class _FlowList extends StatelessWidget {
             flow: f,
             onDelete: (id) async {
               await flowProvider.deleteFlow(id);
+              if (context.mounted) {
+                context.read<WorkspaceTabProvider>().closeTab(
+                  WorkspaceTab(id: 'flow_$id', name: '', type: WorkspaceTabType.flow));
+              }
             },
           );
         },
@@ -368,21 +436,67 @@ class _EndpointRowState extends State<_EndpointRow> {
     final type = widget.endpoint.type.toUpperCase();
     final typeColor = _getTypeColor(type);
 
-    return MouseRegion(
+    final row = MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+          child: Container(
+            height: AppSpacing.sidebarRowHeight,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm - AppSpacing.xs),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? AppColors.activeItem
+                  : (_isHovered ? AppColors.hoverItem : Colors.transparent),
+              borderRadius: AppRadius.br4,
+            ),
+            child: Row(
+              children: [
+                _TypeBadge(type: type, color: typeColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.endpoint.name,
+                    style: AppTypography.code.copyWith(
+                      color: widget.isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (_isHovered) ...[
+                  _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
+                  _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return Draggable<DragData>(
+      data: DragData(
+        type: FlowNodeType.endpoint,
+        payload: {
+          'id': widget.endpoint.id,
+          'name': widget.endpoint.name,
+          'method': widget.endpoint.httpMethod,
+          'url': widget.endpoint.url,
+          'type': widget.endpoint.type,
+        },
+      ),
+      feedback: Material(
+        color: Colors.transparent,
         child: Container(
-          height: AppSpacing.sidebarRowHeight,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          width: 240,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: widget.isSelected
-                ? AppColors.activeItem
-                : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-            border: widget.isSelected
-                ? Border(left: BorderSide(color: AppColors.accent, width: 2))
-                : null,
+            color: AppColors.elevatedSurface,
+            borderRadius: AppRadius.br12,
+            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5), width: 2),
+            boxShadow: AppShadows.panel,
           ),
           child: Row(
             children: [
@@ -391,20 +505,17 @@ class _EndpointRowState extends State<_EndpointRow> {
               Expanded(
                 child: Text(
                   widget.endpoint.name,
-                  style: AppTypography.code.copyWith(
-                    color: widget.isSelected ? AppColors.textPrimary : AppColors.textSecondary,
-                  ),
+                  style: AppTypography.code.copyWith(color: AppColors.textPrimary),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (_isHovered) ...[
-                _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
-                _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
-              ],
             ],
           ),
         ),
       ),
+      dragAnchorStrategy: (draggable, context, position) => const Offset(120, 24),
+      childWhenDragging: Opacity(opacity: 0.4, child: row),
+      child: row,
     );
   }
 
@@ -444,47 +555,87 @@ class _FlowRowState extends State<_FlowRow> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
+    final row = MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+          child: Container(
+            height: AppSpacing.sidebarRowHeight,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm - AppSpacing.xs),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? AppColors.activeItem
+                  : (_isHovered ? AppColors.hoverItem : Colors.transparent),
+              borderRadius: AppRadius.br4,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  LucideIcons.gitFork,
+                  size: 14,
+                  color: widget.isSelected ? AppColors.accent : AppColors.textSecondary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.flow.name,
+                    style: AppTypography.body.copyWith(
+                      color: widget.isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (_isHovered) ...[
+                  _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
+                  _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return Draggable<DragData>(
+      data: DragData(
+        type: FlowNodeType.subflow,
+        payload: {
+          'subflowId': widget.flow.id.toString(),
+          'flowName': widget.flow.name,
+        },
+      ),
+      feedback: Material(
+        color: Colors.transparent,
         child: Container(
-          height: AppSpacing.sidebarRowHeight,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          width: 240,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: widget.isSelected
-                ? AppColors.activeItem
-                : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-            border: widget.isSelected
-                ? Border(left: BorderSide(color: AppColors.accent, width: 2))
-                : null,
+            color: AppColors.elevatedSurface,
+            borderRadius: AppRadius.br12,
+            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5), width: 2),
+            boxShadow: AppShadows.panel,
           ),
           child: Row(
             children: [
-              Icon(
-                LucideIcons.gitFork,
-                size: 14,
-                color: widget.isSelected ? AppColors.accent : AppColors.textSecondary,
-              ),
+              Icon(LucideIcons.gitFork, size: 14, color: AppColors.accent),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   widget.flow.name,
-                  style: AppTypography.body.copyWith(
-                    color: widget.isSelected ? AppColors.textPrimary : AppColors.textSecondary,
-                  ),
+                  style: AppTypography.body.copyWith(color: AppColors.textPrimary),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (_isHovered) ...[
-                _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
-                _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
-              ],
             ],
           ),
         ),
       ),
+      dragAnchorStrategy: (draggable, context, position) => const Offset(120, 24),
+      childWhenDragging: Opacity(opacity: 0.4, child: row),
+      child: row,
     );
   }
 }
@@ -499,19 +650,18 @@ class _TypeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 36,
-      padding: const EdgeInsets.symmetric(vertical: 1),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Center(
         child: Text(
           type,
           style: AppTypography.codeSm.copyWith(
-            fontSize: 8,
+            fontSize: 9,
             color: color,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

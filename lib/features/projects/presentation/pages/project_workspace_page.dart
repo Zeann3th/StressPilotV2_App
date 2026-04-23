@@ -33,6 +33,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   int? _lastLoadedProjectId;
   double _sidebarWidth = 260;
   bool _isAgentOpen = false;
+  bool _isSidebarOpen = true;
 
   static const double _minSidebarWidth = 180;
   static const double _maxSidebarWidth = 480;
@@ -64,6 +65,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   }
 
   void _toggleAgent() => setState(() => _isAgentOpen = !_isAgentOpen);
+  void _toggleSidebar() => setState(() => _isSidebarOpen = !_isSidebarOpen);
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +76,12 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
       backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
-          const WorkspaceNavBar(),
+          WorkspaceNavBar(
+            onToggleSidebar: _toggleSidebar,
+            onToggleAgent: _toggleAgent,
+            isSidebarOpen: _isSidebarOpen,
+            isAgentOpen: _isAgentOpen,
+          ),
           Expanded(
             child: project == null
                 ? const _ProjectSelectionView()
@@ -85,26 +92,31 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                       padding: const EdgeInsets.all(AppSpacing.sm),
                       child: Row(
                         children: [
-                          WorkspaceSidebar(width: _sidebarWidth),
-                          // Drag handle
-                          MouseRegion(
-                            cursor: SystemMouseCursors.resizeColumn,
-                            child: GestureDetector(
-                              onHorizontalDragUpdate: (details) {
-                                setState(() {
-                                  _sidebarWidth = (_sidebarWidth + details.delta.dx)
-                                      .clamp(_minSidebarWidth, _maxSidebarWidth);
-                                });
-                              },
-                              child: Container(
-                                width: 6,
-                                color: Colors.transparent,
-                                child: Center(
-                                  child: Container(width: 1, color: AppColors.divider),
+                          if (_isSidebarOpen) ...[
+                            WorkspaceSidebar(
+                              width: _sidebarWidth,
+                              onCollapse: _toggleSidebar,
+                            ),
+                            // Drag handle
+                            MouseRegion(
+                              cursor: SystemMouseCursors.resizeColumn,
+                              child: GestureDetector(
+                                onHorizontalDragUpdate: (details) {
+                                  setState(() {
+                                    _sidebarWidth = (_sidebarWidth + details.delta.dx)
+                                        .clamp(_minSidebarWidth, _maxSidebarWidth);
+                                  });
+                                },
+                                child: Container(
+                                  width: 6,
+                                  color: Colors.transparent,
+                                  child: Center(
+                                    child: Container(width: 1, color: AppColors.divider),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                           Expanded(
                             child: Container(
                               decoration: BoxDecoration(

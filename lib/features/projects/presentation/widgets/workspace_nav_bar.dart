@@ -13,59 +13,91 @@ import 'package:stress_pilot/features/shared/presentation/provider/endpoint_prov
 import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
 
 class WorkspaceNavBar extends StatelessWidget {
-  const WorkspaceNavBar({super.key});
+  final VoidCallback onToggleSidebar;
+  final VoidCallback onToggleAgent;
+  final bool isSidebarOpen;
+  final bool isAgentOpen;
+
+  const WorkspaceNavBar({
+    super.key,
+    required this.onToggleSidebar,
+    required this.onToggleAgent,
+    required this.isSidebarOpen,
+    required this.isAgentOpen,
+  });
 
   @override
   Widget build(BuildContext context) {
     final project = context.watch<ProjectProvider>().selectedProject;
     final activeTab = context.watch<WorkspaceTabProvider>().activeTab;
 
-    return MoveWindow(
-      child: Container(
-        height: AppSpacing.navBarHeight,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.baseBackground,
-          border: Border(
-            bottom: BorderSide(color: AppColors.divider),
-          ),
+    return Container(
+      height: AppSpacing.navBarHeight,
+      decoration: BoxDecoration(
+        color: AppColors.baseBackground,
+        border: Border(
+          bottom: BorderSide(color: AppColors.divider),
         ),
-        child: Row(
-          children: [
-            // Left: Window buttons (Linux + Windows only)
-            if (WindowSetup.isSupported) ...[
-              const _WindowButtons(),
-              const SizedBox(width: 8),
-            ],
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(child: MoveWindow()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Row(
+              children: [
+                // Left: Sidebar toggle
+                _NavIconButton(
+                  icon: isSidebarOpen ? LucideIcons.panelLeftClose : LucideIcons.panelLeftOpen,
+                  tooltip: isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar',
+                  onPressed: onToggleSidebar,
+                  isActive: isSidebarOpen,
+                ),
+                const SizedBox(width: 12),
 
-            // Left: Play + Env controls
-            _PlayStopButton(project: project, activeTab: activeTab),
-          if (project != null && project.environmentId != 0) ...[
-            const SizedBox(width: 4),
-            _EnvIconButton(
-              environmentId: project.environmentId,
-              projectName: project.name,
+                // Center: Project name picker
+                Expanded(
+                  child: Center(
+                    child: _ProjectNameButton(projectName: project?.name ?? 'No Project'),
+                  ),
+                ),
+
+                // Right: Controls
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Play + Env controls moved here
+                    _PlayStopButton(project: project, activeTab: activeTab),
+                    if (project != null && project.environmentId != 0) ...[
+                      const SizedBox(width: 4),
+                      _EnvIconButton(
+                        environmentId: project.environmentId,
+                        projectName: project.name,
+                      ),
+                    ],
+                    const SizedBox(width: 12),
+                    _NavIconButton(
+                      icon: LucideIcons.shoppingBag,
+                      tooltip: 'Marketplace',
+                      onPressed: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
+                    ),
+                    const SizedBox(width: 4),
+                    _NavIconButton(
+                      icon: LucideIcons.settings,
+                      tooltip: 'Settings',
+                      onPressed: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
+                    ),
+                    const SizedBox(width: 4),
+                    _NavIconButton(
+                      icon: LucideIcons.sparkles,
+                      tooltip: 'Agent',
+                      onPressed: onToggleAgent,
+                      isActive: isAgentOpen,
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-
-          // Center: Project name picker
-          Expanded(
-            child: Center(
-              child: _ProjectNameButton(projectName: project?.name ?? 'No Project'),
-            ),
-          ),
-
-          // Right: Marketplace · Settings
-          _NavIconButton(
-            icon: LucideIcons.shoppingBag,
-            tooltip: 'Marketplace',
-            onPressed: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
-          ),
-          const SizedBox(width: 4),
-          _NavIconButton(
-            icon: LucideIcons.settings,
-            tooltip: 'Settings',
-            onPressed: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
           ),
         ],
       ),
@@ -77,11 +109,13 @@ class _NavIconButton extends StatefulWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+  final bool isActive;
 
   const _NavIconButton({
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.isActive = false,
   });
 
   @override
@@ -93,11 +127,8 @@ class _NavIconButtonState extends State<_NavIconButton> {
 
   @override
   Widget build(BuildContext context) {
-    return ShadTooltip(
-      builder: (context) => Text(
-        widget.tooltip,
-        style: AppTypography.caption.copyWith(color: AppColors.textPrimary),
-      ),
+    return Tooltip(
+      message: widget.tooltip,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _isHovered = true),
@@ -109,13 +140,15 @@ class _NavIconButtonState extends State<_NavIconButton> {
             width: 32,
             height: 28,
             decoration: BoxDecoration(
-              color: _isHovered ? AppColors.hoverItem : Colors.transparent,
+              color: widget.isActive 
+                ? AppColors.activeItem 
+                : (_isHovered ? AppColors.hoverItem : Colors.transparent),
               borderRadius: AppRadius.br4,
             ),
             child: Icon(
               widget.icon,
               size: 16,
-              color: _isHovered ? AppColors.accent : AppColors.textSecondary,
+              color: (widget.isActive || _isHovered) ? AppColors.accent : AppColors.textSecondary,
             ),
           ),
         ),
@@ -231,11 +264,8 @@ class _EnvIconButtonState extends State<_EnvIconButton> {
 
   @override
   Widget build(BuildContext context) {
-    return ShadTooltip(
-      builder: (context) => Text(
-        'Environment',
-        style: AppTypography.caption.copyWith(color: AppColors.textPrimary),
-      ),
+    return Tooltip(
+      message: 'Environment',
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _isHovered = true),
@@ -301,11 +331,8 @@ class _PlayStopButtonState extends State<_PlayStopButton> {
         ? 'Stop'
         : (_isFlow ? 'Run Flow' : (_isEndpoint ? 'Run Endpoint' : 'Run'));
 
-    return ShadTooltip(
-      builder: (context) => Text(
-        tooltip,
-        style: AppTypography.caption.copyWith(color: AppColors.textPrimary),
-      ),
+    return Tooltip(
+      message: tooltip,
       child: MouseRegion(
         cursor: canAct ? SystemMouseCursors.click : SystemMouseCursors.basic,
         onEnter: (_) => setState(() => _isHovered = true),
@@ -350,79 +377,5 @@ class _PlayStopButtonState extends State<_PlayStopButton> {
         endpointProvider.executeEndpoint(endpoint.id, transientState);
       }
     }
-  }
-}
-
-class _WindowButtons extends StatelessWidget {
-  const _WindowButtons();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _TrafficLight(
-          color: const Color(0xFFFF5F57),
-          hoverIcon: LucideIcons.x,
-          onTap: () => appWindow.close(),
-        ),
-        const SizedBox(width: 6),
-        _TrafficLight(
-          color: const Color(0xFFFFBD2E),
-          hoverIcon: LucideIcons.minus,
-          onTap: () => appWindow.minimize(),
-        ),
-        const SizedBox(width: 6),
-        _TrafficLight(
-          color: const Color(0xFF28C840),
-          hoverIcon: LucideIcons.maximize,
-          onTap: () => appWindow.maximizeOrRestore(),
-        ),
-      ],
-    );
-  }
-}
-
-class _TrafficLight extends StatefulWidget {
-  final Color color;
-  final IconData hoverIcon;
-  final VoidCallback onTap;
-  const _TrafficLight({required this.color, required this.hoverIcon, required this.onTap});
-
-  @override
-  State<_TrafficLight> createState() => _TrafficLightState();
-}
-
-class _TrafficLightState extends State<_TrafficLight> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: widget.color,
-            shape: BoxShape.circle,
-            border: Border.all(color: widget.color.withValues(alpha: 0.7), width: 0.5),
-          ),
-          child: _isHovered
-              ? Center(
-                  child: Icon(
-                    widget.hoverIcon,
-                    size: 8,
-                    color: Colors.black.withValues(alpha: 0.5),
-                  ),
-                )
-              : null,
-        ),
-      ),
-    );
   }
 }

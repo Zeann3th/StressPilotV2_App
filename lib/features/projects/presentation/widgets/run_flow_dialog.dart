@@ -9,6 +9,7 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/field_label.dart';
 
 class RunFlowDialog extends StatefulWidget {
   final int flowId;
@@ -128,7 +129,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _FieldLabel('PERFORMANCE SETTINGS'),
+            FieldLabel('PERFORMANCE SETTINGS'),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -179,7 +180,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
               ],
             ),
             const SizedBox(height: 24),
-            const _FieldLabel('DATA & ENVIRONMENT'),
+            FieldLabel('DATA & ENVIRONMENT'),
             const SizedBox(height: 12),
             InkWell(
               onTap: _pickFile,
@@ -232,7 +233,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const _FieldLabel('VARIABLES'),
+                FieldLabel('VARIABLES'),
                 PilotButton.ghost(
                   label: 'Add Variable',
                   icon: LucideIcons.plus,
@@ -289,23 +290,6 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
           onPressed: _run,
         ),
       ],
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: AppTypography.label.copyWith(
-        color: AppColors.accent,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.0,
-      ),
     );
   }
 }

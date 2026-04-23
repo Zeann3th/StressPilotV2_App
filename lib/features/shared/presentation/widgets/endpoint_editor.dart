@@ -8,6 +8,7 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/endpoints/data/curl_parser.dart';
 import 'package:stress_pilot/features/endpoints/presentation/widgets/json_viewer.dart';
 import 'package:stress_pilot/features/endpoints/presentation/widgets/key_value_editor.dart';
 
@@ -53,6 +54,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
 
   async_timer.Timer? _syncTimer;
   async_timer.Timer? _beautifyTimer;
+  async_timer.Timer? _debounce;
 
   @override
   void initState() {
@@ -88,7 +90,6 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
 
     _loadResults();
 
-    _urlCtrl.addListener(_queueSync);
     _bodyCtrl.addListener(_queueSync);
     _successConditionCtrl.addListener(_queueSync);
   }
@@ -158,10 +159,28 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     });
   }
 
+  void _handleUrlChanged(String value) {
+    _queueSync();
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = async_timer.Timer(const Duration(milliseconds: 300), () {
+      if (value.trim().toLowerCase().startsWith('curl ')) {
+        final data = CurlParser.parse(value);
+        setState(() {
+          if (data.url != null && data.url!.isNotEmpty) _urlCtrl.text = data.url!;
+          if (data.method != null) _method = data.method!;
+          if (data.headers != null) _headers.addAll(data.headers!);
+          if (data.body != null && data.body!.isNotEmpty) _bodyCtrl.text = data.body!;
+        });
+        _queueSync();
+      }
+    });
+  }
+
   @override
   void dispose() {
     _syncTimer?.cancel();
     _beautifyTimer?.cancel();
+    _debounce?.cancel();
     _urlCtrl.dispose();
     _nameCtrl.dispose();
     _bodyCtrl.dispose();
@@ -323,37 +342,12 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
 
           Container(
             decoration: BoxDecoration(
+              color: bg,
               border: Border(bottom: BorderSide(color: AppColors.divider)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  height: 32,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppColors.divider)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(LucideIcons.link, size: 13, color: AppColors.textSecondary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _nameCtrl,
-                          style: AppTypography.bodyMd,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                            hintText: 'Endpoint name',
-                          ),
-                          onChanged: (_) => _queueSync(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 Container(
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -368,7 +362,10 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: _UrlField(controller: _urlCtrl),
+                        child: _UrlField(
+                          controller: _urlCtrl,
+                          onChanged: _handleUrlChanged,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       PilotButton.ghost(
@@ -390,20 +387,22 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
           ),
 
           Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            height: 38,
             decoration: BoxDecoration(
-              color: surface,
+              color: bg,
               border: Border(bottom: BorderSide(color: AppColors.divider)),
             ),
             child: TabBar(
               controller: _reqTabCtrl,
               isScrollable: true,
-              indicatorSize: TabBarIndicatorSize.label,
+              indicatorSize: TabBarIndicatorSize.tab,
               indicatorColor: AppColors.accent,
+              indicatorWeight: 2,
+              dividerColor: Colors.transparent,
               labelColor: AppColors.textPrimary,
               unselectedLabelColor: AppColors.textSecondary,
               labelStyle: AppTypography.label.copyWith(fontWeight: FontWeight.w600),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               tabs: const [
                 Tab(text: 'Params'),
                 Tab(text: 'Headers'),
@@ -714,24 +713,31 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
   }
 
   Widget _buildRespTab(String label, bool active, Color secondaryText) {
-    return GestureDetector(
-      onTap: () => setState(() => _showRaw = label == 'Raw'),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: active ? AppColors.accent.withValues(alpha: 0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: active ? AppColors.accent.withValues(alpha: 0.4) : Colors.transparent,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _showRaw = label == 'Raw';
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: active ? AppColors.accent : Colors.transparent,
+                width: 2,
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? AppColors.accent : secondaryText,
-            fontSize: 12,
-            fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: active ? AppColors.textPrimary : secondaryText,
+              fontSize: 12,
+              fontWeight: active ? FontWeight.w500 : FontWeight.normal,
+            ),
           ),
         ),
       ),
@@ -843,12 +849,14 @@ class _MethodDropdown extends StatelessWidget {
 
 class _UrlField extends StatelessWidget {
   final TextEditingController controller;
-  const _UrlField({required this.controller});
+  final ValueChanged<String>? onChanged;
+  const _UrlField({required this.controller, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      onChanged: onChanged,
       style: AppTypography.code.copyWith(fontSize: 13),
       decoration: InputDecoration(
         hintText: 'https://api.example.com/v1/resource',

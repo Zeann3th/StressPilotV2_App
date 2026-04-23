@@ -6,7 +6,7 @@ abstract class AppColors {
   static const baseBackground    = Color(0xFF1E1F22);
   static const sidebarBackground = Color(0xFF23242A);
   static const elevatedSurface   = Color(0xFF2B2C33);
-  static const activeItem        = Color(0xFF383A47);
+  static const activeItem        = Color(0xFF2E436E); // Fleet active row blue
   static const hoverItem         = Color(0xFF2E2F38);
   static const accent            = Color(0xFF7B68EE);
   static const accentHover       = Color(0xFF8B7BEE);

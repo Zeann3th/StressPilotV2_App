@@ -115,22 +115,6 @@ class _AgentTerminalViewState extends State<AgentTerminalView> {
                     ),
             ),
           ),
-          Positioned(
-            top: 12,
-            right: 12,
-            child: PilotButton.ghost(
-              icon: Icons.refresh_rounded,
-              onPressed: () async {
-                await provider.restart();
-                widget.onRequestFocus?.call();
-                Future.delayed(const Duration(milliseconds: 200), () {
-                  if (mounted && _focusNode.canRequestFocus) _focusNode.requestFocus();
-                });
-              },
-              backgroundOverride: Colors.transparent,
-              foregroundOverride: textColor.withValues(alpha: 0.6),
-            ),
-          ),
           if (provider.error != null)
             Positioned(
               bottom: 12,

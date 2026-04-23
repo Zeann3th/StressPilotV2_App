@@ -12,6 +12,7 @@ import 'package:stress_pilot/features/shared/domain/repositories/utility_reposit
 import 'package:stress_pilot/features/endpoints/data/curl_parser.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/endpoints/presentation/widgets/key_value_editor.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/field_label.dart';
 
 class CreateEndpointDialog extends StatefulWidget {
   final int projectId;
@@ -165,19 +166,19 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   Widget build(BuildContext context) {
     return PilotDialog(
       title: 'New Endpoint',
-      maxWidth: 1200,
-      content: IntrinsicHeight(
+      maxWidth: 1000,
+      content: SizedBox(
+        height: 600,
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Expanded(
               flex: 1,
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _FieldLabel('Name *'),
+                    const FieldLabel('Name *'),
                     const SizedBox(height: 6),
                     PilotInput(
                       controller: _nameCtrl,
@@ -191,7 +192,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const _FieldLabel('Type *'),
+                              const FieldLabel('Type *'),
                               const SizedBox(height: 6),
                               _buildDropdown(
                                 value: _selectedType,
@@ -208,7 +209,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const _FieldLabel('Method *'),
+                                const FieldLabel('Method *'),
                                 const SizedBox(height: 6),
                                 _buildDropdown(
                                   value: _httpMethod,
@@ -222,7 +223,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const _FieldLabel('URL / Connection String *'),
+                    const FieldLabel('URL / Connection String *'),
                     const SizedBox(height: 6),
                     PilotInput(
                       controller: _urlCtrl,
@@ -230,7 +231,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                       onChanged: _handleUrlChanged,
                     ),
                     const SizedBox(height: 16),
-                    const _FieldLabel('Description'),
+                    const FieldLabel('Description'),
                     const SizedBox(height: 6),
                     PilotInput(
                       controller: _descCtrl,
@@ -239,10 +240,10 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                     ),
 
                     const SizedBox(height: 24),
-                    const _FieldLabel('Headers'),
+                    const FieldLabel('Headers'),
                     const SizedBox(height: 8),
                     Container(
-                      height: 300,
+                      height: 250,
                       decoration: BoxDecoration(
                         border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
                         borderRadius: AppRadius.br8,
@@ -279,7 +280,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const _FieldLabel('Body / Payload'),
+                      const FieldLabel('Body / Payload'),
                       PilotButton.ghost(
                         label: 'Beautify',
                         icon: LucideIcons.sparkles,
@@ -299,7 +300,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const _FieldLabel('Parameters'),
+                  const FieldLabel('Parameters'),
                   const SizedBox(height: 8),
                   Expanded(
                     child: Container(
@@ -390,15 +391,15 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _FieldLabel('Service Name *'),
+        const FieldLabel('Service Name *'),
         const SizedBox(height: 6),
         PilotInput(controller: _grpcServiceCtrl, placeholder: 'com.example.UserService'),
         const SizedBox(height: 16),
-        const _FieldLabel('Method Name *'),
+        const FieldLabel('Method Name *'),
         const SizedBox(height: 6),
         PilotInput(controller: _grpcMethodCtrl, placeholder: 'GetUser'),
         const SizedBox(height: 16),
-        const _FieldLabel('Stub Path (Proto File) *'),
+        const FieldLabel('Stub Path (Proto File) *'),
         const SizedBox(height: 6),
         PilotInput(controller: _grpcStubCtrl, placeholder: '/path/to/service.proto'),
       ],
@@ -409,11 +410,11 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _FieldLabel('Operation Type *'),
+        const FieldLabel('Operation Type *'),
         const SizedBox(height: 6),
         PilotInput(controller: _graphqlOpTypeCtrl, placeholder: 'query / mutation'),
         const SizedBox(height: 16),
-        const _FieldLabel('GraphQL Variables'),
+        const FieldLabel('GraphQL Variables'),
         const SizedBox(height: 6),
         Container(
           height: 150,
@@ -424,22 +425,6 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
           child: KeyValueEditor(data: _gqlVariables, onChanged: (d) => setState(() => _gqlVariables.addAll(d))),
         ),
       ],
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: AppTypography.label.copyWith(
-        color: AppColors.textSecondary,
-        fontWeight: FontWeight.w600,
-      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/field_label.dart';
 
 class ProjectDialogs {
   static void showCreateDialog(
@@ -18,7 +19,7 @@ class ProjectDialogs {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _FieldLabel('Project Name'),
+          FieldLabel('Project Name'),
           const SizedBox(height: 6),
           PilotInput(
             controller: nameController,
@@ -26,7 +27,7 @@ class ProjectDialogs {
             autofocus: true,
           ),
           const SizedBox(height: 16),
-          _FieldLabel('Description'),
+          FieldLabel('Description'),
           const SizedBox(height: 6),
           PilotInput(
             controller: descController,
@@ -82,7 +83,7 @@ class ProjectDialogs {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _FieldLabel('Project Name'),
+          FieldLabel('Project Name'),
           const SizedBox(height: 6),
           PilotInput(
             controller: nameController,
@@ -90,7 +91,7 @@ class ProjectDialogs {
             autofocus: true,
           ),
           const SizedBox(height: 16),
-          _FieldLabel('Description'),
+          FieldLabel('Description'),
           const SizedBox(height: 6),
           PilotInput(
             controller: descController,
@@ -189,15 +190,3 @@ class ProjectDialogs {
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: AppTypography.label.copyWith(color: AppColors.textSecondary),
-    );
-  }
-}

@@ -56,6 +56,33 @@ class WorkspaceTabProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void renameTab(String tabId, WorkspaceTabType type, String newName) {
+    final index = _tabs.indexWhere((t) => t.id == tabId && t.type == type);
+    if (index != -1) {
+      final oldTab = _tabs[index];
+      final newTab = WorkspaceTab(
+        id: oldTab.id,
+        name: newName,
+        type: oldTab.type,
+        data: oldTab.data,
+      );
+      _tabs[index] = newTab;
+      if (_activeTab == oldTab) {
+        _activeTab = newTab;
+      }
+      notifyListeners();
+    }
+  }
+
+  void reorderTabs(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final WorkspaceTab item = _tabs.removeAt(oldIndex);
+    _tabs.insert(newIndex, item);
+    notifyListeners();
+  }
+
   void clear() {
     _tabs.clear();
     _activeTab = null;

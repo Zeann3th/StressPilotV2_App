@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
+import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
+import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
+import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
 
 class WorkspaceTabBar extends StatelessWidget {
   const WorkspaceTabBar({super.key});
@@ -16,12 +20,14 @@ class WorkspaceTabBar extends StatelessWidget {
     return Container(
       height: AppSpacing.tabBarHeight,
       color: AppColors.sidebarBackground,
-      child: ListView.builder(
+      child: ReorderableListView.builder(
         scrollDirection: Axis.horizontal,
+        onReorder: tabProvider.reorderTabs,
         itemCount: tabs.length,
         itemBuilder: (context, index) {
           final tab = tabs[index];
           return _WorkspaceTabWidget(
+            key: ValueKey('${tab.type}_${tab.id}'),
             tab: tab,
             isActive: activeTab == tab,
             onTap: () => tabProvider.selectTab(tab),
@@ -40,6 +46,7 @@ class _WorkspaceTabWidget extends StatefulWidget {
   final VoidCallback onClose;
 
   const _WorkspaceTabWidget({
+    super.key,
     required this.tab,
     required this.isActive,
     required this.onTap,
@@ -52,6 +59,45 @@ class _WorkspaceTabWidget extends StatefulWidget {
 
 class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
   bool _isHovered = false;
+  bool _isEditing = false;
+  late TextEditingController _editCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _editCtrl = TextEditingController(text: widget.tab.name);
+  }
+
+  @override
+  void dispose() {
+    _editCtrl.dispose();
+    super.dispose();
+  }
+
+  void _startEditing() {
+    setState(() {
+      _isEditing = true;
+      _editCtrl.text = widget.tab.name;
+    });
+  }
+
+  void _submitRename() {
+    final newName = _editCtrl.text.trim();
+    if (newName.isNotEmpty && newName != widget.tab.name) {
+      final tabProvider = context.read<WorkspaceTabProvider>();
+      tabProvider.renameTab(widget.tab.id, widget.tab.type, newName);
+      
+      // Update underlying data based on type
+      if (widget.tab.type == WorkspaceTabType.endpoint) {
+        final endpoint = widget.tab.data as Endpoint;
+        context.read<EndpointProvider>().updateEndpoint(endpoint.id, {'name': newName});
+      } else {
+        final flow = widget.tab.data as flow_domain.Flow;
+        context.read<FlowProvider>().updateFlow(flowId: flow.id, name: newName);
+      }
+    }
+    setState(() => _isEditing = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +106,7 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
+        onDoubleTap: _startEditing,
         child: AnimatedContainer(
           duration: AppDurations.micro,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -87,15 +134,32 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
                 color: widget.isActive ? AppColors.accent : AppColors.textSecondary,
               ),
               const SizedBox(width: 6),
-              Text(
-                widget.tab.name,
-                style: AppTypography.body.copyWith(
-                  color: widget.isActive ? AppColors.textPrimary : AppColors.textSecondary,
-                  fontSize: 12,
+              if (_isEditing)
+                SizedBox(
+                  width: 120,
+                  child: TextField(
+                    controller: _editCtrl,
+                    autofocus: true,
+                    style: AppTypography.body.copyWith(fontSize: 12),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (_) => _submitRename(),
+                    onTapOutside: (_) => _submitRename(),
+                  ),
+                )
+              else
+                Text(
+                  widget.tab.name,
+                  style: AppTypography.body.copyWith(
+                    color: widget.isActive ? AppColors.textPrimary : AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
-              ),
               const SizedBox(width: 6),
-              if (_isHovered || widget.isActive)
+              if ((_isHovered || widget.isActive) && !_isEditing)
                 GestureDetector(
                   onTap: widget.onClose,
                   child: Icon(LucideIcons.x, size: 12, color: AppColors.textSecondary),
