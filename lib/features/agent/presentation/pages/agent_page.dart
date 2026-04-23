@@ -22,18 +22,13 @@ class _AgentPageState extends State<AgentPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<AgentProvider>();
-      provider.ensureStarted().then((_) {
-        _requestFocus();
-      });
+      context.read<AgentProvider>().ensureStarted().then((_) => _requestFocus());
     });
   }
 
   void _requestFocus() {
     Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted && focusNode.canRequestFocus) {
-        focusNode.requestFocus();
-      }
+      if (mounted && focusNode.canRequestFocus) focusNode.requestFocus();
     });
   }
 
@@ -45,78 +40,111 @@ class _AgentPageState extends State<AgentPage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AgentProvider>();
-    final bg = AppColors.background;
-    final textColor = AppColors.textPrimary;
-
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           const FleetPageBar(title: 'Agent'),
           Expanded(
-            child: ClipRect(
-                child: Stack(
-                  children: [
+            child: AgentTerminalView(focusNode: focusNode, onRequestFocus: _requestFocus),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-                    Positioned.fill(
-                      child: Container(
-                        color: const Color(0xFF0D1117),
-                        child: provider.isLoading && !provider.isInitialized
-                            ? const Center(child: CircularProgressIndicator())
-                            : TerminalView(
-                                provider.terminal,
-                                theme: TerminalThemes.defaultDark(),
-                                padding: const EdgeInsets.all(16),
-                                focusNode: focusNode,
-                                hardwareKeyboardOnly: true,
-                              ),
-                      ),
+// Embeddable terminal view — used by AgentPage and bottom panel
+class AgentTerminalView extends StatefulWidget {
+  final FocusNode? focusNode;
+  final VoidCallback? onRequestFocus;
+
+  const AgentTerminalView({super.key, this.focusNode, this.onRequestFocus});
+
+  @override
+  State<AgentTerminalView> createState() => _AgentTerminalViewState();
+}
+
+class _AgentTerminalViewState extends State<AgentTerminalView> {
+  late final FocusNode _focusNode;
+  bool _ownsFocusNode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.focusNode == null) {
+      _focusNode = FocusNode();
+      _ownsFocusNode = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<AgentProvider>().ensureStarted().then((_) {
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted && _focusNode.canRequestFocus) _focusNode.requestFocus();
+          });
+        });
+      });
+    } else {
+      _focusNode = widget.focusNode!;
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_ownsFocusNode) _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<AgentProvider>();
+    final textColor = AppColors.textPrimary;
+
+    return ClipRect(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              color: const Color(0xFF0D1117),
+              child: provider.isLoading && !provider.isInitialized
+                  ? const Center(child: CircularProgressIndicator())
+                  : TerminalView(
+                      provider.terminal,
+                      theme: TerminalThemes.defaultDark(),
+                      padding: const EdgeInsets.all(16),
+                      focusNode: _focusNode,
+                      hardwareKeyboardOnly: true,
                     ),
-
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: PilotButton.ghost(
-                        icon: Icons.arrow_back_rounded,
-                        onPressed: () => Navigator.of(context).pop(),
-                        backgroundOverride: Colors.transparent,
-                        foregroundOverride: textColor.withValues(alpha: 0.6),
-                      ),
-                    ),
-
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: PilotButton.ghost(
-                        icon: Icons.refresh_rounded,
-                        onPressed: () async {
-                          await provider.restart();
-                          _requestFocus();
-                        },
-                        backgroundOverride: Colors.transparent,
-                        foregroundOverride: textColor.withValues(alpha: 0.6),
-                      ),
-                    ),
-
-                    if (provider.error != null)
-                      Positioned(
-                        bottom: 12,
-                        left: 12,
-                        right: 12,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          color: Colors.red.withValues(alpha: 0.8),
-                          child: Text(
-                            'Error: ${provider.error}',
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ),
-                      ),
-                  ],
+            ),
+          ),
+          Positioned(
+            top: 12,
+            right: 12,
+            child: PilotButton.ghost(
+              icon: Icons.refresh_rounded,
+              onPressed: () async {
+                await provider.restart();
+                widget.onRequestFocus?.call();
+                Future.delayed(const Duration(milliseconds: 200), () {
+                  if (mounted && _focusNode.canRequestFocus) _focusNode.requestFocus();
+                });
+              },
+              backgroundOverride: Colors.transparent,
+              foregroundOverride: textColor.withValues(alpha: 0.6),
+            ),
+          ),
+          if (provider.error != null)
+            Positioned(
+              bottom: 12,
+              left: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                color: Colors.red.withValues(alpha: 0.8),
+                child: Text(
+                  'Error: ${provider.error}',
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ),
-          ),
+            ),
         ],
       ),
     );
