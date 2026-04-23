@@ -28,7 +28,13 @@ class WorkspaceNavBar extends StatelessWidget {
           
           const Spacer(),
           
-          // Right: Marketplace · Settings · Agent
+          // Right: Runs · Marketplace · Settings · Agent
+          _NavIconButton(
+            icon: LucideIcons.history,
+            tooltip: 'Recent Runs',
+            onPressed: () => AppNavigator.pushNamed(AppRouter.recentRunsRoute),
+          ),
+          const SizedBox(width: 4),
           _NavIconButton(
             icon: LucideIcons.shoppingBag,
             tooltip: 'Marketplace',

@@ -8,6 +8,7 @@ import 'package:stress_pilot/features/results/presentation/pages/results_page.da
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 import 'package:stress_pilot/features/marketplace/presentation/pages/marketplace_page.dart';
 import 'package:stress_pilot/features/agent/presentation/pages/agent_page.dart';
+import 'package:stress_pilot/features/results/presentation/pages/recent_runs_page.dart';
 
 class AppRouter {
   static const String projectsRoute = '/';
@@ -15,6 +16,7 @@ class AppRouter {
   static const String settingsRoute = '/settings';
   static const String projectEnvironmentRoute = '/project/environment';
   static const String resultsRoute = '/results';
+  static const String recentRunsRoute = '/recent-runs';
   static const String marketplaceRoute = '/marketplace';
   static const String agentRoute = '/agent';
 
@@ -48,6 +50,8 @@ class AppRouter {
       case resultsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         return buildRoute(ResultsPage(runId: args['runId'] as String));
+      case recentRunsRoute:
+        return buildRoute(const RecentRunsPage());
       case marketplaceRoute:
         return buildRoute(const MarketplacePage());
       case agentRoute:
