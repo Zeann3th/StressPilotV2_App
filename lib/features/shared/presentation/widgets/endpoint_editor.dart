@@ -52,6 +52,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
   late ScrollController _settingsScrollCtrl;
 
   async_timer.Timer? _syncTimer;
+  async_timer.Timer? _beautifyTimer;
 
   @override
   void initState() {
@@ -136,9 +137,31 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     context.read<EndpointProvider>().updateTransientState(widget.endpoint.id, transientData);
   }
 
+  void _scheduleBeautify() {
+    _beautifyTimer?.cancel();
+    _beautifyTimer = async_timer.Timer(const Duration(milliseconds: 700), () {
+      final text = _bodyCtrl.text.trim();
+      if (text.isEmpty) return;
+      try {
+        final decoded = jsonDecode(text);
+        final pretty = const JsonEncoder.withIndent('  ').convert(decoded);
+        if (pretty != _bodyCtrl.text) {
+          final sel = _bodyCtrl.selection;
+          _bodyCtrl.value = TextEditingValue(
+            text: pretty,
+            selection: sel.isValid && sel.end <= pretty.length
+                ? sel
+                : TextSelection.collapsed(offset: pretty.length),
+          );
+        }
+      } catch (_) {}
+    });
+  }
+
   @override
   void dispose() {
     _syncTimer?.cancel();
+    _beautifyTimer?.cancel();
     _urlCtrl.dispose();
     _nameCtrl.dispose();
     _bodyCtrl.dispose();
@@ -153,21 +176,6 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     _searchFocusNode.dispose();
     _keyboardFocusNode.dispose();
     super.dispose();
-  }
-
-  void _beautifyJson() {
-    try {
-      final content = _bodyCtrl.text.trim();
-      if (content.isEmpty) return;
-      final decoded = jsonDecode(content);
-      const encoder = JsonEncoder.withIndent('  ');
-      setState(() {
-        _bodyCtrl.text = encoder.convert(decoded);
-      });
-      _queueSync();
-    } catch (e) {
-      PilotToast.show(context, 'Invalid JSON', isError: true);
-    }
   }
 
   String _generateCurlCommand() {
@@ -314,35 +322,68 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
         children: [
 
           Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               border: Border(bottom: BorderSide(color: AppColors.divider)),
             ),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _MethodDropdown(
-                  value: _method,
-                  onChanged: (v) {
-                    setState(() => _method = v!);
-                    _queueSync();
-                  },
+                Container(
+                  height: 32,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: AppColors.divider)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(LucideIcons.link, size: 13, color: AppColors.textSecondary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _nameCtrl,
+                          style: AppTypography.bodyMd,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            hintText: 'Endpoint name',
+                          ),
+                          onChanged: (_) => _queueSync(),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _UrlField(controller: _urlCtrl),
-                ),
-                const SizedBox(width: 16),
-                PilotButton.ghost(
-                  icon: LucideIcons.code,
-                  onPressed: _showExportCurlDialog,
-                  compact: true,
-                ),
-                const SizedBox(width: 8),
-                PilotButton.ghost(
-                  icon: LucideIcons.save,
-                  onPressed: _save,
-                  compact: true,
+                Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      _MethodDropdown(
+                        value: _method,
+                        onChanged: (v) {
+                          setState(() => _method = v!);
+                          _queueSync();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _UrlField(controller: _urlCtrl),
+                      ),
+                      const SizedBox(width: 16),
+                      PilotButton.ghost(
+                        icon: LucideIcons.code,
+                        onPressed: _showExportCurlDialog,
+                        compact: true,
+                      ),
+                      const SizedBox(width: 8),
+                      PilotButton.ghost(
+                        icon: LucideIcons.save,
+                        onPressed: _save,
+                        compact: true,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -406,31 +447,21 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                               controller: _headersScrollCtrl,
                             ),
                           ),
-                          Stack(
-                            children: [
-                              TextField(
-                                controller: _bodyCtrl,
-                                scrollController: _bodyScrollCtrl,
-                                maxLines: null,
-                                expands: true,
-                                style: AppTypography.code.copyWith(fontSize: 13),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.all(16),
-                                  hintText: 'Request Body (JSON)',
-                                ),
-                              ),
-                              Positioned(
-                                top: 8,
-                                right: 16,
-                                child: PilotButton.ghost(
-                                  label: 'Beautify',
-                                  icon: LucideIcons.sparkles,
-                                  onPressed: _beautifyJson,
-                                  compact: true,
-                                ),
-                              ),
-                            ],
+                          TextField(
+                            controller: _bodyCtrl,
+                            scrollController: _bodyScrollCtrl,
+                            maxLines: null,
+                            expands: true,
+                            style: AppTypography.code.copyWith(fontSize: 13),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.all(16),
+                              hintText: 'Request Body (JSON)',
+                            ),
+                            onChanged: (v) {
+                              _queueSync();
+                              _scheduleBeautify();
+                            },
                           ),
                           _buildConfigurationTab(textColor, secondaryText, border),
                         ],
