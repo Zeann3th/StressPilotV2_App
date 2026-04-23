@@ -1,9 +1,13 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:stress_pilot/core/di/locator.dart';
+import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
+import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/create_endpoint_dialog.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
@@ -89,6 +93,41 @@ class _SidebarSectionState extends State<_SidebarSection> {
     }
   }
 
+  Future<void> _handleUpload(BuildContext context) async {
+    try {
+      final capabilities = await getIt<UtilityRepository>().getCapabilities();
+      final formats = capabilities.parsers
+          .expand((p) => p.formats)
+          .map((e) => e.toLowerCase().replaceAll('.', ''))
+          .toSet()
+          .toList();
+
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: formats.isEmpty ? ['json', 'yaml', 'yml', 'proto'] : formats,
+      );
+
+      final filePath = result?.files.firstOrNull?.path;
+      if (filePath != null) {
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(content: Text('Uploading endpoints...')),
+        );
+        if (!context.mounted) return;
+        await context.read<EndpointProvider>().uploadEndpointsFile(
+          filePath: filePath,
+          projectId: context.read<ProjectProvider>().selectedProject?.id ?? 0,
+        );
+        AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(content: Text('Endpoints uploaded successfully')),
+        );
+      }
+    } catch (e) {
+      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -99,6 +138,9 @@ class _SidebarSectionState extends State<_SidebarSection> {
           isExpanded: _isExpanded,
           onToggle: () => setState(() => _isExpanded = !_isExpanded),
           onAdd: () => _handleAdd(context),
+          onUpload: widget.type == _SectionType.endpoints
+              ? () => _handleUpload(context)
+              : null,
         ),
         if (_isExpanded) ...[
           if (widget.type == _SectionType.endpoints)
@@ -116,12 +158,14 @@ class _SectionHeader extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
   final VoidCallback onAdd;
+  final VoidCallback? onUpload;
 
   const _SectionHeader({
     required this.title,
     required this.isExpanded,
     required this.onToggle,
     required this.onAdd,
+    this.onUpload,
   });
 
   @override
@@ -148,6 +192,8 @@ class _SectionHeader extends StatelessWidget {
                 ),
               ),
             ),
+            if (onUpload != null)
+              _IconButton(icon: LucideIcons.upload, onTap: onUpload!),
             _IconButton(
               icon: LucideIcons.plus,
               onTap: onAdd,
