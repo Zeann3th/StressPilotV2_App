@@ -28,6 +28,7 @@ dependencies:
   graphview: ^1.5.1
   lucide_icons: ^0.257.0
   shadcn_ui: ^0.52.1
+  bitsdojo_window: ^0.1.6
   vector_math: ^2.2.0
 
   # Markdown / code highlighting
