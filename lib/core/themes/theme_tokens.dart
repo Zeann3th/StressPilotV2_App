@@ -55,6 +55,32 @@ abstract class AppGradients {
       );
 }
 
+abstract class AppColorsLight {
+  static const baseBackground    = Color(0xFFF5F5F5);
+  static const sidebarBackground = Color(0xFFEBEBEB);
+  static const elevatedSurface   = Color(0xFFFFFFFF);
+  static const activeItem        = Color(0xFFDDDDE8);
+  static const hoverItem         = Color(0xFFE8E8F0);
+  static const accent            = Color(0xFF6B58D6);
+  static const accentHover       = Color(0xFF7B68EE);
+  static const border            = Color(0x1F000000);
+  static const divider           = Color(0x14000000);
+  static const textPrimary       = Color(0xFF1A1A1A);
+  static const textSecondary     = Color(0xFF555550);
+  static const textDisabled      = Color(0xFFAAAAAA);
+  static const accentActive      = Color(0xFF5A48C4);
+
+  static const methodGet    = Color(0xFF57A64A);
+  static const methodPost   = Color(0xFF4B8FD4);
+  static const methodPut    = Color(0xFFC8A84B);
+  static const methodDelete = Color(0xFFC25151);
+  static const methodPatch  = Color(0xFF8B68D4);
+  static const error        = Color(0xFFD2504B);
+  static const success      = methodGet;
+  static const warning      = methodPut;
+  static const info         = methodPost;
+}
+
 abstract class AppDurations {
   static const micro  = Duration(milliseconds: 100);
   static const short  = Duration(milliseconds: 150);
@@ -89,18 +115,18 @@ abstract class AppShadows {
 }
 
 abstract class AppRadius {
-  static const r4  = Radius.circular(4);
-  static const r6  = Radius.circular(6);
-  static const r8  = Radius.circular(8);
+  static const r4  = Radius.circular(6);   // buttons, inputs, chips
+  static const r6  = Radius.circular(8);   // panels, cards
+  static const r8  = Radius.circular(12);  // dialogs
 
   static const br4  = BorderRadius.all(r4);
   static const br6  = BorderRadius.all(r6);
   static const br8  = BorderRadius.all(r8);
 
-  static const r12 = r8;
-  static const r16 = r8;
-  static const br12 = br8;
-  static const br16 = br8;
+  static const r12 = Radius.circular(12);
+  static const r16 = Radius.circular(16);
+  static const br12 = BorderRadius.all(r12);
+  static const br16 = BorderRadius.all(r16);
 }
 
 abstract class AppSpacing {

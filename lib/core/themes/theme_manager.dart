@@ -23,6 +23,9 @@ class ThemeManager with ChangeNotifier {
   bool get isDark => currentTheme.isDark;
   ShadThemeData? get currentShadTheme => _currentShadTheme;
 
+  ShadThemeData get darkShadTheme => _generateShadTheme(_fleetTheme);
+  ShadThemeData get lightShadTheme => _generateShadTheme(_fleetLightTheme);
+
   static const _fleetTheme = PilotTheme(
     id: 'fleet',
     name: 'JetBrains Fleet',
@@ -37,6 +40,23 @@ class ThemeManager with ChangeNotifier {
       'accent': AppColors.accent,
       'success': AppColors.methodGet,
       'error': AppColors.error,
+    },
+  );
+
+  static const _fleetLightTheme = PilotTheme(
+    id: 'fleet-light',
+    name: 'JetBrains Fleet Light',
+    brightness: Brightness.light,
+    colors: {
+      'background': AppColorsLight.baseBackground,
+      'surface': AppColorsLight.sidebarBackground,
+      'elevated': AppColorsLight.elevatedSurface,
+      'border': AppColorsLight.border,
+      'textPrimary': AppColorsLight.textPrimary,
+      'textSecondary': AppColorsLight.textSecondary,
+      'accent': AppColorsLight.accent,
+      'success': AppColorsLight.methodGet,
+      'error': AppColorsLight.error,
     },
   );
 
@@ -64,6 +84,7 @@ class ThemeManager with ChangeNotifier {
   Future<void> loadAvailableThemes() async {
     _availableThemes.clear();
     _availableThemes.add(_fleetTheme);
+    _availableThemes.add(_fleetLightTheme);
 
     try {
       final String home = Platform.environment['HOME'] ??
@@ -170,6 +191,7 @@ class ThemeManager with ChangeNotifier {
   }
 
   Future<void> toggleTheme() async {
-
+    final nextId = currentTheme.isDark ? 'fleet-light' : 'fleet';
+    await setTheme(nextId);
   }
 }

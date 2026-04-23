@@ -209,17 +209,6 @@ class _AppTheme extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeManager = context.watch<ThemeManager>();
-    final isDark = themeManager.themeMode == ThemeMode.dark;
-
-    final defaultShadTheme = isDark
-        ? ShadThemeData(
-            brightness: Brightness.dark,
-            colorScheme: const ShadZincColorScheme.dark(),
-          )
-        : ShadThemeData(
-            brightness: Brightness.light,
-            colorScheme: const ShadZincColorScheme.light(),
-          );
 
     return ShadApp(
       key: ValueKey(themeManager.currentTheme.id),
@@ -228,8 +217,8 @@ class _AppTheme extends StatelessWidget {
       navigatorKey: AppNavigator.navigatorKey,
       navigatorObservers: [AppNavigator.routeObserver],
       themeMode: themeManager.themeMode,
-      theme: themeManager.currentShadTheme ?? defaultShadTheme,
-      darkTheme: themeManager.currentShadTheme ?? defaultShadTheme,
+      theme: themeManager.lightShadTheme,
+      darkTheme: themeManager.darkShadTheme,
       onGenerateRoute: AppRouter.generateRoute,
       initialRoute: initialRoute,
       builder: (context, child) {
