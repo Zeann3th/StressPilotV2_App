@@ -74,7 +74,7 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
       backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
-          WorkspaceNavBar(onAgentPressed: _toggleAgent),
+          const WorkspaceNavBar(),
           Expanded(
             child: project == null
                 ? const _ProjectSelectionView()

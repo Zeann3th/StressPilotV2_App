@@ -11,8 +11,7 @@ import 'package:stress_pilot/features/shared/presentation/provider/endpoint_prov
 import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
 
 class WorkspaceNavBar extends StatelessWidget {
-  final VoidCallback? onAgentPressed;
-  const WorkspaceNavBar({super.key, this.onAgentPressed});
+  const WorkspaceNavBar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -47,13 +46,7 @@ class WorkspaceNavBar extends StatelessWidget {
             ),
           ),
 
-          // Right: Runs · Marketplace · Settings · Agent
-          _NavIconButton(
-            icon: LucideIcons.history,
-            tooltip: 'Recent Runs',
-            onPressed: () => AppNavigator.pushNamed(AppRouter.recentRunsRoute),
-          ),
-          const SizedBox(width: 4),
+          // Right: Marketplace · Settings
           _NavIconButton(
             icon: LucideIcons.shoppingBag,
             tooltip: 'Marketplace',
@@ -64,12 +57,6 @@ class WorkspaceNavBar extends StatelessWidget {
             icon: LucideIcons.settings,
             tooltip: 'Settings',
             onPressed: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
-          ),
-          const SizedBox(width: 4),
-          _NavIconButton(
-            icon: LucideIcons.sparkles,
-            tooltip: 'Agent',
-            onPressed: onAgentPressed ?? () => AppNavigator.pushNamed(AppRouter.agentRoute),
           ),
         ],
       ),
