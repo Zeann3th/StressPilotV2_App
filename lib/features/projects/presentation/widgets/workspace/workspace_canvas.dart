@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Flow;
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
@@ -51,7 +52,7 @@ class WorkspaceCanvas extends StatelessWidget {
               ),
               child: Center(
                 child: Icon(
-                  Icons.account_tree_outlined,
+                  LucideIcons.network,
                   size: 28,
                   color: AppColors.textMuted,
                 ),
@@ -568,10 +569,10 @@ class _CanvasContentState extends State<_CanvasContent>
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildModeButton(
-                  provider, CanvasMode.move, Icons.back_hand_rounded, 'Pan'),
+                  provider, CanvasMode.move, LucideIcons.hand, 'Pan'),
               const SizedBox(width: 4),
               _buildModeButton(
-                  provider, CanvasMode.connect, Icons.edit_rounded, 'Link'),
+                  provider, CanvasMode.connect, LucideIcons.pencil, 'Link'),
               _ToolbarDivider(borderColor: borderColor.withValues(alpha: 0.3)),
               _ToolbarIcon(
                 tooltip: 'Line: ${_lineStyleLabel(provider.lineStyle)}',
@@ -583,32 +584,32 @@ class _CanvasContentState extends State<_CanvasContent>
               _ToolbarIcon(
                 tooltip: provider.isLocked ? 'Unlock Canvas' : 'Lock Canvas',
                 onTap: () => provider.toggleLock(),
-                icon: provider.isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
+                icon: provider.isLocked ? LucideIcons.lock : LucideIcons.lockOpen,
                 color: provider.isLocked ? AppColors.accent : AppColors.textMuted,
               ),
               _ToolbarIcon(
                 tooltip: 'Focus Graph',
                 onTap: () => _focusGraph(),
-                icon: Icons.filter_center_focus_rounded,
+                icon: LucideIcons.crosshair,
                 color: AppColors.textMuted,
               ),
               _ToolbarIcon(
                 tooltip: 'Zoom In',
                 onTap: () => _zoom(1.2),
-                icon: Icons.add_rounded,
+                icon: LucideIcons.plus,
                 color: AppColors.textMuted,
               ),
               _ToolbarIcon(
                 tooltip: 'Zoom Out',
                 onTap: () => _zoom(0.8),
-                icon: Icons.remove_rounded,
+                icon: LucideIcons.minus,
                 color: AppColors.textMuted,
               ),
               _ToolbarDivider(borderColor: borderColor),
               _ToolbarIcon(
                 tooltip: 'Show JSON',
                 onTap: () => _showJsonPayload(context),
-                icon: Icons.code_rounded,
+                icon: LucideIcons.code,
                 color: AppColors.textMuted,
               ),
               _ToolbarIcon(
@@ -641,7 +642,7 @@ class _CanvasContentState extends State<_CanvasContent>
                   );
                   if (confirmed == true) provider.clearCanvas();
                 },
-                icon: Icons.delete_sweep_outlined,
+                icon: LucideIcons.trash2,
                 color: AppColors.error,
               ),
               _ToolbarIcon(
@@ -671,7 +672,7 @@ class _CanvasContentState extends State<_CanvasContent>
                     );
                   }
                 },
-                icon: Icons.save_outlined,
+                icon: LucideIcons.save,
                 color: provider.isSaving
                     ? AppColors.textMuted
                     : AppColors.textSecondary,
@@ -784,9 +785,9 @@ class _CanvasContentState extends State<_CanvasContent>
 
   IconData _lineStyleIcon(ConnectionLineStyle s) {
     switch (s) {
-      case ConnectionLineStyle.straight: return Icons.remove_rounded;
-      case ConnectionLineStyle.curved: return Icons.waves_rounded;
-      case ConnectionLineStyle.orthogonal: return Icons.route_rounded;
+      case ConnectionLineStyle.straight: return LucideIcons.minus;
+      case ConnectionLineStyle.curved: return LucideIcons.activity;
+      case ConnectionLineStyle.orthogonal: return LucideIcons.cornerDownRight;
     }
   }
 
@@ -1161,12 +1162,12 @@ class _NodeBody extends StatelessWidget {
             children: [
               if (hasPre)
                 _InfoBadge(
-                    icon: Icons.login_rounded,
+                    icon: LucideIcons.logIn,
                     label: 'PRE',
                     color: Colors.orange),
               if (hasPost)
                 _InfoBadge(
-                    icon: Icons.logout_rounded,
+                    icon: LucideIcons.logOut,
                     label: 'POST',
                     color: Colors.purple),
             ],
@@ -1220,7 +1221,7 @@ class _NodeBody extends StatelessWidget {
                     color: colors.secondary.withValues(alpha: 0.1),
                     borderRadius: AppRadius.br8,
                   ),
-                  child: Icon(Icons.account_tree_rounded,
+                  child: Icon(LucideIcons.network,
                       size: 20, color: colors.secondary),
                 ),
                 const SizedBox(width: 12),
@@ -1250,7 +1251,7 @@ class _NodeBody extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded,
+                Icon(LucideIcons.chevronRight,
                     size: 16, color: colors.onSurfaceVariant.withValues(alpha: 0.5)),
               ],
             ),
@@ -1279,7 +1280,7 @@ class _NodeBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+          const Icon(LucideIcons.play, color: Colors.white, size: 24),
           Text(
             'START',
             style: TextStyle(
@@ -1325,7 +1326,7 @@ class _NodeBody extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.call_split_rounded, size: 16, color: colors.primary),
+              Icon(LucideIcons.gitBranch, size: 16, color: colors.primary),
               const SizedBox(height: 2),
               Text(
                 'BRANCH',
@@ -1567,7 +1568,7 @@ class _JsonPayloadDialogState extends State<_JsonPayloadDialog> {
                 const Spacer(),
                 PilotButton.ghost(
                   label: 'Auto Format',
-                  icon: Icons.format_align_left_rounded,
+                  icon: LucideIcons.braces,
                   onPressed: _formatJson,
                 ),
               ],

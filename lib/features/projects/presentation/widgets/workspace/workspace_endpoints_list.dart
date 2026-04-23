@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
@@ -145,7 +146,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(Icons.upload_file, size: 16, color: AppColors.textMuted),
+                icon: Icon(LucideIcons.upload, size: 16, color: AppColors.textMuted),
                 tooltip: 'Import Endpoints',
                 onPressed: () => _handleUpload(context),
                 visualDensity: VisualDensity.compact,
@@ -167,7 +168,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
               decoration: InputDecoration(
                 hintText: 'Search endpoints...',
                 hintStyle: AppTypography.caption.copyWith(color: AppColors.textMuted),
-                prefixIcon: Icon(Icons.search_rounded, size: 14, color: AppColors.textMuted),
+                prefixIcon: Icon(LucideIcons.search, size: 14, color: AppColors.textMuted),
                 prefixIconConstraints: const BoxConstraints(minWidth: 30, minHeight: 30),
                 filled: true,
                 fillColor: AppColors.elevated,
@@ -325,7 +326,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
       children: [
         if (!isDragging) ...[
           Icon(
-            Icons.drag_indicator,
+            LucideIcons.gripVertical,
             size: 16,
             color: colors.onSurfaceVariant.withValues(alpha: 0.5),
           ),

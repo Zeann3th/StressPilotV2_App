@@ -221,7 +221,7 @@ class _NodeConfigurationDialogState extends State<NodeConfigurationDialog>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.info_outline, size: 48, color: mutedTextColor),
+            Icon(LucideIcons.info, size: 48, color: mutedTextColor),
             const SizedBox(height: 16),
             Text(
               'Endpoint details not available',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
@@ -157,7 +158,7 @@ class _NewProjectButtonState extends State<_NewProjectButton> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.add, size: 14, color: Colors.white),
+              Icon(LucideIcons.plus, size: 14, color: Colors.white),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'New Project',
