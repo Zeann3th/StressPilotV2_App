@@ -430,7 +430,7 @@ class _NewScheduleEditorState extends State<_NewScheduleEditor> {
                     rampUp: int.tryParse(_rampUpController.text) ?? 0,
                     enabled: _enabled,
                   );
-                  // Passing a dummy Schedule object and the request
+
                   await provider.saveSchedule(
                     Schedule(
                       id: 0,

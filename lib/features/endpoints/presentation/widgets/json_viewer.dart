@@ -28,13 +28,13 @@ class _JsonViewerState extends State<JsonViewer> {
   @override
   void didUpdateWidget(JsonViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If only the active index changed, scroll to it
+
     if (widget.activeMatchIndex != oldWidget.activeMatchIndex &&
         widget.activeMatchIndex >= 0 &&
         widget.activeMatchIndex < _matchKeys.length) {
       _scrollToActiveMatch();
     }
-    // If query or json changed, reset tracking and scroll will happen after next build
+
     if (widget.searchQuery != oldWidget.searchQuery || widget.json != oldWidget.json) {
        _lastReportedCount = -1;
     }
@@ -60,7 +60,7 @@ class _JsonViewerState extends State<JsonViewer> {
 
   @override
   Widget build(BuildContext context) {
-    // ALWAYS clear keys before generating new spans to avoid duplication
+
     _matchKeys.clear();
 
     final jsonString = const JsonEncoder.withIndent('  ').convert(widget.json);

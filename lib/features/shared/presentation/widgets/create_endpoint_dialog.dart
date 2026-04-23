@@ -3,6 +3,7 @@ import 'dart:async' as async_timer;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
@@ -31,12 +32,14 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   String _httpMethod = 'GET';
   final _bodyCtrl = TextEditingController();
   Map<String, String> _headers = {};
-  final Map<String, String> _params = {};
+  Map<String, String> _params = {};
   async_timer.Timer? _debounce;
 
   final _grpcServiceCtrl = TextEditingController();
   final _grpcMethodCtrl = TextEditingController();
   final _grpcStubCtrl = TextEditingController();
+  final _graphqlOpTypeCtrl = TextEditingController();
+  final Map<String, String> _gqlVariables = {};
 
   List<String> _availableTypes = ['HTTP', 'GRPC', 'JDBC', 'JS', 'TCP'];
 
@@ -100,6 +103,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
     _grpcServiceCtrl.dispose();
     _grpcMethodCtrl.dispose();
     _grpcStubCtrl.dispose();
+    _graphqlOpTypeCtrl.dispose();
     super.dispose();
   }
 
@@ -139,6 +143,10 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
         'grpcStubPath': _grpcStubCtrl.text.isNotEmpty
             ? _grpcStubCtrl.text
             : null,
+        'graphqlOperationType': _graphqlOpTypeCtrl.text.isNotEmpty
+            ? _graphqlOpTypeCtrl.text
+            : null,
+        'graphqlVariables': _gqlVariables.isNotEmpty ? _gqlVariables : null,
       };
 
       final ep = await context.read<EndpointProvider>().createEndpoint(data);
@@ -157,96 +165,154 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   Widget build(BuildContext context) {
     return PilotDialog(
       title: 'New Endpoint',
-      maxWidth: 800,
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      maxWidth: 1200,
+      content: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const _FieldLabel('Name *'),
-                      const SizedBox(height: 6),
-                      PilotInput(
-                        controller: _nameCtrl,
-                        placeholder: 'e.g. Get User Profile',
+
+            Expanded(
+              flex: 1,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _FieldLabel('Name *'),
+                    const SizedBox(height: 6),
+                    PilotInput(
+                      controller: _nameCtrl,
+                      placeholder: 'e.g. Get User Profile',
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const _FieldLabel('Type *'),
+                              const SizedBox(height: 6),
+                              _buildDropdown(
+                                value: _selectedType,
+                                items: _availableTypes,
+                                onChanged: (v) => setState(() => _selectedType = v!),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_selectedType == 'HTTP') ...[
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _FieldLabel('Method *'),
+                                const SizedBox(height: 6),
+                                _buildDropdown(
+                                  value: _httpMethod,
+                                  items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
+                                  onChanged: (v) => setState(() => _httpMethod = v!),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const _FieldLabel('URL / Connection String *'),
+                    const SizedBox(height: 6),
+                    PilotInput(
+                      controller: _urlCtrl,
+                      placeholder: _getUrlLabel(),
+                      onChanged: _handleUrlChanged,
+                    ),
+                    const SizedBox(height: 16),
+                    const _FieldLabel('Description'),
+                    const SizedBox(height: 6),
+                    PilotInput(
+                      controller: _descCtrl,
+                      placeholder: 'Optional description...',
+                      maxLines: 2,
+                    ),
+
+                    const SizedBox(height: 24),
+                    const _FieldLabel('Headers'),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 300,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                        borderRadius: AppRadius.br8,
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 1,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const _FieldLabel('Type *'),
-                      const SizedBox(height: 6),
-                      _buildDropdown(
-                        value: _selectedType,
-                        items: _availableTypes,
-                        onChanged: (v) => setState(() => _selectedType = v!),
+                      child: KeyValueEditor(data: _headers, onChanged: (d) => setState(() => _headers = d)),
+                    ),
+
+                    if (_selectedType == 'GRPC' || _selectedType == 'GRAPHQL') ...[
+                      const SizedBox(height: 24),
+                      Text(
+                        'CONFIGURATION',
+                        style: AppTypography.label.copyWith(
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                        ),
                       ),
+                      const SizedBox(height: 8),
+                      if (_selectedType == 'GRPC') _buildGrpcFields(),
+                      if (_selectedType == 'GRAPHQL') _buildGraphQLFields(),
                     ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const _FieldLabel('URL / Connection String *'),
-            const SizedBox(height: 6),
-            PilotInput(
-              controller: _urlCtrl,
-              placeholder: _getUrlLabel(),
-              onChanged: _handleUrlChanged,
-            ),
-            const SizedBox(height: 16),
-            const _FieldLabel('Description'),
-            const SizedBox(height: 6),
-            PilotInput(
-              controller: _descCtrl,
-              placeholder: 'Optional description...',
-              maxLines: 2,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'PROTOCOL DETAILS',
-              style: AppTypography.label.copyWith(
-                color: AppColors.accent,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.0,
               ),
             ),
-            const SizedBox(height: 4),
-            const Divider(),
-            const SizedBox(height: 16),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const _FieldLabel('Body / Payload'),
-                PilotButton.ghost(
-                  label: 'Beautify',
-                  onPressed: _beautifyJson,
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            PilotInput(
-              controller: _bodyCtrl,
-              placeholder: _getBodyPlaceholder(),
-              maxLines: 8,
-              style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
-            ),
-            const SizedBox(height: 24),
+            const VerticalDivider(width: 48, indent: 4, endIndent: 4),
 
-            if (_selectedType == 'HTTP') _buildHttpFields(),
-            if (_selectedType == 'GRPC') _buildGrpcFields(),
+            Expanded(
+              flex: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const _FieldLabel('Body / Payload'),
+                      PilotButton.ghost(
+                        label: 'Beautify',
+                        icon: LucideIcons.sparkles,
+                        onPressed: _beautifyJson,
+                        compact: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 200,
+                    child: PilotInput(
+                      controller: _bodyCtrl,
+                      placeholder: _getBodyPlaceholder(),
+                      maxLines: 10,
+                      style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const _FieldLabel('Parameters'),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                        borderRadius: AppRadius.br8,
+                      ),
+                      child: KeyValueEditor(data: _params, onChanged: (d) => setState(() => _params = d)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -320,32 +386,6 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
     }
   }
 
-  Widget _buildHttpFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _FieldLabel('HTTP Method *'),
-        const SizedBox(height: 6),
-        _buildDropdown(
-          value: _httpMethod,
-          items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
-          onChanged: (v) => setState(() => _httpMethod = v!),
-        ),
-        const SizedBox(height: 16),
-        const _FieldLabel('Headers'),
-        const SizedBox(height: 6),
-        Container(
-          height: 150,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-            borderRadius: AppRadius.br8,
-          ),
-          child: KeyValueEditor(data: _headers, onChanged: (d) => _headers = d),
-        ),
-      ],
-    );
-  }
-
   Widget _buildGrpcFields() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,6 +401,28 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
         const _FieldLabel('Stub Path (Proto File) *'),
         const SizedBox(height: 6),
         PilotInput(controller: _grpcStubCtrl, placeholder: '/path/to/service.proto'),
+      ],
+    );
+  }
+
+  Widget _buildGraphQLFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _FieldLabel('Operation Type *'),
+        const SizedBox(height: 6),
+        PilotInput(controller: _graphqlOpTypeCtrl, placeholder: 'query / mutation'),
+        const SizedBox(height: 16),
+        const _FieldLabel('GraphQL Variables'),
+        const SizedBox(height: 6),
+        Container(
+          height: 150,
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+            borderRadius: AppRadius.br8,
+          ),
+          child: KeyValueEditor(data: _gqlVariables, onChanged: (d) => setState(() => _gqlVariables.addAll(d))),
+        ),
       ],
     );
   }

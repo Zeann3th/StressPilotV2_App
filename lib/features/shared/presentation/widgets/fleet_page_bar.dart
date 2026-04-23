@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
-/// Flat Fleet-style page bar for secondary pages.
-/// Replaces the old floating AppTopBar.
 class FleetPageBar extends StatelessWidget {
   final String title;
   final List<Widget> actions;

@@ -170,7 +170,6 @@ class ThemeManager with ChangeNotifier {
   }
 
   Future<void> toggleTheme() async {
-    // Fleet doesn't have a light mode in this spec
+
   }
 }
-

@@ -1,4 +1,18 @@
-# StressPilot UI Overhaul — Agent Instructions
+/# StressPilot UI Overhaul — Agent Instructions
+
+## User input raw
+i currently have project page (which contains runs, recent activity), workspace, endpoint management page, settings page, plugins page with webview to my plugin cms
+
+i want to do like if nothing found i shared preference about last project, we show recent activity
+else we show the project workspace immidiately
+
+the workspace shall have the left side like code files for Fleet but now is endpoints, when clicking the endpoints, it shows a tab that we can call the api, like we move the endpoint management page to separate ones
+
+Also, we will also be able to CRUD flows there, and option to CRUD the environment variables (it should be top right), under the navigation bar at top, the navigation bar should have marketplace, settings and the agent button, clicking on a flow will open the canvas to drag endpoints and drop them, link them together to save
+
+All components are pages are done but the page connection and the way workspace work will be changed, behaviours of the other pages stays the same, adhere to feature first architecture (ref current folder struct before refactor) (for example, what is in the code is functional and it should stay the same, only the layout or page flow changes)
+
+Also ref and search Jetbrains Fleet design and color, style before doing anything to the code, plan ahead before writing code, dont write too many comments, just that if code get's too long, we can separate by block and add comment to show what it does, apply skill sets that can design and copy Jetbrains Fleet
 
 ## Mission
 
@@ -19,7 +33,7 @@ Think of this as a painter pass over the whole codebase: same structure, new coa
    - Sidebar chrome, tab bar, toolbar patterns
    - Spacing and density
    - How selected/active/hover states look
-3. Write a **design token file** (`lib/core/themes/theme_tokens.dart` or equivalent) with all extracted values: colors, text styles, radii, spacing constants. Every visual value in the app must reference this file — no hardcoded hex anywhere else.
+3. Write a **design token file** (`lib/core/theme/fleet_tokens.dart` or equivalent) with all extracted values: colors, text styles, radii, spacing constants. Every visual value in the app must reference this file — no hardcoded hex anywhere else.
 4. Write a migration plan listing every file that will change. Get confirmation before proceeding.
 
 ---
@@ -30,6 +44,22 @@ Think of this as a painter pass over the whole codebase: same structure, new coa
 - **No logic changes.** State, business logic, API calls, data models, form validation — all untouched.
 - **No new dependencies** unless strictly needed for a layout primitive already in use.
 - All colors, text styles, and spacing come from the token file. No inline styling that isn't already there.
+
+### Shared rule (feature-first enforcement)
+
+If a widget, provider, or service is used by **more than one feature**, it lives in `lib/features/shared/`. Never duplicate cross-feature code inside a single feature folder.
+
+| Used by | Lives in |
+|---------|----------|
+| One feature only | `lib/features/<feature>/presentation/widgets/` |
+| Two or more features | `lib/features/shared/presentation/widgets/` |
+| Core infrastructure (theme, routing, DI) | `lib/core/` |
+
+When creating new widgets during this UI pass:
+- Check if the widget will be reused across features before placing it
+- If yes → `lib/features/shared/presentation/widgets/`
+- If no → keep it in its feature folder
+- Never put feature-specific widgets in `lib/core/`
 
 ---
 
@@ -240,3 +270,16 @@ The goal: every screen looks like it belongs to the same app and that app looks 
 11. Re-skin remaining screens (settings, plugins, recent activity, env vars, dialogs)
 12. Remove obsolete routes and dead code
 13. Smoke-test every nav path
+
+---
+
+## Mandatory quality gate
+
+After **every task** that touches Dart code, run:
+
+```bash
+cd /home/longlh20/Workspace/wasted/StressPilot/stresspilot_super_app && flutter analyze lib/
+```
+
+**Do not commit and do not move to the next task until `flutter analyze` exits with no errors.**
+Warnings are acceptable; errors are not. Fix all errors before proceeding.

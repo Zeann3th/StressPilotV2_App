@@ -44,7 +44,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
-          // Top nav bar
+
           Container(
             height: AppSpacing.navBarHeight,
             decoration: BoxDecoration(
@@ -67,14 +67,14 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
               ],
             ),
           ),
-          // Content area
+
           Expanded(
             child: Padding(
               padding: AppSpacing.pagePadding,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Left panel (flex 2) - Recent pages
+
                   Expanded(
                     flex: 2,
                     child: _PanelContainer(
@@ -85,7 +85,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.lg),
-                  // Right panel (flex 1) - Runs list
+
                   Expanded(
                     flex: 1,
                     child: ClipRRect(

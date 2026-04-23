@@ -91,7 +91,10 @@ class _PluginSettingsViewState extends State<PluginSettingsView> {
                     ],
                   ),
                 )
-              : _PluginDetailView(plugin: selected),
+              : Align(
+                  alignment: Alignment.topCenter,
+                  child: _PluginDetailView(plugin: selected),
+                ),
         ),
       ],
     );

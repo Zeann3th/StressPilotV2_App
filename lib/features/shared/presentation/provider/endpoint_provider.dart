@@ -21,9 +21,9 @@ class EndpointProvider extends ChangeNotifier {
   bool _isExecuting = false;
   String? _error;
 
-  // Caching execution results in memory
   final Map<int, Map<String, dynamic>> _executionResults = {};
-  // Track active cancel tokens
+  final Map<int, Map<String, dynamic>> _transientStates = {};
+
   final Map<int, CancelToken> _cancelTokens = {};
 
   String _getCacheKey(int projectId) => 'endpoints_project_${projectId}_json';
@@ -53,6 +53,12 @@ class EndpointProvider extends ChangeNotifier {
     _selectedEndpoint = endpoint;
     notifyListeners();
   }
+
+  void updateTransientState(int endpointId, Map<String, dynamic> state) {
+    _transientStates[endpointId] = state;
+  }
+
+  Map<String, dynamic>? getTransientState(int endpointId) => _transientStates[endpointId];
 
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;

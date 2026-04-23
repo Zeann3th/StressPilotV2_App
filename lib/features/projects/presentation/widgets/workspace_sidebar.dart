@@ -26,6 +26,10 @@ class WorkspaceSidebar extends StatelessWidget {
       width: width,
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(0),
+          bottomRight: Radius.circular(0),
+        ),
         boxShadow: AppShadows.panel,
       ),
       child: Column(
@@ -174,7 +178,7 @@ class _SectionHeader extends StatelessWidget {
       onTap: onToggle,
       child: Container(
         height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: Row(
           children: [
             Icon(
@@ -361,8 +365,8 @@ class _EndpointRowState extends State<_EndpointRow> {
 
   @override
   Widget build(BuildContext context) {
-    final method = widget.endpoint.httpMethod ?? 'GET';
-    final methodColor = _getMethodColor(method);
+    final type = widget.endpoint.type.toUpperCase();
+    final typeColor = _getTypeColor(type);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -373,16 +377,16 @@ class _EndpointRowState extends State<_EndpointRow> {
           height: AppSpacing.sidebarRowHeight,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           decoration: BoxDecoration(
-            color: widget.isSelected 
-                ? AppColors.activeItem 
+            color: widget.isSelected
+                ? AppColors.activeItem
                 : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-            border: widget.isSelected 
+            border: widget.isSelected
                 ? Border(left: BorderSide(color: AppColors.accent, width: 2))
                 : null,
           ),
           child: Row(
             children: [
-              _MethodBadge(method: method, color: methodColor),
+              _TypeBadge(type: type, color: typeColor),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -404,13 +408,13 @@ class _EndpointRowState extends State<_EndpointRow> {
     );
   }
 
-  Color _getMethodColor(String method) {
-    switch (method.toUpperCase()) {
-      case 'GET': return AppColors.methodGet;
-      case 'POST': return AppColors.methodPost;
-      case 'PUT': return AppColors.methodPut;
-      case 'DELETE': return AppColors.methodDelete;
-      case 'PATCH': return AppColors.methodPatch;
+  Color _getTypeColor(String type) {
+    switch (type) {
+      case 'HTTP': return AppColors.methodGet;
+      case 'GRPC': return AppColors.methodPost;
+      case 'JDBC': return AppColors.methodPut;
+      case 'JS': return AppColors.methodPatch;
+      case 'TCP': return AppColors.methodDelete;
       default: return AppColors.textSecondary;
     }
   }
@@ -449,10 +453,10 @@ class _FlowRowState extends State<_FlowRow> {
           height: AppSpacing.sidebarRowHeight,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           decoration: BoxDecoration(
-            color: widget.isSelected 
-                ? AppColors.activeItem 
+            color: widget.isSelected
+                ? AppColors.activeItem
                 : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-            border: widget.isSelected 
+            border: widget.isSelected
                 ? Border(left: BorderSide(color: AppColors.accent, width: 2))
                 : null,
           ),
@@ -485,27 +489,30 @@ class _FlowRowState extends State<_FlowRow> {
   }
 }
 
-class _MethodBadge extends StatelessWidget {
-  final String method;
+class _TypeBadge extends StatelessWidget {
+  final String type;
   final Color color;
 
-  const _MethodBadge({required this.method, required this.color});
+  const _TypeBadge({required this.type, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      width: 36,
+      padding: const EdgeInsets.symmetric(vertical: 1),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: Text(
-        method.toUpperCase(),
-        style: AppTypography.codeSm.copyWith(
-          fontSize: 9,
-          color: color,
-          fontWeight: FontWeight.bold,
+      child: Center(
+        child: Text(
+          type,
+          style: AppTypography.codeSm.copyWith(
+            fontSize: 8,
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

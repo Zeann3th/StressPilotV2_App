@@ -1,6 +1,6 @@
 # Workspace Polish & UX Fix Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Polish the workspace UI — Montserrat font, resizable sidebar, clickable project picker, play/stop action bar, icon-only ENV badge, and subtle shadows/margins to visually separate components.
 
@@ -54,11 +54,11 @@ Zero errors before every commit.
 
 Montserrat is served via `google_fonts` (already in pubspec). JetBrains Mono stays for `code`, `codeSm`, `codePath`. All human-readable text styles switch to Montserrat.
 
-- [ ] **Step 1: Read the current AppTypography class**
+- [x] **Step 1: Read the current AppTypography class**
 
 Read `lib/core/themes/theme_tokens.dart` lines 86–98 to see current text style getters.
 
-- [ ] **Step 2: Add GoogleFonts import and update AppTypography**
+- [x] **Step 2: Add GoogleFonts import and update AppTypography**
 
 In `lib/core/themes/theme_tokens.dart`, add at the top (already imports flutter/material.dart and google_fonts):
 
@@ -86,14 +86,14 @@ abstract class AppTypography {
 }
 ```
 
-- [ ] **Step 3: Analyze**
+- [x] **Step 3: Analyze**
 
 ```bash
 cd /home/longlh20/Workspace/wasted/StressPilot/stresspilot_super_app && flutter analyze lib/
 ```
 Expected: zero errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/core/themes/theme_tokens.dart
@@ -110,11 +110,11 @@ git commit -m "style: switch UI typography to Montserrat, keep JetBrains Mono fo
 
 The sidebar is currently `width: 260` hardcoded inside `WorkspaceSidebar`. Make width controlled by the parent via a constructor param, and add a drag handle divider in `ProjectWorkspacePage`.
 
-- [ ] **Step 1: Read current WorkspaceSidebar**
+- [x] **Step 1: Read current WorkspaceSidebar**
 
 Read `lib/features/projects/presentation/widgets/workspace_sidebar.dart` lines 1–45. Note the `Container(width: 260, ...)`.
 
-- [ ] **Step 2: Add width param to WorkspaceSidebar**
+- [x] **Step 2: Add width param to WorkspaceSidebar**
 
 In `workspace_sidebar.dart`, change `WorkspaceSidebar` to accept a `width` parameter:
 
@@ -134,7 +134,7 @@ class WorkspaceSidebar extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 3: Add _sidebarWidth state and drag handle to ProjectWorkspacePage**
+- [x] **Step 3: Add _sidebarWidth state and drag handle to ProjectWorkspacePage**
 
 Read `lib/features/projects/presentation/pages/project_workspace_page.dart` fully.
 
@@ -194,14 +194,14 @@ Row(
 
 Note: `_buildActionBar` is added in Task 4. For now keep the existing env badge row.
 
-- [ ] **Step 4: Analyze**
+- [x] **Step 4: Analyze**
 
 ```bash
 flutter analyze lib/
 ```
 Expected: zero errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/features/projects/presentation/widgets/workspace_sidebar.dart \
@@ -218,7 +218,7 @@ git commit -m "feat: resizable sidebar panel with drag handle"
 
 The project name on the left of the nav bar is plain `Text`. Replace with a clickable widget that shows a popup menu listing all projects from `ProjectProvider.projects`. Clicking a project calls `ProjectProvider.selectProject(project)` (which already persists to SharedPreferences and notifies listeners — workspace auto-reloads via `didChangeDependencies`).
 
-- [ ] **Step 1: Read workspace_nav_bar.dart fully**
+- [x] **Step 1: Read workspace_nav_bar.dart fully**
 
 Read the file. Note the left side is:
 ```dart
@@ -228,7 +228,7 @@ Text(
 ),
 ```
 
-- [ ] **Step 2: Replace with _ProjectNameButton**
+- [x] **Step 2: Replace with _ProjectNameButton**
 
 In `workspace_nav_bar.dart`, change `WorkspaceNavBar.build` left side to:
 
@@ -333,14 +333,14 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
 
 Add import at top of file: `import 'package:shadcn_ui/shadcn_ui.dart';`
 
-- [ ] **Step 3: Analyze**
+- [x] **Step 3: Analyze**
 
 ```bash
 flutter analyze lib/features/projects/presentation/widgets/workspace_nav_bar.dart
 ```
 Expected: zero errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/features/projects/presentation/widgets/workspace_nav_bar.dart
@@ -362,11 +362,11 @@ Replace the current env badge row (which shows `settings2` icon + "ENV" text) wi
    - Active tab = endpoint, not executing → play icon, on tap call `endpointProvider.executeEndpoint(endpoint.id)`
    - Active tab = endpoint, executing → stop icon (`LucideIcons.squareStop`), on tap call `endpointProvider.cancelExecution(endpoint.id)`
 
-- [ ] **Step 1: Read project_workspace_page.dart fully**
+- [x] **Step 1: Read project_workspace_page.dart fully**
 
 Read the file. Note the env badge Container block (lines 77–93 approx) and the `_EnvBadge` class.
 
-- [ ] **Step 2: Replace env badge row with _ActionBar**
+- [x] **Step 2: Replace env badge row with _ActionBar**
 
 In `_ProjectWorkspacePageState.build`, replace the conditional env badge Container:
 
@@ -390,7 +390,7 @@ _ActionBar(
 
 Make `_ActionBar` always visible (even when project is null — just shows disabled buttons).
 
-- [ ] **Step 3: Add _ActionBar widget**
+- [x] **Step 3: Add _ActionBar widget**
 
 Add at the bottom of `project_workspace_page.dart` (before `_EnvBadge` class, or replace it):
 
@@ -427,7 +427,7 @@ class _ActionBar extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 4: Add _EnvIconButton (replaces old _EnvBadge)**
+- [x] **Step 4: Add _EnvIconButton (replaces old _EnvBadge)**
 
 ```dart
 class _EnvIconButton extends StatefulWidget {
@@ -478,7 +478,7 @@ class _EnvIconButtonState extends State<_EnvIconButton> {
 }
 ```
 
-- [ ] **Step 5: Add _PlayStopButton**
+- [x] **Step 5: Add _PlayStopButton**
 
 ```dart
 class _PlayStopButton extends StatefulWidget {
@@ -568,18 +568,18 @@ import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dia
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 ```
 
-- [ ] **Step 6: Remove the old _EnvBadge class**
+- [x] **Step 6: Remove the old _EnvBadge class**
 
 Delete the `_EnvBadge` StatefulWidget class — replaced by `_EnvIconButton`.
 
-- [ ] **Step 7: Analyze**
+- [x] **Step 7: Analyze**
 
 ```bash
 flutter analyze lib/features/projects/presentation/pages/project_workspace_page.dart
 ```
 Expected: zero errors.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add lib/features/projects/presentation/pages/project_workspace_page.dart
@@ -599,7 +599,7 @@ git commit -m "feat: action bar with icon-only ENV button and play/stop run butt
 
 Target look: panels visually separated, slight depth, feel like JetBrains Fleet with a touch of warmth. Not heavy card UI — subtle.
 
-- [ ] **Step 1: Add shadow tokens to theme_tokens.dart**
+- [x] **Step 1: Add shadow tokens to theme_tokens.dart**
 
 In `lib/core/themes/theme_tokens.dart`, add after `AppDurations`:
 
@@ -634,7 +634,7 @@ abstract class AppShadows {
 }
 ```
 
-- [ ] **Step 2: Polish sidebar — shadow + rounded right edge**
+- [x] **Step 2: Polish sidebar — shadow + rounded right edge**
 
 In `lib/features/projects/presentation/widgets/workspace_sidebar.dart`, update the outer `Container`:
 
@@ -659,7 +659,7 @@ In `_SectionHeader.build`, change `padding` from `symmetric(horizontal: AppSpaci
 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
 ```
 
-- [ ] **Step 3: Polish workspace page — margins around content**
+- [x] **Step 3: Polish workspace page — margins around content**
 
 In `project_workspace_page.dart`, wrap the `Expanded(content)` area with a small margin:
 
@@ -690,7 +690,7 @@ Expanded(
 
 This gives 4px gap between the drag handle and content, with subtle border + shadow on the content panel.
 
-- [ ] **Step 4: Polish tab bar — active tab pill style**
+- [x] **Step 4: Polish tab bar — active tab pill style**
 
 In `lib/features/projects/presentation/widgets/workspace_tab_bar.dart`, update `_WorkspaceTabWidget.build`:
 
@@ -711,7 +711,7 @@ decoration: BoxDecoration(
 ),
 ```
 
-- [ ] **Step 5: Polish recent activity page — card margins**
+- [x] **Step 5: Polish recent activity page — card margins**
 
 In `lib/features/projects/presentation/pages/recent_activity_page.dart`, update `_PanelContainer` or the inline panel containers to add `boxShadow: AppShadows.card`:
 
@@ -720,14 +720,14 @@ Find the container with `AppColors.sidebarBackground` and add:
 boxShadow: AppShadows.card,
 ```
 
-- [ ] **Step 6: Analyze**
+- [x] **Step 6: Analyze**
 
 ```bash
 cd /home/longlh20/Workspace/wasted/StressPilot/stresspilot_super_app && flutter analyze lib/
 ```
 Expected: zero errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/core/themes/theme_tokens.dart \

@@ -44,6 +44,7 @@ class AgentInputBar extends StatefulWidget {
 class _AgentInputBarState extends State<AgentInputBar> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  final _keyboardFocusNode = FocusNode();
 
   List<AgentCommand> _suggestions = [];
   int _selectedIndex = 0;
@@ -116,6 +117,7 @@ class _AgentInputBarState extends State<AgentInputBar> {
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -198,7 +200,7 @@ class _AgentInputBarState extends State<AgentInputBar> {
             children: [
               Expanded(
                 child: KeyboardListener(
-                  focusNode: FocusNode(),
+                  focusNode: _keyboardFocusNode,
                   onKeyEvent: (event) {
                     if (_handleKey(event)) return;
                     if (event is KeyDownEvent &&

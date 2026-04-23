@@ -88,12 +88,11 @@ class _AppRootState extends State<AppRoot> {
         setState(() {
           _initialized = true;
           _hasError = false;
-          _initialRoute = getIt<ProjectProvider>().hasSelectedProject 
-              ? AppRouter.workspaceRoute 
+          _initialRoute = getIt<ProjectProvider>().hasSelectedProject
+              ? AppRouter.workspaceRoute
               : AppRouter.projectsRoute;
         });
 
-        // Trigger update check on startup
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             UpdateDialog.checkAndShow(context);
