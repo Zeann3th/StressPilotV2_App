@@ -1,4 +1,3 @@
-// lib/core/themes/pilot_colors.dart
 import 'package:flutter/material.dart';
 
 class PilotColors {
@@ -44,9 +43,9 @@ class PilotColors {
     required this.methodPatch,
   });
 
-  // Convenience aliases
-  Color get textMuted => textDisabled;
-  Color get success => methodGet;
-  Color get warning => methodPut;
-  Color get info => methodPost;
+  // These map semantic UI states to HTTP method colors by convention.
+  // Custom themes must follow the same color conventions for these to be meaningful.
+  Color get success => methodGet;   // green
+  Color get warning => methodPut;   // amber
+  Color get info    => methodPost;  // blue
 }
