@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:stress_pilot/core/di/locator.dart';
@@ -9,6 +10,7 @@ import 'package:stress_pilot/core/system/settings_manager.dart';
 import 'package:stress_pilot/core/system/logger.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/pilot_theme.dart';
+import 'package:stress_pilot/core/themes/pilot_colors.dart';
 
 class ThemeManager with ChangeNotifier {
   static const String _defaultThemeId = 'fleet';
@@ -25,6 +27,32 @@ class ThemeManager with ChangeNotifier {
 
   ShadThemeData get darkShadTheme => _generateShadTheme(_fleetTheme);
   ShadThemeData get lightShadTheme => _generateShadTheme(_fleetLightTheme);
+
+  PilotColors get pilotColors => _buildPilotColors(currentTheme);
+
+  PilotColors _buildPilotColors(PilotTheme theme) {
+    return PilotColors(
+      background:    theme.getColor('background',    AppColors.baseBackground),
+      surface:       theme.getColor('surface',       AppColors.sidebarBackground),
+      elevated:      theme.getColor('elevated',      AppColors.elevatedSurface),
+      activeItem:    theme.getColor('activeItem',    AppColors.activeItem),
+      hoverItem:     theme.getColor('hoverItem',     AppColors.hoverItem),
+      accent:        theme.getColor('accent',        AppColors.accent),
+      accentHover:   theme.getColor('accentHover',   AppColors.accentHover),
+      accentActive:  theme.getColor('accentActive',  AppColors.accentActive),
+      border:        theme.getColor('border',        AppColors.border),
+      divider:       theme.getColor('divider',       AppColors.divider),
+      textPrimary:   theme.getColor('textPrimary',   AppColors.textPrimary),
+      textSecondary: theme.getColor('textSecondary', AppColors.textSecondary),
+      textDisabled:  theme.getColor('textDisabled',  AppColors.textDisabled),
+      error:         theme.getColor('error',         AppColors.error),
+      methodGet:     theme.getColor('success',       AppColors.methodGet),
+      methodPost:    theme.getColor('info',          AppColors.methodPost),
+      methodPut:     theme.getColor('warning',       AppColors.methodPut),
+      methodDelete:  theme.getColor('methodDelete',  AppColors.methodDelete),
+      methodPatch:   theme.getColor('methodPatch',   AppColors.methodPatch),
+    );
+  }
 
   static const _fleetTheme = PilotTheme(
     id: 'fleet',
@@ -86,12 +114,34 @@ class ThemeManager with ChangeNotifier {
     _availableThemes.add(_fleetTheme);
     _availableThemes.add(_fleetLightTheme);
 
+    // Load bundled asset themes
+    try {
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifest = jsonDecode(manifestContent);
+      final themeAssets = manifest.keys
+          .where((k) => k.startsWith('assets/themes/') && k.endsWith('.json'))
+          .toList();
+
+      for (final assetPath in themeAssets) {
+        try {
+          final content = await rootBundle.loadString(assetPath);
+          final json = jsonDecode(content);
+          final id = p.basenameWithoutExtension(assetPath.split('/').last);
+          _availableThemes.add(PilotTheme.fromJson(id, json));
+        } catch (e) {
+          AppLogger.warning('Failed to parse bundled theme $assetPath: $e');
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to load bundled themes: $e');
+    }
+
+    // Load user filesystem themes
     try {
       final String home = Platform.environment['HOME'] ??
                           Platform.environment['USERPROFILE'] ??
                           '/';
       final themesDir = Directory(p.join(home, '.pilot', 'client', 'themes'));
-
       if (await themesDir.exists()) {
         final files = themesDir.listSync().where((e) => e is File && e.path.endsWith('.json'));
         for (var entity in files) {
