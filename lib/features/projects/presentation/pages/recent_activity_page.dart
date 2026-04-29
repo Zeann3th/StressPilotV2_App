@@ -117,8 +117,7 @@ class _PanelContainer extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
         borderRadius: AppRadius.br6,
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppShadows.card,
+        border: Border.all(color: AppColors.divider),
       ),
       child: child,
     );
@@ -148,21 +147,24 @@ class _NewProjectButtonState extends State<_NewProjectButton> {
         child: AnimatedContainer(
           duration: AppDurations.short,
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.xs,
+            horizontal: 12,
+            vertical: 6,
           ),
           decoration: BoxDecoration(
             color: _hovered ? AppColors.accentHover : AppColors.accent,
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            borderRadius: AppRadius.br4,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.plus, size: 14, color: Colors.white),
-              const SizedBox(width: AppSpacing.xs),
+              const Icon(LucideIcons.plus, size: 14, color: AppColors.textPrimary),
+              const SizedBox(width: 6),
               Text(
                 'New Project',
-                style: AppTypography.body.copyWith(color: Colors.white),
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),

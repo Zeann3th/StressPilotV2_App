@@ -32,11 +32,11 @@ class _MarketplacePageState extends State<MarketplacePage> {
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.sidebarBackground,
-                  borderRadius: AppRadius.br8,
-                  border: Border.all(color: AppColors.border),
+                  borderRadius: AppRadius.br6,
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: ClipRRect(
-                  borderRadius: AppRadius.br8,
+                  borderRadius: AppRadius.br6,
                   child: Stack(
                     children: [
                       Positioned.fill(
@@ -58,8 +58,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             webViewController?.setVisible(false);
                             Navigator.of(context).pop();
                           },
-                          backgroundOverride: Colors.transparent,
-                          foregroundOverride: AppColors.textPrimary.withValues(alpha: 0.6),
+                          compact: true,
                         ),
                       ),
                       Positioned(
@@ -70,8 +69,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                           onPressed: () {
                             webViewController?.reload();
                           },
-                          backgroundOverride: Colors.transparent,
-                          foregroundOverride: AppColors.textPrimary.withValues(alpha: 0.6),
+                          compact: true,
                         ),
                       ),
                     ],

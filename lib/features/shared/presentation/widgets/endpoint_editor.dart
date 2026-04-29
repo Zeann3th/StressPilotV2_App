@@ -34,6 +34,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
   Map<String, dynamic>? _response;
   int? _statusCode;
   int? _responseTime;
+  int _elapsedMs = 0;
   bool? _isSuccess;
   bool _showRaw = false;
   double _responsePanelHeight = 300.0;
@@ -55,6 +56,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
   async_timer.Timer? _syncTimer;
   async_timer.Timer? _beautifyTimer;
   async_timer.Timer? _debounce;
+  async_timer.Timer? _executionTimer;
 
   @override
   void initState() {
@@ -92,6 +94,25 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
 
     _bodyCtrl.addListener(_queueSync);
     _successConditionCtrl.addListener(_queueSync);
+  }
+
+  void _startTimer() {
+    _executionTimer?.cancel();
+    _elapsedMs = 0;
+    _executionTimer = async_timer.Timer.periodic(const Duration(milliseconds: 10), (timer) {
+      if (mounted) {
+        setState(() {
+          _elapsedMs += 10;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _stopTimer() {
+    _executionTimer?.cancel();
+    _executionTimer = null;
   }
 
   void _loadResults() {
@@ -181,6 +202,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     _syncTimer?.cancel();
     _beautifyTimer?.cancel();
     _debounce?.cancel();
+    _executionTimer?.cancel();
     _urlCtrl.dispose();
     _nameCtrl.dispose();
     _bodyCtrl.dispose();
@@ -313,6 +335,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
   Future<void> _execute() async {
     final provider = context.read<EndpointProvider>();
     provider.setResponsePanelVisible(true);
+    _startTimer();
 
     dynamic bodyPayload = _bodyCtrl.text;
     try {
@@ -336,6 +359,8 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
       await provider.executeEndpoint(widget.endpoint.id, transientData);
     } catch (e) {
       if (mounted) PilotToast.show(context, 'Execution failed: $e', isError: true);
+    } finally {
+      _stopTimer();
     }
   }
 
@@ -551,7 +576,9 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                                     const SizedBox(width: 4),
                                     _buildRespTab('Raw', _showRaw, secondaryText),
                                     const Spacer(),
-                                    if (_statusCode != null) ...[
+                                    if (endpointProvider.isEndpointExecuting(widget.endpoint.id))
+                                      Text('${_elapsedMs}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono'))
+                                    else if (_statusCode != null) ...[
                                       _buildStatusBadge(_isSuccess ?? (_statusCode! < 400), _statusCode!),
                                       const SizedBox(width: 10),
                                       Text('${_responseTime}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono')),
