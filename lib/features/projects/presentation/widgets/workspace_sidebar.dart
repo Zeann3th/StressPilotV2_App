@@ -49,17 +49,14 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
       width: widget.width,
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
-        boxShadow: AppShadows.panel,
+        border: Border(right: BorderSide(color: AppColors.divider)),
       ),
       child: Column(
         children: [
-          // Sidebar Toolbar
+          // Sidebar Toolbar (Search)
           Container(
             height: 40,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.divider)),
-            ),
             child: Row(
               children: [
                 Expanded(
@@ -80,7 +77,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
                   ),
                 ),
                 _IconButton(
-                  icon: LucideIcons.minus,
+                  icon: LucideIcons.panelLeftClose,
                   onTap: widget.onCollapse,
                 ),
               ],
@@ -88,16 +85,16 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              padding: EdgeInsets.zero,
               children: [
                 _SidebarSection(
-                  title: 'Endpoints',
+                  title: 'ENDPOINTS',
                   type: _SectionType.endpoints,
                   searchQuery: _searchQuery,
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 8),
                 _SidebarSection(
-                  title: 'Flows',
+                  title: 'FLOWS',
                   type: _SectionType.flows,
                   searchQuery: _searchQuery,
                 ),
@@ -131,33 +128,31 @@ class _SidebarSectionState extends State<_SidebarSection> {
   bool _isExpanded = true;
 
   void _handleAdd(BuildContext context) {
-    Future.microtask(() {
-      switch (widget.type) {
-        case _SectionType.endpoints:
-          final projectId = context.read<ProjectProvider>().selectedProject?.id;
-          if (projectId == null) return;
-          showDialog<void>(
-            context: context,
-            builder: (_) => CreateEndpointDialog(projectId: projectId),
-          );
-          break;
-        case _SectionType.flows:
-          FlowDialog.showCreateDialog(
-            context,
-            onCreate: (name, description, type, projectId) async {
-              await context.read<FlowProvider>().createFlow(
-                flow_domain.CreateFlowRequest(
-                  name: name,
-                  description: description,
-                  type: type,
-                  projectId: projectId,
-                ),
-              );
-            },
-          );
-          break;
-      }
-    });
+    switch (widget.type) {
+      case _SectionType.endpoints:
+        final projectId = context.read<ProjectProvider>().selectedProject?.id;
+        if (projectId == null) return;
+        showDialog<void>(
+          context: context,
+          builder: (_) => CreateEndpointDialog(projectId: projectId),
+        );
+        break;
+      case _SectionType.flows:
+        FlowDialog.showCreateDialog(
+          context,
+          onCreate: (name, description, type, projectId) async {
+            await context.read<FlowProvider>().createFlow(
+              flow_domain.CreateFlowRequest(
+                name: name,
+                description: description,
+                type: type,
+                projectId: projectId,
+              ),
+            );
+          },
+        );
+        break;
+    }
   }
 
   Future<void> _handleUpload(BuildContext context) async {
@@ -172,38 +167,32 @@ class _SidebarSectionState extends State<_SidebarSection> {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: formats.isEmpty ? ['json', 'yaml', 'yml', 'proto'] : formats,
+        allowMultiple: false,
       );
 
-      final filePath = result?.files.firstOrNull?.path;
-      if (filePath != null) {
-        if (!context.mounted) return;
-        Future.microtask(() {
-          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-            const SnackBar(content: Text('Uploading endpoints...')),
-          );
-        });
-        if (!context.mounted) return;
-        final selectedProject = context.read<ProjectProvider>().selectedProject;
-        if (selectedProject == null) return;
-        final provider = context.read<EndpointProvider>();
-        await provider.uploadEndpointsFile(
-          filePath: filePath,
-          projectId: selectedProject.id,
-        );
-        if (!context.mounted) return;
-        Future.microtask(() {
-          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-            const SnackBar(content: Text('Endpoints uploaded successfully')),
-          );
-        });
+      if (result == null || result.files.isEmpty) return;
+      final filePath = result.files.first.path;
+      if (filePath == null) return;
+
+      if (!context.mounted) return;
+      
+      final selectedProject = context.read<ProjectProvider>().selectedProject;
+      if (selectedProject == null) return;
+      
+      PilotToast.show(context, 'Uploading endpoints...');
+      
+      final provider = context.read<EndpointProvider>();
+      await provider.uploadEndpointsFile(
+        filePath: filePath,
+        projectId: selectedProject.id,
+      );
+      
+      if (context.mounted) {
+        PilotToast.show(context, 'Endpoints uploaded successfully');
       }
     } catch (e) {
       if (context.mounted) {
-        Future.microtask(() {
-          AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-            SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.red),
-          );
-        });
+        PilotToast.show(context, 'Upload failed: $e', isError: true);
       }
     }
   }
@@ -213,23 +202,26 @@ class _SidebarSectionState extends State<_SidebarSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SidebarSectionHeader(
-          label: widget.title,
-          isExpanded: _isExpanded,
-          onToggle: () => setState(() => _isExpanded = !_isExpanded),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.type == _SectionType.endpoints)
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: SidebarSectionHeader(
+            label: widget.title,
+            isExpanded: _isExpanded,
+            onToggle: () => setState(() => _isExpanded = !_isExpanded),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.type == _SectionType.endpoints)
+                  _IconButton(
+                    icon: LucideIcons.upload,
+                    onTap: () => _handleUpload(context),
+                  ),
                 _IconButton(
-                  icon: LucideIcons.upload,
-                  onTap: () => _handleUpload(context),
+                  icon: LucideIcons.plus,
+                  onTap: () => _handleAdd(context),
                 ),
-              _IconButton(
-                icon: LucideIcons.plus,
-                onTap: () => _handleAdd(context),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         if (_isExpanded) ...[

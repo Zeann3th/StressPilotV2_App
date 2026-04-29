@@ -5,6 +5,8 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/system/app_state_manager.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
+import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
+
 class StatusBar extends StatelessWidget {
   final String? projectName;
 
@@ -16,6 +18,7 @@ class StatusBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stateManager = context.watch<AppStateManager>();
+    final endpointProvider = context.watch<EndpointProvider>();
     final isIndexing = stateManager.isRecovering('Backend Process');
 
     return Container(
@@ -38,6 +41,12 @@ class StatusBar extends StatelessWidget {
             icon: LucideIcons.history,
             tooltip: 'Recent Runs',
             onTap: () => AppNavigator.pushNamed(AppRouter.recentRunsRoute),
+          ),
+          const SizedBox(width: 4),
+          _StatusIconButton(
+            icon: LucideIcons.terminal,
+            tooltip: 'Toggle Response Panel',
+            onTap: () => endpointProvider.toggleResponsePanel(),
           ),
         ],
       ),

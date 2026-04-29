@@ -26,6 +26,19 @@ class EndpointProvider extends ChangeNotifier {
 
   final Map<int, CancelToken> _cancelTokens = {};
 
+  bool _isResponsePanelVisible = false;
+  bool get isResponsePanelVisible => _isResponsePanelVisible;
+
+  void setResponsePanelVisible(bool visible) {
+    _isResponsePanelVisible = visible;
+    notifyListeners();
+  }
+
+  void toggleResponsePanel() {
+    _isResponsePanelVisible = !_isResponsePanelVisible;
+    notifyListeners();
+  }
+
   String _getCacheKey(int projectId) => 'endpoints_project_${projectId}_json';
 
   Future<void> _cacheEndpoints(int projectId) async {

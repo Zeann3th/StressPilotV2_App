@@ -107,17 +107,10 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
       child: GestureDetector(
         onTap: widget.onTap,
         onDoubleTap: _startEditing,
-        child: AnimatedContainer(
-          duration: AppDurations.micro,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: widget.isActive
-                ? AppColors.activeItem
-                : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(4),
-              topRight: Radius.circular(4),
-            ),
+            color: widget.isActive ? AppColors.activeItem : Colors.transparent,
             border: Border(
               bottom: BorderSide(
                 color: widget.isActive ? AppColors.accent : Colors.transparent,
@@ -133,7 +126,7 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
                 size: 13,
                 color: widget.isActive ? AppColors.accent : AppColors.textSecondary,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               if (_isEditing)
                 SizedBox(
                   width: 120,
@@ -155,10 +148,11 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
                   widget.tab.name,
                   style: AppTypography.body.copyWith(
                     color: widget.isActive ? AppColors.textPrimary : AppColors.textSecondary,
-                    fontSize: 12,
+                    fontSize: 13,
+                    fontWeight: widget.isActive ? FontWeight.w500 : FontWeight.normal,
                   ),
                 ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               if ((_isHovered || widget.isActive) && !_isEditing)
                 GestureDetector(
                   onTap: widget.onClose,

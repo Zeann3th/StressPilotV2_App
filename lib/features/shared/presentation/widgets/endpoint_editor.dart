@@ -310,6 +310,35 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     }
   }
 
+  Future<void> _execute() async {
+    final provider = context.read<EndpointProvider>();
+    provider.setResponsePanelVisible(true);
+
+    dynamic bodyPayload = _bodyCtrl.text;
+    try {
+      if (bodyPayload.trim().startsWith('{') || bodyPayload.trim().startsWith('[')) {
+        bodyPayload = jsonDecode(bodyPayload);
+      }
+    } catch (_) {}
+
+    final transientData = {
+      'url': _urlCtrl.text,
+      'httpMethod': _method,
+      'httpHeaders': _headers,
+      'httpParameters': _params,
+      'body': bodyPayload,
+      'successCondition': _successConditionCtrl.text,
+    };
+
+    provider.updateTransientState(widget.endpoint.id, transientData);
+
+    try {
+      await provider.executeEndpoint(widget.endpoint.id, transientData);
+    } catch (e) {
+      if (mounted) PilotToast.show(context, 'Execution failed: $e', isError: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final border = AppColors.border;
@@ -377,6 +406,13 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                       PilotButton.ghost(
                         icon: LucideIcons.save,
                         onPressed: _save,
+                        compact: true,
+                      ),
+                      const SizedBox(width: 8),
+                      PilotButton.primary(
+                        icon: LucideIcons.play,
+                        label: 'Run',
+                        onPressed: _execute,
                         compact: true,
                       ),
                     ],
@@ -467,197 +503,193 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                       ),
                     ),
 
-                    MouseRegion(
-                      cursor: SystemMouseCursors.resizeRow,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onVerticalDragUpdate: (d) {
-                          setState(() {
-                            _responsePanelHeight = (_responsePanelHeight - d.delta.dy)
-                                .clamp(40.0, totalH - 100.0);
-                          });
-                        },
-                        child: Container(
-                          height: 8,
-                          color: border.withValues(alpha: 0.1),
-                          alignment: Alignment.center,
+                    if (endpointProvider.isResponsePanelVisible) ...[
+                      MouseRegion(
+                        cursor: SystemMouseCursors.resizeRow,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onVerticalDragUpdate: (d) {
+                            setState(() {
+                              _responsePanelHeight = (_responsePanelHeight - d.delta.dy)
+                                  .clamp(40.0, totalH - 100.0);
+                            });
+                          },
                           child: Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: border.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(2),
+                            height: 8,
+                            color: border.withValues(alpha: 0.1),
+                            alignment: Alignment.center,
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: border.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
 
-                    SizedBox(
-                      height: respH,
-                      child: Container(
-                        color: bg,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
+                      SizedBox(
+                        height: respH,
+                        child: Container(
+                          color: bg,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
 
-                            Container(
-                              height: 36,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: surface,
-                                border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.1))),
-                              ),
-                              child: Row(
-                                children: [
-                                  _buildRespTab('Response', !_showRaw, secondaryText),
-                                  const SizedBox(width: 4),
-                                  _buildRespTab('Raw', _showRaw, secondaryText),
-                                  const Spacer(),
-                                  if (_statusCode != null) ...[
-                                    _buildStatusBadge(_isSuccess ?? (_statusCode! < 400), _statusCode!),
-                                    const SizedBox(width: 10),
-                                    Text('${_responseTime}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono')),
-                                  ],
-                                  const SizedBox(width: 8),
-                                  PilotButton.ghost(
-                                    icon: LucideIcons.search,
-                                    compact: true,
-                                    onPressed: () {
-                                      setState(() {
-                                        _showSearch = !_showSearch;
-                                        if (_showSearch) _searchFocusNode.requestFocus();
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            if (_showSearch)
                               Container(
-                                height: 38,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                height: 36,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
                                 decoration: BoxDecoration(
                                   color: surface,
                                   border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.1))),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(LucideIcons.search, size: 14, color: secondaryText),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _searchCtrl,
-                                        focusNode: _searchFocusNode,
-                                        textInputAction: TextInputAction.next,
-                                        decoration: const InputDecoration(
-                                          hintText: 'Find in response...',
-                                          border: InputBorder.none,
-                                          isDense: true,
-                                        ),
-                                        style: TextStyle(fontSize: 13, color: textColor),
-                                        onChanged: (v) {
-                                          setState(() {
-                                            _currentSearchMatchIndex = 0;
-                                          });
-                                        },
-                                        onSubmitted: (_) {
-                                          if (_totalMatchesCount > 0) {
-                                            setState(() {
-                                              _currentSearchMatchIndex = (_currentSearchMatchIndex + 1) % _totalMatchesCount;
-                                            });
-                                            _searchFocusNode.requestFocus();
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                    if (_totalMatchesCount > 0) ...[
-                                      Text(
-                                        '${_currentSearchMatchIndex + 1} / $_totalMatchesCount',
-                                        style: TextStyle(fontSize: 11, color: secondaryText, fontFamily: 'JetBrains Mono'),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      PilotButton.ghost(
-                                        icon: LucideIcons.chevronUp,
-                                        compact: true,
-                                        onPressed: () {
-                                          if (_totalMatchesCount > 0) {
-                                            setState(() {
-                                              _currentSearchMatchIndex = (_currentSearchMatchIndex - 1 + _totalMatchesCount) % _totalMatchesCount;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                      PilotButton.ghost(
-                                        icon: LucideIcons.chevronDown,
-                                        compact: true,
-                                        onPressed: () {
-                                          if (_totalMatchesCount > 0) {
-                                            setState(() {
-                                              _currentSearchMatchIndex = (_currentSearchMatchIndex + 1) % _totalMatchesCount;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                      const VerticalDivider(width: 16, indent: 8, endIndent: 8),
+                                    _buildRespTab('Response', !_showRaw, secondaryText),
+                                    const SizedBox(width: 4),
+                                    _buildRespTab('Raw', _showRaw, secondaryText),
+                                    const Spacer(),
+                                    if (_statusCode != null) ...[
+                                      _buildStatusBadge(_isSuccess ?? (_statusCode! < 400), _statusCode!),
+                                      const SizedBox(width: 10),
+                                      Text('${_responseTime}ms', style: TextStyle(color: secondaryText, fontSize: 12, fontFamily: 'JetBrains Mono')),
                                     ],
-                                    PilotButton.ghost(
-                                      icon: LucideIcons.x,
-                                      compact: true,
-                                      onPressed: () => setState(() {
-                                        _showSearch = false;
-                                        _searchCtrl.clear();
-                                        _totalMatchesCount = 0;
-                                        _currentSearchMatchIndex = 0;
-                                      }),
+                                    const SizedBox(width: 8),
+                                    _IconButton(
+                                      icon: LucideIcons.minus,
+                                      onTap: () => endpointProvider.setResponsePanelVisible(false),
                                     ),
                                   ],
                                 ),
                               ),
 
-                            Expanded(
-                              child: _response == null
-                                  ? _buildResponseEmptyState(secondaryText)
-                                  : Scrollbar(
-                                      controller: _responseScrollCtrl,
-                                      thumbVisibility: true,
-                                      child: SingleChildScrollView(
+                              if (_showSearch)
+                                Container(
+                                  height: 38,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: surface,
+                                    border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.1))),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(LucideIcons.search, size: 14, color: secondaryText),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _searchCtrl,
+                                          focusNode: _searchFocusNode,
+                                          textInputAction: TextInputAction.next,
+                                          decoration: const InputDecoration(
+                                            hintText: 'Find in response...',
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                          ),
+                                          style: TextStyle(fontSize: 13, color: textColor),
+                                          onChanged: (v) {
+                                            setState(() {
+                                              _currentSearchMatchIndex = 0;
+                                            });
+                                          },
+                                          onSubmitted: (_) {
+                                            if (_totalMatchesCount > 0) {
+                                              setState(() {
+                                                _currentSearchMatchIndex = (_currentSearchMatchIndex + 1) % _totalMatchesCount;
+                                              });
+                                              _searchFocusNode.requestFocus();
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      if (_totalMatchesCount > 0) ...[
+                                        Text(
+                                          '${_currentSearchMatchIndex + 1} / $_totalMatchesCount',
+                                          style: TextStyle(fontSize: 11, color: secondaryText, fontFamily: 'JetBrains Mono'),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        PilotButton.ghost(
+                                          icon: LucideIcons.chevronUp,
+                                          compact: true,
+                                          onPressed: () {
+                                            if (_totalMatchesCount > 0) {
+                                              setState(() {
+                                                _currentSearchMatchIndex = (_currentSearchMatchIndex - 1 + _totalMatchesCount) % _totalMatchesCount;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                        PilotButton.ghost(
+                                          icon: LucideIcons.chevronDown,
+                                          compact: true,
+                                          onPressed: () {
+                                            if (_totalMatchesCount > 0) {
+                                              setState(() {
+                                                _currentSearchMatchIndex = (_currentSearchMatchIndex + 1) % _totalMatchesCount;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                        const VerticalDivider(width: 16, indent: 8, endIndent: 8),
+                                      ],
+                                      PilotButton.ghost(
+                                        icon: LucideIcons.x,
+                                        compact: true,
+                                        onPressed: () => setState(() {
+                                          _showSearch = false;
+                                          _searchCtrl.clear();
+                                          _totalMatchesCount = 0;
+                                          _currentSearchMatchIndex = 0;
+                                        }),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                              Expanded(
+                                child: _response == null
+                                    ? _buildResponseEmptyState(secondaryText)
+                                    : Scrollbar(
                                         controller: _responseScrollCtrl,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(16),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              _showRaw
-                                                  ? SelectableText(
-                                                      _getRawResponse(_response!),
-                                                      style: TextStyle(
-                                                        fontFamily: 'JetBrains Mono',
-                                                        fontSize: 12,
-                                                        color: textColor,
+                                        thumbVisibility: true,
+                                        child: SingleChildScrollView(
+                                          controller: _responseScrollCtrl,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                _showRaw
+                                                    ? SelectableText(
+                                                        _getRawResponse(_response!),
+                                                        style: TextStyle(
+                                                          fontFamily: 'JetBrains Mono',
+                                                          fontSize: 12,
+                                                          color: textColor,
+                                                        ),
+                                                      )
+                                                    : JsonViewer(
+                                                        json: _getResponseData(_response!),
+                                                        searchQuery: _searchCtrl.text,
+                                                        activeMatchIndex: _currentSearchMatchIndex,
+                                                        onMatchesCountChanged: (count) {
+                                                          if (_totalMatchesCount != count) {
+                                                            setState(() => _totalMatchesCount = count);
+                                                          }
+                                                        },
                                                       ),
-                                                    )
-                                                  : JsonViewer(
-                                                      json: _getResponseData(_response!),
-                                                      searchQuery: _searchCtrl.text,
-                                                      activeMatchIndex: _currentSearchMatchIndex,
-                                                      onMatchesCountChanged: (count) {
-                                                        if (_totalMatchesCount != count) {
-                                                          setState(() => _totalMatchesCount = count);
-                                                        }
-                                                      },
-                                                    ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                            ),
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 );
               },
