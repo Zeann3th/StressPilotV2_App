@@ -56,30 +56,20 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
           Container(
             height: 40,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchCtrl,
-                    style: AppTypography.body.copyWith(fontSize: 12),
-                    decoration: InputDecoration(
-                      hintText: 'Search...',
-                      hintStyle: AppTypography.body.copyWith(
-                        color: AppColors.textDisabled,
-                        fontSize: 12,
-                      ),
-                      prefixIcon: const Icon(LucideIcons.search, size: 14),
-                      border: InputBorder.none,
-                      isDense: true,
-                    ),
-                    onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
-                  ),
+            child: TextField(
+              controller: _searchCtrl,
+              style: AppTypography.body.copyWith(fontSize: 12),
+              decoration: InputDecoration(
+                hintText: 'Search...',
+                hintStyle: AppTypography.body.copyWith(
+                  color: AppColors.textDisabled,
+                  fontSize: 12,
                 ),
-                _IconButton(
-                  icon: LucideIcons.panelLeftClose,
-                  onTap: widget.onCollapse,
-                ),
-              ],
+                prefixIcon: const Icon(LucideIcons.search, size: 14),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
             ),
           ),
           Expanded(

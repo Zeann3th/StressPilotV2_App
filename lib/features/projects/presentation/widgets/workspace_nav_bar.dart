@@ -126,16 +126,10 @@ class _NavIconButtonState extends State<_NavIconButton> {
         onExit: (_) => setState(() => _isHovered = false),
         child: GestureDetector(
           onTap: widget.onPressed,
-          child: AnimatedContainer(
-            duration: AppDurations.micro,
+          child: Container(
             width: 32,
             height: 28,
-            decoration: BoxDecoration(
-              color: widget.isActive 
-                ? AppColors.activeItem 
-                : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-              borderRadius: AppRadius.br4,
-            ),
+            color: Colors.transparent,
             child: Icon(
               widget.icon,
               size: 16,
