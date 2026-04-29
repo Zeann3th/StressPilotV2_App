@@ -12,13 +12,16 @@ class EnvironmentProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   int _tempIdCounter = 0;
+  int? _currentEnvironmentId;
 
   List<EnvironmentVariable> get variables => _variables;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int? get currentEnvironmentId => _currentEnvironmentId;
   bool get hasChanges => _calculateHasChanges();
 
   Future<void> loadVariables(int environmentId) async {
+    _currentEnvironmentId = environmentId;
     _isLoading = true;
     _error = null;
     notifyListeners();

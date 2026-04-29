@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
-import 'package:stress_pilot/core/themes/components/components.dart';
 
 class EnvironmentPage extends StatefulWidget {
   final int environmentId;
@@ -38,9 +36,8 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
       backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
-          FleetPageBar(
-            title: 'Environment — ${widget.projectName}',
-            actions: [_SaveButton(environmentId: widget.environmentId)],
+          const FleetPageBar(
+            title: 'Environment Settings',
           ),
           Expanded(
             child: Padding(
@@ -68,37 +65,6 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SaveButton extends StatelessWidget {
-  final int environmentId;
-  const _SaveButton({required this.environmentId});
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<EnvironmentProvider>();
-    final hasChanges = provider.hasChanges;
-
-    return PilotButton.primary(
-      onPressed: hasChanges && !provider.isLoading
-          ? () async {
-              try {
-                await provider.saveChanges(environmentId);
-                if (context.mounted) {
-                  PilotToast.show(context, 'Changes saved successfully');
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  PilotToast.show(context, 'Error: $e', isError: true);
-                }
-              }
-            }
-          : null,
-      icon: provider.isLoading ? LucideIcons.refreshCcw : LucideIcons.save,
-      compact: true,
-      tooltip: provider.isLoading ? 'Saving...' : 'Save Changes',
     );
   }
 }

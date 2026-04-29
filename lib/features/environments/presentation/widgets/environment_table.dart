@@ -55,11 +55,18 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 top: 0,
                 bottom: 0,
                 child: Center(
-                  child: PilotButton.primary(
-                    onPressed: () => provider.addVariable(),
-                    icon: LucideIcons.plus,
-                    compact: true,
-                    tooltip: 'Add Variable',
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _SaveButton(environmentId: provider.currentEnvironmentId ?? 0),
+                      const SizedBox(width: 8),
+                      PilotButton.primary(
+                        onPressed: () => provider.addVariable(),
+                        icon: LucideIcons.plus,
+                        compact: true,
+                        tooltip: 'Add Variable',
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -165,6 +172,37 @@ class _EmptyState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SaveButton extends StatelessWidget {
+  final int environmentId;
+  const _SaveButton({required this.environmentId});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<EnvironmentProvider>();
+    final hasChanges = provider.hasChanges;
+
+    return PilotButton.primary(
+      onPressed: hasChanges && !provider.isLoading
+          ? () async {
+              try {
+                await provider.saveChanges(environmentId);
+                if (context.mounted) {
+                  PilotToast.show(context, 'Changes saved successfully');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  PilotToast.show(context, 'Error: $e', isError: true);
+                }
+              }
+            }
+          : null,
+      icon: provider.isLoading ? LucideIcons.refreshCcw : LucideIcons.save,
+      compact: true,
+      tooltip: provider.isLoading ? 'Saving...' : 'Save Changes',
     );
   }
 }
