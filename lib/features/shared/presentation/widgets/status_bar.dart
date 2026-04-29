@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
+import 'package:stress_pilot/core/system/app_state_manager.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class StatusBar extends StatelessWidget {
@@ -13,6 +15,9 @@ class StatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final stateManager = context.watch<AppStateManager>();
+    final isIndexing = stateManager.isRecovering('Backend Process');
+
     return Container(
       height: 22,
       color: AppColors.sidebarBackground,
@@ -25,6 +30,10 @@ class StatusBar extends StatelessWidget {
               style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
             ),
           const Spacer(),
+          if (isIndexing) ...[
+            const _IndexingIndicator(),
+            const SizedBox(width: 8),
+          ],
           _StatusIconButton(
             icon: LucideIcons.history,
             tooltip: 'Recent Runs',
@@ -32,6 +41,54 @@ class StatusBar extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _IndexingIndicator extends StatefulWidget {
+  const _IndexingIndicator();
+
+  @override
+  State<_IndexingIndicator> createState() => _IndexingIndicatorState();
+}
+
+class _IndexingIndicatorState extends State<_IndexingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        RotationTransition(
+          turns: _ctrl,
+          child: Icon(LucideIcons.loader2, size: 10, color: AppColors.accent),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          'Indexing...',
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: 10,
+          ),
+        ),
+      ],
     );
   }
 }

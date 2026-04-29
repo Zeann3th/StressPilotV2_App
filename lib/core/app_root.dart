@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -52,10 +54,17 @@ class _AppRootState extends State<AppRoot> {
 
   Future<void> _init() async {
     try {
-      AppLogger.info('Starting application initialization', name: 'AppRoot');
+      AppLogger.info('Starting application initialization (non-blocking)', name: 'AppRoot');
+
+      // Core sync/fast initializations
+      await getIt<ThemeManager>().initialize();
+      await getIt<ProjectProvider>().initialize();
+      await getIt<KeymapProvider>().initialize();
+      await getIt<PluginCapabilityRepository>().initialize();
 
       final appStateManager = getIt<AppStateManager>();
 
+      // Register background tasks
       appStateManager.register('Backend Process', () async {
         await getIt<ProcessManager>().startBackend(
           attachLogs: kDebugMode,
@@ -70,22 +79,14 @@ class _AppRootState extends State<AppRoot> {
         await getIt<SessionManager>().initializeSession();
       });
 
-      try {
-        await appStateManager.recover('Backend Process');
-      } catch (e) {
-        AppLogger.error('Backend startup failed/timed out, continuing in offline mode', name: 'AppRoot', error: e);
-      }
+      // Launch background processes
+      unawaited(appStateManager.recover('Backend Process').catchError((e) {
+        AppLogger.error('Backend background startup failed', name: 'AppRoot', error: e);
+      }));
 
-      try {
-        await appStateManager.recover('Session Manager');
-      } catch (e) {
-        AppLogger.error('Session initialization failed, continuing in offline mode', name: 'AppRoot', error: e);
-      }
-
-      await getIt<ThemeManager>().initialize();
-      await getIt<ProjectProvider>().initialize();
-      await getIt<KeymapProvider>().initialize();
-      await getIt<PluginCapabilityRepository>().initialize();
+      unawaited(appStateManager.recover('Session Manager').catchError((e) {
+        AppLogger.error('Session background initialization failed', name: 'AppRoot', error: e);
+      }));
 
       if (mounted) {
         setState(() {
@@ -103,7 +104,7 @@ class _AppRootState extends State<AppRoot> {
         });
       }
 
-      AppLogger.info('Application initialized (Offline Mode compatible)', name: 'AppRoot');
+      AppLogger.info('Application shell initialized', name: 'AppRoot');
     } catch (e, st) {
 
       AppLogger.critical(
