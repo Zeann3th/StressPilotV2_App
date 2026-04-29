@@ -6,13 +6,13 @@ abstract class AppColors {
   static const baseBackground    = Color(0xFF1E1F22);
   static const sidebarBackground = Color(0xFF23242A);
   static const elevatedSurface   = Color(0xFF2B2C33);
-  static const activeItem        = Color(0xFF2E436E); // Fleet active row blue
+  static const activeItem        = Color(0xFF383A47); // Fleet active row
   static const hoverItem         = Color(0xFF2E2F38);
   static const accent            = Color(0xFF7B68EE);
   static const accentHover       = Color(0xFF8B7BEE);
 
-  static const border            = Color(0x1FFFFFFF); // rgba(255,255,255,0.12)
-  static const divider           = Color(0x14FFFFFF); // rgba(255,255,255,0.08)
+  static const border            = Color(0x14FFFFFF); // rgba(255,255,255,0.08)
+  static const divider           = Color(0x0FFFFFFF); // rgba(255,255,255,0.06)
 
   static const textPrimary       = Color(0xFFDCD9D0);
   static const textSecondary     = Color(0xFF7E7C75);
@@ -89,35 +89,15 @@ abstract class AppDurations {
 
 abstract class AppShadows {
 
-  static List<BoxShadow> get panel => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.25),
-      blurRadius: 8,
-      offset: const Offset(2, 0),
-    ),
-  ];
-
-  static List<BoxShadow> get card => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.3),
-      blurRadius: 12,
-      offset: const Offset(0, 4),
-    ),
-  ];
-
-  static List<BoxShadow> get subtle => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.15),
-      blurRadius: 4,
-      offset: const Offset(0, 1),
-    ),
-  ];
+  static List<BoxShadow> get panel => [];
+  static List<BoxShadow> get card => [];
+  static List<BoxShadow> get subtle => [];
 }
 
 abstract class AppRadius {
-  static const r4  = Radius.circular(6);   // buttons, inputs, chips
-  static const r6  = Radius.circular(8);   // panels, cards
-  static const r8  = Radius.circular(12);  // dialogs
+  static const r4  = Radius.circular(4);   // buttons, inputs, chips
+  static const r6  = Radius.circular(6);   // panels, cards
+  static const r8  = Radius.circular(8);   // dialogs
 
   static const br4  = BorderRadius.all(r4);
   static const br6  = BorderRadius.all(r6);
