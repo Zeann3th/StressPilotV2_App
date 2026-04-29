@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
@@ -29,23 +30,38 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
+        // Table Toolbar
+        Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Stack(
             children: [
-              SizedBox(
-                width: 320,
-                child: PilotInput(
-                  placeholder: 'Search variables...',
-                  onChanged: (v) => setState(() => _search = v),
-                  prefixIcon: Icons.search_rounded,
+              // Center: Search Bar
+              Positioned.fill(
+                child: Center(
+                  child: SizedBox(
+                    width: 400,
+                    child: PilotInput(
+                      placeholder: 'Search variables...',
+                      onChanged: (v) => setState(() => _search = v),
+                      prefixIcon: LucideIcons.search,
+                    ),
+                  ),
                 ),
               ),
-              const Spacer(),
-              PilotButton.primary(
-                onPressed: () => provider.addVariable(),
-                icon: Icons.add_rounded,
-                label: 'Add Variable',
+              // Right: Actions
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: PilotButton.primary(
+                    onPressed: () => provider.addVariable(),
+                    icon: LucideIcons.plus,
+                    compact: true,
+                    tooltip: 'Add Variable',
+                  ),
+                ),
               ),
             ],
           ),
@@ -284,8 +300,10 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
               duration: AppDurations.micro,
               opacity: _isHovered ? 1.0 : 0.0,
               child: PilotButton.ghost(
-                icon: Icons.delete_outline_rounded,
+                icon: LucideIcons.trash2,
                 onPressed: widget.onDelete,
+                compact: true,
+                tooltip: 'Delete Variable',
               ),
             ),
           ],

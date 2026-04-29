@@ -37,52 +37,55 @@ class WorkspaceNavBar extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(child: MoveWindow()),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          // Left: Sidebar toggle
+          Positioned(
+            left: AppSpacing.md,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _NavIconButton(
+                icon: isSidebarOpen ? LucideIcons.panelLeftClose : LucideIcons.panelLeftOpen,
+                tooltip: isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar',
+                onPressed: onToggleSidebar,
+                isActive: isSidebarOpen,
+              ),
+            ),
+          ),
+
+          // Center: Project name picker (mathematically centered)
+          Positioned.fill(
+            child: Center(
+              child: _ProjectNameButton(projectName: project?.name ?? 'No Project'),
+            ),
+          ),
+
+          // Right: Controls
+          Positioned(
+            right: AppSpacing.md,
+            top: 0,
+            bottom: 0,
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Left: Sidebar toggle
-                _NavIconButton(
-                  icon: isSidebarOpen ? LucideIcons.panelLeftClose : LucideIcons.panelLeftOpen,
-                  tooltip: isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar',
-                  onPressed: onToggleSidebar,
-                  isActive: isSidebarOpen,
-                ),
-                const SizedBox(width: 12),
-
-                // Center: Project name picker
-                Expanded(
-                  child: Center(
-                    child: _ProjectNameButton(projectName: project?.name ?? 'No Project'),
+                _PlayStopButton(project: project, activeTab: activeTab),
+                if (project != null && project.environmentId != 0) ...[
+                  const SizedBox(width: 4),
+                  _EnvIconButton(
+                    environmentId: project.environmentId,
+                    projectName: project.name,
                   ),
+                ],
+                const SizedBox(width: 12),
+                _NavIconButton(
+                  icon: LucideIcons.shoppingBag,
+                  tooltip: 'Marketplace',
+                  onPressed: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
                 ),
-
-                // Right: Controls
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Play + Env controls moved here
-                    _PlayStopButton(project: project, activeTab: activeTab),
-                    if (project != null && project.environmentId != 0) ...[
-                      const SizedBox(width: 4),
-                      _EnvIconButton(
-                        environmentId: project.environmentId,
-                        projectName: project.name,
-                      ),
-                    ],
-                    const SizedBox(width: 12),
-                    _NavIconButton(
-                      icon: LucideIcons.shoppingBag,
-                      tooltip: 'Marketplace',
-                      onPressed: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
-                    ),
-                    const SizedBox(width: 4),
-                    _NavIconButton(
-                      icon: LucideIcons.settings,
-                      tooltip: 'Settings',
-                      onPressed: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
-                    ),
-                  ],
+                const SizedBox(width: 4),
+                _NavIconButton(
+                  icon: LucideIcons.settings,
+                  tooltip: 'Settings',
+                  onPressed: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
                 ),
               ],
             ),

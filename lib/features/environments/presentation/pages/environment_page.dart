@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
@@ -95,8 +96,9 @@ class _SaveButton extends StatelessWidget {
               }
             }
           : null,
-      icon: provider.isLoading ? null : Icons.check_rounded,
-      label: provider.isLoading ? 'Saving...' : 'Save Changes',
+      icon: provider.isLoading ? LucideIcons.refreshCcw : LucideIcons.save,
+      compact: true,
+      tooltip: provider.isLoading ? 'Saving...' : 'Save Changes',
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class SidebarSectionHeader extends StatelessWidget {
@@ -24,6 +25,12 @@ class SidebarSectionHeader extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         child: Row(
           children: [
+            Icon(
+              isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 label.toUpperCase(),

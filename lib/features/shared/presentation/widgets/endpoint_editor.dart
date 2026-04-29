@@ -363,7 +363,6 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
       _stopTimer();
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final border = AppColors.border;
@@ -372,7 +371,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     final bg = AppColors.baseBackground;
     final surface = AppColors.sidebarBackground;
 
-    context.watch<EndpointProvider>();
+    final endpointProvider = context.watch<EndpointProvider>();
     _loadResults();
 
     return KeyboardListener(
@@ -921,6 +920,43 @@ class _UrlField extends StatelessWidget {
         hintText: 'https://api.example.com/v1/resource',
         hintStyle: AppTypography.code.copyWith(color: AppColors.textDisabled, fontSize: 13),
         border: InputBorder.none,
+      ),
+    );
+  }
+}
+
+class _IconButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _IconButton({required this.icon, required this.onTap});
+
+  @override
+  State<_IconButton> createState() => _IconButtonState();
+}
+
+class _IconButtonState extends State<_IconButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: _isHovered ? AppColors.hoverItem : Colors.transparent,
+            borderRadius: AppRadius.br4,
+          ),
+          child: Icon(
+            widget.icon,
+            size: 14,
+            color: _isHovered ? AppColors.accent : AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }

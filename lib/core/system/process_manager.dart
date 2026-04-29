@@ -265,26 +265,9 @@ class ProcessManager {
     final javaPath = await _getJavaExecutable();
     final workingDir = _getExecutableDir();
 
-    final logDir = Platform.isWindows
-        ? (Platform.environment['APPDATA'] ?? workingDir)
-        : (Platform.environment['HOME'] ?? workingDir);
-    final logFile = File(path.join(logDir, 'stresspilot', 'pilot.log'));
-    await logFile.parent.create(recursive: true);
-    final sink = logFile.openWrite(mode: FileMode.append);
-
-    void fileLog(String msg) {
-      sink.writeln('[${DateTime.now()}] $msg');
-    }
-
-    fileLog('=== startBackend called ===');
-    fileLog('javaPath: $javaPath (exists: ${File(javaPath).existsSync()})');
-    fileLog('jarPath: $jarPath (exists: ${File(jarPath).existsSync()})');
-    fileLog('workingDir: $workingDir');
+    AppLogger.info('Starting backend: java=$javaPath, jar=$jarPath', name: _logName);
 
     if (!await File(jarPath).exists()) {
-      fileLog('CRITICAL: JAR file not found, aborting.');
-      await sink.flush();
-      await sink.close();
       AppLogger.critical('JAR file not found at $jarPath', name: _logName);
       return;
     }
@@ -301,35 +284,24 @@ class ProcessManager {
         workingDirectory: workingDir,
       );
 
-      fileLog('Process started PID=${process.pid}');
-
       final pilotProcess = PilotProcess('backend');
       pilotProcess.process = process;
       _processes['backend'] = pilotProcess;
 
       if (!kDebugMode) {
         process.stdout.transform(utf8.decoder).listen((data) {
-          sink.write(data);
           AppLogger.debug(data.trim(), name: 'backend.stdout');
         });
         process.stderr.transform(utf8.decoder).listen((data) {
-          sink.write('[ERR] $data');
           AppLogger.error(data.trim(), name: 'backend.stderr');
         });
         process.exitCode.then((code) async {
-          fileLog('Process exited with code: $code');
           AppLogger.error('Backend process exited with code: $code', name: _logName);
-          await sink.flush();
-          await sink.close();
           _processes.remove('backend');
           if (onExit != null) {
             onExit(code);
           }
         });
-      } else {
-
-        await sink.flush();
-        await sink.close();
       }
 
       _setupLogging(pilotProcess, attachLogs);
@@ -337,9 +309,6 @@ class ProcessManager {
       AppLogger.info('Backend started (pid=${process.pid})', name: _logName);
       await _waitForHealth();
     } catch (e, st) {
-      fileLog('FAILED TO START: $e\n$st');
-      await sink.flush();
-      await sink.close();
       AppLogger.critical('Failed to start backend', name: _logName, error: e, stackTrace: st);
       rethrow;
     }

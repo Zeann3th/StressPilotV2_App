@@ -11,6 +11,7 @@ class PilotButton extends StatefulWidget {
   final bool compact;
   final Color? foregroundOverride;
   final Color? backgroundOverride;
+  final String? tooltip;
 
   const PilotButton({
     super.key,
@@ -21,6 +22,7 @@ class PilotButton extends StatefulWidget {
     this.compact = false,
     this.foregroundOverride,
     this.backgroundOverride,
+    this.tooltip,
   });
 
   const PilotButton.primary({
@@ -31,6 +33,7 @@ class PilotButton extends StatefulWidget {
     this.compact = false,
     this.foregroundOverride,
     this.backgroundOverride,
+    this.tooltip,
   }) : variant = PilotButtonVariant.primary;
 
   const PilotButton.ghost({
@@ -41,6 +44,7 @@ class PilotButton extends StatefulWidget {
     this.compact = false,
     this.foregroundOverride,
     this.backgroundOverride,
+    this.tooltip,
   }) : variant = PilotButtonVariant.ghost;
 
   const PilotButton.danger({
@@ -51,6 +55,7 @@ class PilotButton extends StatefulWidget {
     this.compact = false,
     this.foregroundOverride,
     this.backgroundOverride,
+    this.tooltip,
   }) : variant = PilotButtonVariant.danger;
 
   @override
@@ -68,7 +73,6 @@ class _PilotButtonState extends State<PilotButton> {
 
     Color bgColor;
     Color textColor;
-    Color borderColor;
 
     switch (widget.variant) {
       case PilotButtonVariant.primary:
@@ -79,10 +83,7 @@ class _PilotButtonState extends State<PilotButton> {
         } else {
           bgColor = AppColors.accent;
         }
-        textColor = Colors.white;
-        borderColor = _isFocused
-            ? Colors.white.withValues(alpha: 0.5)
-            : Colors.transparent;
+        textColor = AppColors.textPrimary;
         break;
 
       case PilotButtonVariant.ghost:
@@ -96,9 +97,6 @@ class _PilotButtonState extends State<PilotButton> {
         textColor = (_isHovered || _isFocused)
             ? AppColors.accent
             : AppColors.textPrimary;
-        borderColor = _isFocused
-            ? AppColors.accent
-            : AppColors.border;
         break;
 
       case PilotButtonVariant.danger:
@@ -110,9 +108,6 @@ class _PilotButtonState extends State<PilotButton> {
           bgColor = Colors.transparent;
         }
         textColor = AppColors.error;
-        borderColor = _isFocused
-            ? AppColors.error
-            : AppColors.error.withValues(alpha: 0.4);
         break;
     }
 
@@ -123,10 +118,10 @@ class _PilotButtonState extends State<PilotButton> {
       bgColor = widget.backgroundOverride!;
     }
 
-    final vPad = widget.compact ? 6.0 : 8.0;
-    final hPad = widget.compact ? 10.0 : 16.0;
+    final vPad = widget.compact ? 4.0 : 6.0;
+    final hPad = widget.compact ? 8.0 : 12.0;
 
-    return FocusableActionDetector(
+    Widget child = FocusableActionDetector(
       mouseCursor: widget.onPressed != null
           ? SystemMouseCursors.click
           : SystemMouseCursors.forbidden,
@@ -144,30 +139,17 @@ class _PilotButtonState extends State<PilotButton> {
           duration: AppDurations.short,
           padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
           decoration: BoxDecoration(
-            color: widget.variant == PilotButtonVariant.primary && !_isHovered && !_isPressed && !_isFocused
-                ? null
-                : bgColor,
-            gradient: widget.variant == PilotButtonVariant.primary && !_isHovered && !_isPressed && !_isFocused
-                ? AppGradients.green(isDark)
-                : null,
-            borderRadius: AppRadius.br8,
-            border: Border.all(color: borderColor, width: _isFocused ? 2 : 1),
-            boxShadow: _isFocused
-                ? [
-                    BoxShadow(
-                      color: borderColor.withValues(alpha: 0.3),
-                      blurRadius: 4,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : [],
+            color: bgColor,
+            borderRadius: AppRadius.br4,
+            border: _isFocused ? Border.all(color: AppColors.accent, width: 1) : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (widget.icon != null) ...[
-                Icon(widget.icon, size: 15, color: textColor),
-                if (widget.label != null) const SizedBox(width: 6),
+                Icon(widget.icon, size: 16, color: textColor),
+                if (widget.label != null) const SizedBox(width: 8),
               ],
               if (widget.label != null)
                 Text(
@@ -182,5 +164,10 @@ class _PilotButtonState extends State<PilotButton> {
         ),
       ),
     );
+
+    if (widget.tooltip != null) {
+      return Tooltip(message: widget.tooltip!, child: child);
+    }
+    return child;
   }
 }

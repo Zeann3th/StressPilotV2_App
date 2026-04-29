@@ -87,7 +87,7 @@ class _IndexingIndicatorState extends State<_IndexingIndicator>
       children: [
         RotationTransition(
           turns: _ctrl,
-          child: Icon(LucideIcons.loader2, size: 10, color: AppColors.accent),
+          child: Icon(LucideIcons.refreshCcw, size: 10, color: AppColors.accent),
         ),
         const SizedBox(width: 4),
         Text(
