@@ -99,6 +99,7 @@ class _SettingsTableState extends State<SettingsTable> {
                   onPressed: () => setState(() => _selectedCategory = cat),
                   foregroundOverride: isSelected ? AppColors.accent : AppColors.textSecondary,
                   backgroundOverride: isSelected ? AppColors.accent.withValues(alpha: 0.1) : null,
+                  alignment: MainAxisAlignment.start,
                 ),
               );
             },

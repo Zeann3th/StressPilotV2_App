@@ -636,20 +636,17 @@ class _TypeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 36,
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(3),
       ),
-      child: Center(
-        child: Text(
-          type,
-          style: AppTypography.codeSm.copyWith(
-            fontSize: 9,
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
+      child: Text(
+        type,
+        style: AppTypography.codeSm.copyWith(
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          color: color,
         ),
       ),
     );

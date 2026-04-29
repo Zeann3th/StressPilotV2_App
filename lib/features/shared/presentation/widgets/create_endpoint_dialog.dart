@@ -3,7 +3,6 @@ import 'dart:async' as async_timer;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
@@ -80,18 +79,27 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
     });
   }
 
-  void _beautifyJson() {
-    try {
-      final content = _bodyCtrl.text.trim();
-      if (content.isEmpty) return;
-      final decoded = jsonDecode(content);
-      const encoder = JsonEncoder.withIndent('  ');
-      setState(() {
-        _bodyCtrl.text = encoder.convert(decoded);
-      });
-    } catch (e) {
-      PilotToast.show(context, 'Invalid JSON', isError: true);
-    }
+  void _scheduleBeautify() {
+    _debounce?.cancel();
+    _debounce = async_timer.Timer(const Duration(milliseconds: 700), () {
+      final text = _bodyCtrl.text.trim();
+      if (text.isEmpty) return;
+      try {
+        final decoded = jsonDecode(text);
+        final pretty = const JsonEncoder.withIndent('  ').convert(decoded);
+        if (pretty != _bodyCtrl.text && mounted) {
+          final sel = _bodyCtrl.selection;
+          setState(() {
+            _bodyCtrl.value = TextEditingValue(
+              text: pretty,
+              selection: sel.isValid && sel.end <= pretty.length
+                  ? sel
+                  : TextSelection.collapsed(offset: pretty.length),
+            );
+          });
+        }
+      } catch (_) {}
+    });
   }
 
   @override
@@ -277,18 +285,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const FieldLabel('Body / Payload'),
-                      PilotButton.ghost(
-                        label: 'Beautify',
-                        icon: LucideIcons.sparkles,
-                        onPressed: _beautifyJson,
-                        compact: true,
-                      ),
-                    ],
-                  ),
+                  const FieldLabel('Body / Payload'),
                   const SizedBox(height: 6),
                   SizedBox(
                     height: 200,
@@ -297,6 +294,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                       placeholder: _getBodyPlaceholder(),
                       maxLines: 10,
                       style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
+                      onChanged: (_) => _scheduleBeautify(),
                     ),
                   ),
                   const SizedBox(height: 24),

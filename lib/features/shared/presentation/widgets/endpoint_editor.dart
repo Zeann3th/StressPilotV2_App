@@ -114,9 +114,14 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     _executionTimer?.cancel();
     _executionTimer = null;
   }
-
   void _loadResults() {
     final provider = context.read<EndpointProvider>();
+    if (provider.isEndpointExecuting(widget.endpoint.id)) {
+      if (_executionTimer == null) _startTimer();
+    } else {
+      _stopTimer();
+    }
+
     final cachedResult = provider.getExecutionResult(widget.endpoint.id);
     if (cachedResult != null) {
       _response = cachedResult;
@@ -332,37 +337,6 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     }
   }
 
-  Future<void> _execute() async {
-    final provider = context.read<EndpointProvider>();
-    provider.setResponsePanelVisible(true);
-    _startTimer();
-
-    dynamic bodyPayload = _bodyCtrl.text;
-    try {
-      if (bodyPayload.trim().startsWith('{') || bodyPayload.trim().startsWith('[')) {
-        bodyPayload = jsonDecode(bodyPayload);
-      }
-    } catch (_) {}
-
-    final transientData = {
-      'url': _urlCtrl.text,
-      'httpMethod': _method,
-      'httpHeaders': _headers,
-      'httpParameters': _params,
-      'body': bodyPayload,
-      'successCondition': _successConditionCtrl.text,
-    };
-
-    provider.updateTransientState(widget.endpoint.id, transientData);
-
-    try {
-      await provider.executeEndpoint(widget.endpoint.id, transientData);
-    } catch (e) {
-      if (mounted) PilotToast.show(context, 'Execution failed: $e', isError: true);
-    } finally {
-      _stopTimer();
-    }
-  }
   @override
   Widget build(BuildContext context) {
     final border = AppColors.border;
@@ -431,13 +405,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                         icon: LucideIcons.save,
                         onPressed: _save,
                         compact: true,
-                      ),
-                      const SizedBox(width: 8),
-                      PilotButton.primary(
-                        icon: LucideIcons.play,
-                        label: 'Run',
-                        onPressed: _execute,
-                        compact: true,
+                        tooltip: 'Save',
                       ),
                     ],
                   ),
@@ -452,22 +420,27 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
               color: bg,
               border: Border(bottom: BorderSide(color: AppColors.divider)),
             ),
-            child: TabBar(
-              controller: _reqTabCtrl,
-              isScrollable: true,
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicatorColor: AppColors.accent,
-              indicatorWeight: 2,
-              dividerColor: Colors.transparent,
-              labelColor: AppColors.textPrimary,
-              unselectedLabelColor: AppColors.textSecondary,
-              labelStyle: AppTypography.label.copyWith(fontWeight: FontWeight.w600),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              tabs: const [
-                Tab(text: 'Params'),
-                Tab(text: 'Headers'),
-                Tab(text: 'Body'),
-                Tab(text: 'Configuration'),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TabBar(
+                  controller: _reqTabCtrl,
+                  isScrollable: true,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicatorColor: AppColors.accent,
+                  indicatorWeight: 2,
+                  dividerColor: Colors.transparent,
+                  labelColor: AppColors.textPrimary,
+                  unselectedLabelColor: AppColors.textSecondary,
+                  labelStyle: AppTypography.label.copyWith(fontWeight: FontWeight.w600),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  tabs: const [
+                    Tab(text: 'Params'),
+                    Tab(text: 'Headers'),
+                    Tab(text: 'Body'),
+                    Tab(text: 'Configuration'),
+                  ],
+                ),
               ],
             ),
           ),

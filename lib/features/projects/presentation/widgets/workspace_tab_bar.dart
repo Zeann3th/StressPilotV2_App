@@ -24,14 +24,22 @@ class WorkspaceTabBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         onReorder: tabProvider.reorderTabs,
         itemCount: tabs.length,
+        proxyDecorator: (child, index, animation) => Material(
+          color: Colors.transparent,
+          child: child,
+        ),
+        buildDefaultDragHandles: false, // Remove default handles
         itemBuilder: (context, index) {
           final tab = tabs[index];
-          return _WorkspaceTabWidget(
+          return ReorderableDragStartListener(
             key: ValueKey('${tab.type}_${tab.id}'),
-            tab: tab,
-            isActive: activeTab == tab,
-            onTap: () => tabProvider.selectTab(tab),
-            onClose: () => tabProvider.closeTab(tab),
+            index: index,
+            child: _WorkspaceTabWidget(
+              tab: tab,
+              isActive: activeTab == tab,
+              onTap: () => tabProvider.selectTab(tab),
+              onClose: () => tabProvider.closeTab(tab),
+            ),
           );
         },
       ),
@@ -46,7 +54,6 @@ class _WorkspaceTabWidget extends StatefulWidget {
   final VoidCallback onClose;
 
   const _WorkspaceTabWidget({
-    super.key,
     required this.tab,
     required this.isActive,
     required this.onTap,

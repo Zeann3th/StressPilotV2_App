@@ -12,6 +12,7 @@ class PilotButton extends StatefulWidget {
   final Color? foregroundOverride;
   final Color? backgroundOverride;
   final String? tooltip;
+  final MainAxisAlignment alignment;
 
   const PilotButton({
     super.key,
@@ -23,6 +24,7 @@ class PilotButton extends StatefulWidget {
     this.foregroundOverride,
     this.backgroundOverride,
     this.tooltip,
+    this.alignment = MainAxisAlignment.center,
   });
 
   const PilotButton.primary({
@@ -34,6 +36,7 @@ class PilotButton extends StatefulWidget {
     this.foregroundOverride,
     this.backgroundOverride,
     this.tooltip,
+    this.alignment = MainAxisAlignment.center,
   }) : variant = PilotButtonVariant.primary;
 
   const PilotButton.ghost({
@@ -45,6 +48,7 @@ class PilotButton extends StatefulWidget {
     this.foregroundOverride,
     this.backgroundOverride,
     this.tooltip,
+    this.alignment = MainAxisAlignment.center,
   }) : variant = PilotButtonVariant.ghost;
 
   const PilotButton.danger({
@@ -56,6 +60,7 @@ class PilotButton extends StatefulWidget {
     this.foregroundOverride,
     this.backgroundOverride,
     this.tooltip,
+    this.alignment = MainAxisAlignment.center,
   }) : variant = PilotButtonVariant.danger;
 
   @override
@@ -144,8 +149,8 @@ class _PilotButtonState extends State<PilotButton> {
             border: _isFocused ? Border.all(color: AppColors.accent, width: 1) : null,
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: widget.alignment == MainAxisAlignment.center ? MainAxisSize.min : MainAxisSize.max,
+            mainAxisAlignment: widget.alignment,
             children: [
               if (widget.icon != null) ...[
                 Icon(widget.icon, size: 16, color: textColor),
