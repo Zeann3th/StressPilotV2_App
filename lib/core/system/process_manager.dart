@@ -219,6 +219,33 @@ class ProcessManager {
     return paths;
   }
 
+  Future<String> _getJsaPath() async {
+    final home = Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'] ?? '';
+    final pilotHome = Platform.environment['PILOT_HOME'] ?? path.join(home, '.pilot');
+    final jsaDir = path.join(pilotHome, 'core', 'scripts');
+    await Directory(jsaDir).create(recursive: true);
+    return path.join(jsaDir, 'app.jsa');
+  }
+
+  Future<void> _generateJsa(String javaPath, String jarPath, String jsaPath) async {
+    AppLogger.info('Generating AppCDS cache...', name: _logName);
+    try {
+      await Process.run(javaPath, [
+        '-Dspring.context.exit=onRefresh',
+        '-XX:ArchiveClassesAtExit=$jsaPath',
+        '-jar',
+        jarPath,
+      ]);
+      if (await File(jsaPath).exists()) {
+        AppLogger.info('AppCDS cache generated at $jsaPath', name: _logName);
+      } else {
+        AppLogger.warning('AppCDS cache generation failed, will start without cache', name: _logName);
+      }
+    } catch (e) {
+      AppLogger.warning('AppCDS generation error: $e', name: _logName);
+    }
+  }
+
   String _getAssetPath(String assetName) {
     if (kDebugMode) {
       return path.join(Directory.current.path, 'assets', assetName);
@@ -276,11 +303,23 @@ class ProcessManager {
       await _makeExecutable(javaPath);
     }
 
+    final jsaPath = await _getJsaPath();
+    if (!await File(jsaPath).exists()) {
+      await _generateJsa(javaPath, jarPath, jsaPath);
+    }
+    final jsaExists = await File(jsaPath).exists();
+
     try {
       final profile = kDebugMode ? 'dev' : 'prod';
+      final args = <String>[
+        if (jsaExists) '-XX:SharedArchiveFile=$jsaPath',
+        '-jar',
+        jarPath,
+        '--spring.profiles.active=$profile',
+      ];
       final process = await Process.start(
         javaPath,
-        ['-jar', jarPath, '--spring.profiles.active=$profile'],
+        args,
         workingDirectory: workingDir,
       );
 
