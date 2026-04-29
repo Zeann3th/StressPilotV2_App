@@ -84,7 +84,6 @@ files:
 
 	@echo "#!/bin/bash"                                                                      > $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "set -e"                                                                          >> $(PACKAGE_DIR)/DEBIAN/postinst
-	@echo "chmod +x /opt/$(BINARY_NAME)/data/flutter_assets/assets/agent/stresspilot-agent" >> $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "update-desktop-database /usr/share/applications || true"                        >> $(PACKAGE_DIR)/DEBIAN/postinst
 	@echo "gtk-update-icon-cache /usr/share/pixmaps || true"                               >> $(PACKAGE_DIR)/DEBIAN/postinst
 
@@ -107,7 +106,6 @@ permissions:
 	chmod 755 $(PACKAGE_DIR)/DEBIAN/postinst
 	chmod 755 $(PACKAGE_DIR)/DEBIAN/prerm
 	chmod +x  $(PACKAGE_DIR)/opt/$(BINARY_NAME)/$(BINARY_NAME)
-	chmod +x  $(PACKAGE_DIR)/opt/$(BINARY_NAME)/data/flutter_assets/assets/agent/stresspilot-agent
 	find $(PACKAGE_DIR)/opt/$(BINARY_NAME)/lib -name "*.so*" -exec chmod 644 {} \; 2>/dev/null || true
 
 deb:

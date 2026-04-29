@@ -4,7 +4,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/agent/presentation/pages/agent_page.dart' show AgentTerminalView;
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
@@ -18,7 +17,6 @@ import 'package:stress_pilot/features/projects/presentation/widgets/workspace_ta
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_canvas.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/bottom_panel_shell.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/endpoint_editor.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/status_bar.dart';
 
@@ -32,7 +30,6 @@ class ProjectWorkspacePage extends StatefulWidget {
 class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
   int? _lastLoadedProjectId;
   double _sidebarWidth = 260;
-  bool _isAgentOpen = false;
   bool _isSidebarOpen = true;
 
   static const double _minSidebarWidth = 180;
@@ -64,7 +61,6 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
     }
   }
 
-  void _toggleAgent() => setState(() => _isAgentOpen = !_isAgentOpen);
   void _toggleSidebar() => setState(() => _isSidebarOpen = !_isSidebarOpen);
 
   @override
@@ -78,56 +74,51 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
         children: [
           WorkspaceNavBar(
             onToggleSidebar: _toggleSidebar,
-            onToggleAgent: _toggleAgent,
             isSidebarOpen: _isSidebarOpen,
-            isAgentOpen: _isAgentOpen,
           ),
           Expanded(
             child: project == null
                 ? const _ProjectSelectionView()
-                : BottomPanelShell(
-                    isOpen: _isAgentOpen,
-                    panel: const _AgentPanel(),
-                    body: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.sm),
-                      child: Row(
-                        children: [
-                          if (_isSidebarOpen) ...[
-                            WorkspaceSidebar(
-                              width: _sidebarWidth,
-                              onCollapse: _toggleSidebar,
-                            ),
-                            // Drag handle
-                            MouseRegion(
-                              cursor: SystemMouseCursors.resizeColumn,
-                              child: GestureDetector(
-                                onHorizontalDragUpdate: (details) {
-                                  setState(() {
-                                    _sidebarWidth = (_sidebarWidth + details.delta.dx)
-                                        .clamp(_minSidebarWidth, _maxSidebarWidth);
-                                  });
-                                },
-                                child: Container(
-                                  width: 6,
-                                  color: Colors.transparent,
-                                  child: Center(
-                                    child: Container(width: 1, color: AppColors.divider),
-                                  ),
+                : Padding(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    child: Row(
+                      children: [
+                        if (_isSidebarOpen) ...[
+                          WorkspaceSidebar(
+                            width: _sidebarWidth,
+                            onCollapse: _toggleSidebar,
+                          ),
+                          // Drag handle
+                          MouseRegion(
+                            cursor: SystemMouseCursors.resizeColumn,
+                            child: GestureDetector(
+                              onHorizontalDragUpdate: (details) {
+                                setState(() {
+                                  _sidebarWidth = (_sidebarWidth + details.delta.dx)
+                                      .clamp(_minSidebarWidth, _maxSidebarWidth);
+                                });
+                              },
+                              child: Container(
+                                width: 6,
+                                color: Colors.transparent,
+                                child: Center(
+                                  child: Container(width: 1, color: AppColors.divider),
                                 ),
                               ),
                             ),
-                          ],
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.baseBackground,
-                                borderRadius: AppRadius.br6,
-                                border: Border.all(color: AppColors.border),
-                                boxShadow: AppShadows.subtle,
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: Column(
-                                children: [
+                          ),
+                        ],
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.baseBackground,
+                              borderRadius: AppRadius.br6,
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: AppShadows.subtle,
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Column(
+                              children: [
                                   const WorkspaceTabBar(),
                                   Expanded(child: _buildTabContent(activeTab)),
                                 ],
@@ -137,12 +128,9 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
                         ],
                       ),
                     ),
-                  ),
           ),
           StatusBar(
             projectName: project?.name,
-            isAgentOpen: _isAgentOpen,
-            onAgentToggle: _toggleAgent,
           ),
         ],
       ),
@@ -158,38 +146,6 @@ class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
       case WorkspaceTabType.endpoint:
         return EndpointEditor(endpoint: activeTab.data as Endpoint);
     }
-  }
-}
-
-// Agent panel embeds the terminal view without Scaffold/AppBar
-class _AgentPanel extends StatelessWidget {
-  const _AgentPanel();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.sidebarBackground,
-      child: Column(
-        children: [
-          Container(
-            height: 32,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.sidebarBackground,
-              border: Border(bottom: BorderSide(color: AppColors.divider)),
-            ),
-            child: Row(
-              children: [
-                Icon(LucideIcons.sparkles, size: 14, color: AppColors.accent),
-                const SizedBox(width: 6),
-                Text('Agent', style: AppTypography.bodyMd.copyWith(color: AppColors.textPrimary)),
-              ],
-            ),
-          ),
-          const Expanded(child: AgentTerminalView()),
-        ],
-      ),
-    );
   }
 }
 

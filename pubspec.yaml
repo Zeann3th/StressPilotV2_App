@@ -56,8 +56,6 @@ dependencies:
   # Process management
   ffi: ^2.1.0
   process_run: ^1.1.1
-  xterm: ^4.0.0
-  flutter_pty: ^0.4.2
 
   # Package info
   package_info_plus: ^8.1.0
@@ -97,7 +95,6 @@ flutter:
     - assets/images/
     - assets/core/
     - assets/fonts/
-    - assets/agent/
     - assets/themes/
 
   fonts:

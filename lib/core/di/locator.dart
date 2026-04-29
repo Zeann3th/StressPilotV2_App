@@ -41,7 +41,6 @@ import 'package:stress_pilot/features/results/data/repositories/results_reposito
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
 import 'package:stress_pilot/features/shared/data/repositories/run_repository_impl.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
-import 'package:stress_pilot/features/agent/presentation/provider/agent_provider.dart';
 
 final getIt = GetIt.instance;
 
@@ -95,8 +94,6 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => SchedulingProvider(getIt()));
   getIt.registerLazySingleton<PluginCapabilityRepository>(
       () => PluginCapabilityRepositoryImpl());
-
-  getIt.registerLazySingleton(() => AgentProvider());
 
   getIt<ResultsProvider>();
 }

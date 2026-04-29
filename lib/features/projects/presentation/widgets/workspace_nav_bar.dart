@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/core/window/window_manager.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
@@ -14,16 +13,12 @@ import 'package:stress_pilot/features/shared/presentation/provider/project_provi
 
 class WorkspaceNavBar extends StatelessWidget {
   final VoidCallback onToggleSidebar;
-  final VoidCallback onToggleAgent;
   final bool isSidebarOpen;
-  final bool isAgentOpen;
 
   const WorkspaceNavBar({
     super.key,
     required this.onToggleSidebar,
-    required this.onToggleAgent,
     required this.isSidebarOpen,
-    required this.isAgentOpen,
   });
 
   @override
@@ -86,13 +81,6 @@ class WorkspaceNavBar extends StatelessWidget {
                       icon: LucideIcons.settings,
                       tooltip: 'Settings',
                       onPressed: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
-                    ),
-                    const SizedBox(width: 4),
-                    _NavIconButton(
-                      icon: LucideIcons.sparkles,
-                      tooltip: 'Agent',
-                      onPressed: onToggleAgent,
-                      isActive: isAgentOpen,
                     ),
                   ],
                 ),

@@ -234,38 +234,6 @@ class ProcessManager {
     }
   }
 
-  String resolveAgentPath() {
-    final exeName = Platform.isWindows ? 'stresspilot-agent.exe' : 'stresspilot-agent';
-    final standardPath = _getAssetPath('agent/$exeName');
-
-    if (kDebugMode) return standardPath;
-
-    if (File(standardPath).existsSync()) {
-      return standardPath;
-    }
-
-    final String executableDir = File(Platform.resolvedExecutable).parent.path;
-    final altPath = path.join(
-      executableDir,
-      'flutter_assets',
-      'agent',
-      exeName,
-    );
-
-    if (File(altPath).existsSync()) {
-      AppLogger.info('Agent found at alternative path: $altPath', name: _logName);
-      return altPath;
-    }
-
-    return standardPath;
-  }
-
-  String resolveAgentSourceDir() {
-    return path.normalize(
-      path.join(_getExecutableDir(), '..', 'stresspilot_agent'),
-    );
-  }
-
   PilotProcess? getProcess(String name) => _processes[name];
 
   Future<void> _makeExecutable(String filePath) async {
@@ -375,62 +343,6 @@ class ProcessManager {
       AppLogger.critical('Failed to start backend', name: _logName, error: e, stackTrace: st);
       rethrow;
     }
-  }
-
-  Future<void> startAgent({bool pipeMode = false, bool pythonMode = false}) async {
-    if (_processes.containsKey('agent')) {
-      return;
-    }
-
-    Process? process;
-    String? workingDir;
-
-    if (pythonMode || kDebugMode) {
-      final agentSourceDir = resolveAgentSourceDir();
-      if (await Directory(agentSourceDir).exists()) {
-        try {
-          process = await Process.start(
-            'powershell.exe',
-            ['-NoProfile', '-Command', 'uv run python src/main.py ${pipeMode ? "--pipe" : ""}'],
-            workingDirectory: agentSourceDir,
-          );
-          workingDir = agentSourceDir;
-        } catch (e) {
-          AppLogger.warning('Failed to start via uv run, trying executable...', name: _logName);
-        }
-      }
-    }
-
-    if (process == null) {
-      final agentPath = resolveAgentPath();
-
-      if (!await File(agentPath).exists()) {
-        AppLogger.error('Agent executable not found at $agentPath', name: _logName);
-        return;
-      }
-
-      await _makeExecutable(agentPath);
-
-      try {
-        final List<String> args = pipeMode ? ['--pipe'] : [];
-        process = await Process.start(agentPath, args);
-        workingDir = path.dirname(agentPath);
-      } catch (e) {
-        AppLogger.error('Failed to start agent executable', name: _logName, error: e);
-        rethrow;
-      }
-    }
-
-    final pilotProcess = PilotProcess('agent');
-    pilotProcess.process = process;
-    _processes['agent'] = pilotProcess;
-
-    _setupLogging(pilotProcess, true);
-    AppLogger.info('Agent started (pid=${process.pid}) in $workingDir', name: _logName);
-  }
-
-  Future<void> stopAgent() async {
-    await stopProcess('agent');
   }
 
   void _setupLogging(PilotProcess p, bool attach) {

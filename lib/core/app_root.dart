@@ -22,7 +22,6 @@ import 'package:stress_pilot/features/projects/presentation/provider/canvas_prov
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
-import 'package:stress_pilot/features/agent/presentation/provider/agent_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/plugin_settings_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
 import 'package:stress_pilot/features/scheduling/presentation/provider/scheduling_provider.dart';
@@ -154,9 +153,6 @@ class _AppRootState extends State<AppRoot> {
         ),
         ChangeNotifierProvider<RunProvider>.value(
           value: getIt<RunProvider>(),
-        ),
-        ChangeNotifierProvider<AgentProvider>.value(
-          value: getIt<AgentProvider>(),
         ),
         ChangeNotifierProvider<ThemeManager>.value(
           value: getIt<ThemeManager>(),
