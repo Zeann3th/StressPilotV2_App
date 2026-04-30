@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:stress_pilot/features/shared/domain/models/run.dart';
+import 'package:stress_pilot/features/results/domain/models/run.dart';
 
 abstract class RunRepository {
   Future<Run> getLastRun(int flowId);

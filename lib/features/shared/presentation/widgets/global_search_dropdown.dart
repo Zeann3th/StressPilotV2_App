@@ -12,8 +12,8 @@ import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/projects/data/repositories/project_repository_impl.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/navigation_item.dart';
 
 class _SearchResults {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/environments/presentation/pages/environment_page.dart';
-import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
-import 'package:stress_pilot/features/projects/presentation/pages/recent_activity_page.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
+import 'package:stress_pilot/features/projects/presentation/pages/workspace_page.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 import 'package:stress_pilot/features/marketplace/presentation/pages/marketplace_page.dart';
@@ -26,15 +26,15 @@ class AppRouter {
     if (settings.name == workspaceRoute) {
       final projectProvider = getIt<ProjectProvider>();
       if (projectProvider.selectedProject == null) {
-        return buildRoute(const RecentActivityPage());
+        return buildRoute(const ProjectsPage());
       }
     }
 
     switch (settings.name) {
       case projectsRoute:
-        return buildRoute(const RecentActivityPage());
+        return buildRoute(const ProjectsPage());
       case workspaceRoute:
-        return buildRoute(const ProjectWorkspacePage());
+        return buildRoute(const WorkspacePage());
       case settingsRoute:
         return buildRoute(const SettingsPage());
       case projectEnvironmentRoute:

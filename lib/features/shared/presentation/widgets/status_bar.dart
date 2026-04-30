@@ -5,7 +5,7 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/system/app_state_manager.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
-import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 
 class StatusBar extends StatelessWidget {
   final String? projectName;

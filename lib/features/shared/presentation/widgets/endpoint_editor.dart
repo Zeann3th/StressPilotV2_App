@@ -7,7 +7,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/endpoints/data/curl_parser.dart';
 import 'package:stress_pilot/features/endpoints/presentation/widgets/json_viewer.dart';
 import 'package:stress_pilot/features/endpoints/presentation/widgets/key_value_editor.dart';

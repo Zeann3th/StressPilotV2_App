@@ -5,8 +5,8 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
-import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 
 class WorkspaceTabBar extends StatelessWidget {
   const WorkspaceTabBar({super.key});

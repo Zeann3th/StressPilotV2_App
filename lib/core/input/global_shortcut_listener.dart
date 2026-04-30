@@ -5,7 +5,7 @@ import 'package:stress_pilot/core/input/keymap_provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/global_search_dropdown.dart';
 
 class GlobalShortcutListener extends StatefulWidget {

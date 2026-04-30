@@ -13,7 +13,7 @@ import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_ty
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 
 class WorkspaceEndpointsList extends StatefulWidget {
   final flow.Flow? selectedFlow;

@@ -1,279 +1,175 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/project/project_topbar.dart';
-import 'package:stress_pilot/features/projects/domain/models/project.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/runs_list_widget.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
-import '../widgets/project/project_table.dart';
-import '../widgets/project/project_empty_states.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/runs_list_widget.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
 
 class ProjectsPage extends StatefulWidget {
-  final int? initialFlowId;
-
-  const ProjectsPage({super.key, this.initialFlowId});
+  const ProjectsPage({super.key});
 
   @override
   State<ProjectsPage> createState() => _ProjectsPageState();
 }
 
 class _ProjectsPageState extends State<ProjectsPage> {
-  final TextEditingController _searchController = TextEditingController();
-  final GlobalKey _topBarKey = GlobalKey();
-  final GlobalKey _analyticsKey = GlobalKey();
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProjectProvider>().loadProjects();
+      if (mounted) context.read<ProjectProvider>().loadProjects();
     });
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void _onNewProject() {
+    ProjectDialogs.showCreateDialog(
+      context,
+      onCreate: (name, description) async {
+        final provider = context.read<ProjectProvider>();
+        final project = await provider.createProject(
+          name: name,
+          description: description,
+        );
+        await provider.selectProject(project);
+        AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bg = AppColors.background;
-    final border = AppColors.border;
-
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
-          const FleetPageBar(title: 'Projects', showBack: false),
-          Expanded(
-            child: Column(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          ProjectTopBar(
-                            key: _topBarKey,
-                            searchController: _searchController,
-                            onRefresh: _handleRefresh,
-                            onAdd: _handleCreate,
-                            onImport: _handleImport,
-                            onExport: _handleExport,
-                            onSearchSubmitted: _handleSearch,
-                            onSearchChanged: () => setState(() {}),
-                          ),
-                          Expanded(child: _buildMainContent()),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      key: _analyticsKey,
-                      height: MediaQuery.of(context).size.height * 0.4,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: border.withValues(alpha: 0.3))),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.elevated,
-                                border: Border.all(color: border.withValues(alpha: 0.3)),
-                                borderRadius: AppRadius.br12,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: AppRadius.br12,
-                                child: RunsListWidget(flowId: widget.initialFlowId),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: AppColors.elevated,
-                                border: Border.all(color: border.withValues(alpha: 0.3)),
-                                borderRadius: AppRadius.br12,
-                              ),
-                              child: const RecentPagesWidget(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+
+          Container(
+            height: AppSpacing.navBarHeight,
+            decoration: BoxDecoration(
+              color: AppColors.baseBackground,
+              border: Border(
+                bottom: BorderSide(color: AppColors.divider, width: 1),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Row(
+              children: [
+                Text(
+                  'StressPilot',
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
+                const Spacer(),
+                _NewProjectButton(onTap: _onNewProject),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: Padding(
+              padding: AppSpacing.pagePadding,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+
+                  Expanded(
+                    flex: 2,
+                    child: _PanelContainer(
+                      child: const Padding(
+                        padding: EdgeInsets.all(AppSpacing.lg),
+                        child: RecentPagesWidget(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.lg),
+
+                  Expanded(
+                    flex: 1,
+                    child: ClipRRect(
+                      borderRadius: AppRadius.br6,
+                      child: _PanelContainer(
+                        child: const RunsListWidget(flowId: null),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildMainContent() {
-    return Consumer<ProjectProvider>(
-      builder: (context, provider, child) {
-        if (provider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+class _PanelContainer extends StatelessWidget {
+  final Widget child;
 
-        if (provider.error != null) {
-          return ProjectErrorState(
-            error: provider.error!,
-            onRetry: () => provider.loadProjects(),
-          );
-        }
+  const _PanelContainer({required this.child});
 
-        if (provider.projects.isEmpty) {
-          return const ProjectEmptyState();
-        }
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.sidebarBackground,
+        borderRadius: AppRadius.br6,
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: child,
+    );
+  }
+}
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ProjectTable(
-            projects: provider.projects,
-            onProjectTap: _handleProjectTap,
-            onEdit: _handleEdit,
-            onDelete: _handleDelete,
+class _NewProjectButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _NewProjectButton({required this.onTap});
+
+  @override
+  State<_NewProjectButton> createState() => _NewProjectButtonState();
+}
+
+class _NewProjectButtonState extends State<_NewProjectButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: AppDurations.short,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 6,
           ),
-        );
-      },
-    );
-  }
-
-  void _handleRefresh() {
-    context.read<ProjectProvider>().loadProjects(
-      searchName: _searchController.text,
-    );
-  }
-
-  void _handleSearch(String query) {
-    context.read<ProjectProvider>().loadProjects(searchName: query);
-  }
-
-  void _handleCreate() {
-    ProjectDialogs.showCreateDialog(
-      context,
-      onCreate: (name, description) async {
-        await context.read<ProjectProvider>().createProject(
-          name: name,
-          description: description,
-        );
-      },
-    );
-  }
-
-  void _handleEdit(Project project) {
-    ProjectDialogs.showEditDialog(
-      context,
-      project: project,
-      onUpdate: (id, name, description) async {
-        await context.read<ProjectProvider>().updateProject(
-          projectId: id,
-          name: name,
-          description: description,
-        );
-      },
-    );
-  }
-
-  void _handleDelete(Project project) {
-    ProjectDialogs.showDeleteDialog(
-      context,
-      project: project,
-      onDelete: (id) async {
-        await context.read<ProjectProvider>().deleteProject(id);
-      },
-    );
-  }
-
-  Future<void> _handleProjectTap(Project project) async {
-    await context.read<ProjectProvider>().selectProject(project);
-    AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
-  }
-
-  Future<void> _handleImport() async {
-    try {
-      await context.read<ProjectProvider>().importProject();
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(
-          content: Text('Project imported successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(
-          content: Text('Failed to import project: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _handleExport() async {
-    final provider = context.read<ProjectProvider>();
-
-    if (provider.projects.isEmpty) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(
-          content: Text('No projects available to export'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    final selectedProject = await showDialog<Project>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Project to Export'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: provider.projects.length,
-            itemBuilder: (context, index) {
-              final project = provider.projects[index];
-              return ListTile(
-                title: Text(project.name),
-                subtitle: Text(project.description),
-                onTap: () => Navigator.of(context).pop(project),
-              );
-            },
+          decoration: BoxDecoration(
+            color: _hovered ? AppColors.accentHover : AppColors.accent,
+            borderRadius: AppRadius.br4,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.plus, size: 14, color: AppColors.textPrimary),
+              const SizedBox(width: 6),
+              Text(
+                'New Project',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-        ],
       ),
     );
-
-    if (selectedProject == null) return;
-
-    try {
-      await provider.exportProject(selectedProject.id, selectedProject.name);
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(
-          content: Text('Project exported successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      AppNavigator.scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(
-          content: Text('Failed to export project: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
   }
 }

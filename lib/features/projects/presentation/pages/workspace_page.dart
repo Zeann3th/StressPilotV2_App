@@ -7,9 +7,9 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/project_provider.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/flow_provider.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace_nav_bar.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/workspace_sidebar.dart';
@@ -20,14 +20,14 @@ import 'package:stress_pilot/features/projects/presentation/widgets/project/proj
 import 'package:stress_pilot/features/shared/presentation/widgets/endpoint_editor.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/status_bar.dart';
 
-class ProjectWorkspacePage extends StatefulWidget {
-  const ProjectWorkspacePage({super.key});
+class WorkspacePage extends StatefulWidget {
+  const WorkspacePage({super.key});
 
   @override
-  State<ProjectWorkspacePage> createState() => _ProjectWorkspacePageState();
+  State<WorkspacePage> createState() => _WorkspacePageState();
 }
 
-class _ProjectWorkspacePageState extends State<ProjectWorkspacePage> {
+class _WorkspacePageState extends State<WorkspacePage> {
   int? _lastLoadedProjectId;
   double _sidebarWidth = 260;
   bool _isSidebarOpen = true;
