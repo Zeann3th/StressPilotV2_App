@@ -8,7 +8,7 @@ class EndpointEditorResponsePanel extends StatelessWidget {
   final Map<String, dynamic>? response;
   final bool showRaw;
   final bool isExecuting;
-  final int elapsedMs;
+  final ValueNotifier<int> elapsedMsNotifier;
   final int? statusCode;
   final int? responseTime;
   final bool? isSuccess;
@@ -32,8 +32,9 @@ class EndpointEditorResponsePanel extends StatelessWidget {
     required this.response,
     required this.showRaw,
     required this.isExecuting,
-    required this.elapsedMs,
+    required this.elapsedMsNotifier,
     required this.statusCode,
+
     required this.responseTime,
     required this.isSuccess,
     required this.onToggleRaw,
@@ -111,7 +112,12 @@ class EndpointEditorResponsePanel extends StatelessWidget {
                           EditorTabButton(label: 'Raw', active: showRaw, onTap: onToggleRaw),
                           const Spacer(),
                           if (isExecuting)
-                            Text('$elapsedMs ms', style: AppTypography.codeSm.copyWith(color: secondaryText))
+                            ValueListenableBuilder<int>(
+                              valueListenable: elapsedMsNotifier,
+                              builder: (context, ms, _) {
+                                return Text('$ms ms', style: AppTypography.codeSm.copyWith(color: secondaryText));
+                              },
+                            )
                           else if (statusCode != null) ...[
                             _StatusBadge(success: isSuccess ?? (statusCode! < 400), code: statusCode!),
                             const SizedBox(width: 10),

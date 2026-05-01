@@ -34,7 +34,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
   Map<String, dynamic>? _response;
   int? _statusCode;
   int? _responseTime;
-  int _elapsedMs = 0;
+  final ValueNotifier<int> _elapsedMsNotifier = ValueNotifier(0);
   bool? _isSuccess;
   bool _showRaw = false;
   late ValueNotifier<double> _responsePanelHeight;
@@ -96,12 +96,10 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
 
   void _startTimer() {
     _executionTimer?.cancel();
-    _elapsedMs = 0;
+    _elapsedMsNotifier.value = 0;
     _executionTimer = async_timer.Timer.periodic(const Duration(milliseconds: 10), (timer) {
       if (mounted) {
-        setState(() {
-          _elapsedMs += 10;
-        });
+        _elapsedMsNotifier.value += 10;
       } else {
         timer.cancel();
       }
@@ -198,6 +196,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     _searchFocusNode.dispose();
     _keyboardFocusNode.dispose();
     _responsePanelHeight.dispose();
+    _elapsedMsNotifier.dispose();
     super.dispose();
   }
 
@@ -376,7 +375,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                         response: _response,
                         showRaw: _showRaw,
                         isExecuting: endpointProvider.isEndpointExecuting(widget.endpoint.id),
-                        elapsedMs: _elapsedMs,
+                        elapsedMsNotifier: _elapsedMsNotifier,
                         statusCode: _statusCode,
                         responseTime: _responseTime,
                         isSuccess: _isSuccess,
