@@ -1,5 +1,7 @@
 export 'buttons/pilot_button.dart';
 export 'inputs/pilot_input.dart';
+export 'inputs/pilot_json_editor.dart';
+export 'layout/pilot_panel.dart';
 export 'feedback/pilot_badge.dart';
 export 'feedback/pilot_skeleton.dart';
 export 'modals/pilot_dialog.dart';

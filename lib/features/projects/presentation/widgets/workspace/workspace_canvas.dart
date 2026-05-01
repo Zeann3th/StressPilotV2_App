@@ -262,7 +262,7 @@ class _CanvasContentState extends State<_CanvasContent>
                                 animation: _animationController,
                                 builder: (context, child) {
                                   return CustomPaint(
-                                    painter: _EdgeOverlayPainter(
+                                    painter: CanvasEdgePainter(
                                       nodes: canvasProvider.nodes,
                                       connections: canvasProvider.connections,
                                       animationOffset:
@@ -354,7 +354,7 @@ class _CanvasContentState extends State<_CanvasContent>
                       }
                     : null,
                 child:
-                    _NodeBody(node: node, provider: provider, colors: colors),
+                    CanvasNodeBody(node: node, provider: provider, colors: colors),
               ),
               if (isSelected)
                 Positioned.fill(
@@ -844,7 +844,7 @@ class _CanvasContentState extends State<_CanvasContent>
   }
 }
 
-class _EdgeOverlayPainter extends CustomPainter {
+class CanvasEdgePainter extends CustomPainter {
   final List<CanvasNode> nodes;
   final List<CanvasConnection> connections;
   final double animationOffset;
@@ -852,7 +852,7 @@ class _EdgeOverlayPainter extends CustomPainter {
   final ConnectionLineStyle lineStyle;
   final String? highlightedConnectionId;
 
-  _EdgeOverlayPainter({
+  CanvasEdgePainter({
     required this.nodes,
     required this.connections,
     required this.animationOffset,
@@ -1063,15 +1063,15 @@ class _EdgeOverlayPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _EdgeOverlayPainter old) => true;
+  bool shouldRepaint(covariant CanvasEdgePainter old) => true;
 }
 
-class _NodeBody extends StatelessWidget {
+class CanvasNodeBody extends StatelessWidget {
   final CanvasNode node;
   final CanvasProvider provider;
   final ColorScheme colors;
 
-  const _NodeBody(
+  const CanvasNodeBody(
       {required this.node, required this.provider, required this.colors});
 
   @override

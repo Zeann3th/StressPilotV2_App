@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/widgets/environment_table.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
 
 class EnvironmentPage extends StatefulWidget {
@@ -20,7 +21,6 @@ class EnvironmentPage extends StatefulWidget {
 }
 
 class _EnvironmentPageState extends State<EnvironmentPage> {
-  final GlobalKey _tableKey = GlobalKey();
 
   @override
   void initState() {
@@ -41,25 +41,11 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Container(
-                      key: _tableKey,
-                      decoration: BoxDecoration(
-                        color: AppColors.sidebarBackground,
-                        borderRadius: AppRadius.br8,
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const ClipRRect(
-                        borderRadius: AppRadius.br8,
-                        child: EnvironmentTable(),
-                      ),
-                    ),
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: PilotPanel(
+                padding: EdgeInsets.zero,
+                borderRadius: AppRadius.br8,
+                child: const EnvironmentTable(),
               ),
             ),
           ),

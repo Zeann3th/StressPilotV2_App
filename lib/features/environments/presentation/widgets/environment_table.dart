@@ -32,7 +32,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
       children: [
         // Table Toolbar
         Container(
-          height: 48,
+          height: 56,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Stack(
             children: [
@@ -75,7 +75,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
         ),
 
         Container(
-          height: 32,
+          height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 24),
           decoration: BoxDecoration(
             color: AppColors.elevatedSurface,
