@@ -400,6 +400,7 @@ class _PlayStopButtonState extends State<_PlayStopButton> {
         endpointProvider.cancelExecution(endpoint.id);
       } else {
         final transientState = endpointProvider.getTransientState(endpoint.id) ?? {};
+        endpointProvider.setResponsePanelVisible(true);
         endpointProvider.executeEndpoint(endpoint.id, transientState);
       }
     }

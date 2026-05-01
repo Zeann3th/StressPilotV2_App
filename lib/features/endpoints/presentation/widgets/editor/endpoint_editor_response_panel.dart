@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
@@ -180,11 +181,11 @@ class EndpointEditorResponsePanel extends StatelessWidget {
                           padding: const EdgeInsets.all(16),
                           child: showRaw
                               ? SelectableText(
-                                  response.toString(),
+                                  _getRawResponse(response!),
                                   style: AppTypography.code.copyWith(fontSize: 12),
                                 )
                               : JsonViewer(
-                                  json: response!,
+                                  json: _getResponseData(response!),
                                   searchQuery: searchController.text,
                                   activeMatchIndex: currentSearchMatchIndex,
                                   onMatchesCountChanged: (_) {}, // Handled by parent if needed
@@ -197,6 +198,38 @@ class EndpointEditorResponsePanel extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Map<String, dynamic> _getResponseData(Map<String, dynamic> r) {
+    if (r.containsKey('error')) return {'error': r['error']};
+
+    final outerData = r['data'];
+    if (outerData is Map<String, dynamic>) {
+      final innerData = outerData['data'];
+
+      // If innerData is a Map, that's what we want (data.data)
+      if (innerData is Map<String, dynamic>) return innerData;
+
+      // Fallback: return outerData without metadata
+      final cleaned = Map<String, dynamic>.from(outerData);
+      cleaned.removeWhere((k, _) => const {
+            'statusCode',
+            'success',
+            'responseTimeMs',
+            'message',
+            'rawResponse'
+          }.contains(k));
+      return cleaned;
+    }
+    return r;
+  }
+
+  String _getRawResponse(Map<String, dynamic> r) {
+    try {
+      return const JsonEncoder.withIndent('  ').convert(r);
+    } catch (_) {
+      return r.toString();
+    }
   }
 }
 

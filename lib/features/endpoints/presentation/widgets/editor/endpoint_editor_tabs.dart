@@ -52,27 +52,22 @@ class EndpointEditorTabs extends StatelessWidget {
             color: bg,
             border: Border(bottom: BorderSide(color: border)),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TabBar(
-                controller: tabController,
-                isScrollable: true,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorColor: AppColors.accent,
-                indicatorWeight: 2,
-                dividerColor: Colors.transparent,
-                labelColor: AppColors.textPrimary,
-                unselectedLabelColor: AppColors.textSecondary,
-                labelStyle: AppTypography.label.copyWith(fontWeight: FontWeight.w600),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                tabs: const [
-                  Tab(text: 'Params'),
-                  Tab(text: 'Headers'),
-                  Tab(text: 'Body'),
-                  Tab(text: 'Configuration'),
-                ],
-              ),
+          child: TabBar(
+            controller: tabController,
+            isScrollable: false, // Use full width
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicatorColor: AppColors.accent,
+            indicatorWeight: 2,
+            dividerColor: Colors.transparent,
+            labelColor: AppColors.textPrimary,
+            unselectedLabelColor: AppColors.textSecondary,
+            labelStyle: AppTypography.label.copyWith(fontWeight: FontWeight.w600),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            tabs: const [
+              Tab(text: 'Params'),
+              Tab(text: 'Headers'),
+              Tab(text: 'Body'),
+              Tab(text: 'Configuration'),
             ],
           ),
         ),
