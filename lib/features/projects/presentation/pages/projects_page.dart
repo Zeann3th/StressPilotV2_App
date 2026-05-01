@@ -276,7 +276,7 @@ class _PanelContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.sidebarBackground,
+        color: AppColors.baseBackground,
         borderRadius: AppRadius.br6,
         border: Border.all(color: AppColors.divider),
       ),

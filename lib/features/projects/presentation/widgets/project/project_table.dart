@@ -126,66 +126,68 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: AppDurations.micro,
-          color: _isHovered
-              ? AppColors.accent.withValues(alpha: 0.04)
-              : Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 200,
-                child: Row(
-                  children: [
-                    _ProjectAvatar(name: widget.project.name),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        widget.project.name,
-                        style: AppTypography.body.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.w500,
+        child: RepaintBoundary(
+          child: AnimatedContainer(
+            duration: AppDurations.micro,
+            color: _isHovered
+                ? AppColors.accent.withValues(alpha: 0.04)
+                : Colors.transparent,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 200,
+                  child: Row(
+                    children: [
+                      _ProjectAvatar(name: widget.project.name),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          widget.project.name,
+                          style: AppTypography.body.copyWith(
+                            color: textColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  widget.project.description,
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textSecondary,
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              _MonoCell('#${widget.project.id}', width: 70),
-              _MonoCell(_formatDate(widget.project.createdAt), width: 120),
-              SizedBox(
-                width: 90,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    PilotButton.ghost(
-                      icon: Icons.edit_outlined,
-                      compact: true,
-                      onPressed: widget.onEdit,
+                Expanded(
+                  child: Text(
+                    widget.project.description,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
                     ),
-                    const SizedBox(width: 6),
-                    PilotButton.danger(
-                      icon: Icons.delete_outline_rounded,
-                      compact: true,
-                      onPressed: widget.onDelete,
-                    ),
-                  ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
+                _MonoCell('#${widget.project.id}', width: 70),
+                _MonoCell(_formatDate(widget.project.createdAt), width: 120),
+                SizedBox(
+                  width: 90,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      PilotButton.ghost(
+                        icon: Icons.edit_outlined,
+                        compact: true,
+                        onPressed: widget.onEdit,
+                      ),
+                      const SizedBox(width: 6),
+                      PilotButton.danger(
+                        icon: Icons.delete_outline_rounded,
+                        compact: true,
+                        onPressed: widget.onDelete,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

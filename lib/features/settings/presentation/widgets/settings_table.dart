@@ -118,30 +118,30 @@ class _SettingsTableState extends State<SettingsTable> {
 
   Widget _buildContent(Map<String, List<MapEntry<String, String>>> grouped, Color textColor, Color border) {
     if (_selectedCategory == 'THEME') {
-      return const _ThemeSettings();
+      return _ThemeSettings();
     }
 
     if (_selectedCategory == 'ABOUT') {
-      return const SingleChildScrollView(
-        padding: EdgeInsets.all(32),
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(32),
         child: AppAboutSection(),
       );
     }
 
     if (_selectedCategory == 'SHORTCUTS') {
-      return const KeymapSettingsTable();
+      return KeymapSettingsTable();
     }
 
     if (_selectedCategory == 'PLUGINS') {
-      return const PluginSettingsView();
+      return PluginSettingsView();
     }
 
     if (_selectedCategory == 'FUNCTIONS') {
-      return const FunctionSettingsView();
+      return FunctionSettingsView();
     }
 
     if (_selectedCategory == 'TASK SCHEDULING') {
-      return const TaskSchedulingView();
+      return TaskSchedulingView();
     }
 
     if (_selectedCategory == 'CONFIGURATIONS') {

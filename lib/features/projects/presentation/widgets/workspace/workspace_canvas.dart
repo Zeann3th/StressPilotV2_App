@@ -259,21 +259,23 @@ class _CanvasContentState extends State<_CanvasContent>
                         child: Stack(
                           children: [
                             Positioned.fill(
-                              child: AnimatedBuilder(
-                                animation: _animationController,
-                                builder: (context, child) {
-                                  return CustomPaint(
-                                    painter: CanvasEdgePainter(
-                                      nodes: canvasProvider.nodes,
-                                      connections: canvasProvider.connections,
-                                      animationOffset:
-                                          _animationController.value * 14.0,
-                                      colors: Theme.of(context).colorScheme,
-                                      lineStyle: canvasProvider.lineStyle,
-                                      highlightedConnectionId: _highlightedConnectionId,
-                                    ),
-                                  );
-                                },
+                              child: RepaintBoundary(
+                                child: AnimatedBuilder(
+                                  animation: _animationController,
+                                  builder: (context, child) {
+                                    return CustomPaint(
+                                      painter: CanvasEdgePainter(
+                                        nodes: canvasProvider.nodes,
+                                        connections: canvasProvider.connections,
+                                        animationOffset:
+                                            _animationController.value * 14.0,
+                                        colors: Theme.of(context).colorScheme,
+                                        lineStyle: canvasProvider.lineStyle,
+                                        highlightedConnectionId: _highlightedConnectionId,
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                             ...canvasProvider.nodes.map(

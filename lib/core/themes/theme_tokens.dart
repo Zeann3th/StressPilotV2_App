@@ -5,7 +5,7 @@ import 'package:stress_pilot/core/themes/theme_manager.dart';
 import 'package:stress_pilot/core/themes/pilot_theme.dart';
 
 abstract class AppColors {
-  // Base Colors (Fallbacks)
+  // Base Colors (Fallbacks for DARK)
   static const _fallbackBackground = Color(0xFF1E1F28);
   static const _fallbackSidebar    = Color(0xFF22232D);
   static const _fallbackElevated   = Color(0xFF2A2B36);
@@ -16,27 +16,29 @@ abstract class AppColors {
   static const _fallbackSecondary  = Color(0xFF757580);
   static const _fallbackDisabled   = Color(0xFF45454E);
 
+  // Private helper to get current theme
   static PilotTheme get _theme => getIt<ThemeManager>().currentTheme;
 
-  static Color get baseBackground    => _theme.getColor('background',    _fallbackBackground);
-  static Color get sidebarBackground => _theme.getColor('surface',       _fallbackSidebar);
-  static Color get elevatedSurface   => _theme.getColor('elevated',      _fallbackElevated);
-  static Color get activeItem        => _theme.getColor('activeItem',    _fallbackActive);
-  static Color get hoverItem         => _theme.getColor('hoverItem',     _fallbackHover);
-  static Color get accent            => _theme.getColor('accent',        _fallbackAccent);
+  // Dynamic Getters with Context-Aware Fallbacks
+  static Color get baseBackground    => _theme.getColor('background',    _theme.isDark ? _fallbackBackground : AppColorsLight.baseBackground);
+  static Color get sidebarBackground => _theme.getColor('surface',       _theme.isDark ? _fallbackSidebar    : AppColorsLight.sidebarBackground);
+  static Color get elevatedSurface   => _theme.getColor('elevated',      _theme.isDark ? _fallbackElevated   : AppColorsLight.elevatedSurface);
+  static Color get activeItem        => _theme.getColor('activeItem',    _theme.isDark ? _fallbackActive     : AppColorsLight.activeItem);
+  static Color get hoverItem         => _theme.getColor('hoverItem',     _theme.isDark ? _fallbackHover      : AppColorsLight.hoverItem);
+  static Color get accent            => _theme.getColor('accent',        _theme.isDark ? _fallbackAccent     : AppColorsLight.accent);
   static Color get accentHover       => _theme.getColor('accentHover',   accent.withValues(alpha: 0.85));
   static Color get accentActive      => _theme.getColor('accentActive',  accent.withValues(alpha: 0.7));
 
-  static Color get border            => _theme.getColor('border',        const Color(0x14FFFFFF));
-  static Color get divider           => _theme.getColor('divider',       const Color(0x0FFFFFFF));
+  static Color get border            => _theme.getColor('border',        _theme.isDark ? const Color(0x14FFFFFF) : const Color(0x1F000000));
+  static Color get divider           => _theme.getColor('divider',       _theme.isDark ? const Color(0x0FFFFFFF) : const Color(0x14000000));
 
-  static Color get textPrimary       => _theme.getColor('textPrimary',   _fallbackText);
-  static Color get textSecondary     => _theme.getColor('textSecondary', _fallbackSecondary);
-  static Color get textDisabled      => _theme.getColor('textDisabled',  _fallbackDisabled);
+  static Color get textPrimary       => _theme.getColor('textPrimary',   _theme.isDark ? _fallbackText       : AppColorsLight.textPrimary);
+  static Color get textSecondary     => _theme.getColor('textSecondary', _theme.isDark ? _fallbackSecondary  : AppColorsLight.textSecondary);
+  static Color get textDisabled      => _theme.getColor('textDisabled',  _theme.isDark ? _fallbackDisabled   : AppColorsLight.textDisabled);
   static Color get textMuted         => textDisabled;
 
   static Color get methodGet         => _theme.getColor('success',       const Color(0xFF57A64A));
-  static Color get methodPost        => _theme.getColor('info',          const Color(0xFF4B8FD4));
+  static Color get methodPost        => _theme.getColor('info',          _theme.isDark ? const Color(0xFF4B8FD4) : AppColorsLight.methodPost);
   static Color get methodPut         => _theme.getColor('warning',       const Color(0xFFC8A84B));
   static Color get methodDelete      => _theme.getColor('methodDelete',  const Color(0xFFC25151));
   static Color get methodPatch       => _theme.getColor('methodPatch',   const Color(0xFF8B68D4));
@@ -46,6 +48,7 @@ abstract class AppColors {
   static Color get warning           => methodPut;
   static Color get info              => methodPost;
 
+  // Legacy mappings for backward compatibility
   static Color get background => baseBackground;
   static Color get surface    => sidebarBackground;
   static Color get elevated   => elevatedSurface;
@@ -68,22 +71,22 @@ abstract class AppGradients {
 }
 
 abstract class AppColorsLight {
-  static const baseBackground    = Color(0xFFF5F5F5);
-  static const sidebarBackground = Color(0xFFEBEBEB);
+  static const baseBackground    = Color(0xFFFFFFFF);
+  static const sidebarBackground = Color(0xFFF7F8FA);
   static const elevatedSurface   = Color(0xFFFFFFFF);
-  static const activeItem        = Color(0xFFDDDDE8);
-  static const hoverItem         = Color(0xFFE8E8F0);
-  static const accent            = Color(0xFF6B58D6);
-  static const accentHover       = Color(0xFF7B68EE);
+  static const activeItem        = Color(0xFFE4E6ED);
+  static const hoverItem         = Color(0xFFF0F1F5);
+  static const accent            = Color(0xFF3574F0);
+  static const accentHover       = Color(0xFF4B85F2);
   static const border            = Color(0x1F000000);
   static const divider           = Color(0x14000000);
-  static const textPrimary       = Color(0xFF1A1A1A);
-  static const textSecondary     = Color(0xFF555550);
+  static const textPrimary       = Color(0xFF19191C);
+  static const textSecondary     = Color(0xFF70727A);
   static const textDisabled      = Color(0xFFAAAAAA);
-  static const accentActive      = Color(0xFF5A48C4);
+  static const accentActive      = Color(0xFF2E68E0);
 
   static const methodGet    = Color(0xFF57A64A);
-  static const methodPost   = Color(0xFF4B8FD4);
+  static const methodPost   = Color(0xFF3574F0);
   static const methodPut    = Color(0xFFC8A84B);
   static const methodDelete = Color(0xFFC25151);
   static const methodPatch  = Color(0xFF8B68D4);
@@ -100,23 +103,21 @@ abstract class AppDurations {
 }
 
 abstract class AppShadows {
-
   static List<BoxShadow> get panel => [];
   static List<BoxShadow> get card => [];
   static List<BoxShadow> get subtle => [];
 }
 
 abstract class AppRadius {
-  static const r4  = Radius.circular(4);   // buttons, inputs, chips
-  static const r6  = Radius.circular(6);   // panels, cards
-  static const r8  = Radius.circular(8);   // dialogs
+  static const r4  = Radius.circular(4);
+  static const r6  = Radius.circular(6);
+  static const r8  = Radius.circular(8);
+  static const r12 = Radius.circular(12);
+  static const r16 = Radius.circular(16);
 
   static const br4  = BorderRadius.all(r4);
   static const br6  = BorderRadius.all(r6);
   static const br8  = BorderRadius.all(r8);
-
-  static const r12 = Radius.circular(12);
-  static const r16 = Radius.circular(16);
   static const br12 = BorderRadius.all(r12);
   static const br16 = BorderRadius.all(r16);
 }
@@ -142,7 +143,6 @@ abstract class AppSpacing {
 abstract class AppTypography {
   static const _mono = 'JetBrains Mono';
 
-  // Human-readable UI text — Inter
   static TextStyle get caption => GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
   static TextStyle get body    => GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
   static TextStyle get bodyMd  => GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary);

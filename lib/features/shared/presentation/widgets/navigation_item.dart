@@ -35,58 +35,60 @@ class _NavigationItemState extends State<NavigationItem> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: AppDurations.micro,
-          color: _hovered
-              ? AppColors.accent.withValues(alpha: 0.08)
-              : Colors.transparent,
-          padding: EdgeInsets.symmetric(
-            horizontal: widget.compact ? 10 : 14,
-            vertical: widget.compact ? 6 : 8,
-          ),
-          child: Row(
-            children: [
-              Icon(widget.icon, size: 14, color: AppColors.textSecondary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: widget.compact ? 13 : 14,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (widget.subtitle != null && widget.subtitle!.isNotEmpty) ...[
-                      const SizedBox(height: 1),
+        child: RepaintBoundary(
+          child: AnimatedContainer(
+            duration: AppDurations.micro,
+            color: _hovered
+                ? AppColors.accent.withValues(alpha: 0.08)
+                : Colors.transparent,
+            padding: EdgeInsets.symmetric(
+              horizontal: widget.compact ? 10 : 14,
+              vertical: widget.compact ? 6 : 8,
+            ),
+            child: Row(
+              children: [
+                Icon(widget.icon, size: 14, color: AppColors.textSecondary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        widget.subtitle!,
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textMuted,
-                          fontSize: widget.compact ? 11 : 12,
+                        widget.title,
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: widget.compact ? 13 : 14,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (widget.subtitle != null && widget.subtitle!.isNotEmpty) ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          widget.subtitle!,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textMuted,
+                            fontSize: widget.compact ? 11 : 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              if (widget.badge != null) ...[
-                const SizedBox(width: 8),
-                PilotBadge(
-                  label: widget.badge!.toUpperCase(),
-                  color: _getBadgeColor(widget.badge!),
-                  compact: true,
-                ),
+                if (widget.badge != null) ...[
+                  const SizedBox(width: 8),
+                  PilotBadge(
+                    label: widget.badge!.toUpperCase(),
+                    color: _getBadgeColor(widget.badge!),
+                    compact: true,
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

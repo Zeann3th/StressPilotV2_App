@@ -29,8 +29,8 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
-          const FleetPageBar(title: 'Settings'),
-          const Expanded(
+          FleetPageBar(title: 'Settings'),
+          Expanded(
             child: Padding(
               padding: EdgeInsets.all(24),
               child: SettingsTable(),
