@@ -65,7 +65,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
 
   @override
   Widget build(BuildContext context) {
-    final activeTab = context.watch<WorkspaceTabProvider>().activeTab;
     final project = context.watch<ProjectProvider>().selectedProject;
 
     return Scaffold(
@@ -119,15 +118,31 @@ class _WorkspacePageState extends State<WorkspacePage> {
                             clipBehavior: Clip.antiAlias,
                             child: Column(
                               children: [
-                                  const WorkspaceTabBar(),
-                                  Expanded(child: _buildTabContent(activeTab)),
-                                ],
-                              ),
+                                const WorkspaceTabBar(),
+                                Expanded(
+                                  child: Consumer<WorkspaceTabProvider>(
+                                    builder: (context, tabProvider, _) {
+                                      final tabs = tabProvider.tabs;
+                                      final activeTabIndex = tabProvider.activeTabIndex;
+
+                                      if (tabs.isEmpty) {
+                                        return const _EmptyTabState();
+                                      }
+
+                                      return IndexedStack(
+                                        index: activeTabIndex == -1 ? 0 : activeTabIndex,
+                                        children: tabs.map((tab) => _buildTabContent(tab)).toList(),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
           ),
           StatusBar(
             projectName: project?.name,

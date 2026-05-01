@@ -31,6 +31,11 @@ class WorkspaceTabProvider with ChangeNotifier {
   List<WorkspaceTab> get tabs => List.unmodifiable(_tabs);
   WorkspaceTab? get activeTab => _activeTab;
 
+  int get activeTabIndex {
+    if (_activeTab == null) return -1;
+    return _tabs.indexWhere((t) => t.id == _activeTab!.id && t.type == _activeTab!.type);
+  }
+
   void openTab(WorkspaceTab tab) {
     final index = _tabs.indexWhere((t) => t.id == tab.id && t.type == tab.type);
     if (index == -1) {
