@@ -174,14 +174,16 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
   }
 
   Widget _buildDropdown() {
-    return Positioned(
-      width: 420,
-      child: CompositedTransformFollower(
-        link: _layerLink,
-        showWhenUnlinked: false,
-        offset: const Offset(-35, 44),
-        child: Material(
-          color: Colors.transparent,
+    return CompositedTransformFollower(
+      link: _layerLink,
+      showWhenUnlinked: false,
+      targetAnchor: Alignment.bottomLeft,
+      followerAnchor: Alignment.topLeft,
+      offset: const Offset(0, 8),
+      child: Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          width: 420,
           child: _SearchDropdownPanel(
             results: _results,
             isLoading: _isLoading,

@@ -37,7 +37,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
   int _elapsedMs = 0;
   bool? _isSuccess;
   bool _showRaw = false;
-  double _responsePanelHeight = 300.0;
+  late ValueNotifier<double> _responsePanelHeight;
 
   final TextEditingController _searchCtrl = TextEditingController();
   bool _showSearch = false;
@@ -87,6 +87,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     }
 
     _reqTabCtrl = TabController(length: 4, vsync: this);
+    _responsePanelHeight = ValueNotifier<double>(300.0);
 
     _loadResults();
 
@@ -196,6 +197,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     _searchCtrl.dispose();
     _searchFocusNode.dispose();
     _keyboardFocusNode.dispose();
+    _responsePanelHeight.dispose();
     super.dispose();
   }
 
@@ -275,7 +277,8 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     try {
       dynamic bodyPayload = _bodyCtrl.text;
       try {
-        if (bodyPayload.trim().startsWith('{') || bodyPayload.trim().startsWith('[')) {
+        if (bodyPayload.trim().startsWith('{') ||
+            bodyPayload.trim().startsWith('[')) {
           bodyPayload = jsonDecode(bodyPayload);
         }
       } catch (_) {}
@@ -379,8 +382,8 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                         isSuccess: _isSuccess,
                         onToggleRaw: () => setState(() => _showRaw = !_showRaw),
                         onClose: () => endpointProvider.setResponsePanelVisible(false),
-                        height: _responsePanelHeight.clamp(40.0, constraints.maxHeight - 100.0),
-                        onHeightChanged: (h) => setState(() => _responsePanelHeight = h),
+                        heightNotifier: _responsePanelHeight,
+                        maxHeight: constraints.maxHeight - 100.0,
                         showSearch: _showSearch,
                         searchController: _searchCtrl,
                         searchFocusNode: _searchFocusNode,
@@ -403,6 +406,11 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
                           _totalMatchesCount = 0;
                           _currentSearchMatchIndex = 0;
                         }),
+                        onMatchesCountChanged: (count) {
+                          if (_totalMatchesCount != count) {
+                            setState(() => _totalMatchesCount = count);
+                          }
+                        },
                       ),
                   ],
                 );

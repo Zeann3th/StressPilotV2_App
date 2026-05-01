@@ -108,6 +108,7 @@ class _CanvasContentState extends State<_CanvasContent>
   bool _initialLoadScheduled = false;
   String? _highlightedConnectionId;
   bool _didTapConnection = false;
+  bool _isDraggingNode = false;
 
   final GlobalKey _toolbarKey = GlobalKey();
 
@@ -219,9 +220,9 @@ class _CanvasContentState extends State<_CanvasContent>
                 builder: (context, candidateData, rejectedData) {
                   return InteractiveViewer(
                     transformationController: _transformationController,
-                    panEnabled: !canvasProvider.isLocked &&
+                    panEnabled: !_isDraggingNode && !canvasProvider.isLocked &&
                         canvasProvider.canvasMode == CanvasMode.move,
-                    scaleEnabled: !canvasProvider.isLocked,
+                    scaleEnabled: !_isDraggingNode && !canvasProvider.isLocked,
                     boundaryMargin: const EdgeInsets.all(4000),
                     minScale: 0.1,
                     maxScale: 2.0,
@@ -321,61 +322,66 @@ class _CanvasContentState extends State<_CanvasContent>
       left: node.position.dx,
       top: node.position.dy,
       width: node.actualWidth,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onDoubleTap: () => _handleNodeDoubleTap(node),
-        onTap: () {
-          if (provider.canvasMode == CanvasMode.connect) {
-            if (provider.selectedSourceNodeId != null) {
-              provider.connectToTarget(node.id);
+      child: RepaintBoundary(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onDoubleTap: () => _handleNodeDoubleTap(node),
+          onTap: () {
+            if (provider.canvasMode == CanvasMode.connect) {
+              if (provider.selectedSourceNodeId != null) {
+                provider.connectToTarget(node.id);
+              } else {
+                provider.selectSourceNode(node.id);
+              }
             } else {
-              provider.selectSourceNode(node.id);
+              provider.selectNode(node.id);
             }
-          } else {
-            provider.selectNode(node.id);
-          }
-        },
-        child: MouseRegion(
-          cursor: provider.canvasMode == CanvasMode.move
-              ? SystemMouseCursors.grab
-              : SystemMouseCursors.click,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              GestureDetector(
-                onPanUpdate: provider.canvasMode == CanvasMode.move
-                    ? (details) {
-                        final scale = _transformationController.value
-                            .getMaxScaleOnAxis();
-                        provider.updateNodePosition(
-                          node.id,
-                          node.position + (details.delta / scale),
-                        );
-                      }
-                    : null,
-                child:
-                    CanvasNodeBody(node: node, provider: provider, colors: colors),
-              ),
-              if (isSelected)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          node.type == FlowNodeType.branch ? 8 : 16,
-                        ),
-                        border: Border.all(color: AppColors.accent, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accent.withValues(alpha: 0.3),
-                            blurRadius: 12,
+          },
+          child: MouseRegion(
+            cursor: provider.canvasMode == CanvasMode.move
+                ? SystemMouseCursors.grab
+                : SystemMouseCursors.click,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                GestureDetector(
+                  onPanStart: (_) => setState(() => _isDraggingNode = true),
+                  onPanEnd: (_) => setState(() => _isDraggingNode = false),
+                  onPanCancel: () => setState(() => _isDraggingNode = false),
+                  onPanUpdate: provider.canvasMode == CanvasMode.move
+                      ? (details) {
+                          final scale = _transformationController.value
+                              .getMaxScaleOnAxis();
+                          provider.updateNodePosition(
+                            node.id,
+                            node.position + (details.delta / scale),
+                          );
+                        }
+                      : null,
+                  child:
+                      CanvasNodeBody(node: node, provider: provider, colors: colors),
+                ),
+                if (isSelected)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                            node.type == FlowNodeType.branch ? 8 : 16,
                           ),
-                        ],
+                          border: Border.all(color: AppColors.accent, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.accent.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1071,8 +1077,12 @@ class CanvasNodeBody extends StatelessWidget {
   final CanvasProvider provider;
   final ColorScheme colors;
 
-  const CanvasNodeBody(
-      {required this.node, required this.provider, required this.colors});
+  const CanvasNodeBody({
+    super.key,
+    required this.node,
+    required this.provider,
+    required this.colors,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1715,3 +1725,4 @@ class _ToolbarIconState extends State<_ToolbarIcon> {
     );
   }
 }
+

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/endpoints/presentation/widgets/json_viewer.dart';
 
 class EndpointEditorResponsePanel extends StatelessWidget {
@@ -15,8 +14,8 @@ class EndpointEditorResponsePanel extends StatelessWidget {
   final bool? isSuccess;
   final VoidCallback onToggleRaw;
   final VoidCallback onClose;
-  final double height;
-  final ValueChanged<double> onHeightChanged;
+  final ValueNotifier<double> heightNotifier;
+  final double maxHeight;
   final bool showSearch;
   final TextEditingController searchController;
   final FocusNode searchFocusNode;
@@ -26,6 +25,7 @@ class EndpointEditorResponsePanel extends StatelessWidget {
   final VoidCallback onSearchNext;
   final VoidCallback onSearchPrev;
   final VoidCallback onCloseSearch;
+  final ValueChanged<int> onMatchesCountChanged;
 
   const EndpointEditorResponsePanel({
     super.key,
@@ -38,8 +38,8 @@ class EndpointEditorResponsePanel extends StatelessWidget {
     required this.isSuccess,
     required this.onToggleRaw,
     required this.onClose,
-    required this.height,
-    required this.onHeightChanged,
+    required this.heightNotifier,
+    required this.maxHeight,
     required this.showSearch,
     required this.searchController,
     required this.searchFocusNode,
@@ -49,6 +49,7 @@ class EndpointEditorResponsePanel extends StatelessWidget {
     required this.onSearchNext,
     required this.onSearchPrev,
     required this.onCloseSearch,
+    required this.onMatchesCountChanged,
   });
 
   @override
@@ -66,7 +67,9 @@ class EndpointEditorResponsePanel extends StatelessWidget {
           cursor: SystemMouseCursors.resizeRow,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onVerticalDragUpdate: (d) => onHeightChanged(height - d.delta.dy),
+            onVerticalDragUpdate: (d) {
+              heightNotifier.value = (heightNotifier.value - d.delta.dy).clamp(40.0, maxHeight);
+            },
             child: Container(
               height: 8,
               color: border.withValues(alpha: 0.1),
@@ -83,118 +86,127 @@ class EndpointEditorResponsePanel extends StatelessWidget {
           ),
         ),
 
-        SizedBox(
-          height: height,
-          child: Container(
-            color: bg,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Toolbar
-                Container(
-                  height: 36,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: surface,
-                    border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.1))),
-                  ),
-                  child: Row(
-                    children: [
-                      EditorTabButton(label: 'Response', active: !showRaw, onTap: onToggleRaw),
-                      const SizedBox(width: 4),
-                      EditorTabButton(label: 'Raw', active: showRaw, onTap: onToggleRaw),
-                      const Spacer(),
-                      if (isExecuting)
-                        Text('$elapsedMs ms', style: AppTypography.codeSm.copyWith(color: secondaryText))
-                      else if (statusCode != null) ...[
-                        _StatusBadge(success: isSuccess ?? (statusCode! < 400), code: statusCode!),
-                        const SizedBox(width: 10),
-                        Text('$responseTime ms', style: AppTypography.codeSm.copyWith(color: secondaryText)),
-                      ],
-                      const SizedBox(width: 8),
-                      EditorIconButton(
-                        icon: LucideIcons.minus,
-                        onTap: onClose,
+        ValueListenableBuilder<double>(
+          valueListenable: heightNotifier,
+          builder: (context, currentHeight, _) {
+            return SizedBox(
+              height: currentHeight.clamp(40.0, maxHeight),
+              child: Container(
+                color: bg,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Toolbar
+                    Container(
+                      height: 36,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: surface,
+                        border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.1))),
                       ),
-                    ],
-                  ),
-                ),
-
-                if (showSearch)
-                  Container(
-                    height: 38,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: surface,
-                      border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.1))),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(LucideIcons.search, size: 14, color: secondaryText),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: searchController,
-                            focusNode: searchFocusNode,
-                            textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                              hintText: 'Find in response...',
-                              border: InputBorder.none,
-                              isDense: true,
-                            ),
-                            style: TextStyle(fontSize: 13, color: textColor),
-                            onChanged: onSearchChanged,
-                            onSubmitted: (_) => onSearchNext(),
-                          ),
-                        ),
-                        if (totalMatchesCount > 0) ...[
-                          Text(
-                            '${currentSearchMatchIndex + 1} / $totalMatchesCount',
-                            style: TextStyle(fontSize: 11, color: secondaryText, fontFamily: 'JetBrains Mono'),
-                          ),
+                      child: Row(
+                        children: [
+                          EditorTabButton(label: 'Response', active: !showRaw, onTap: onToggleRaw),
+                          const SizedBox(width: 4),
+                          EditorTabButton(label: 'Raw', active: showRaw, onTap: onToggleRaw),
+                          const Spacer(),
+                          if (isExecuting)
+                            Text('$elapsedMs ms', style: AppTypography.codeSm.copyWith(color: secondaryText))
+                          else if (statusCode != null) ...[
+                            _StatusBadge(success: isSuccess ?? (statusCode! < 400), code: statusCode!),
+                            const SizedBox(width: 10),
+                            Text('$responseTime ms', style: AppTypography.codeSm.copyWith(color: secondaryText)),
+                          ],
                           const SizedBox(width: 8),
-                          PilotButton.ghost(
-                            icon: LucideIcons.chevronUp,
-                            compact: true,
-                            onPressed: onSearchPrev,
+                          EditorIconButton(
+                            icon: LucideIcons.minus,
+                            onTap: onClose,
                           ),
-                          PilotButton.ghost(
-                            icon: LucideIcons.chevronDown,
-                            compact: true,
-                            onPressed: onSearchNext,
-                          ),
-                          const VerticalDivider(width: 16, indent: 8, endIndent: 8),
                         ],
-                        EditorIconButton(
-                          icon: LucideIcons.x,
-                          compact: true,
-                          onTap: onCloseSearch,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
 
-                Expanded(
-                  child: response == null
-                      ? _EmptyState(secondaryText: secondaryText)
-                      : SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: showRaw
-                              ? SelectableText(
-                                  _getRawResponse(response!),
-                                  style: AppTypography.code.copyWith(fontSize: 12),
-                                )
-                              : JsonViewer(
-                                  json: _getResponseData(response!),
-                                  searchQuery: searchController.text,
-                                  activeMatchIndex: currentSearchMatchIndex,
-                                  onMatchesCountChanged: (_) {}, // Handled by parent if needed
-                                ),
+                    if (showSearch)
+                      Container(
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: surface,
+                          border: Border(bottom: BorderSide(color: border.withValues(alpha: 0.1))),
                         ),
+                        child: Row(
+                          children: [
+                            Icon(LucideIcons.search, size: 14, color: secondaryText),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: searchController,
+                                focusNode: searchFocusNode,
+                                textInputAction: TextInputAction.search,
+                                decoration: const InputDecoration(
+                                  hintText: 'Find in response...',
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                ),
+                                style: TextStyle(fontSize: 13, color: textColor),
+                                onChanged: onSearchChanged,
+                                onSubmitted: (_) {
+                                  onSearchNext();
+                                  searchFocusNode.requestFocus(); // KEEP FOCUS
+                                },
+                              ),
+                            ),
+                            if (totalMatchesCount > 0) ...[
+                              Text(
+                                '${currentSearchMatchIndex + 1} / $totalMatchesCount',
+                                style: TextStyle(fontSize: 11, color: secondaryText, fontFamily: 'JetBrains Mono'),
+                              ),
+                              const SizedBox(width: 12),
+                              EditorIconButton(
+                                icon: LucideIcons.chevronUp,
+                                compact: true,
+                                onTap: onSearchPrev,
+                              ),
+                              const SizedBox(width: 4),
+                              EditorIconButton(
+                                icon: LucideIcons.chevronDown,
+                                compact: true,
+                                onTap: onSearchNext,
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            EditorIconButton(
+                              icon: LucideIcons.x,
+                              compact: true,
+                              onTap: onCloseSearch,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    Expanded(
+                      child: response == null
+                          ? _EmptyState(secondaryText: secondaryText)
+                          : SingleChildScrollView(
+                              padding: const EdgeInsets.all(16),
+                              child: showRaw
+                                  ? SelectableText(
+                                      _getRawResponse(response!),
+                                      style: AppTypography.code.copyWith(fontSize: 12),
+                                    )
+                                  : JsonViewer(
+                                      json: _getResponseData(response!),
+                                      searchQuery: searchController.text,
+                                      activeMatchIndex: currentSearchMatchIndex,
+                                      onMatchesCountChanged: onMatchesCountChanged,
+                                    ),
+                            ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -238,7 +250,12 @@ class EditorTabButton extends StatelessWidget {
   final bool active;
   final VoidCallback onTap;
 
-  const EditorTabButton({required this.label, required this.active, required this.onTap});
+  const EditorTabButton({
+    super.key,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
