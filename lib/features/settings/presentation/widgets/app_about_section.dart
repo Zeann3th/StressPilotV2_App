@@ -180,7 +180,7 @@ class _AppAboutSectionState extends State<AppAboutSection> {
                       color: AppColors.warning.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.cleaning_services_rounded, color: AppColors.warning, size: 24),
+                    child: Icon(Icons.cleaning_services_rounded, color: AppColors.warning, size: 24),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
@@ -231,7 +231,7 @@ class _AppAboutSectionState extends State<AppAboutSection> {
                 color: AppColors.success.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24),
+              child: Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24),
             ),
             const SizedBox(width: 20),
             Expanded(
@@ -269,7 +269,7 @@ class _AppAboutSectionState extends State<AppAboutSection> {
                   color: AppColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 24),
+                child: Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 24),
               ),
               const SizedBox(width: 20),
               Expanded(

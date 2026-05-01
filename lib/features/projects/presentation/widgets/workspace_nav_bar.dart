@@ -257,7 +257,7 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
               ),
               const SizedBox(width: 6),
               if (isLoading)
-                const SizedBox(
+                SizedBox(
                   width: 10,
                   height: 10,
                   child: CircularProgressIndicator(

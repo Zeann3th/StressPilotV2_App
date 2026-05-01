@@ -54,24 +54,24 @@ class ThemeManager with ChangeNotifier {
     );
   }
 
-  static const _fleetTheme = PilotTheme(
+  static final _fleetTheme = PilotTheme(
     id: 'fleet',
     name: 'JetBrains Fleet',
     brightness: Brightness.dark,
     colors: {
-      'background': AppColors.baseBackground,
-      'surface': AppColors.sidebarBackground,
-      'elevated': AppColors.elevatedSurface,
-      'border': AppColors.border,
-      'textPrimary': AppColors.textPrimary,
-      'textSecondary': AppColors.textSecondary,
-      'accent': AppColors.accent,
-      'success': AppColors.methodGet,
-      'error': AppColors.error,
+      'background': const Color(0xFF1E1F28),
+      'surface': const Color(0xFF22232D),
+      'elevated': const Color(0xFF2A2B36),
+      'activeItem': const Color(0xFF2E3044),
+      'hoverItem': const Color(0xFF272838),
+      'accent': const Color(0xFF5B9BD5),
+      'textPrimary': const Color(0xFFD4D4D6),
+      'textSecondary': const Color(0xFF757580),
+      'textDisabled': const Color(0xFF45454E),
     },
   );
 
-  static const _fleetLightTheme = PilotTheme(
+  static final _fleetLightTheme = PilotTheme(
     id: 'fleet-light',
     name: 'JetBrains Fleet Light',
     brightness: Brightness.light,
@@ -106,6 +106,21 @@ class ThemeManager with ChangeNotifier {
     final newThemeId = getIt<SettingsManager>().getString('workbench.colorTheme', defaultValue: _defaultThemeId);
     if (newThemeId != currentTheme.id) {
       setTheme(newThemeId);
+    }
+  }
+
+  Future<void> reloadThemes() async {
+    final currentThemeId = _currentTheme?.id;
+    await loadAvailableThemes();
+    
+    if (currentThemeId != null) {
+      final updated = _availableThemes.firstWhere(
+        (t) => t.id == currentThemeId,
+        orElse: () => _fleetTheme,
+      );
+      _currentTheme = updated;
+      _currentShadTheme = _generateShadTheme(updated);
+      notifyListeners();
     }
   }
 

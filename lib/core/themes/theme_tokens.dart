@@ -6,15 +6,15 @@ import 'package:stress_pilot/core/themes/pilot_theme.dart';
 
 abstract class AppColors {
   // Base Colors (Fallbacks)
-  static const _fallbackBackground = Color(0xFF1E1F22);
-  static const _fallbackSidebar    = Color(0xFF23242A);
-  static const _fallbackElevated   = Color(0xFF2B2C33);
-  static const _fallbackActive     = Color(0xFF383A47);
-  static const _fallbackHover      = Color(0xFF2E2F38);
-  static const _fallbackAccent     = Color(0xFF7B68EE);
-  static const _fallbackText       = Color(0xFFDCD9D0);
-  static const _fallbackSecondary  = Color(0xFF7E7C75);
-  static const _fallbackDisabled   = Color(0xFF4A4845);
+  static const _fallbackBackground = Color(0xFF1E1F28);
+  static const _fallbackSidebar    = Color(0xFF22232D);
+  static const _fallbackElevated   = Color(0xFF2A2B36);
+  static const _fallbackActive     = Color(0xFF2E3044);
+  static const _fallbackHover      = Color(0xFF272838);
+  static const _fallbackAccent     = Color(0xFF5B9BD5);
+  static const _fallbackText       = Color(0xFFD4D4D6);
+  static const _fallbackSecondary  = Color(0xFF757580);
+  static const _fallbackDisabled   = Color(0xFF45454E);
 
   static PilotTheme get _theme => getIt<ThemeManager>().currentTheme;
 

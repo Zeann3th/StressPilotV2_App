@@ -217,14 +217,14 @@ class _AppTheme extends StatelessWidget {
     final themeManager = context.watch<ThemeManager>();
 
     return ShadApp(
-      key: ValueKey(themeManager.currentTheme.id),
+      key: ValueKey(themeManager.currentTheme.id), // FORCE REBUILD ON THEME CHANGE
       title: 'Stress Pilot',
       debugShowCheckedModeBanner: false,
       navigatorKey: AppNavigator.navigatorKey,
       navigatorObservers: [AppNavigator.routeObserver],
       themeMode: themeManager.themeMode,
-      theme: themeManager.lightShadTheme,
-      darkTheme: themeManager.darkShadTheme,
+      theme: themeManager.currentShadTheme ?? themeManager.lightShadTheme,
+      darkTheme: themeManager.currentShadTheme ?? themeManager.darkShadTheme,
       onGenerateRoute: AppRouter.generateRoute,
       initialRoute: initialRoute,
       builder: (context, child) {

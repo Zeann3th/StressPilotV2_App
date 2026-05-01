@@ -105,7 +105,7 @@ class ProjectErrorState extends StatelessWidget {
                 width: 1,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.error_outline_rounded,
               size: 32,
               color: AppColors.error,
