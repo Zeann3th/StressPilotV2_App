@@ -29,11 +29,17 @@ class WorkspacePage extends StatefulWidget {
 
 class _WorkspacePageState extends State<WorkspacePage> {
   int? _lastLoadedProjectId;
-  double _sidebarWidth = 260;
+  final ValueNotifier<double> _sidebarWidth = ValueNotifier(260.0);
   bool _isSidebarOpen = true;
 
   static const double _minSidebarWidth = 180;
   static const double _maxSidebarWidth = 480;
+
+  @override
+  void dispose() {
+    _sidebarWidth.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -83,28 +89,35 @@ class _WorkspacePageState extends State<WorkspacePage> {
                     child: Row(
                       children: [
                         if (_isSidebarOpen) ...[
-                          WorkspaceSidebar(
-                            width: _sidebarWidth,
-                            onCollapse: _toggleSidebar,
-                          ),
-                          // Drag handle
-                          MouseRegion(
-                            cursor: SystemMouseCursors.resizeColumn,
-                            child: GestureDetector(
-                              onHorizontalDragUpdate: (details) {
-                                setState(() {
-                                  _sidebarWidth = (_sidebarWidth + details.delta.dx)
-                                      .clamp(_minSidebarWidth, _maxSidebarWidth);
-                                });
-                              },
-                              child: Container(
-                                width: 6,
-                                color: Colors.transparent,
-                                child: Center(
-                                  child: Container(width: 1, color: AppColors.divider),
-                                ),
-                              ),
-                            ),
+                          ValueListenableBuilder<double>(
+                            valueListenable: _sidebarWidth,
+                            builder: (context, width, child) {
+                              return Row(
+                                children: [
+                                  WorkspaceSidebar(
+                                    width: width,
+                                    onCollapse: _toggleSidebar,
+                                  ),
+                                  // Drag handle
+                                  MouseRegion(
+                                    cursor: SystemMouseCursors.resizeColumn,
+                                    child: GestureDetector(
+                                      onHorizontalDragUpdate: (details) {
+                                        _sidebarWidth.value = (_sidebarWidth.value + details.delta.dx)
+                                            .clamp(_minSidebarWidth, _maxSidebarWidth);
+                                      },
+                                      child: Container(
+                                        width: 6,
+                                        color: Colors.transparent,
+                                        child: Center(
+                                          child: Container(width: 1, color: AppColors.divider),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                         Expanded(

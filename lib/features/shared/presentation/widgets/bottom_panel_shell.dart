@@ -24,12 +24,18 @@ class BottomPanelShell extends StatefulWidget {
 }
 
 class _BottomPanelShellState extends State<BottomPanelShell> {
-  late double _panelHeight;
+  late final ValueNotifier<double> _panelHeight;
 
   @override
   void initState() {
     super.initState();
-    _panelHeight = widget.initialPanelHeight;
+    _panelHeight = ValueNotifier(widget.initialPanelHeight);
+  }
+
+  @override
+  void dispose() {
+    _panelHeight.dispose();
+    super.dispose();
   }
 
   @override
@@ -38,28 +44,35 @@ class _BottomPanelShellState extends State<BottomPanelShell> {
       children: [
         Expanded(child: widget.body),
         if (widget.isOpen) ...[
-          // Drag handle
-          MouseRegion(
-            cursor: SystemMouseCursors.resizeRow,
-            child: GestureDetector(
-              onVerticalDragUpdate: (details) {
-                setState(() {
-                  _panelHeight = (_panelHeight - details.delta.dy)
-                      .clamp(widget.minPanelHeight, widget.maxPanelHeight);
-                });
-              },
-              child: Container(
-                height: 4,
-                color: Colors.transparent,
-                child: Center(
-                  child: Container(height: 1, color: AppColors.divider),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            height: _panelHeight,
-            child: widget.panel,
+          ValueListenableBuilder<double>(
+            valueListenable: _panelHeight,
+            builder: (context, height, child) {
+              return Column(
+                children: [
+                  // Drag handle
+                  MouseRegion(
+                    cursor: SystemMouseCursors.resizeRow,
+                    child: GestureDetector(
+                      onVerticalDragUpdate: (details) {
+                        _panelHeight.value = (_panelHeight.value - details.delta.dy)
+                            .clamp(widget.minPanelHeight, widget.maxPanelHeight);
+                      },
+                      child: Container(
+                        height: 4,
+                        color: Colors.transparent,
+                        child: Center(
+                          child: Container(height: 1, color: AppColors.divider),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: height,
+                    child: widget.panel,
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ],
