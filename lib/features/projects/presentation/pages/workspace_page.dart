@@ -131,7 +131,14 @@ class _WorkspacePageState extends State<WorkspacePage> {
 
                                       return IndexedStack(
                                         index: activeTabIndex == -1 ? 0 : activeTabIndex,
-                                        children: tabs.map((tab) => _buildTabContent(tab)).toList(),
+                                        children: tabs.map((tab) {
+                                          switch (tab.type) {
+                                            case WorkspaceTabType.flow:
+                                              return WorkspaceCanvas(selectedFlow: tab.data as flow_domain.Flow);
+                                            case WorkspaceTabType.endpoint:
+                                              return EndpointEditor(endpoint: tab.data as Endpoint);
+                                          }
+                                        }).toList(),
                                       );
                                     },
                                   ),
@@ -150,17 +157,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
         ],
       ),
     );
-  }
-
-  Widget _buildTabContent(WorkspaceTab? activeTab) {
-    if (activeTab == null) return const _EmptyTabState();
-
-    switch (activeTab.type) {
-      case WorkspaceTabType.flow:
-        return WorkspaceCanvas(selectedFlow: activeTab.data as flow_domain.Flow);
-      case WorkspaceTabType.endpoint:
-        return EndpointEditor(endpoint: activeTab.data as Endpoint);
-    }
   }
 }
 
