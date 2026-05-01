@@ -160,7 +160,6 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
     if (!mounted) return;
 
     final projects = provider.projects;
-    if (projects.isEmpty) return;
 
     final RenderBox? button = this.context.findRenderObject() as RenderBox?;
     final RenderBox? overlay = Overlay.of(this.context).context.findRenderObject() as RenderBox?;
@@ -182,28 +181,60 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
         borderRadius: AppRadius.br6,
         side: BorderSide(color: AppColors.border),
       ),
-      items: projects.map((p) => PopupMenuItem<int>(
-        value: p.id,
-        height: 36,
-        child: Text(
-          p.name,
-          style: AppTypography.body.copyWith(
-            color: provider.selectedProject?.id == p.id
-                ? AppColors.accent
-                : AppColors.textPrimary,
+      items: [
+        if (projects.isEmpty)
+          PopupMenuItem<int>(
+            enabled: false,
+            height: 36,
+            child: Text(
+              'No projects found',
+              style: AppTypography.body.copyWith(color: AppColors.textMuted),
+            ),
+          ),
+        ...projects.map((p) => PopupMenuItem<int>(
+          value: p.id,
+          height: 36,
+          child: Text(
+            p.name,
+            style: AppTypography.body.copyWith(
+              color: provider.selectedProject?.id == p.id
+                  ? AppColors.accent
+                  : AppColors.textPrimary,
+            ),
+          ),
+        )),
+        const PopupMenuDivider(),
+        PopupMenuItem<int>(
+          value: -1,
+          height: 36,
+          child: Row(
+            children: [
+              Icon(LucideIcons.folderCog, size: 14, color: AppColors.textSecondary),
+              const SizedBox(width: 8),
+              Text(
+                'Manage Projects...',
+                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+              ),
+            ],
           ),
         ),
-      )).toList(),
+      ],
     );
 
     if (selected != null && mounted) {
-      final project = projects.firstWhere((p) => p.id == selected);
-      await provider.selectProject(project);
+      if (selected == -1) {
+        AppNavigator.pushNamed(AppRouter.projectsRoute);
+      } else {
+        final project = projects.firstWhere((p) => p.id == selected);
+        await provider.selectProject(project);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<ProjectProvider>().isLoading;
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
@@ -224,8 +255,18 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
                 widget.projectName,
                 style: AppTypography.bodyMd.copyWith(color: AppColors.textPrimary),
               ),
-              const SizedBox(width: 4),
-              Icon(LucideIcons.chevronsUpDown, size: 12, color: AppColors.textSecondary),
+              const SizedBox(width: 6),
+              if (isLoading)
+                const SizedBox(
+                  width: 10,
+                  height: 10,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    color: AppColors.accent,
+                  ),
+                )
+              else
+                Icon(LucideIcons.chevronsUpDown, size: 12, color: AppColors.textSecondary),
             ],
           ),
         ),

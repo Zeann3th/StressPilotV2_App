@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/features/shared/domain/models/paged_response.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
@@ -29,11 +30,8 @@ class ProjectProvider extends ChangeNotifier {
 
   static const String _selectedProjectKey = 'selected_project_json';
 
-  static const String _projectsKey = 'projects_list_json';
-
   Future<void> initialize() async {
     await _loadSelectedProject();
-    await _loadCachedProjects();
   }
 
   void toggleSidebar() {
@@ -46,30 +44,17 @@ class ProjectProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _loadCachedProjects() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_projectsKey);
-    if (jsonString != null) {
-      try {
-        final List<dynamic> jsonList = jsonDecode(jsonString);
-        _projects = jsonList.map((e) => Project.fromJson(e)).toList();
-        notifyListeners();
-      } catch (_) {}
-    }
-  }
-
-  Future<void> _cacheProjects() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = jsonEncode(_projects.map((e) => e.toJson()).toList());
-    await prefs.setString(_projectsKey, jsonString);
-  }
-
   Future<void> loadProjects({String? searchName}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
+      // Ensure backend is ready on initial load
+      if (_projects.isEmpty) {
+        await HttpClient.waitForBackend();
+      }
+
       final PagedResponse<Project> response = await _projectRepository.getProjects(
         name: searchName,
         page: 0,
@@ -77,15 +62,9 @@ class ProjectProvider extends ChangeNotifier {
       );
       _projects = response.content;
       _error = null;
-      await _cacheProjects();
     } catch (e) {
       _error = e.toString();
-
-      if (searchName == null || searchName.isEmpty) {
-        if (_projects.isEmpty) await _loadCachedProjects();
-      } else {
-        _projects = [];
-      }
+      _projects = [];
     } finally {
       _isLoading = false;
       notifyListeners();

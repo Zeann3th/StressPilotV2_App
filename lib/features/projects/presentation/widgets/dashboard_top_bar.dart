@@ -6,49 +6,43 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/global_search_dropdown.dart';
 
-class AppTopBar extends StatefulWidget {
+class DashboardTopBar extends StatefulWidget {
   final TextEditingController? searchController;
   final ValueChanged<String>? onSearchSubmitted;
 
-  const AppTopBar({super.key, this.searchController, this.onSearchSubmitted});
+  const DashboardTopBar({super.key, this.searchController, this.onSearchSubmitted});
 
   @override
-  State<AppTopBar> createState() => _AppTopBarState();
+  State<DashboardTopBar> createState() => _DashboardTopBarState();
 }
 
-class _AppTopBarState extends State<AppTopBar> {
+class _DashboardTopBarState extends State<DashboardTopBar> {
   @override
   Widget build(BuildContext context) {
     final keymap = context.watch<KeymapProvider>();
-    final bg = AppColors.surface;
-    final border = AppColors.border;
+    final bg = AppColors.baseBackground;
+    final border = AppColors.divider;
 
     return Container(
-      height: 60,
-      margin: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: AppSpacing.navBarHeight,
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: AppRadius.br16,
-        border: Border.all(color: border.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-          ),
-        ],
+        border: Border(
+          bottom: BorderSide(color: border, width: 1),
+        ),
       ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Stack(
         children: [
-
+          // Center: Global Search
           Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
+              constraints: const BoxConstraints(maxWidth: 400),
               child: const GlobalSearchDropdown(),
             ),
           ),
 
+          // Right: Action Icons
           Align(
             alignment: Alignment.centerRight,
             child: Row(
@@ -59,7 +53,7 @@ class _AppTopBarState extends State<AppTopBar> {
                   tooltip: 'Marketplace',
                   onTap: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 _TopBarIcon(
                   icon: LucideIcons.settings,
                   tooltip: _tip('Settings', keymap.getShortcut('app.settings')),

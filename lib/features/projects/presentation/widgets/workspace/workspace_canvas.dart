@@ -20,6 +20,7 @@ import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:highlight/languages/json.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 
+import 'package:stress_pilot/features/projects/presentation/widgets/workspace/canvas_node_toolbar.dart';
 import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
 import 'canvas_painters.dart';
 
@@ -295,6 +296,14 @@ class _CanvasContentState extends State<_CanvasContent>
                   key: _toolbarKey,
                   child: _buildUnifiedToolbar(context, Theme.of(context).colorScheme, canvasProvider),
                 ),
+              ),
+            ),
+            Positioned(
+              left: 16,
+              top: 100,
+              bottom: 100,
+              child: Center(
+                child: const CanvasNodeToolbar(),
               ),
             ),
           ],

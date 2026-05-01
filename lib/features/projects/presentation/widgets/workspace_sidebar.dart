@@ -231,100 +231,128 @@ class _EndpointList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final endpointProvider = context.watch<EndpointProvider>();
-    final endpoints = endpointProvider.endpoints.where((e) =>
-        e.name.toLowerCase().contains(searchQuery)).toList();
+
+    if (endpointProvider.isLoading && endpointProvider.endpoints.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 16, top: 8),
+        child: Column(
+          children: List.generate(
+            5,
+            (index) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: PilotSkeleton(
+                height: AppSpacing.sidebarRowHeight,
+                width: double.infinity,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final endpoints = endpointProvider.endpoints
+        .where((e) => e.name.toLowerCase().contains(searchQuery))
+        .toList();
     final selectedEndpoint = endpointProvider.selectedEndpoint;
-    final projectId =
-        context.read<ProjectProvider>().selectedProject?.id ?? 0;
+    final projectId = context.read<ProjectProvider>().selectedProject?.id ?? 0;
 
     void openTab(Endpoint e) {
       endpointProvider.selectEndpoint(e);
       context.read<WorkspaceTabProvider>().openTab(
-        WorkspaceTab(
-          id: 'endpoint_${e.id}',
-          name: e.name,
-          type: WorkspaceTabType.endpoint,
-          data: e,
-        ),
-      );
+            WorkspaceTab(
+              id: 'endpoint_${e.id}',
+              name: e.name,
+              type: WorkspaceTabType.endpoint,
+              data: e,
+            ),
+          );
     }
 
     return Padding(
       padding: const EdgeInsets.only(left: 16),
       child: Column(
-        children: endpoints.map((e) => _EndpointRow(
-          endpoint: e,
-          isSelected: selectedEndpoint?.id == e.id,
-          onTap: () => openTab(e),
-          onEdit: () {
-            // Show rename dialog
-            final ctrl = TextEditingController(text: e.name);
-            PilotDialog.show(
-              context: context,
-              title: 'Rename Endpoint',
-              content: PilotInput(controller: ctrl, autofocus: true),
-              actions: [
-                PilotButton.ghost(label: 'Cancel', onPressed: () => Navigator.pop(context)),
-                PilotButton.primary(
-                  label: 'Rename',
-                  onPressed: () {
-                    if (ctrl.text.trim().isNotEmpty) {
-                      endpointProvider.updateEndpoint(e.id, {'name': ctrl.text.trim()});
-                      context.read<WorkspaceTabProvider>().renameTab(
-                        'endpoint_${e.id}', WorkspaceTabType.endpoint, ctrl.text.trim());
-                    }
-                    Navigator.pop(context);
+        children: endpoints
+            .map((e) => _EndpointRow(
+                  endpoint: e,
+                  isSelected: selectedEndpoint?.id == e.id,
+                  onTap: () => openTab(e),
+                  onEdit: () {
+                    // Show rename dialog
+                    final ctrl = TextEditingController(text: e.name);
+                    PilotDialog.show(
+                      context: context,
+                      title: 'Rename Endpoint',
+                      content: PilotInput(controller: ctrl, autofocus: true),
+                      actions: [
+                        PilotButton.ghost(
+                            label: 'Cancel',
+                            onPressed: () => Navigator.pop(context)),
+                        PilotButton.primary(
+                          label: 'Rename',
+                          onPressed: () {
+                            if (ctrl.text.trim().isNotEmpty) {
+                              endpointProvider.updateEndpoint(
+                                  e.id, {'name': ctrl.text.trim()});
+                              context.read<WorkspaceTabProvider>().renameTab(
+                                  'endpoint_${e.id}',
+                                  WorkspaceTabType.endpoint,
+                                  ctrl.text.trim());
+                            }
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    );
                   },
-                ),
-              ],
-            );
-          },
-          onDelete: () {
-            PilotDialog.show(
-              context: context,
-              title: 'Delete Endpoint',
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Are you sure you want to delete "${e.name}"?',
-                    style: AppTypography.body,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'This action cannot be undone.',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                PilotButton.ghost(
-                  label: 'Cancel',
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                PilotButton.danger(
-                  label: 'Delete',
-                  onPressed: () async {
-                    try {
-                      await endpointProvider.deleteEndpoint(e.id, projectId);
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                        PilotToast.show(context, 'Endpoint deleted');
-                      }
-                    } catch (err) {
-                      if (context.mounted) {
-                        PilotToast.show(context, 'Error: $err', isError: true);
-                      }
-                    }
+                  onDelete: () {
+                    PilotDialog.show(
+                      context: context,
+                      title: 'Delete Endpoint',
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Are you sure you want to delete "${e.name}"?',
+                            style: AppTypography.body,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'This action cannot be undone.',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        PilotButton.ghost(
+                          label: 'Cancel',
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        PilotButton.danger(
+                          label: 'Delete',
+                          onPressed: () async {
+                            try {
+                              await endpointProvider.deleteEndpoint(
+                                  e.id, projectId);
+                              if (context.mounted) {
+                                Navigator.of(context).pop();
+                                PilotToast.show(context, 'Endpoint deleted');
+                              }
+                            } catch (err) {
+                              if (context.mounted) {
+                                PilotToast.show(context, 'Error: $err',
+                                    isError: true);
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                    );
                   },
-                ),
-              ],
-            );
-          },
-        )).toList(),
+                ))
+            .toList(),
       ),
     );
   }
@@ -337,60 +365,85 @@ class _FlowList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final flowProvider = context.watch<FlowProvider>();
-    final flows = flowProvider.flows.where((f) =>
-        f.name.toLowerCase().contains(searchQuery)).toList();
+
+    if (flowProvider.isLoading && flowProvider.flows.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 16, top: 8),
+        child: Column(
+          children: List.generate(
+            3,
+            (index) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: PilotSkeleton(
+                height: AppSpacing.sidebarRowHeight,
+                width: double.infinity,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final flows = flowProvider.flows
+        .where((f) => f.name.toLowerCase().contains(searchQuery))
+        .toList();
     final selectedFlow = flowProvider.selectedFlow;
 
     void openTab(flow_domain.Flow f) {
       flowProvider.selectFlow(f);
       context.read<WorkspaceTabProvider>().openTab(
-        WorkspaceTab(
-          id: 'flow_${f.id}',
-          name: f.name,
-          type: WorkspaceTabType.flow,
-          data: f,
-        ),
-      );
+            WorkspaceTab(
+              id: 'flow_${f.id}',
+              name: f.name,
+              type: WorkspaceTabType.flow,
+              data: f,
+            ),
+          );
     }
 
     return Padding(
       padding: const EdgeInsets.only(left: 16),
       child: Column(
-        children: flows.map((f) => _FlowRow(
-          flow: f,
-          isSelected: selectedFlow?.id == f.id,
-          onTap: () => openTab(f),
-          onEdit: () {
-            FlowDialog.showEditDialog(
-              context,
-              flow: f,
-              onUpdate: (id, name, description) async {
-                await flowProvider.updateFlow(
-                  flowId: id,
-                  name: name,
-                  description: description,
-                );
-                if (context.mounted) {
-                  context.read<WorkspaceTabProvider>().renameTab(
-                    'flow_$id', WorkspaceTabType.flow, name);
-                }
-              },
-            );
-          },
-          onDelete: () {
-            FlowDialog.showDeleteDialog(
-              context,
-              flow: f,
-              onDelete: (id) async {
-                await flowProvider.deleteFlow(id);
-                if (context.mounted) {
-                  context.read<WorkspaceTabProvider>().closeTab(
-                    WorkspaceTab(id: 'flow_$id', name: '', type: WorkspaceTabType.flow));
-                }
-              },
-            );
-          },
-        )).toList(),
+        children: flows
+            .map((f) => _FlowRow(
+                  flow: f,
+                  isSelected: selectedFlow?.id == f.id,
+                  onTap: () => openTab(f),
+                  onEdit: () {
+                    FlowDialog.showEditDialog(
+                      context,
+                      flow: f,
+                      onUpdate: (id, name, description) async {
+                        await flowProvider.updateFlow(
+                          flowId: id,
+                          name: name,
+                          description: description,
+                        );
+                        if (context.mounted) {
+                          context.read<WorkspaceTabProvider>().renameTab(
+                              'flow_$id', WorkspaceTabType.flow, name);
+                        }
+                      },
+                    );
+                  },
+                  onDelete: () {
+                    FlowDialog.showDeleteDialog(
+                      context,
+                      flow: f,
+                      onDelete: (id) async {
+                        await flowProvider.deleteFlow(id);
+                        if (context.mounted) {
+                          context.read<WorkspaceTabProvider>().closeTab(
+                              WorkspaceTab(
+                                  id: 'flow_$id',
+                                  name: '',
+                                  type: WorkspaceTabType.flow));
+                        }
+                      },
+                    );
+                  },
+                ))
+            .toList(),
       ),
     );
   }

@@ -66,6 +66,43 @@ class _AppAboutSectionState extends State<AppAboutSection> {
     }
   }
 
+  bool _isPurgingCache = false;
+
+  Future<void> _purgeCache() async {
+    setState(() => _isPurgingCache = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      final legacyKeys = [
+        'projects_list_json',
+        'flows_list_json',
+      ];
+
+      for (final key in legacyKeys) {
+        if (prefs.containsKey(key)) {
+          await prefs.remove(key);
+        }
+      }
+
+      final allKeys = prefs.getKeys();
+      for (final key in allKeys) {
+        if (key.startsWith('endpoints_project_') && key.endsWith('_json')) {
+          await prefs.remove(key);
+        }
+      }
+
+      if (mounted) {
+        PilotToast.show(context, 'Cache purged successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        PilotToast.show(context, 'Failed to purge cache: $e', isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isPurgingCache = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final border = AppColors.border;
@@ -125,6 +162,52 @@ class _AppAboutSectionState extends State<AppAboutSection> {
             Text('System Health', style: AppTypography.heading.copyWith(color: textColor, fontSize: 20)),
             const SizedBox(height: 12),
             _buildHealthStatus(border, textColor),
+            const SizedBox(height: 24),
+            Text('Cache Management', style: AppTypography.heading.copyWith(color: textColor, fontSize: 20)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.sidebarBackground,
+                borderRadius: AppRadius.br8,
+                border: Border.all(color: border),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.cleaning_services_rounded, color: AppColors.warning, size: 24),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Purge Application Cache',
+                            style: AppTypography.bodyLg.copyWith(color: textColor, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 2),
+                        Text('Delete legacy cached data. This will not delete your actual projects or settings.',
+                            style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      PilotButton.ghost(
+                        label: _isPurgingCache ? 'Purging...' : 'Purge Cache',
+                        icon: Icons.delete_outline_rounded,
+                        onPressed: _isPurgingCache ? null : _purgeCache,
+                        foregroundOverride: AppColors.warning,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

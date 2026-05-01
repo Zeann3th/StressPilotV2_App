@@ -3,11 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/navigation_item.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
+import 'package:stress_pilot/core/themes/components/components.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/navigation_item.dart';
 
 class RecentPagesWidget extends StatefulWidget {
   const RecentPagesWidget({super.key});
@@ -62,7 +63,27 @@ class _RecentPagesWidgetState extends State<RecentPagesWidget> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const PilotSkeleton(width: 16, height: 16),
+              const SizedBox(width: 8),
+              const PilotSkeleton(width: 120, height: 20),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView.separated(
+              padding: EdgeInsets.zero,
+              itemCount: 5,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) => const PilotSkeleton(height: 48),
+            ),
+          ),
+        ],
+      );
     }
 
     if (_recentItems.isEmpty) {

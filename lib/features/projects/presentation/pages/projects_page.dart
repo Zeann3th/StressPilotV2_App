@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/runs_list_widget.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/project/project_table.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/project/project_topbar.dart';
+import 'package:stress_pilot/features/projects/domain/models/project.dart';
+
+import 'package:stress_pilot/features/projects/presentation/widgets/dashboard_top_bar.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
@@ -16,12 +21,20 @@ class ProjectsPage extends StatefulWidget {
 }
 
 class _ProjectsPageState extends State<ProjectsPage> {
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<ProjectProvider>().loadProjects();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _onNewProject() {
@@ -39,68 +52,216 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 
+  Future<void> _onProjectTap(Project project) async {
+    final provider = context.read<ProjectProvider>();
+    await provider.selectProject(project);
+    AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
+  }
+
+  void _onEditProject(Project project) {
+    ProjectDialogs.showEditDialog(
+      context,
+      project: project,
+      onUpdate: (id, name, description) async {
+        await context.read<ProjectProvider>().updateProject(
+              projectId: id,
+              name: name,
+              description: description,
+            );
+      },
+    );
+  }
+
+  void _onDeleteProject(Project project) {
+    ProjectDialogs.showDeleteDialog(
+      context,
+      project: project,
+      onDelete: (id) async {
+        await context.read<ProjectProvider>().deleteProject(id);
+      },
+    );
+  }
+
+  void _handleRefresh() {
+    context.read<ProjectProvider>().loadProjects(
+      searchName: _searchController.text,
+    );
+  }
+
+  void _handleSearch(String query) {
+    context.read<ProjectProvider>().loadProjects(searchName: query);
+  }
+
+  Future<void> _handleImport() async {
+    try {
+      await context.read<ProjectProvider>().importProject();
+      if (mounted) {
+        PilotToast.show(context, 'Project imported successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        PilotToast.show(context, 'Failed to import project: $e', isError: true);
+      }
+    }
+  }
+
+  Future<void> _handleExport() async {
+    final provider = context.read<ProjectProvider>();
+
+    if (provider.projects.isEmpty) {
+      PilotToast.show(context, 'No projects available to export', isError: true);
+      return;
+    }
+
+    final selectedProject = await PilotDialog.show<Project>(
+      context: context,
+      title: 'Select Project to Export',
+      maxWidth: 400,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 300),
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: provider.projects.length,
+          itemBuilder: (context, index) {
+            final project = provider.projects[index];
+            return ListTile(
+              title: Text(project.name, style: AppTypography.bodyMd.copyWith(color: AppColors.textPrimary)),
+              subtitle: Text(
+                project.description,
+                style: AppTypography.caption,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () => Navigator.of(context).pop(project),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.br8),
+              hoverColor: AppColors.accent.withValues(alpha: 0.1),
+            );
+          },
+        ),
+      ),
+      actions: [
+        PilotButton.ghost(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+
+    if (selectedProject == null) return;
+
+    try {
+      await provider.exportProject(selectedProject.id, selectedProject.name);
+      if (mounted) {
+        PilotToast.show(context, 'Project exported successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        PilotToast.show(context, 'Failed to export project: $e', isError: true);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<ProjectProvider>();
+    final border = AppColors.divider;
+
     return Scaffold(
       backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
-
-          Container(
-            height: AppSpacing.navBarHeight,
-            decoration: BoxDecoration(
-              color: AppColors.baseBackground,
-              border: Border(
-                bottom: BorderSide(color: AppColors.divider, width: 1),
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Row(
-              children: [
-                Text(
-                  'StressPilot',
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const Spacer(),
-                _NewProjectButton(onTap: _onNewProject),
-              ],
-            ),
-          ),
-
+          const DashboardTopBar(),
           Expanded(
-            child: Padding(
-              padding: AppSpacing.pagePadding,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-
-                  Expanded(
-                    flex: 2,
-                    child: _PanelContainer(
-                      child: const Padding(
-                        padding: EdgeInsets.all(AppSpacing.lg),
-                        child: RecentPagesWidget(),
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              decoration: BoxDecoration(
+                color: AppColors.sidebarBackground,
+                borderRadius: AppRadius.br16,
+                border: Border.all(color: border),
+              ),
+              child: ClipRRect(
+                borderRadius: AppRadius.br16,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          ProjectTopBar(
+                            searchController: _searchController,
+                            onRefresh: _handleRefresh,
+                            onAdd: _onNewProject,
+                            onImport: _handleImport,
+                            onExport: _handleExport,
+                            onSearchSubmitted: _handleSearch,
+                            onSearchChanged: () => setState(() {}),
+                          ),
+                          Expanded(
+                            child: _buildMainTable(provider),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.lg),
-
-                  Expanded(
-                    flex: 1,
-                    child: ClipRRect(
-                      borderRadius: AppRadius.br6,
-                      child: _PanelContainer(
-                        child: const RunsListWidget(flowId: null),
+                    
+                    // Analytics / Recent Activity Footer
+                    Container(
+                      height: MediaQuery.of(context).size.height * 0.35,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: border)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _PanelContainer(
+                              child: const RunsListWidget(flowId: null),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _PanelContainer(
+                              child: const Padding(
+                                padding: EdgeInsets.all(16),
+                                child: RecentPagesWidget(),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMainTable(ProjectProvider provider) {
+    if (provider.isLoading && provider.projects.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(24),
+        child: PilotSkeleton(height: double.infinity, width: double.infinity),
+      );
+    }
+
+    if (provider.projects.isEmpty) {
+      return Center(
+        child: Text(
+          'No projects found. Create one to get started.',
+          style: AppTypography.body.copyWith(color: AppColors.textMuted),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: ProjectTable(
+        projects: provider.projects,
+        onProjectTap: _onProjectTap,
+        onEdit: _onEditProject,
+        onDelete: _onDeleteProject,
       ),
     );
   }
@@ -124,52 +285,3 @@ class _PanelContainer extends StatelessWidget {
   }
 }
 
-class _NewProjectButton extends StatefulWidget {
-  final VoidCallback onTap;
-
-  const _NewProjectButton({required this.onTap});
-
-  @override
-  State<_NewProjectButton> createState() => _NewProjectButtonState();
-}
-
-class _NewProjectButtonState extends State<_NewProjectButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: AppDurations.short,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 6,
-          ),
-          decoration: BoxDecoration(
-            color: _hovered ? AppColors.accentHover : AppColors.accent,
-            borderRadius: AppRadius.br4,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(LucideIcons.plus, size: 14, color: AppColors.textPrimary),
-              const SizedBox(width: 6),
-              Text(
-                'New Project',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
