@@ -51,18 +51,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       ),
                       Positioned(
                         top: 12,
-                        left: 12,
-                        child: PilotButton.ghost(
-                          icon: Icons.arrow_back_rounded,
-                          onPressed: () {
-                            webViewController?.setVisible(false);
-                            Navigator.of(context).pop();
-                          },
-                          compact: true,
-                        ),
-                      ),
-                      Positioned(
-                        top: 12,
                         right: 12,
                         child: PilotButton.ghost(
                           icon: Icons.refresh_rounded,

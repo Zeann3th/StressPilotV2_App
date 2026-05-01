@@ -224,9 +224,16 @@ class _SidebarSectionState extends State<_SidebarSection> {
   }
 }
 
-class _EndpointList extends StatelessWidget {
+class _EndpointList extends StatefulWidget {
   final String searchQuery;
-  const _EndpointList({required this.searchQuery});
+  const _EndpointList({super.key, required this.searchQuery});
+
+  @override
+  State<_EndpointList> createState() => _EndpointListState();
+}
+
+class _EndpointListState extends State<_EndpointList> {
+  bool _hasFocus = false;
 
   @override
   Widget build(BuildContext context) {
@@ -251,9 +258,10 @@ class _EndpointList extends StatelessWidget {
     }
 
     final endpoints = endpointProvider.endpoints
-        .where((e) => e.name.toLowerCase().contains(searchQuery))
+        .where((e) => e.name.toLowerCase().contains(widget.searchQuery))
         .toList();
-    final selectedEndpoint = endpointProvider.selectedEndpoint;
+    
+    final activeTab = context.watch<WorkspaceTabProvider>().activeTab;
     final projectId = context.read<ProjectProvider>().selectedProject?.id ?? 0;
 
     void openTab(Endpoint e) {
@@ -268,14 +276,18 @@ class _EndpointList extends StatelessWidget {
           );
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 16),
-      child: Column(
-        children: endpoints
-            .map((e) => _EndpointRow(
-                  endpoint: e,
-                  isSelected: selectedEndpoint?.id == e.id,
-                  onTap: () => openTab(e),
+    return Focus(
+      onFocusChange: (focus) => setState(() => _hasFocus = focus),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16),
+        child: Column(
+          children: endpoints
+              .map((e) => _EndpointRow(
+                    endpoint: e,
+                    isSelected: activeTab?.type == WorkspaceTabType.endpoint && 
+                                activeTab?.id == 'endpoint_${e.id}',
+                    isFocused: _hasFocus,
+                    onTap: () => openTab(e),
                   onEdit: () {
                     // Show rename dialog
                     final ctrl = TextEditingController(text: e.name);
@@ -304,63 +316,71 @@ class _EndpointList extends StatelessWidget {
                       ],
                     );
                   },
-                  onDelete: () {
-                    PilotDialog.show(
-                      context: context,
-                      title: 'Delete Endpoint',
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Are you sure you want to delete "${e.name}"?',
-                            style: AppTypography.body,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'This action cannot be undone.',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textMuted,
+                    onDelete: () {
+                      PilotDialog.show(
+                        context: context,
+                        title: 'Delete Endpoint',
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Are you sure you want to delete "${e.name}"?',
+                              style: AppTypography.body,
                             ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'This action cannot be undone.',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          PilotButton.ghost(
+                            label: 'Cancel',
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          PilotButton.danger(
+                            label: 'Delete',
+                            onPressed: () async {
+                              try {
+                                await endpointProvider.deleteEndpoint(
+                                    e.id, projectId);
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                  PilotToast.show(context, 'Endpoint deleted');
+                                }
+                              } catch (err) {
+                                if (context.mounted) {
+                                  PilotToast.show(context, 'Error: $err',
+                                      isError: true);
+                                }
+                              }
+                            },
                           ),
                         ],
-                      ),
-                      actions: [
-                        PilotButton.ghost(
-                          label: 'Cancel',
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        PilotButton.danger(
-                          label: 'Delete',
-                          onPressed: () async {
-                            try {
-                              await endpointProvider.deleteEndpoint(
-                                  e.id, projectId);
-                              if (context.mounted) {
-                                Navigator.of(context).pop();
-                                PilotToast.show(context, 'Endpoint deleted');
-                              }
-                            } catch (err) {
-                              if (context.mounted) {
-                                PilotToast.show(context, 'Error: $err',
-                                    isError: true);
-                              }
-                            }
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                ))
-            .toList(),
+                      );
+                    },
+                  ))
+              .toList(),
+        ),
       ),
     );
   }
 }
 
-class _FlowList extends StatelessWidget {
+class _FlowList extends StatefulWidget {
   final String searchQuery;
-  const _FlowList({required this.searchQuery});
+  const _FlowList({super.key, required this.searchQuery});
+
+  @override
+  State<_FlowList> createState() => _FlowListState();
+}
+
+class _FlowListState extends State<_FlowList> {
+  bool _hasFocus = false;
 
   @override
   Widget build(BuildContext context) {
@@ -385,9 +405,10 @@ class _FlowList extends StatelessWidget {
     }
 
     final flows = flowProvider.flows
-        .where((f) => f.name.toLowerCase().contains(searchQuery))
+        .where((f) => f.name.toLowerCase().contains(widget.searchQuery))
         .toList();
-    final selectedFlow = flowProvider.selectedFlow;
+        
+    final activeTab = context.watch<WorkspaceTabProvider>().activeTab;
 
     void openTab(flow_domain.Flow f) {
       flowProvider.selectFlow(f);
@@ -401,14 +422,18 @@ class _FlowList extends StatelessWidget {
           );
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 16),
-      child: Column(
-        children: flows
-            .map((f) => _FlowRow(
-                  flow: f,
-                  isSelected: selectedFlow?.id == f.id,
-                  onTap: () => openTab(f),
+    return Focus(
+      onFocusChange: (focus) => setState(() => _hasFocus = focus),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16),
+        child: Column(
+          children: flows
+              .map((f) => _FlowRow(
+                    flow: f,
+                    isSelected: activeTab?.type == WorkspaceTabType.flow && 
+                                activeTab?.id == 'flow_${f.id}',
+                    isFocused: _hasFocus,
+                    onTap: () => openTab(f),
                   onEdit: () {
                     FlowDialog.showEditDialog(
                       context,
@@ -440,18 +465,18 @@ class _FlowList extends StatelessWidget {
                                   type: WorkspaceTabType.flow));
                         }
                       },
-                    );
-                  },
-                ))
-            .toList(),
-      ),
-    );
-  }
-}
-
+                      );
+                      },
+                      )).toList(),
+                      ),
+                      ),
+                      );
+                      }
+                      }
 class _EndpointRow extends StatefulWidget {
   final Endpoint endpoint;
   final bool isSelected;
+  final bool isFocused;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -459,6 +484,7 @@ class _EndpointRow extends StatefulWidget {
   const _EndpointRow({
     required this.endpoint,
     required this.isSelected,
+    this.isFocused = true,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -488,19 +514,24 @@ class _EndpointRowState extends State<_EndpointRow> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm - AppSpacing.xs),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? AppColors.activeItem
+                  ? (widget.isFocused ? AppColors.activeItem : AppColors.activeItem.withValues(alpha: 0.5))
                   : (_isHovered ? AppColors.hoverItem : Colors.transparent),
               borderRadius: AppRadius.br4,
             ),
             child: Row(
               children: [
-                _TypeBadge(type: type, color: typeColor),
+                Opacity(
+                  opacity: (widget.isSelected && !widget.isFocused) ? 0.5 : 1.0,
+                  child: _TypeBadge(type: type, color: typeColor),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     widget.endpoint.name,
                     style: AppTypography.code.copyWith(
-                      color: widget.isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                      color: widget.isSelected 
+                          ? (widget.isFocused ? AppColors.textPrimary : AppColors.textSecondary)
+                          : AppColors.textSecondary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -574,6 +605,7 @@ class _EndpointRowState extends State<_EndpointRow> {
 class _FlowRow extends StatefulWidget {
   final flow_domain.Flow flow;
   final bool isSelected;
+  final bool isFocused;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -581,6 +613,7 @@ class _FlowRow extends StatefulWidget {
   const _FlowRow({
     required this.flow,
     required this.isSelected,
+    this.isFocused = true,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -607,7 +640,7 @@ class _FlowRowState extends State<_FlowRow> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm - AppSpacing.xs),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? AppColors.activeItem
+                  ? (widget.isFocused ? AppColors.activeItem : AppColors.activeItem.withValues(alpha: 0.5))
                   : (_isHovered ? AppColors.hoverItem : Colors.transparent),
               borderRadius: AppRadius.br4,
             ),
@@ -616,14 +649,18 @@ class _FlowRowState extends State<_FlowRow> {
                 Icon(
                   LucideIcons.gitFork,
                   size: 14,
-                  color: widget.isSelected ? AppColors.accent : AppColors.textSecondary,
+                  color: widget.isSelected 
+                      ? (widget.isFocused ? AppColors.accent : AppColors.accent.withValues(alpha: 0.5)) 
+                      : AppColors.textSecondary,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     widget.flow.name,
                     style: AppTypography.body.copyWith(
-                      color: widget.isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                      color: widget.isSelected 
+                          ? (widget.isFocused ? AppColors.textPrimary : AppColors.textSecondary)
+                          : AppColors.textSecondary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
