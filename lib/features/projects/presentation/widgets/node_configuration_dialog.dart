@@ -365,33 +365,57 @@ class _ProcessorEditorState extends State<_ProcessorEditor> {
       newData.remove('clear');
     }
 
-    _injectError = false;
-    if (_injectController.text.trim().isNotEmpty) {
+    bool hasChanged = false;
+
+    final injectText = _injectController.text.trim();
+    if (injectText.isNotEmpty) {
       try {
-        newData['inject'] = jsonDecode(_injectController.text);
+        newData['inject'] = jsonDecode(injectText);
+        if (_injectError) {
+          _injectError = false;
+          hasChanged = true;
+        }
       } catch (_) {
-        _injectError = true;
-        // BLOCK: Remove the key so invalid JSON is NOT sent
+        if (!_injectError) {
+          _injectError = true;
+          hasChanged = true;
+        }
         newData.remove('inject');
       }
     } else {
+      if (_injectError) {
+        _injectError = false;
+        hasChanged = true;
+      }
       newData.remove('inject');
     }
 
-    _extractError = false;
-    if (_extractController.text.trim().isNotEmpty) {
+    final extractText = _extractController.text.trim();
+    if (extractText.isNotEmpty) {
       try {
-        newData['extract'] = jsonDecode(_extractController.text);
+        newData['extract'] = jsonDecode(extractText);
+        if (_extractError) {
+          _extractError = false;
+          hasChanged = true;
+        }
       } catch (_) {
-        _extractError = true;
-        // BLOCK: Remove the key so invalid JSON is NOT sent
+        if (!_extractError) {
+          _extractError = true;
+          hasChanged = true;
+        }
         newData.remove('extract');
       }
     } else {
+      if (_extractError) {
+        _extractError = false;
+        hasChanged = true;
+      }
       newData.remove('extract');
     }
 
-    setState(() {});
+    if (hasChanged) {
+      setState(() {});
+    }
     widget.onChanged(newData);
   }
 
