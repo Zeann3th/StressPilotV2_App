@@ -260,11 +260,6 @@ class CanvasProvider extends ChangeNotifier {
       preProcessor = node.data['preProcessor'] != null
           ? Map<String, dynamic>.from(node.data['preProcessor'])
           : {};
-      preProcessor['location'] = {
-        'x': node.position.dx,
-        'y': node.position.dy,
-      };
-      preProcessor['temp_sync_id'] = node.id;
 
       if (node.type == FlowNodeType.endpoint) {
         preProcessor['endpoint_id'] = endpointId;
@@ -273,6 +268,12 @@ class CanvasProvider extends ChangeNotifier {
         preProcessor['endpoint_type'] = node.data['type'];
         preProcessor['endpoint_method'] = node.data['method'];
       }
+
+      preProcessor['location'] = {
+        'x': node.position.dx,
+        'y': node.position.dy,
+      };
+      preProcessor['temp_sync_id'] = node.id;
 
       return FlowStep(
         id: node.id,
