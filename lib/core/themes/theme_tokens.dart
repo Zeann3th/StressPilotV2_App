@@ -112,8 +112,8 @@ abstract class AppRadius {
   static const r4  = Radius.circular(4);
   static const r6  = Radius.circular(6);
   static const r8  = Radius.circular(8);
-  static const r12 = Radius.circular(12);
-  static const r16 = Radius.circular(16);
+  static const r12 = Radius.circular(6); // Flattened for Fleet
+  static const r16 = Radius.circular(6); // Flattened for Fleet
 
   static const br4  = BorderRadius.all(r4);
   static const br6  = BorderRadius.all(r6);

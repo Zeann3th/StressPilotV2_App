@@ -10,10 +10,10 @@ import 'package:stress_pilot/features/shared/domain/repositories/utility_reposit
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/create_endpoint_dialog.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
-import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
+import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/flow_dialog.dart';
 
 import 'package:stress_pilot/features/shared/presentation/widgets/sidebar_section_header.dart';
@@ -153,7 +153,7 @@ class _SidebarSectionState extends State<_SidebarSection> {
           .toSet()
           .toList();
 
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: formats.isEmpty ? ['json', 'yaml', 'yml', 'proto'] : formats,
         allowMultiple: false,
@@ -226,7 +226,7 @@ class _SidebarSectionState extends State<_SidebarSection> {
 
 class _EndpointList extends StatefulWidget {
   final String searchQuery;
-  const _EndpointList({super.key, required this.searchQuery});
+  const _EndpointList({required this.searchQuery});
 
   @override
   State<_EndpointList> createState() => _EndpointListState();
@@ -373,7 +373,7 @@ class _EndpointListState extends State<_EndpointList> {
 
 class _FlowList extends StatefulWidget {
   final String searchQuery;
-  const _FlowList({super.key, required this.searchQuery});
+  const _FlowList({required this.searchQuery});
 
   @override
   State<_FlowList> createState() => _FlowListState();

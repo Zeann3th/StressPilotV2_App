@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
+import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart' as domain_endpoint;
 import 'package:stress_pilot/features/endpoints/presentation/widgets/key_value_editor.dart';

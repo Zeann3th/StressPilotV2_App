@@ -6,8 +6,6 @@ import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/features/shared/domain/models/paged_response.dart';
 import 'package:stress_pilot/features/projects/domain/models/project.dart';
-import 'package:stress_pilot/core/di/locator.dart';
-import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/project_repository.dart';
 import 'package:stress_pilot/features/projects/data/repositories/project_repository_impl.dart';
 
@@ -182,7 +180,7 @@ class ProjectProvider extends ChangeNotifier {
   Future<void> exportProject(int projectId, String projectName) async {
     try {
 
-      final result = await FilePicker.platform.saveFile(
+      final result = await FilePicker.saveFile(
         dialogTitle: 'Export Project',
         fileName: '${projectName.replaceAll(' ', '_')}_export.yaml',
         type: FileType.custom,
@@ -206,17 +204,10 @@ class ProjectProvider extends ChangeNotifier {
 
   Future<Project> importProject() async {
     try {
-      final capabilities = await getIt<UtilityRepository>().getCapabilities();
-      final formats = capabilities.parsers
-          .expand((p) => p.formats)
-          .map((e) => e.toLowerCase().replaceAll('.', ''))
-          .toSet()
-          .toList();
-
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         dialogTitle: 'Import Project',
         type: FileType.custom,
-        allowedExtensions: formats.isEmpty ? ['yaml'] : formats,
+        allowedExtensions: ['yaml', 'yml'],
         allowMultiple: false,
       );
 

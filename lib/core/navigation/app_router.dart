@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/environments/presentation/pages/environment_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
-import 'package:stress_pilot/features/projects/presentation/pages/workspace_page.dart';
+import 'package:stress_pilot/features/workspace/presentation/pages/workspace_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';

@@ -21,7 +21,7 @@ class _DashboardTopBarState extends State<DashboardTopBar> {
   Widget build(BuildContext context) {
     final keymap = context.watch<KeymapProvider>();
     final bg = AppColors.baseBackground;
-    final border = AppColors.divider;
+    final border = AppColors.border;
 
     return Container(
       height: AppSpacing.navBarHeight,
@@ -86,6 +86,7 @@ class _TopBarIcon extends StatefulWidget {
 
 class _TopBarIconState extends State<_TopBarIcon> {
   bool _isHovered = false;
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -101,18 +102,28 @@ class _TopBarIconState extends State<_TopBarIcon> {
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
         child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: AppDurations.micro,
-            width: 44,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _isHovered
-                  ? accent.withValues(alpha: 0.1)
-                  : Colors.transparent,
-              borderRadius: AppRadius.br8,
+          onTapDown: (_) => setState(() => _isPressed = true),
+          onTapUp: (_) {
+            setState(() => _isPressed = false);
+            widget.onTap();
+          },
+          onTapCancel: () => setState(() => _isPressed = false),
+          child: TweenAnimationBuilder<double>(
+            duration: AppDurations.short,
+            tween: Tween(begin: 1.0, end: _isPressed ? 0.95 : 1.0),
+            builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+            child: AnimatedContainer(
+              duration: AppDurations.micro,
+              width: 36, // Slightly narrower for Fleet density
+              height: 32, // Match sidebarRowHeight
+              decoration: BoxDecoration(
+                color: _isHovered
+                    ? accent.withValues(alpha: 0.1)
+                    : Colors.transparent,
+                borderRadius: AppRadius.br4,
+              ),
+              child: Icon(widget.icon, size: 16, color: iconColor),
             ),
-            child: Icon(widget.icon, size: 18, color: iconColor),
           ),
         ),
       ),

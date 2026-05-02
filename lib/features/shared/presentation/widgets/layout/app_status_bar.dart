@@ -7,10 +7,10 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 
-class StatusBar extends StatelessWidget {
+class AppStatusBar extends StatelessWidget {
   final String? projectName;
 
-  const StatusBar({
+  const AppStatusBar({
     super.key,
     this.projectName,
   });
@@ -27,11 +27,12 @@ class StatusBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
         children: [
-          if (projectName != null)
-            Text(
-              projectName!,
-              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          Text(
+            projectName ?? '<No Project Selected>',
+            style: AppTypography.caption.copyWith(
+              color: projectName != null ? AppColors.textSecondary : AppColors.textDisabled,
             ),
+          ),
           const Spacer(),
           if (isIndexing) ...[
             const _IndexingIndicator(),

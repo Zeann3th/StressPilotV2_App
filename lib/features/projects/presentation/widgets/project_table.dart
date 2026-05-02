@@ -19,37 +19,26 @@ class ProjectTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surface = AppColors.surface;
-    final border = AppColors.border;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: AppRadius.br12,
-        border: Border.all(color: border, width: 1),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          _ProjectTableHeader(),
-          Divider(height: 1, color: border),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: projects.length,
-            separatorBuilder: (_, _) => Divider(height: 1, color: border),
-            itemBuilder: (context, index) {
-              final project = projects[index];
-              return _ProjectTableRow(
-                project: project,
-                onTap: () => onProjectTap(project),
-                onEdit: () => onEdit(project),
-                onDelete: () => onDelete(project),
-              );
-            },
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _ProjectTableHeader(),
+        const SizedBox(height: 12),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: projects.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final project = projects[index];
+            return _ProjectTableRow(
+              project: project,
+              onTap: () => onProjectTap(project),
+              onEdit: () => onEdit(project),
+              onDelete: () => onDelete(project),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -57,14 +46,11 @@ class ProjectTable extends StatelessWidget {
 class _ProjectTableHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final headerBg = AppColors.elevated;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: headerBg,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _HeaderCell('NAME', width: 200),
+          _HeaderCell('NAME', width: 220),
           _HeaderCell('DESCRIPTION', flex: 1),
           _HeaderCell('ID', width: 70),
           _HeaderCell('CREATED', width: 120),
@@ -88,7 +74,11 @@ class _HeaderCell extends StatelessWidget {
     final widget = Text(
       label,
       textAlign: center ? TextAlign.center : TextAlign.start,
-      style: AppTypography.label.copyWith(color: AppColors.textMuted),
+      style: AppTypography.label.copyWith(
+        color: AppColors.textMuted,
+        fontSize: 10,
+        letterSpacing: 0.8,
+      ),
     );
 
     if (width != null) return SizedBox(width: width, child: widget);
@@ -115,38 +105,51 @@ class _ProjectTableRow extends StatefulWidget {
 
 class _ProjectTableRowState extends State<_ProjectTableRow> {
   bool _isHovered = false;
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
-    final textColor = AppColors.textPrimary;
+    final border = AppColors.border;
+    final surface = AppColors.elevatedSurface;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: RepaintBoundary(
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: TweenAnimationBuilder<double>(
+          duration: AppDurations.short,
+          tween: Tween(begin: 1.0, end: _isPressed ? 0.99 : 1.0),
+          builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
           child: AnimatedContainer(
             duration: AppDurations.micro,
-            color: _isHovered
-                ? AppColors.accent.withValues(alpha: 0.04)
-                : Colors.transparent,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: BoxDecoration(
+              color: _isHovered ? AppColors.activeItem.withValues(alpha: 0.5) : surface,
+              borderRadius: AppRadius.br6,
+              border: Border.all(
+                color: _isHovered ? AppColors.accent.withValues(alpha: 0.3) : border,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 SizedBox(
-                  width: 200,
+                  width: 220,
                   child: Row(
                     children: [
                       _ProjectAvatar(name: widget.project.name),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           widget.project.name,
-                          style: AppTypography.body.copyWith(
-                            color: textColor,
-                            fontWeight: FontWeight.w500,
+                          style: AppTypography.bodyMd.copyWith(
+                            color: AppColors.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -157,7 +160,7 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
                 ),
                 Expanded(
                   child: Text(
-                    widget.project.description,
+                    widget.project.description.isEmpty ? 'No description' : widget.project.description,
                     style: AppTypography.body.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -175,12 +178,14 @@ class _ProjectTableRowState extends State<_ProjectTableRow> {
                       PilotButton.ghost(
                         icon: Icons.edit_outlined,
                         compact: true,
+                        tooltip: 'Edit',
                         onPressed: widget.onEdit,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 4),
                       PilotButton.danger(
                         icon: Icons.delete_outline_rounded,
                         compact: true,
+                        tooltip: 'Delete',
                         onPressed: widget.onDelete,
                       ),
                     ],

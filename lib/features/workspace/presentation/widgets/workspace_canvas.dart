@@ -5,7 +5,7 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow;
 import 'package:stress_pilot/core/themes/components/components.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/node_configuration_dialog.dart';
@@ -20,12 +20,13 @@ import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:highlight/languages/json.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 
-import 'package:stress_pilot/features/projects/presentation/widgets/workspace/canvas_node_toolbar.dart';
-import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
-import 'canvas_painters.dart';
+import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
 
-import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart' as domain_endpoint;
+
+import 'canvas/canvas_node_toolbar.dart';
+import 'canvas/canvas_painters.dart';
 
 class WorkspaceCanvas extends StatelessWidget {
 

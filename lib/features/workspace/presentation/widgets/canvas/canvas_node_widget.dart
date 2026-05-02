@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
+import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
 
 class CanvasNodeWidget extends StatefulWidget {
   final CanvasNode node;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
-import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
+import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
 import 'dart:ui';
 
 class CanvasNodeToolbar extends StatelessWidget {

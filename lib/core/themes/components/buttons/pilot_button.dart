@@ -139,32 +139,42 @@ class _PilotButtonState extends State<PilotButton> {
           widget.onPressed?.call();
         },
         onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedContainer(
-          key: ValueKey(isDark),
+        child: TweenAnimationBuilder<double>(
           duration: AppDurations.short,
-          padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: AppRadius.br4,
-            border: _isFocused ? Border.all(color: AppColors.accent, width: 1) : null,
-          ),
-          child: Row(
-            mainAxisSize: widget.alignment == MainAxisAlignment.center ? MainAxisSize.min : MainAxisSize.max,
-            mainAxisAlignment: widget.alignment,
-            children: [
-              if (widget.icon != null) ...[
-                Icon(widget.icon, size: 16, color: textColor),
-                if (widget.label != null) const SizedBox(width: 8),
-              ],
-              if (widget.label != null)
-                Text(
-                  widget.label!,
-                  style: AppTypography.body.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w500,
+          tween: Tween(begin: 1.0, end: _isPressed ? 0.98 : 1.0),
+          builder: (context, scale, child) {
+            return Transform.scale(
+              scale: scale,
+              child: child,
+            );
+          },
+          child: AnimatedContainer(
+            key: ValueKey(isDark),
+            duration: AppDurations.short,
+            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: AppRadius.br4,
+              border: _isFocused ? Border.all(color: AppColors.accent, width: 1) : null,
+            ),
+            child: Row(
+              mainAxisSize: widget.alignment == MainAxisAlignment.center ? MainAxisSize.min : MainAxisSize.max,
+              mainAxisAlignment: widget.alignment,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(widget.icon, size: 16, color: textColor),
+                  if (widget.label != null) const SizedBox(width: 8),
+                ],
+                if (widget.label != null)
+                  Text(
+                    widget.label!,
+                    style: AppTypography.body.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

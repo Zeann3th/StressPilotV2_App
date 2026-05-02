@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
@@ -41,48 +42,46 @@ class _RecentPagesWidgetState extends State<RecentPagesWidget> {
     final projectProvider = context.read<ProjectProvider>();
     final flowProvider = context.read<FlowProvider>();
 
-    switch (item.type) {
-      case RecentEntityType.project:
-        final project = Project.fromJson(item.arguments);
-        await projectProvider.selectProject(project);
-        AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
-        break;
-      case RecentEntityType.flow:
-        final flow = flow_domain.Flow.fromJson(item.arguments);
-        await flowProvider.selectFlow(flow);
-        AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
-        break;
-      case RecentEntityType.endpoint:
-        final project = Project.fromJson(item.arguments['project'] as Map<String, dynamic>);
-        await projectProvider.selectProject(project);
-        AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
-        break;
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      switch (item.type) {
+        case RecentEntityType.project:
+          final project = Project.fromJson(item.arguments);
+          await projectProvider.selectProject(project);
+          if (mounted) AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
+          break;
+        case RecentEntityType.flow:
+          final flow = flow_domain.Flow.fromJson(item.arguments);
+          await flowProvider.selectFlow(flow);
+          if (mounted) AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
+          break;
+        case RecentEntityType.endpoint:
+          final project = Project.fromJson(item.arguments['project'] as Map<String, dynamic>);
+          await projectProvider.selectProject(project);
+          if (mounted) AppNavigator.pushReplacementNamed(AppRouter.workspaceRoute);
+          break;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const PilotSkeleton(width: 16, height: 16),
-              const SizedBox(width: 8),
-              const PilotSkeleton(width: 120, height: 20),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              itemCount: 5,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) => const PilotSkeleton(height: 48),
-            ),
-          ),
-        ],
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const PilotSkeleton(width: 48, height: 48),
+            const SizedBox(height: 16),
+            const PilotSkeleton(width: 200, height: 24),
+            const SizedBox(height: 32),
+            ...List.generate(3, (index) => const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: PilotSkeleton(height: 40),
+            )),
+          ],
+        ),
       );
     }
 
@@ -91,11 +90,11 @@ class _RecentPagesWidgetState extends State<RecentPagesWidget> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history_rounded, size: 32, color: AppColors.textMuted),
-            const SizedBox(height: 12),
+            Icon(LucideIcons.rocket, size: 48, color: AppColors.textDisabled),
+            const SizedBox(height: 16),
             Text(
               'No recent activity',
-              style: AppTypography.body.copyWith(color: AppColors.textMuted),
+              style: AppTypography.heading.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -103,37 +102,32 @@ class _RecentPagesWidgetState extends State<RecentPagesWidget> {
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          children: [
-            Icon(Icons.history_rounded, size: 16, color: AppColors.textPrimary),
-            const SizedBox(width: 8),
-            Text('Recent Activity', style: AppTypography.heading),
-          ],
+        const SizedBox(height: 40),
+        Icon(LucideIcons.rocket, size: 48, color: AppColors.textDisabled),
+        const SizedBox(height: 16),
+        Text(
+          'Recent Projects & Flows',
+          style: AppTypography.heading.copyWith(color: AppColors.textSecondary),
         ),
-        const SizedBox(height: 12),
-        Expanded(
+        const SizedBox(height: 32),
+        Flexible(
           child: ListView.separated(
+            shrinkWrap: true,
             padding: EdgeInsets.zero,
             itemCount: _recentItems.length,
-            separatorBuilder: (context, index) => Divider(
-              height: 1,
-              thickness: 1,
-              color: AppColors.border.withValues(alpha: 0.15),
-            ),
+            separatorBuilder: (context, index) => const SizedBox(height: 4),
             itemBuilder: (context, index) {
               final item = _recentItems[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: NavigationItem(
-                  title: item.title,
-                  subtitle: item.subtitle,
-                  badge: item.badge,
-                  icon: item.icon,
-                  compact: false,
-                  onTap: () => _onItemTap(item),
-                ),
+              return NavigationItem(
+                title: item.title,
+                subtitle: item.subtitle,
+                badge: item.badge,
+                icon: item.icon,
+                compact: true,
+                onTap: () => _onItemTap(item),
               );
             },
           ),

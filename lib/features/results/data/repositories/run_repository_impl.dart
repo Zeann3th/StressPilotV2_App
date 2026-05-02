@@ -56,7 +56,7 @@ class RunRepositoryImpl implements RunRepository {
       final fileName =
           '[Stress Pilot] Detailed report of run ${run.id} $dateStr.xlsx';
 
-      String? outputFile = await FilePicker.platform.saveFile(
+      String? outputFile = await FilePicker.saveFile(
         dialogTitle: 'Save Run Report',
         fileName: fileName,
         type: FileType.custom,

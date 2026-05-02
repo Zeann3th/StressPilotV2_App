@@ -10,15 +10,15 @@ import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/workspace_nav_bar.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/workspace_sidebar.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/workspace_tab_bar.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/workspace/workspace_canvas.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/workspace_tab_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/layout/app_nav_bar.dart';
+import 'package:stress_pilot/features/workspace/presentation/widgets/workspace_sidebar.dart';
+import 'package:stress_pilot/features/workspace/presentation/widgets/workspace_tab_bar.dart';
+import 'package:stress_pilot/features/workspace/presentation/widgets/workspace_canvas.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
-import 'package:stress_pilot/features/projects/presentation/widgets/project/project_dialog.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/project_dialog.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/endpoint_editor.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/status_bar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/layout/app_status_bar.dart';
 
 class WorkspacePage extends StatefulWidget {
   const WorkspacePage({super.key});
@@ -77,7 +77,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
       backgroundColor: AppColors.baseBackground,
       body: Column(
         children: [
-          WorkspaceNavBar(
+          AppNavBar(
             onToggleSidebar: _toggleSidebar,
             isSidebarOpen: _isSidebarOpen,
           ),
@@ -126,7 +126,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
                               color: AppColors.baseBackground,
                               borderRadius: AppRadius.br6,
                               border: Border.all(color: AppColors.border),
-                              boxShadow: AppShadows.subtle,
                             ),
                             clipBehavior: Clip.antiAlias,
                             child: Column(
@@ -164,7 +163,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                     ),
                   ),
           ),
-          StatusBar(
+          AppStatusBar(
             projectName: project?.name,
           ),
         ],
@@ -304,43 +303,57 @@ class _ProjectCard extends StatefulWidget {
 
 class _ProjectCardState extends State<_ProjectCard> {
   bool _isHovered = false;
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: () => context.read<ProjectProvider>().selectProject(widget.project),
-        child: AnimatedContainer(
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            context.read<ProjectProvider>().selectProject(widget.project);
+          }
+        });
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: TweenAnimationBuilder<double>(
           duration: AppDurations.short,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _isHovered ? AppColors.hoverItem : AppColors.sidebarBackground,
-            borderRadius: AppRadius.br8,
-            border: Border.all(
-              color: _isHovered ? AppColors.accent.withValues(alpha: 0.5) : AppColors.border,
+          tween: Tween(begin: 1.0, end: _isPressed ? 0.98 : 1.0),
+          builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+          child: AnimatedContainer(
+            duration: AppDurations.short,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _isHovered ? AppColors.hoverItem : AppColors.sidebarBackground,
+              borderRadius: AppRadius.br6,
+              border: Border.all(
+                color: _isHovered ? AppColors.accent.withValues(alpha: 0.5) : AppColors.border,
+              ),
             ),
-            boxShadow: _isHovered ? AppShadows.subtle : null,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.project.name,
-                style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.project.description.isEmpty ? 'No description' : widget.project.description,
-                style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.project.name,
+                  style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.project.description.isEmpty ? 'No description' : widget.project.description,
+                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ),
       ),

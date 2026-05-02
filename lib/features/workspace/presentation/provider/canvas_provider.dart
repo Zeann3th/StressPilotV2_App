@@ -4,7 +4,7 @@ import 'package:stress_pilot/features/projects/presentation/provider/flow_provid
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart' as domain_endpoint;
 import 'package:uuid/uuid.dart';
 
-import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
+import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
 
 enum CanvasMode { move, connect }
 

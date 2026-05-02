@@ -12,7 +12,7 @@ import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart'
 import 'package:stress_pilot/features/endpoints/presentation/widgets/endpoint_type_badge.dart';
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
-import 'package:stress_pilot/features/projects/domain/models/canvas.dart';
+import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 
 class WorkspaceEndpointsList extends StatefulWidget {
@@ -73,7 +73,7 @@ class _WorkspaceEndpointsListState extends State<WorkspaceEndpointsList> {
           .toSet()
           .toList();
 
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: formats.isEmpty ? ['json', 'yaml', 'yml', 'proto'] : formats,
       );

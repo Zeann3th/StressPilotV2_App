@@ -42,13 +42,13 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
   final FocusNode _focusNode = FocusNode();
   final LayerLink _layerLink = LayerLink();
   final Dio _dio = HttpClient.getInstance();
+  final GlobalKey _searchBarKey = GlobalKey();
 
   OverlayEntry? _overlayEntry;
   Timer? _debounce;
   _SearchResults _results = const _SearchResults();
   bool _isLoading = false;
   bool _isFocused = false;
-  double _searchBarWidth = 400;
 
   @override
   void initState() {
@@ -175,6 +175,13 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
   }
 
   Widget _buildDropdown() {
+    double width = 400; // default/fallback
+    final context = _searchBarKey.currentContext;
+    if (context != null) {
+      final box = context.findRenderObject() as RenderBox;
+      width = box.size.width;
+    }
+
     return CompositedTransformFollower(
       link: _layerLink,
       showWhenUnlinked: false,
@@ -184,7 +191,7 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
       child: Material(
         color: Colors.transparent,
         child: SizedBox(
-          width: _searchBarWidth,
+          width: width,
           child: _SearchDropdownPanel(
             results: _results,
             isLoading: _isLoading,
@@ -243,72 +250,67 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
     final bgColor = AppColors.elevated;
     final borderColor = _isFocused ? AppColors.accent : AppColors.border;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        _searchBarWidth = constraints.maxWidth;
-        
-        return CompositedTransformTarget(
-          link: _layerLink,
-          child: AnimatedContainer(
-            duration: AppDurations.short,
-            height: 36,
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: AppRadius.br8,
-              border: Border.all(
-                color: borderColor,
-                width: _isFocused ? 2 : 1,
-              ),
-              boxShadow: _isFocused
-                  ? [
-                      BoxShadow(
-                        color: AppColors.accent.withValues(alpha: 0.2),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 10),
-                Icon(Icons.search_rounded, size: 16, color: AppColors.textMuted),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    onChanged: _onChanged,
-                    style: AppTypography.body.copyWith(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Search projects, flows, endpoints...',
-                      hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                      suffixIcon: _isLoading
-                          ? Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 1.5,
-                                  color: AppColors.accent,
-                                ),
-                              ),
-                            )
-                          : null,
-                    ),
-                    cursorColor: AppColors.accent,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
+    return CompositedTransformTarget(
+      key: _searchBarKey,
+      link: _layerLink,
+      child: AnimatedContainer(
+        duration: AppDurations.short,
+        height: 36,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: AppRadius.br8,
+          border: Border.all(
+            color: borderColor,
+            width: _isFocused ? 2 : 1,
           ),
-        );
-      },
+          boxShadow: _isFocused
+              ? [
+                  BoxShadow(
+                    color: AppColors.accent.withValues(alpha: 0.2),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          children: [
+            const SizedBox(width: 10),
+            Icon(Icons.search_rounded, size: 16, color: AppColors.textMuted),
+            const SizedBox(width: 6),
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                onChanged: _onChanged,
+                style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Search projects, flows, endpoints...',
+                  hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  suffixIcon: _isLoading
+                      ? Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+                cursorColor: AppColors.accent,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+      ),
     );
   }
 }

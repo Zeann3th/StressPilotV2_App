@@ -6,25 +6,27 @@ import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
-import 'package:stress_pilot/features/projects/presentation/provider/workspace_tab_provider.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dialog.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 
-class WorkspaceNavBar extends StatelessWidget {
+class AppNavBar extends StatelessWidget {
   final VoidCallback onToggleSidebar;
   final bool isSidebarOpen;
+  final Widget? center;
 
-  const WorkspaceNavBar({
+  const AppNavBar({
     super.key,
     required this.onToggleSidebar,
     required this.isSidebarOpen,
+    this.center,
   });
 
   @override
   Widget build(BuildContext context) {
-    final project = context.watch<ProjectProvider>().selectedProject;
-    final activeTab = context.watch<WorkspaceTabProvider>().activeTab;
+    final project = center != null ? null : context.watch<ProjectProvider>().selectedProject;
+    final activeTab = center != null ? null : context.watch<WorkspaceTabProvider>().activeTab;
 
     return Container(
       height: AppSpacing.navBarHeight,
@@ -52,10 +54,10 @@ class WorkspaceNavBar extends StatelessWidget {
             ),
           ),
 
-          // Center: Project name picker (mathematically centered)
+          // Center: Custom widget or Project name picker
           Positioned.fill(
             child: Center(
-              child: _ProjectNameButton(projectName: project?.name ?? 'No Project'),
+              child: center ?? _ProjectNameButton(projectName: project?.name ?? 'No Project'),
             ),
           ),
 
@@ -67,13 +69,15 @@ class WorkspaceNavBar extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _PlayStopButton(project: project, activeTab: activeTab),
-                if (project != null && project.environmentId != 0) ...[
-                  const SizedBox(width: 4),
-                  _EnvIconButton(
-                    environmentId: project.environmentId,
-                    projectName: project.name,
-                  ),
+                if (center == null) ...[
+                  _PlayStopButton(project: project, activeTab: activeTab),
+                  if (project != null && project.environmentId != 0) ...[
+                    const SizedBox(width: 4),
+                    _EnvIconButton(
+                      environmentId: project.environmentId,
+                      projectName: project.name,
+                    ),
+                  ],
                 ],
                 const SizedBox(width: 12),
                 _NavIconButton(
@@ -226,7 +230,9 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
         AppNavigator.pushNamed(AppRouter.projectsRoute);
       } else {
         final project = projects.firstWhere((p) => p.id == selected);
-        await provider.selectProject(project);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) provider.selectProject(project);
+        });
       }
     }
   }
