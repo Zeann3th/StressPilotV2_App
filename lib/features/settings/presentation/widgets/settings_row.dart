@@ -81,7 +81,6 @@ class _SettingsRowState extends State<SettingsRow> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = AppColors.textPrimary;
 
     final isBool = widget.value.toLowerCase() == 'true' || widget.value.toLowerCase() == 'false';
@@ -99,7 +98,7 @@ class _SettingsRowState extends State<SettingsRow> {
         child: AnimatedContainer(
           duration: AppDurations.micro,
           color: _isHovered && !_isEditing && !isBool
-              ? (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02))
+              ? AppColors.hoverItem
               : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: Row(

@@ -9,10 +9,11 @@ import 'package:stress_pilot/features/projects/domain/repositories/flow_reposito
 import 'package:stress_pilot/features/projects/data/repositories/flow_repository_impl.dart';
 import 'package:stress_pilot/features/projects/domain/repositories/project_repository.dart';
 import 'package:stress_pilot/features/projects/data/repositories/project_repository_impl.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/settings/domain/repositories/setting_repository.dart';
 import 'package:stress_pilot/features/settings/data/repositories/setting_repository_impl.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
@@ -23,13 +24,12 @@ import 'package:stress_pilot/features/settings/presentation/provider/plugin_sett
 import 'package:stress_pilot/features/settings/domain/repositories/function_repository.dart';
 import 'package:stress_pilot/features/settings/data/repositories/function_repository_impl.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
-import 'package:stress_pilot/features/scheduling/domain/repositories/schedule_repository.dart';
-import 'package:stress_pilot/features/scheduling/data/repositories/schedule_repository_impl.dart';
-import 'package:stress_pilot/features/scheduling/presentation/provider/scheduling_provider.dart';
-import 'package:stress_pilot/features/shared/domain/repositories/run_repository.dart';
-import 'package:stress_pilot/features/marketplace/data/repositories/plugin_capability_repository_impl.dart';
-import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
-import 'package:stress_pilot/features/shared/data/repositories/utility_repository_impl.dart';
+import 'package:stress_pilot/features/settings/domain/repositories/schedule_repository.dart';
+import 'package:stress_pilot/features/settings/data/repositories/schedule_repository_impl.dart';
+import 'package:stress_pilot/features/settings/presentation/provider/scheduling_provider.dart';
+import 'package:stress_pilot/features/results/domain/repositories/run_repository.dart';
+import 'package:stress_pilot/features/results/data/repositories/run_repository_impl.dart';
+import 'package:stress_pilot/features/results/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 
 import 'package:stress_pilot/features/environments/domain/repositories/environment_repository.dart';
@@ -38,9 +38,10 @@ import 'package:stress_pilot/features/environments/presentation/provider/environ
 import 'package:stress_pilot/features/results/domain/repositories/results_repository.dart';
 import 'package:stress_pilot/features/results/data/repositories/results_repository_impl.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
-import 'package:stress_pilot/features/shared/data/repositories/run_repository_impl.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
-import 'package:stress_pilot/features/agent/presentation/provider/agent_provider.dart';
+
+import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
+import 'package:stress_pilot/features/shared/data/repositories/utility_repository_impl.dart';
+import 'package:stress_pilot/features/marketplace/data/repositories/plugin_capability_repository_impl.dart';
 
 final getIt = GetIt.instance;
 
@@ -68,6 +69,7 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => KeymapProvider());
 
   getIt.registerLazySingleton(() => EndpointProvider());
+  getIt.registerLazySingleton(() => WorkspaceTabProvider());
 
   getIt.registerLazySingleton(() => CanvasProvider());
 
@@ -93,8 +95,6 @@ void setupDependencies() {
   getIt.registerLazySingleton(() => SchedulingProvider(getIt()));
   getIt.registerLazySingleton<PluginCapabilityRepository>(
       () => PluginCapabilityRepositoryImpl());
-
-  getIt.registerLazySingleton(() => AgentProvider());
 
   getIt<ResultsProvider>();
 }

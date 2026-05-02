@@ -91,7 +91,10 @@ class _PluginSettingsViewState extends State<PluginSettingsView> {
                     ],
                   ),
                 )
-              : _PluginDetailView(plugin: selected),
+              : Align(
+                  alignment: Alignment.topCenter,
+                  child: _PluginDetailView(plugin: selected),
+                ),
         ),
       ],
     );
@@ -179,7 +182,7 @@ class _PluginDetailView extends StatelessWidget {
                 height: 64,
                 decoration: BoxDecoration(
                   color: AppColors.accent.withValues(alpha: 0.1),
-                  borderRadius: AppRadius.br12,
+                  borderRadius: AppRadius.br8,
                 ),
                 child: Icon(Icons.extension_rounded, size: 32, color: AppColors.accent),
               ),

@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/features/endpoints/domain/repositories/endpoint_repository.dart';
 import 'package:stress_pilot/features/endpoints/data/repositories/endpoint_repository_impl.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
@@ -17,35 +16,41 @@ class EndpointProvider extends ChangeNotifier {
   int _pageSize = 20;
   bool _hasMore = true;
 
+  Endpoint? _selectedEndpoint;
   bool _isExecuting = false;
   String? _error;
 
-  // Caching execution results in memory
   final Map<int, Map<String, dynamic>> _executionResults = {};
-  // Track active cancel tokens
+  final Map<int, Map<String, dynamic>> _transientStates = {};
+
   final Map<int, CancelToken> _cancelTokens = {};
 
-  String _getCacheKey(int projectId) => 'endpoints_project_${projectId}_json';
+  bool _isResponsePanelVisible = false;
+  bool get isResponsePanelVisible => _isResponsePanelVisible;
 
-  Future<void> _cacheEndpoints(int projectId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = jsonEncode(_endpoints.map((e) => e.toJson()).toList());
-    await prefs.setString(_getCacheKey(projectId), jsonString);
+  void setResponsePanelVisible(bool visible) {
+    _isResponsePanelVisible = visible;
+    notifyListeners();
   }
 
-  Future<void> _loadCachedEndpoints(int projectId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_getCacheKey(projectId));
-    if (jsonString != null) {
-      try {
-        final List<dynamic> jsonList = jsonDecode(jsonString);
-        _endpoints = jsonList.map((e) => Endpoint.fromJson(e)).toList();
-        notifyListeners();
-      } catch (_) {}
-    }
+  void toggleResponsePanel() {
+    _isResponsePanelVisible = !_isResponsePanelVisible;
+    notifyListeners();
   }
 
   List<Endpoint> get endpoints => _endpoints;
+  Endpoint? get selectedEndpoint => _selectedEndpoint;
+
+  void selectEndpoint(Endpoint endpoint) {
+    _selectedEndpoint = endpoint;
+    notifyListeners();
+  }
+
+  void updateTransientState(int endpointId, Map<String, dynamic> state) {
+    _transientStates[endpointId] = state;
+  }
+
+  Map<String, dynamic>? getTransientState(int endpointId) => _transientStates[endpointId];
 
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
@@ -72,6 +77,10 @@ class EndpointProvider extends ChangeNotifier {
     _hasMore = true;
 
     try {
+      if (_endpoints.isEmpty) {
+        await HttpClient.waitForBackend();
+      }
+
       final PagedResponse<Endpoint> page = await _endpointRepository.fetchEndpoints(
         projectId: projectId,
         page: _currentPage,
@@ -80,10 +89,8 @@ class EndpointProvider extends ChangeNotifier {
 
       _endpoints = page.content;
       _hasMore = _currentPage < (page.totalPages - 1);
-      await _cacheEndpoints(projectId);
     } catch (e) {
       _error = e.toString();
-      if (_endpoints.isEmpty) await _loadCachedEndpoints(projectId);
       _hasMore = false;
     }
 
@@ -278,4 +285,3 @@ class EndpointProvider extends ChangeNotifier {
 
   bool isEndpointExecuting(int endpointId) => _cancelTokens.containsKey(endpointId);
 }
-

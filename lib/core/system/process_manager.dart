@@ -219,6 +219,33 @@ class ProcessManager {
     return paths;
   }
 
+  Future<String> _getJsaPath() async {
+    final home = Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'] ?? '';
+    final pilotHome = Platform.environment['PILOT_HOME'] ?? path.join(home, '.pilot');
+    final jsaDir = path.join(pilotHome, 'core', 'scripts');
+    await Directory(jsaDir).create(recursive: true);
+    return path.join(jsaDir, 'app.jsa');
+  }
+
+  Future<void> _generateJsa(String javaPath, String jarPath, String jsaPath) async {
+    AppLogger.info('Generating AppCDS cache...', name: _logName);
+    try {
+      await Process.run(javaPath, [
+        '-Dspring.context.exit=onRefresh',
+        '-XX:ArchiveClassesAtExit=$jsaPath',
+        '-jar',
+        jarPath,
+      ]);
+      if (await File(jsaPath).exists()) {
+        AppLogger.info('AppCDS cache generated at $jsaPath', name: _logName);
+      } else {
+        AppLogger.warning('AppCDS cache generation failed, will start without cache', name: _logName);
+      }
+    } catch (e) {
+      AppLogger.warning('AppCDS generation error: $e', name: _logName);
+    }
+  }
+
   String _getAssetPath(String assetName) {
     if (kDebugMode) {
       return path.join(Directory.current.path, 'assets', assetName);
@@ -232,38 +259,6 @@ class ProcessManager {
         assetName,
       );
     }
-  }
-
-  String resolveAgentPath() {
-    final exeName = Platform.isWindows ? 'stresspilot-agent.exe' : 'stresspilot-agent';
-    final standardPath = _getAssetPath('agent/$exeName');
-
-    if (kDebugMode) return standardPath;
-
-    if (File(standardPath).existsSync()) {
-      return standardPath;
-    }
-
-    final String executableDir = File(Platform.resolvedExecutable).parent.path;
-    final altPath = path.join(
-      executableDir,
-      'flutter_assets',
-      'agent',
-      exeName,
-    );
-
-    if (File(altPath).existsSync()) {
-      AppLogger.info('Agent found at alternative path: $altPath', name: _logName);
-      return altPath;
-    }
-
-    return standardPath;
-  }
-
-  String resolveAgentSourceDir() {
-    return path.normalize(
-      path.join(_getExecutableDir(), '..', 'stresspilot_agent'),
-    );
   }
 
   PilotProcess? getProcess(String name) => _processes[name];
@@ -297,26 +292,9 @@ class ProcessManager {
     final javaPath = await _getJavaExecutable();
     final workingDir = _getExecutableDir();
 
-    final logDir = Platform.isWindows
-        ? (Platform.environment['APPDATA'] ?? workingDir)
-        : (Platform.environment['HOME'] ?? workingDir);
-    final logFile = File(path.join(logDir, 'stresspilot', 'pilot.log'));
-    await logFile.parent.create(recursive: true);
-    final sink = logFile.openWrite(mode: FileMode.append);
-
-    void fileLog(String msg) {
-      sink.writeln('[${DateTime.now()}] $msg');
-    }
-
-    fileLog('=== startBackend called ===');
-    fileLog('javaPath: $javaPath (exists: ${File(javaPath).existsSync()})');
-    fileLog('jarPath: $jarPath (exists: ${File(jarPath).existsSync()})');
-    fileLog('workingDir: $workingDir');
+    AppLogger.info('Starting backend: java=$javaPath, jar=$jarPath', name: _logName);
 
     if (!await File(jarPath).exists()) {
-      fileLog('CRITICAL: JAR file not found, aborting.');
-      await sink.flush();
-      await sink.close();
       AppLogger.critical('JAR file not found at $jarPath', name: _logName);
       return;
     }
@@ -325,15 +303,25 @@ class ProcessManager {
       await _makeExecutable(javaPath);
     }
 
+    final jsaPath = await _getJsaPath();
+    if (!await File(jsaPath).exists()) {
+      await _generateJsa(javaPath, jarPath, jsaPath);
+    }
+    final jsaExists = await File(jsaPath).exists();
+
     try {
       final profile = kDebugMode ? 'dev' : 'prod';
+      final args = <String>[
+        if (jsaExists) '-XX:SharedArchiveFile=$jsaPath',
+        '-jar',
+        jarPath,
+        '--spring.profiles.active=$profile',
+      ];
       final process = await Process.start(
         javaPath,
-        ['-jar', jarPath, '--spring.profiles.active=$profile'],
+        args,
         workingDirectory: workingDir,
       );
-
-      fileLog('Process started PID=${process.pid}');
 
       final pilotProcess = PilotProcess('backend');
       pilotProcess.process = process;
@@ -341,27 +329,18 @@ class ProcessManager {
 
       if (!kDebugMode) {
         process.stdout.transform(utf8.decoder).listen((data) {
-          sink.write(data);
           AppLogger.debug(data.trim(), name: 'backend.stdout');
         });
         process.stderr.transform(utf8.decoder).listen((data) {
-          sink.write('[ERR] $data');
           AppLogger.error(data.trim(), name: 'backend.stderr');
         });
         process.exitCode.then((code) async {
-          fileLog('Process exited with code: $code');
           AppLogger.error('Backend process exited with code: $code', name: _logName);
-          await sink.flush();
-          await sink.close();
           _processes.remove('backend');
           if (onExit != null) {
             onExit(code);
           }
         });
-      } else {
-
-        await sink.flush();
-        await sink.close();
       }
 
       _setupLogging(pilotProcess, attachLogs);
@@ -369,68 +348,9 @@ class ProcessManager {
       AppLogger.info('Backend started (pid=${process.pid})', name: _logName);
       await _waitForHealth();
     } catch (e, st) {
-      fileLog('FAILED TO START: $e\n$st');
-      await sink.flush();
-      await sink.close();
       AppLogger.critical('Failed to start backend', name: _logName, error: e, stackTrace: st);
       rethrow;
     }
-  }
-
-  Future<void> startAgent({bool pipeMode = false, bool pythonMode = false}) async {
-    if (_processes.containsKey('agent')) {
-      return;
-    }
-
-    Process? process;
-    String? workingDir;
-
-    if (pythonMode || kDebugMode) {
-      final agentSourceDir = resolveAgentSourceDir();
-      if (await Directory(agentSourceDir).exists()) {
-        try {
-          process = await Process.start(
-            'powershell.exe',
-            ['-NoProfile', '-Command', 'uv run python src/main.py ${pipeMode ? "--pipe" : ""}'],
-            workingDirectory: agentSourceDir,
-          );
-          workingDir = agentSourceDir;
-        } catch (e) {
-          AppLogger.warning('Failed to start via uv run, trying executable...', name: _logName);
-        }
-      }
-    }
-
-    if (process == null) {
-      final agentPath = resolveAgentPath();
-
-      if (!await File(agentPath).exists()) {
-        AppLogger.error('Agent executable not found at $agentPath', name: _logName);
-        return;
-      }
-
-      await _makeExecutable(agentPath);
-
-      try {
-        final List<String> args = pipeMode ? ['--pipe'] : [];
-        process = await Process.start(agentPath, args);
-        workingDir = path.dirname(agentPath);
-      } catch (e) {
-        AppLogger.error('Failed to start agent executable', name: _logName, error: e);
-        rethrow;
-      }
-    }
-
-    final pilotProcess = PilotProcess('agent');
-    pilotProcess.process = process;
-    _processes['agent'] = pilotProcess;
-
-    _setupLogging(pilotProcess, true);
-    AppLogger.info('Agent started (pid=${process.pid}) in $workingDir', name: _logName);
-  }
-
-  Future<void> stopAgent() async {
-    await stopProcess('agent');
   }
 
   void _setupLogging(PilotProcess p, bool attach) {
@@ -504,7 +424,7 @@ class ProcessManager {
 
     try {
       if (Platform.isWindows) {
-        // 1. Kill by port
+
         final result = await Process.run('cmd', ['/c', 'netstat -ano | findstr :52000']);
         for (var line in result.stdout.toString().split('\n')) {
           if (line.contains('LISTENING')) {
@@ -515,8 +435,6 @@ class ProcessManager {
           }
         }
 
-        // 2. Kill by command line (specifically for app.jar)
-        // This ensures we catch it even if it's on a different port or not yet listening
         await Process.run('powershell', [
           '-NoProfile',
           '-Command',

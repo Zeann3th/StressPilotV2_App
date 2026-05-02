@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_notifier/local_notifier.dart';
+import 'package:stress_pilot/core/network/http_client.dart';
 import 'package:stress_pilot/core/navigation/navigation_tracker.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/features/shared/domain/models/paged_response.dart';
@@ -39,6 +40,10 @@ class FlowProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (_flows.isEmpty) {
+        await HttpClient.waitForBackend();
+      }
+
       final PagedResponse<flow_domain.Flow> response = await _flowRepository
           .getFlows(projectId: projectId, name: name, page: 0, size: 20);
       _flows = response.content;

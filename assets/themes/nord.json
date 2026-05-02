@@ -1,0 +1,25 @@
+{
+  "name": "Nord",
+  "brightness": "dark",
+  "colors": {
+    "background": "#2e3440",
+    "surface": "#3b4252",
+    "elevated": "#434c5e",
+    "activeItem": "#4c566a",
+    "hoverItem": "#434c5e",
+    "accent": "#88c0d0",
+    "accentHover": "#9ecfdf",
+    "accentActive": "#7ab0c0",
+    "border": "#4c566a",
+    "divider": "#3b4252",
+    "textPrimary": "#eceff4",
+    "textSecondary": "#d8dee9",
+    "textDisabled": "#4c566a",
+    "success": "#a3be8c",
+    "info": "#81a1c1",
+    "warning": "#ebcb8b",
+    "error": "#bf616a",
+    "methodDelete": "#bf616a",
+    "methodPatch": "#b48ead"
+  }
+}

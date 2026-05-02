@@ -1,26 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:stress_pilot/features/projects/domain/models/project.dart';
-import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
-import 'package:stress_pilot/features/endpoints/presentation/pages/endpoints_page.dart';
+import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/features/environments/presentation/pages/environment_page.dart';
-import 'package:stress_pilot/features/projects/presentation/pages/project_workspace_page.dart';
 import 'package:stress_pilot/features/projects/presentation/pages/projects_page.dart';
+import 'package:stress_pilot/features/workspace/presentation/pages/workspace_page.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/results/presentation/pages/results_page.dart';
 import 'package:stress_pilot/features/settings/presentation/pages/settings_page.dart';
 import 'package:stress_pilot/features/marketplace/presentation/pages/marketplace_page.dart';
-import 'package:stress_pilot/features/agent/presentation/pages/agent_page.dart';
+import 'package:stress_pilot/features/results/presentation/pages/recent_runs_page.dart';
 
 class AppRouter {
   static const String projectsRoute = '/';
   static const String workspaceRoute = '/workspace';
   static const String settingsRoute = '/settings';
-  static const String projectEndpointsRoute = '/project/endpoints';
   static const String projectEnvironmentRoute = '/project/environment';
   static const String resultsRoute = '/results';
+  static const String recentRunsRoute = '/recent-runs';
   static const String marketplaceRoute = '/marketplace';
-  static const String agentRoute = '/agent';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     MaterialPageRoute<T> buildRoute<T>(Widget widget) {
@@ -28,10 +24,7 @@ class AppRouter {
     }
 
     if (settings.name == workspaceRoute) {
-      final projectProvider = Provider.of<ProjectProvider>(
-        AppNavigator.navigatorKey.currentContext!,
-        listen: false,
-      );
+      final projectProvider = getIt<ProjectProvider>();
       if (projectProvider.selectedProject == null) {
         return buildRoute(const ProjectsPage());
       }
@@ -39,35 +32,11 @@ class AppRouter {
 
     switch (settings.name) {
       case projectsRoute:
-        final args = settings.arguments as Map<String, dynamic>?;
-        return buildRoute(
-          ProjectsPage(initialFlowId: args?['initialFlowId'] as int?),
-        );
+        return buildRoute(const ProjectsPage());
       case workspaceRoute:
-        return buildRoute(const ProjectWorkspacePage());
+        return buildRoute(const WorkspacePage());
       case settingsRoute:
         return buildRoute(const SettingsPage());
-      case projectEndpointsRoute:
-        final args = settings.arguments as Map<String, dynamic>;
-        final projectData = args['project'];
-        final project = projectData is Project
-            ? projectData
-            : Project.fromJson(projectData as Map<String, dynamic>);
-
-        final initialEndpointData = args['initialEndpoint'];
-        Endpoint? initialEndpoint;
-        if (initialEndpointData != null) {
-          initialEndpoint = initialEndpointData is Endpoint
-              ? initialEndpointData
-              : Endpoint.fromJson(initialEndpointData as Map<String, dynamic>);
-        }
-
-        return buildRoute(
-          ProjectEndpointsPage(
-            project: project,
-            initialEndpoint: initialEndpoint,
-          ),
-        );
       case projectEnvironmentRoute:
         final args = settings.arguments as Map<String, dynamic>;
         return buildRoute(
@@ -79,10 +48,10 @@ class AppRouter {
       case resultsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         return buildRoute(ResultsPage(runId: args['runId'] as String));
+      case recentRunsRoute:
+        return buildRoute(const RecentRunsPage());
       case marketplaceRoute:
         return buildRoute(const MarketplacePage());
-      case agentRoute:
-        return buildRoute(const AgentPage());
 
       default:
         return buildRoute(

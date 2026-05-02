@@ -1,0 +1,379 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+
+import 'package:stress_pilot/core/themes/components/components.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
+import 'package:stress_pilot/features/projects/domain/models/project.dart';
+import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/workspace_tab_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/layout/app_nav_bar.dart';
+import 'package:stress_pilot/features/workspace/presentation/widgets/workspace_sidebar.dart';
+import 'package:stress_pilot/features/workspace/presentation/widgets/workspace_tab_bar.dart';
+import 'package:stress_pilot/features/workspace/presentation/widgets/workspace_canvas.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/project_dialog.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/endpoint_editor.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/layout/app_status_bar.dart';
+
+class WorkspacePage extends StatefulWidget {
+  const WorkspacePage({super.key});
+
+  @override
+  State<WorkspacePage> createState() => _WorkspacePageState();
+}
+
+class _WorkspacePageState extends State<WorkspacePage> {
+  int? _lastLoadedProjectId;
+  final ValueNotifier<double> _sidebarWidth = ValueNotifier(260.0);
+  bool _isSidebarOpen = true;
+
+  static const double _minSidebarWidth = 180;
+  static const double _maxSidebarWidth = 480;
+
+  @override
+  void dispose() {
+    _sidebarWidth.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<ProjectProvider>().loadProjects();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final project = context.watch<ProjectProvider>().selectedProject;
+
+    if (project != null && project.id != _lastLoadedProjectId) {
+      _lastLoadedProjectId = project.id;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<FlowProvider>().clearFlow();
+        context.read<FlowProvider>().loadFlows(projectId: project.id);
+        context.read<EndpointProvider>().loadEndpoints(projectId: project.id);
+        context.read<WorkspaceTabProvider>().clear();
+      });
+    }
+  }
+
+  void _toggleSidebar() => setState(() => _isSidebarOpen = !_isSidebarOpen);
+
+  @override
+  Widget build(BuildContext context) {
+    final project = context.watch<ProjectProvider>().selectedProject;
+
+    return Scaffold(
+      backgroundColor: AppColors.baseBackground,
+      body: Column(
+        children: [
+          AppNavBar(
+            onToggleSidebar: _toggleSidebar,
+            isSidebarOpen: _isSidebarOpen,
+          ),
+          Expanded(
+            child: project == null
+                ? const _ProjectSelectionView()
+                : Padding(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    child: Row(
+                      children: [
+                        if (_isSidebarOpen) ...[
+                          ValueListenableBuilder<double>(
+                            valueListenable: _sidebarWidth,
+                            builder: (context, width, child) {
+                              return Row(
+                                children: [
+                                  WorkspaceSidebar(
+                                    width: width,
+                                    onCollapse: _toggleSidebar,
+                                  ),
+                                  // Drag handle
+                                  MouseRegion(
+                                    cursor: SystemMouseCursors.resizeColumn,
+                                    child: GestureDetector(
+                                      onHorizontalDragUpdate: (details) {
+                                        _sidebarWidth.value = (_sidebarWidth.value + details.delta.dx)
+                                            .clamp(_minSidebarWidth, _maxSidebarWidth);
+                                      },
+                                      child: Container(
+                                        width: 6,
+                                        color: Colors.transparent,
+                                        child: Center(
+                                          child: Container(width: 1, color: AppColors.divider),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.baseBackground,
+                              borderRadius: AppRadius.br12,
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: AppShadows.panel,
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Column(
+                              children: [
+                                const WorkspaceTabBar(),
+                                Expanded(
+                                  child: Consumer<WorkspaceTabProvider>(
+                                    builder: (context, tabProvider, _) {
+                                      final tabs = tabProvider.tabs;
+                                      final activeTabIndex = tabProvider.activeTabIndex;
+
+                                      if (tabs.isEmpty) {
+                                        return const _EmptyTabState();
+                                      }
+
+                                      return IndexedStack(
+                                        index: activeTabIndex == -1 ? 0 : activeTabIndex,
+                                        children: tabs.map((tab) {
+                                          switch (tab.type) {
+                                            case WorkspaceTabType.flow:
+                                              return WorkspaceCanvas(selectedFlow: tab.data as flow_domain.Flow);
+                                            case WorkspaceTabType.endpoint:
+                                              return EndpointEditor(endpoint: tab.data as Endpoint);
+                                          }
+                                        }).toList(),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+          AppStatusBar(
+            projectName: project?.name,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyTabState extends StatelessWidget {
+  const _EmptyTabState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(LucideIcons.layoutDashboard, size: 48, color: AppColors.textDisabled),
+          const SizedBox(height: 16),
+          Text(
+            'Select an endpoint or open a flow',
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Shown when no project is selected — project picker + recent activity
+class _ProjectSelectionView extends StatefulWidget {
+  const _ProjectSelectionView();
+
+  @override
+  State<_ProjectSelectionView> createState() => _ProjectSelectionViewState();
+}
+
+class _ProjectSelectionViewState extends State<_ProjectSelectionView> {
+  final _searchCtrl = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<ProjectProvider>();
+    final projects = provider.projects.where((p) =>
+        p.name.toLowerCase().contains(_searchCtrl.text.toLowerCase())).toList();
+
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Projects',
+                style: AppTypography.heading.copyWith(fontSize: 24),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: 300,
+                child: PilotInput(
+                  controller: _searchCtrl,
+                  placeholder: 'Search projects...',
+                  prefixIcon: LucideIcons.search,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 12),
+              PilotButton.primary(
+                label: 'New Project',
+                icon: LucideIcons.plus,
+                onPressed: () => _onNewProject(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          if (provider.isLoading)
+            const Expanded(child: Center(child: CircularProgressIndicator()))
+          else if (projects.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.folderX, size: 48, color: AppColors.textDisabled),
+                    const SizedBox(height: 16),
+                    Text('No projects found', style: AppTypography.body.copyWith(color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              flex: 2,
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 300,
+                  mainAxisExtent: 100,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: projects.length,
+                itemBuilder: (context, index) {
+                  final p = projects[index];
+                  return _ProjectCard(project: p);
+                },
+              ),
+            ),
+          const SizedBox(height: 32),
+          Text('Recent Activity', style: AppTypography.heading.copyWith(fontSize: 18)),
+          const SizedBox(height: 16),
+          const Expanded(flex: 1, child: _RecentActivitySummary()),
+        ],
+      ),
+    );
+  }
+
+  void _onNewProject(BuildContext context) {
+    ProjectDialogs.showCreateDialog(
+      context,
+      onCreate: (name, description) async {
+        final provider = context.read<ProjectProvider>();
+        final project = await provider.createProject(name: name, description: description);
+        await provider.selectProject(project);
+      },
+    );
+  }
+}
+
+class _ProjectCard extends StatefulWidget {
+  final Project project;
+  const _ProjectCard({required this.project});
+
+  @override
+  State<_ProjectCard> createState() => _ProjectCardState();
+}
+
+class _ProjectCardState extends State<_ProjectCard> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            context.read<ProjectProvider>().selectProject(widget.project);
+          }
+        });
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: TweenAnimationBuilder<double>(
+          duration: AppDurations.short,
+          tween: Tween(begin: 1.0, end: _isPressed ? 0.98 : 1.0),
+          builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+          child: AnimatedContainer(
+            duration: AppDurations.short,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _isHovered ? AppColors.hoverItem : AppColors.sidebarBackground,
+              borderRadius: AppRadius.br6,
+              border: Border.all(
+                color: _isHovered ? AppColors.accent.withValues(alpha: 0.5) : AppColors.border,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.project.name,
+                  style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.project.description.isEmpty ? 'No description' : widget.project.description,
+                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentActivitySummary extends StatelessWidget {
+  const _RecentActivitySummary();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.sidebarBackground,
+        borderRadius: AppRadius.br8,
+        border: Border.all(color: AppColors.border),
+      ),
+      child: const RecentPagesWidget(),
+    );
+  }
+}

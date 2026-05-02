@@ -6,6 +6,7 @@ import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/field_label.dart';
 
 class FlowDialog {
   static void showCreateDialog(
@@ -52,7 +53,7 @@ class FlowDialog {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _FieldLabel('Flow Name'),
+                  const FieldLabel('Flow Name'),
                   const SizedBox(height: 6),
                   PilotInput(
                     controller: nameController,
@@ -60,7 +61,7 @@ class FlowDialog {
                     autofocus: true,
                   ),
                   const SizedBox(height: 16),
-                  const _FieldLabel('Type'),
+                  const FieldLabel('Type'),
                   const SizedBox(height: 6),
                   _buildDropdown(
                     context: context,
@@ -73,7 +74,7 @@ class FlowDialog {
                     },
                   ),
                   const SizedBox(height: 16),
-                  const _FieldLabel('Description'),
+                  const FieldLabel('Description'),
                   const SizedBox(height: 6),
                   PilotInput(
                     controller: descriptionController,
@@ -140,7 +141,7 @@ class FlowDialog {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _FieldLabel('Flow Name'),
+          const FieldLabel('Flow Name'),
           const SizedBox(height: 6),
           PilotInput(
             controller: nameController,
@@ -148,7 +149,7 @@ class FlowDialog {
             autofocus: true,
           ),
           const SizedBox(height: 16),
-          const _FieldLabel('Description'),
+          const FieldLabel('Description'),
           const SizedBox(height: 6),
           PilotInput(
             controller: descriptionController,
@@ -269,19 +270,6 @@ class FlowDialog {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: AppTypography.label.copyWith(color: AppColors.textSecondary),
     );
   }
 }

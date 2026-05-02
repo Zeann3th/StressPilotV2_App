@@ -32,7 +32,9 @@ class SettingsManager extends ChangeNotifier {
       final file = await _file;
       if (await file.exists()) {
         final content = await file.readAsString();
-        _settings = jsonDecode(content);
+        if (content.trim().isNotEmpty) {
+          _settings = jsonDecode(content);
+        }
       }
 
       final defaults = _defaultSettings;

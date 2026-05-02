@@ -10,6 +10,42 @@ class HttpClient {
   static final Map<String, Dio> _dioInstances = {};
   static CookieJar? _cookieJar;
   static SessionManager? _sessionManager;
+
+  /// Pings the backend until it responds or 20 seconds elapse.
+  /// Used by providers to handle backend cold starts (20s uptime requirement).
+  static Future<void> waitForBackend() async {
+    final dio = Dio(BaseOptions(
+      baseUrl: AppConfig.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 2),
+      receiveTimeout: const Duration(seconds: 2),
+    ));
+
+    int elapsedMs = 0;
+    int currentDelayMs = 500;
+    const maxTimeMs = 20000;
+
+    AppLogger.info('Inquiring backend status...', name: 'HTTP');
+
+    while (elapsedMs < maxTimeMs) {
+      try {
+        final response = await dio.get('/api/v1/utilities/session');
+        if (response.statusCode == 200) {
+          AppLogger.info('Backend is ready!', name: 'HTTP');
+          return;
+        }
+      } catch (_) {
+        // Continue waiting
+      }
+
+      await Future.delayed(Duration(milliseconds: currentDelayMs));
+      elapsedMs += currentDelayMs;
+      // Exponential backoff with jitter/clamp
+      currentDelayMs = (currentDelayMs * 1.5).toInt().clamp(500, 3000);
+    }
+
+    AppLogger.error('Backend did not become ready within ${maxTimeMs / 1000}s', name: 'HTTP');
+  }
+
   static Dio getInstance({SessionManager? sessionManager, String? baseUrl}) {
     if (sessionManager != null) {
       _sessionManager = sessionManager;

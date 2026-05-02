@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,23 +14,27 @@ import 'package:stress_pilot/core/system/app_state_manager.dart';
 import 'package:stress_pilot/features/marketplace/domain/repositories/plugin_capability_repository.dart';
 
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
+import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/core/input/keymap_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/core/input/global_shortcut_listener.dart';
-import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
-import 'package:stress_pilot/features/projects/presentation/provider/canvas_provider.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/workspace_tab_provider.dart';
+import 'package:stress_pilot/features/workspace/presentation/provider/canvas_provider.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
-import 'package:stress_pilot/features/agent/presentation/provider/agent_provider.dart';
+import 'package:stress_pilot/features/results/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/plugin_settings_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
-import 'package:stress_pilot/features/scheduling/presentation/provider/scheduling_provider.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/layout.dart';
+import 'package:stress_pilot/features/settings/presentation/provider/scheduling_provider.dart';
 import 'package:stress_pilot/core/updater/update_dialog.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/app_skeleton.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:stress_pilot/core/window/window_manager.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class AppRoot extends StatefulWidget {
+
   const AppRoot({super.key});
 
   @override
@@ -38,6 +44,7 @@ class AppRoot extends StatefulWidget {
 class _AppRootState extends State<AppRoot> {
   bool _initialized = false;
   bool _hasError = false;
+  String _initialRoute = AppRouter.projectsRoute;
 
   @override
   void initState() {
@@ -47,10 +54,17 @@ class _AppRootState extends State<AppRoot> {
 
   Future<void> _init() async {
     try {
-      AppLogger.info('Starting application initialization', name: 'AppRoot');
+      AppLogger.info('Starting application initialization (non-blocking)', name: 'AppRoot');
+
+      // Core sync/fast initializations
+      await getIt<ThemeManager>().initialize();
+      await getIt<ProjectProvider>().initialize();
+      await getIt<KeymapProvider>().initialize();
+      await getIt<PluginCapabilityRepository>().initialize();
 
       final appStateManager = getIt<AppStateManager>();
 
+      // Register background tasks
       appStateManager.register('Backend Process', () async {
         await getIt<ProcessManager>().startBackend(
           attachLogs: kDebugMode,
@@ -65,30 +79,24 @@ class _AppRootState extends State<AppRoot> {
         await getIt<SessionManager>().initializeSession();
       });
 
-      try {
-        await appStateManager.recover('Backend Process');
-      } catch (e) {
-        AppLogger.error('Backend startup failed/timed out, continuing in offline mode', name: 'AppRoot', error: e);
-      }
+      // Launch background processes
+      unawaited(appStateManager.recover('Backend Process').catchError((e) {
+        AppLogger.error('Backend background startup failed', name: 'AppRoot', error: e);
+      }));
 
-      try {
-        await appStateManager.recover('Session Manager');
-      } catch (e) {
-        AppLogger.error('Session initialization failed, continuing in offline mode', name: 'AppRoot', error: e);
-      }
-
-      await getIt<ThemeManager>().initialize();
-      await getIt<ProjectProvider>().initialize();
-      await getIt<KeymapProvider>().initialize();
-      await getIt<PluginCapabilityRepository>().initialize();
+      unawaited(appStateManager.recover('Session Manager').catchError((e) {
+        AppLogger.error('Session background initialization failed', name: 'AppRoot', error: e);
+      }));
 
       if (mounted) {
         setState(() {
           _initialized = true;
           _hasError = false;
+          _initialRoute = getIt<ProjectProvider>().hasSelectedProject
+              ? AppRouter.workspaceRoute
+              : AppRouter.projectsRoute;
         });
 
-        // Trigger update check on startup
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             UpdateDialog.checkAndShow(context);
@@ -96,7 +104,7 @@ class _AppRootState extends State<AppRoot> {
         });
       }
 
-      AppLogger.info('Application initialized (Offline Mode compatible)', name: 'AppRoot');
+      AppLogger.info('Application shell initialized', name: 'AppRoot');
     } catch (e, st) {
 
       AppLogger.critical(
@@ -132,6 +140,9 @@ class _AppRootState extends State<AppRoot> {
         ChangeNotifierProvider<EndpointProvider>.value(
           value: getIt<EndpointProvider>(),
         ),
+        ChangeNotifierProvider<WorkspaceTabProvider>.value(
+          value: getIt<WorkspaceTabProvider>(),
+        ),
         ChangeNotifierProvider<CanvasProvider>.value(
           value: getIt<CanvasProvider>(),
         ),
@@ -143,9 +154,6 @@ class _AppRootState extends State<AppRoot> {
         ),
         ChangeNotifierProvider<RunProvider>.value(
           value: getIt<RunProvider>(),
-        ),
-        ChangeNotifierProvider<AgentProvider>.value(
-          value: getIt<AgentProvider>(),
         ),
         ChangeNotifierProvider<ThemeManager>.value(
           value: getIt<ThemeManager>(),
@@ -165,8 +173,8 @@ class _AppRootState extends State<AppRoot> {
         ],
 
       child: _initialized && !_hasError
-          ? const GlobalShortcutListener(
-              child: _AppTheme(),
+          ? GlobalShortcutListener(
+              child: _AppTheme(initialRoute: _initialRoute),
             )
           : const _AppLoadingTheme(),
     );
@@ -187,43 +195,38 @@ class _AppLoadingTheme extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShadApp(
+    Widget child = ShadApp(
       title: 'Stress Pilot',
       debugShowCheckedModeBanner: false,
       home: const AppSkeleton(),
     );
+
+    if (WindowSetup.isSupported) {
+      child = WindowBorder(color: AppColors.border, width: 1, child: child);
+    }
+    return child;
   }
 }
 
 class _AppTheme extends StatelessWidget {
-  const _AppTheme();
+  final String initialRoute;
+  const _AppTheme({required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
     final themeManager = context.watch<ThemeManager>();
-    final isDark = themeManager.themeMode == ThemeMode.dark;
-
-    final defaultShadTheme = isDark
-        ? ShadThemeData(
-            brightness: Brightness.dark,
-            colorScheme: const ShadZincColorScheme.dark(),
-          )
-        : ShadThemeData(
-            brightness: Brightness.light,
-            colorScheme: const ShadZincColorScheme.light(),
-          );
 
     return ShadApp(
-      key: ValueKey(themeManager.currentTheme.id),
+      key: ValueKey(themeManager.currentTheme.id), // FORCE REBUILD ON THEME CHANGE
       title: 'Stress Pilot',
       debugShowCheckedModeBanner: false,
       navigatorKey: AppNavigator.navigatorKey,
       navigatorObservers: [AppNavigator.routeObserver],
       themeMode: themeManager.themeMode,
-      theme: themeManager.currentShadTheme ?? defaultShadTheme,
-      darkTheme: themeManager.currentShadTheme ?? defaultShadTheme,
+      theme: themeManager.currentShadTheme ?? themeManager.lightShadTheme,
+      darkTheme: themeManager.currentShadTheme ?? themeManager.darkShadTheme,
       onGenerateRoute: AppRouter.generateRoute,
-      initialRoute: AppRouter.projectsRoute,
+      initialRoute: initialRoute,
       builder: (context, child) {
         return ScaffoldMessenger(
           key: AppNavigator.scaffoldMessengerKey,

@@ -103,6 +103,7 @@ class EndpointRepositoryImpl implements EndpointRepository {
       '/api/v1/endpoints/upload',
       data: formData,
       options: Options(
+        contentType: 'multipart/form-data',
         connectTimeout: const Duration(seconds: 60),
         receiveTimeout: const Duration(seconds: 60),
       ),

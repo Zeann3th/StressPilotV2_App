@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
+import 'package:stress_pilot/features/projects/presentation/widgets/dashboard_top_bar.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class AppSkeleton extends StatefulWidget {
@@ -42,7 +42,7 @@ class _AppSkeletonState extends State<AppSkeleton>
       body: Column(
         children: [
 
-          const AppTopBar(),
+          const DashboardTopBar(),
 
           Expanded(
             child: Container(

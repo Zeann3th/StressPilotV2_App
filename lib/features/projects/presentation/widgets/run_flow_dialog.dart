@@ -2,12 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
-import 'package:stress_pilot/features/shared/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/results/presentation/provider/run_provider.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/field_label.dart';
 
 class RunFlowDialog extends StatefulWidget {
   final int flowId;
@@ -57,7 +59,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
   }
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
     );
@@ -127,7 +129,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _FieldLabel('PERFORMANCE SETTINGS'),
+            FieldLabel('PERFORMANCE SETTINGS'),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -140,7 +142,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                       PilotInput(
                         controller: _threadsCtrl,
                         placeholder: '1',
-                        prefixIcon: Icons.groups_rounded,
+                        prefixIcon: LucideIcons.users,
                       ),
                     ],
                   ),
@@ -155,7 +157,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                       PilotInput(
                         controller: _durationCtrl,
                         placeholder: '60',
-                        prefixIcon: Icons.timer_rounded,
+                        prefixIcon: LucideIcons.timer,
                       ),
                     ],
                   ),
@@ -170,7 +172,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                       PilotInput(
                         controller: _rampUpCtrl,
                         placeholder: '0',
-                        prefixIcon: Icons.trending_up_rounded,
+                        prefixIcon: LucideIcons.trendingUp,
                       ),
                     ],
                   ),
@@ -178,7 +180,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
               ],
             ),
             const SizedBox(height: 24),
-            const _FieldLabel('DATA & ENVIRONMENT'),
+            FieldLabel('DATA & ENVIRONMENT'),
             const SizedBox(height: 12),
             InkWell(
               onTap: _pickFile,
@@ -195,7 +197,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                 child: Row(
                   children: [
                     Icon(
-                      _selectedFile != null ? Icons.description : Icons.upload_file_rounded,
+                      _selectedFile != null ? LucideIcons.fileText : LucideIcons.upload,
                       color: _selectedFile != null ? AppColors.accent : AppColors.textMuted,
                     ),
                     const SizedBox(width: 12),
@@ -220,7 +222,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                     if (_selectedFile != null)
                       IconButton(
                         onPressed: () => setState(() => _selectedFile = null),
-                        icon: const Icon(Icons.close, size: 18),
+                        icon: const Icon(LucideIcons.x, size: 18),
                         visualDensity: VisualDensity.compact,
                       ),
                   ],
@@ -231,10 +233,10 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const _FieldLabel('VARIABLES'),
+                FieldLabel('VARIABLES'),
                 PilotButton.ghost(
                   label: 'Add Variable',
-                  icon: Icons.add,
+                  icon: LucideIcons.plus,
                   onPressed: _addVariable,
                   compact: true,
                 ),
@@ -268,7 +270,7 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
                     ),
                     IconButton(
                       onPressed: () => _removeVariable(entry.key),
-                      icon: const Icon(Icons.remove_circle_outline, color: AppColors.error, size: 20),
+                      icon: Icon(LucideIcons.circleMinus, color: AppColors.error, size: 20),
                     ),
                   ],
                 ),
@@ -284,27 +286,10 @@ class _RunFlowDialogState extends State<RunFlowDialog> {
         ),
         PilotButton.primary(
           label: 'Start Run',
-          icon: Icons.play_arrow_rounded,
+          icon: LucideIcons.play,
           onPressed: _run,
         ),
       ],
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: AppTypography.label.copyWith(
-        color: AppColors.accent,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.0,
-      ),
     );
   }
 }

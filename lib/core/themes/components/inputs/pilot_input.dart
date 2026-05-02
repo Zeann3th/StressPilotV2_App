@@ -68,8 +68,8 @@ class _PilotInputState extends State<PilotInput> {
     final borderColor = widget.borderless
         ? Colors.transparent
         : _isFocused
-        ? AppColors.accent
-        : AppColors.border;
+            ? AppColors.accent
+            : AppColors.border;
 
     return AnimatedContainer(
       key: ValueKey(isDark),
@@ -79,45 +79,33 @@ class _PilotInputState extends State<PilotInput> {
         borderRadius: AppRadius.br8,
         border: Border.all(
           color: borderColor,
-          width: _isFocused && !widget.borderless ? 2 : 1,
+          width: 1,
         ),
-        boxShadow: _isFocused && !widget.borderless
-            ? [
-                BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.2),
-                  blurRadius: 4,
-                  spreadRadius: 1,
-                ),
-              ]
-            : [],
       ),
-      child: Padding(
-        padding: EdgeInsets.all(_isFocused && !widget.borderless ? 0.0 : 1.0),
-        child: TextField(
-          controller: widget.controller,
-          focusNode: _focusNode,
-          autofocus: widget.autofocus,
-          maxLines: widget.maxLines,
-          onChanged: widget.onChanged,
-          onSubmitted: widget.onSubmitted,
-          style: (widget.style ?? AppTypography.body).copyWith(
-            color: AppColors.textPrimary,
-          ),
-          decoration: InputDecoration(
-            hintText: widget.placeholder,
-            hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
-            prefixIcon: widget.prefixIcon != null
-                ? Icon(widget.prefixIcon, size: 16, color: AppColors.textMuted)
-                : null,
-            border: InputBorder.none,
-            isDense: true,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: widget.prefixIcon != null ? 4 : 12,
-              vertical: 10,
-            ),
-          ),
-          cursorColor: AppColors.accent,
+      child: TextField(
+        controller: widget.controller,
+        focusNode: _focusNode,
+        autofocus: widget.autofocus,
+        maxLines: widget.maxLines,
+        onChanged: widget.onChanged,
+        onSubmitted: widget.onSubmitted,
+        style: (widget.style ?? AppTypography.body).copyWith(
+          color: AppColors.textPrimary,
         ),
+        decoration: InputDecoration(
+          hintText: widget.placeholder,
+          hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
+          prefixIcon: widget.prefixIcon != null
+              ? Icon(widget.prefixIcon, size: 16, color: AppColors.textMuted)
+              : null,
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: widget.prefixIcon != null ? 4 : 12,
+            vertical: 10,
+          ),
+        ),
+        cursorColor: AppColors.accent,
       ),
     );
   }

@@ -13,37 +13,53 @@ class EndpointTypeBadge extends StatelessWidget {
     this.inverse = false,
   });
 
-  Color _colorForType(String type) {
+  Color _colorForType(BuildContext context, String type) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    Color baseColor;
     switch (type.toUpperCase()) {
       case 'HTTP':
-        return const Color(0xFF3B82F6);
+        baseColor = const Color(0xFF3B82F6);
+        break;
       case 'GRPC':
-        return const Color(0xFF06B6D4);
+        baseColor = const Color(0xFF06B6D4);
+        break;
       case 'WSS':
       case 'WS':
       case 'WEBSOCKET':
-        return const Color(0xFFF59E0B);
+        baseColor = const Color(0xFFF59E0B);
+        break;
       case 'GRAPHQL':
-        return const Color(0xFFEC4899);
+        baseColor = const Color(0xFFEC4899);
+        break;
       case 'JDBC':
       case 'SQL':
-        return const Color(0xFF6366F1);
+        baseColor = const Color(0xFF6366F1);
+        break;
       case 'JS':
       case 'JAVASCRIPT':
-        return const Color(0xFFF59E0B);
+        baseColor = const Color(0xFFF59E0B);
+        break;
       default:
-        return HSLColor.fromAHSL(
+        baseColor = HSLColor.fromAHSL(
           1.0,
           (type.hashCode.abs() % 360).toDouble(),
           0.65,
           0.55,
         ).toColor();
     }
+
+    if (!isDark) {
+      // Darken slightly for light mode to maintain contrast
+      final hsl = HSLColor.fromColor(baseColor);
+      return hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
+    }
+    return baseColor;
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _colorForType(type);
+    final color = _colorForType(context, type);
     final label = type.toUpperCase().length > 4 && compact
         ? type.toUpperCase().substring(0, 4)
         : type.toUpperCase();

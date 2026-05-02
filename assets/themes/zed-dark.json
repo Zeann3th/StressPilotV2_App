@@ -1,0 +1,25 @@
+{
+  "name": "Zed Dark",
+  "brightness": "dark",
+  "colors": {
+    "background": "#1a1a1a",
+    "surface": "#222222",
+    "elevated": "#2a2a2a",
+    "activeItem": "#1e3a5f",
+    "hoverItem": "#2a2a2a",
+    "accent": "#52a9ff",
+    "accentHover": "#6bbdff",
+    "accentActive": "#3d8cd4",
+    "border": "#333333",
+    "divider": "#2a2a2a",
+    "textPrimary": "#d4d4d4",
+    "textSecondary": "#888888",
+    "textDisabled": "#555555",
+    "success": "#57a64a",
+    "info": "#4b8fd4",
+    "warning": "#c8a84b",
+    "error": "#e06c75",
+    "methodDelete": "#c25151",
+    "methodPatch": "#8b68d4"
+  }
+}

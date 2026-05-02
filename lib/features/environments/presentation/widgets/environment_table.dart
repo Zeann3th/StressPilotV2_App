@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/environments/presentation/provider/environment_provider.dart';
@@ -19,7 +20,6 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
   Widget build(BuildContext context) {
     final provider = context.watch<EnvironmentProvider>();
     final variables = provider.variables;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final border = AppColors.border;
 
     final filtered = variables.where((v) {
@@ -30,37 +30,58 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
+        // Table Toolbar
+        Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Stack(
             children: [
-              SizedBox(
-                width: 320,
-                child: PilotInput(
-                  placeholder: 'Search variables...',
-                  onChanged: (v) => setState(() => _search = v),
-                  prefixIcon: Icons.search_rounded,
+              // Center: Search Bar
+              Positioned.fill(
+                child: Center(
+                  child: SizedBox(
+                    width: 400,
+                    child: PilotInput(
+                      placeholder: 'Search variables...',
+                      onChanged: (v) => setState(() => _search = v),
+                      prefixIcon: LucideIcons.search,
+                    ),
+                  ),
                 ),
               ),
-              const Spacer(),
-              PilotButton.primary(
-                onPressed: () => provider.addVariable(),
-                icon: Icons.add_rounded,
-                label: 'Add Variable',
+              // Right: Actions
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _SaveButton(environmentId: provider.currentEnvironmentId ?? 0),
+                      const SizedBox(width: 8),
+                      PilotButton.primary(
+                        onPressed: () => provider.addVariable(),
+                        icon: LucideIcons.plus,
+                        compact: true,
+                        tooltip: 'Add Variable',
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
         ),
 
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.03)
-                : Colors.black.withValues(alpha: 0.03),
+            color: AppColors.elevatedSurface,
             border: Border(
-              top: BorderSide(color: border.withValues(alpha: 0.3)),
-              bottom: BorderSide(color: border.withValues(alpha: 0.3)),
+              top: BorderSide(color: border),
+              bottom: BorderSide(color: border),
             ),
           ),
           child: Row(
@@ -69,7 +90,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 width: 60,
                 child: Text(
                   'STATUS',
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
                 ),
               ),
               const SizedBox(width: 16),
@@ -77,7 +98,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 flex: 1,
                 child: Text(
                   'VARIABLE KEY',
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
                 ),
               ),
               const SizedBox(width: 16),
@@ -85,7 +106,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 flex: 2,
                 child: Text(
                   'VALUE',
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
                 ),
               ),
               const SizedBox(width: 48),
@@ -155,6 +176,37 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+class _SaveButton extends StatelessWidget {
+  final int environmentId;
+  const _SaveButton({required this.environmentId});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<EnvironmentProvider>();
+    final hasChanges = provider.hasChanges;
+
+    return PilotButton.primary(
+      onPressed: hasChanges && !provider.isLoading
+          ? () async {
+              try {
+                await provider.saveChanges(environmentId);
+                if (context.mounted) {
+                  PilotToast.show(context, 'Changes saved successfully');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  PilotToast.show(context, 'Error: $e', isError: true);
+                }
+              }
+            }
+          : null,
+      icon: provider.isLoading ? LucideIcons.refreshCcw : LucideIcons.save,
+      compact: true,
+      tooltip: provider.isLoading ? 'Saving...' : 'Save Changes',
+    );
+  }
+}
+
 class _EnvironmentRow extends StatefulWidget {
   final EnvironmentVariable variable;
   final bool isLast;
@@ -209,7 +261,6 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final border = AppColors.border;
     final textColor = AppColors.textPrimary;
 
@@ -218,14 +269,13 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
       onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
         duration: AppDurations.micro,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
-          color: _isHovered
-              ? (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02))
-              : Colors.transparent,
+          color: _isHovered ? AppColors.hoverItem : Colors.transparent,
           border: widget.isLast
               ? null
-              : Border(bottom: BorderSide(color: border.withValues(alpha: 0.15))),
+              : Border(bottom: BorderSide(color: border)),
         ),
         child: Row(
           children: [
@@ -288,8 +338,10 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
               duration: AppDurations.micro,
               opacity: _isHovered ? 1.0 : 0.0,
               child: PilotButton.ghost(
-                icon: Icons.delete_outline_rounded,
+                icon: LucideIcons.trash2,
                 onPressed: widget.onDelete,
+                compact: true,
+                tooltip: 'Delete Variable',
               ),
             ),
           ],

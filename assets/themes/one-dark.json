@@ -1,0 +1,25 @@
+{
+  "name": "One Dark Pro",
+  "brightness": "dark",
+  "colors": {
+    "background": "#282c34",
+    "surface": "#21252b",
+    "elevated": "#2c313a",
+    "activeItem": "#2c313c",
+    "hoverItem": "#2c313a",
+    "accent": "#61afef",
+    "accentHover": "#7abff5",
+    "accentActive": "#4d9fe0",
+    "border": "#3e4451",
+    "divider": "#2c313a",
+    "textPrimary": "#abb2bf",
+    "textSecondary": "#5c6370",
+    "textDisabled": "#3e4451",
+    "success": "#98c379",
+    "info": "#56b6c2",
+    "warning": "#e5c07b",
+    "error": "#e06c75",
+    "methodDelete": "#e06c75",
+    "methodPatch": "#c678dd"
+  }
+}

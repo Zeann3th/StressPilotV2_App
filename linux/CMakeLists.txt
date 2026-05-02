@@ -11,6 +11,9 @@ set(APPLICATION_ID "dev.zeann3th.stresspilot")
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
 cmake_policy(SET CMP0063 NEW)
+if(POLICY CMP0175)
+  cmake_policy(SET CMP0175 NEW)
+endif()
 
 # Load bundled libraries from the lib/ directory relative to the binary.
 set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")

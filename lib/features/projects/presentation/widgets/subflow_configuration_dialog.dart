@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart' hide Flow;
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart';
@@ -89,7 +90,7 @@ class _SubflowConfigurationDialogState extends State<SubflowConfigurationDialog>
           PilotInput(
             controller: _searchController,
             placeholder: 'Search flow by name...',
-            prefixIcon: Icons.search,
+            prefixIcon: LucideIcons.search,
             onChanged: _onSearchChanged,
           ),
           if (_filteredFlows.isNotEmpty) ...[
@@ -131,7 +132,7 @@ class _SubflowConfigurationDialogState extends State<SubflowConfigurationDialog>
         if (_selectedFlow != null)
           PilotButton.ghost(
             label: 'Navigate',
-            icon: Icons.open_in_new,
+            icon: LucideIcons.externalLink,
             onPressed: () {
               context.read<FlowProvider>().selectFlow(_selectedFlow!);
               Navigator.of(context).pop();

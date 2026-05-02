@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:stress_pilot/core/config/app_config.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/app_topbar.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/pilot_webview.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
+import 'package:stress_pilot/features/marketplace/presentation/widgets/pilot_webview.dart';
 
 class MarketplacePage extends StatefulWidget {
   const MarketplacePage({super.key});
@@ -17,11 +17,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = AppColors.background;
-    final surface = AppColors.surface;
-    final border = AppColors.border;
-    final textColor = AppColors.textPrimary;
-
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
@@ -29,27 +24,19 @@ class _MarketplacePageState extends State<MarketplacePage> {
         }
       },
       child: Scaffold(
-        backgroundColor: bg,
+        backgroundColor: AppColors.baseBackground,
         body: Column(
           children: [
-            const AppTopBar(),
+            const FleetPageBar(title: 'Marketplace'),
             Expanded(
               child: Container(
-                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 decoration: BoxDecoration(
-                  color: surface,
-                  borderRadius: AppRadius.br16,
-                  border: Border.all(color: border.withValues(alpha: 0.3)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      offset: const Offset(0, 4),
-                      blurRadius: 12,
-                    ),
-                  ],
+                  color: AppColors.sidebarBackground,
+                  borderRadius: AppRadius.br6,
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: ClipRRect(
-                  borderRadius: AppRadius.br16,
+                  borderRadius: AppRadius.br6,
                   child: Stack(
                     children: [
                       Positioned.fill(
@@ -64,27 +51,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       ),
                       Positioned(
                         top: 12,
-                        left: 12,
-                        child: PilotButton.ghost(
-                          icon: Icons.arrow_back_rounded,
-                          onPressed: () {
-                            webViewController?.setVisible(false);
-                            Navigator.of(context).pop();
-                          },
-                          backgroundOverride: Colors.transparent,
-                          foregroundOverride: textColor.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      Positioned(
-                        top: 12,
                         right: 12,
                         child: PilotButton.ghost(
                           icon: Icons.refresh_rounded,
                           onPressed: () {
                             webViewController?.reload();
                           },
-                          backgroundOverride: Colors.transparent,
-                          foregroundOverride: textColor.withValues(alpha: 0.6),
+                          compact: true,
                         ),
                       ),
                     ],

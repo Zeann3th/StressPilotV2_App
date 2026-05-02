@@ -58,9 +58,9 @@ class ProjectRepositoryImpl implements ProjectRepository {
     int? environmentId,
   }) async {
     final body = {
-      'name': ?name,
-      'description': ?description,
-      'environmentId': ?environmentId,
+      'name': name,
+      'description': description,
+      'environmentId': environmentId,
     };
 
     final response = await _dio.patch('/api/v1/projects/$projectId', data: body);

@@ -42,6 +42,7 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
   final FocusNode _focusNode = FocusNode();
   final LayerLink _layerLink = LayerLink();
   final Dio _dio = HttpClient.getInstance();
+  final GlobalKey _searchBarKey = GlobalKey();
 
   OverlayEntry? _overlayEntry;
   Timer? _debounce;
@@ -174,14 +175,23 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
   }
 
   Widget _buildDropdown() {
-    return Positioned(
-      width: 420,
-      child: CompositedTransformFollower(
-        link: _layerLink,
-        showWhenUnlinked: false,
-        offset: const Offset(-35, 44),
-        child: Material(
-          color: Colors.transparent,
+    double width = 400; // default/fallback
+    final context = _searchBarKey.currentContext;
+    if (context != null) {
+      final box = context.findRenderObject() as RenderBox;
+      width = box.size.width;
+    }
+
+    return CompositedTransformFollower(
+      link: _layerLink,
+      showWhenUnlinked: false,
+      targetAnchor: Alignment.bottomLeft,
+      followerAnchor: Alignment.topLeft,
+      offset: const Offset(0, 8),
+      child: Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          width: width,
           child: _SearchDropdownPanel(
             results: _results,
             isLoading: _isLoading,
@@ -231,13 +241,7 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
       final project = await ProjectRepositoryImpl().getProjectDetail(endpoint.projectId);
       if (!mounted) return;
       await projectProvider.selectProject(project);
-      AppNavigator.pushNamed(
-        AppRouter.projectEndpointsRoute,
-        arguments: {
-          'project': project,
-          'initialEndpoint': endpoint,
-        },
-      );
+      AppNavigator.pushNamed(AppRouter.workspaceRoute);
     } catch (_) {}
   }
 
@@ -247,6 +251,7 @@ class _GlobalSearchDropdownState extends State<GlobalSearchDropdown> {
     final borderColor = _isFocused ? AppColors.accent : AppColors.border;
 
     return CompositedTransformTarget(
+      key: _searchBarKey,
       link: _layerLink,
       child: AnimatedContainer(
         duration: AppDurations.short,

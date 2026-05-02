@@ -11,6 +11,8 @@ class PilotButton extends StatefulWidget {
   final bool compact;
   final Color? foregroundOverride;
   final Color? backgroundOverride;
+  final String? tooltip;
+  final MainAxisAlignment alignment;
 
   const PilotButton({
     super.key,
@@ -21,6 +23,8 @@ class PilotButton extends StatefulWidget {
     this.compact = false,
     this.foregroundOverride,
     this.backgroundOverride,
+    this.tooltip,
+    this.alignment = MainAxisAlignment.center,
   });
 
   const PilotButton.primary({
@@ -31,6 +35,8 @@ class PilotButton extends StatefulWidget {
     this.compact = false,
     this.foregroundOverride,
     this.backgroundOverride,
+    this.tooltip,
+    this.alignment = MainAxisAlignment.center,
   }) : variant = PilotButtonVariant.primary;
 
   const PilotButton.ghost({
@@ -41,6 +47,8 @@ class PilotButton extends StatefulWidget {
     this.compact = false,
     this.foregroundOverride,
     this.backgroundOverride,
+    this.tooltip,
+    this.alignment = MainAxisAlignment.center,
   }) : variant = PilotButtonVariant.ghost;
 
   const PilotButton.danger({
@@ -51,6 +59,8 @@ class PilotButton extends StatefulWidget {
     this.compact = false,
     this.foregroundOverride,
     this.backgroundOverride,
+    this.tooltip,
+    this.alignment = MainAxisAlignment.center,
   }) : variant = PilotButtonVariant.danger;
 
   @override
@@ -68,7 +78,6 @@ class _PilotButtonState extends State<PilotButton> {
 
     Color bgColor;
     Color textColor;
-    Color borderColor;
 
     switch (widget.variant) {
       case PilotButtonVariant.primary:
@@ -79,10 +88,7 @@ class _PilotButtonState extends State<PilotButton> {
         } else {
           bgColor = AppColors.accent;
         }
-        textColor = Colors.white;
-        borderColor = _isFocused
-            ? Colors.white.withValues(alpha: 0.5)
-            : Colors.transparent;
+        textColor = AppColors.textPrimary;
         break;
 
       case PilotButtonVariant.ghost:
@@ -96,9 +102,6 @@ class _PilotButtonState extends State<PilotButton> {
         textColor = (_isHovered || _isFocused)
             ? AppColors.accent
             : AppColors.textPrimary;
-        borderColor = _isFocused
-            ? AppColors.accent
-            : AppColors.border;
         break;
 
       case PilotButtonVariant.danger:
@@ -110,9 +113,6 @@ class _PilotButtonState extends State<PilotButton> {
           bgColor = Colors.transparent;
         }
         textColor = AppColors.error;
-        borderColor = _isFocused
-            ? AppColors.error
-            : AppColors.error.withValues(alpha: 0.4);
         break;
     }
 
@@ -123,10 +123,10 @@ class _PilotButtonState extends State<PilotButton> {
       bgColor = widget.backgroundOverride!;
     }
 
-    final vPad = widget.compact ? 6.0 : 8.0;
-    final hPad = widget.compact ? 10.0 : 16.0;
+    final vPad = widget.compact ? 4.0 : 6.0;
+    final hPad = widget.compact ? 8.0 : 12.0;
 
-    return FocusableActionDetector(
+    Widget child = FocusableActionDetector(
       mouseCursor: widget.onPressed != null
           ? SystemMouseCursors.click
           : SystemMouseCursors.forbidden,
@@ -139,48 +139,50 @@ class _PilotButtonState extends State<PilotButton> {
           widget.onPressed?.call();
         },
         onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedContainer(
-          key: ValueKey(isDark),
+        child: TweenAnimationBuilder<double>(
           duration: AppDurations.short,
-          padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-          decoration: BoxDecoration(
-            color: widget.variant == PilotButtonVariant.primary && !_isHovered && !_isPressed && !_isFocused
-                ? null
-                : bgColor,
-            gradient: widget.variant == PilotButtonVariant.primary && !_isHovered && !_isPressed && !_isFocused
-                ? AppGradients.green(isDark)
-                : null,
-            borderRadius: AppRadius.br8,
-            border: Border.all(color: borderColor, width: _isFocused ? 2 : 1),
-            boxShadow: _isFocused
-                ? [
-                    BoxShadow(
-                      color: borderColor.withValues(alpha: 0.3),
-                      blurRadius: 4,
-                      spreadRadius: 1,
+          tween: Tween(begin: 1.0, end: _isPressed ? 0.98 : 1.0),
+          builder: (context, scale, child) {
+            return Transform.scale(
+              scale: scale,
+              child: child,
+            );
+          },
+          child: AnimatedContainer(
+            key: ValueKey(isDark),
+            duration: AppDurations.short,
+            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: AppRadius.br8,
+              border: _isFocused ? Border.all(color: AppColors.accent, width: 1) : null,
+            ),
+            child: Row(
+              mainAxisSize: widget.alignment == MainAxisAlignment.center ? MainAxisSize.min : MainAxisSize.max,
+              mainAxisAlignment: widget.alignment,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(widget.icon, size: 16, color: textColor),
+                  if (widget.label != null) const SizedBox(width: 8),
+                ],
+                if (widget.label != null)
+                  Text(
+                    widget.label!,
+                    style: AppTypography.body.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ]
-                : [],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.icon != null) ...[
-                Icon(widget.icon, size: 15, color: textColor),
-                if (widget.label != null) const SizedBox(width: 6),
-              ],
-              if (widget.label != null)
-                Text(
-                  widget.label!,
-                  style: AppTypography.body.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w500,
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
+
+    if (widget.tooltip != null) {
+      return Tooltip(message: widget.tooltip!, child: child);
+    }
+    return child;
   }
 }

@@ -41,6 +41,9 @@ class AppStateManager extends ChangeNotifier {
   final Map<String, ServiceState> _services = {};
   final Map<String, RecoveryCallback> _recoveryCallbacks = {};
   final Map<String, Timer?> _recoveryTimers = {};
+  final Set<String> _recovering = {};
+
+  bool isRecovering(String name) => _recovering.contains(name);
 
   void register(String name, RecoveryCallback onRecover) {
     _services[name] = ServiceState(
@@ -101,12 +104,18 @@ class AppStateManager extends ChangeNotifier {
     final callback = _recoveryCallbacks[name];
     if (callback == null) return;
 
+    _recovering.add(name);
+    notifyListeners();
+
     AppLogger.info('Recovering $name...', name: _tag);
     try {
       await callback();
       markHealthy(name);
     } catch (e) {
       markFailed(name, error: e.toString());
+    } finally {
+      _recovering.remove(name);
+      notifyListeners();
     }
   }
 
