@@ -21,16 +21,16 @@ class ShutdownHandler with WindowListener, TrayListener {
   }
 
   void _setupSignalHandlers() {
-    ProcessSignal.sigint.watch().listen((_) => _handleSignal('SIGINT'));
+    ProcessSignal.sigint.watch().listen((_) async => await _handleSignal('SIGINT'));
 
     if (!Platform.isWindows) {
-      ProcessSignal.sigterm.watch().listen((_) => _handleSignal('SIGTERM'));
+      ProcessSignal.sigterm.watch().listen((_) async => await _handleSignal('SIGTERM'));
     }
   }
 
   Future<void> _handleSignal(String signal) async {
-    AppLogger.info('Received $signal', name: _logName);
-    _processManager.brittleKill();
+    AppLogger.info('Received $signal, cleaning up...', name: _logName);
+    await _processManager.forceKill();
     exit(0);
   }
 
@@ -40,7 +40,7 @@ class ShutdownHandler with WindowListener, TrayListener {
 
     final context = AppNavigator.navigatorKey.currentContext;
     if (context == null) {
-      _exitEntirely();
+      await _exitEntirely();
       return;
     }
 
@@ -123,9 +123,13 @@ class ShutdownHandler with WindowListener, TrayListener {
     }
   }
 
-  void _exitEntirely() {
-    AppLogger.info('Exiting...', name: _logName);
-    _processManager.brittleKill();
+  Future<void> _exitEntirely() async {
+    AppLogger.info('Exiting and cleaning up processes...', name: _logName);
+    try {
+      await _processManager.forceKill().timeout(const Duration(seconds: 5));
+    } catch (e) {
+      AppLogger.error('Forced cleanup timed out: $e', name: _logName);
+    }
     exit(0);
   }
 }

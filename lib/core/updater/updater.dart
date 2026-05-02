@@ -109,7 +109,26 @@ class AppUpdater {
   }
 
   static Future<void> _install(String filePath) async {
-    AppLogger.info('Killing backend before update...', name: 'Updater');
+    AppLogger.info('Cleaning up JSA cache and killing backend before update...', name: 'Updater');
+    try {
+      // Cleanup JSA cache to avoid compatibility issues with new backend version
+      final home = Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'] ?? '';
+      final pilotHome = Platform.environment['PILOT_HOME'] ?? (Platform.isWindows ? '$home\\.pilot' : '$home/.pilot');
+      final jsaDir = Directory(Platform.isWindows ? '$pilotHome\\core\\scripts' : '$pilotHome/core/scripts');
+
+      if (await jsaDir.exists()) {
+        final files = jsaDir.listSync();
+        for (final file in files) {
+          if (file is File && file.path.endsWith('.jsa')) {
+            AppLogger.info('Deleting old JSA cache: ${file.path}', name: 'Updater');
+            await file.delete();
+          }
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to cleanup JSA cache during update: $e', name: 'Updater');
+    }
+
     try {
       await getIt<ProcessManager>().forceKill();
 
