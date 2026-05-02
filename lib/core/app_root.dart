@@ -26,7 +26,7 @@ import 'package:stress_pilot/features/results/presentation/provider/results_prov
 import 'package:stress_pilot/features/results/presentation/provider/run_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/plugin_settings_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
-import 'package:stress_pilot/features/scheduling/presentation/provider/scheduling_provider.dart';
+import 'package:stress_pilot/features/settings/presentation/provider/scheduling_provider.dart';
 import 'package:stress_pilot/core/updater/update_dialog.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/app_skeleton.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';

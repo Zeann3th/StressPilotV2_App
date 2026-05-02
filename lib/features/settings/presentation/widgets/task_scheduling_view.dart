@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/core/themes/components/components.dart';
-import 'package:stress_pilot/features/scheduling/presentation/provider/scheduling_provider.dart';
-import 'package:stress_pilot/features/scheduling/domain/models/schedule.dart';
+import 'package:stress_pilot/features/settings/presentation/provider/scheduling_provider.dart';
+import 'package:stress_pilot/features/settings/domain/models/schedule.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
 

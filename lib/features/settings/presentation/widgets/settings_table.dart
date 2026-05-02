@@ -9,7 +9,7 @@ import 'package:stress_pilot/features/settings/presentation/widgets/keymap_setti
 import 'package:stress_pilot/features/settings/presentation/widgets/app_about_section.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/plugin_settings_view.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/function_settings_view.dart';
-import 'package:stress_pilot/features/scheduling/presentation/widgets/task_scheduling_view.dart';
+import 'package:stress_pilot/features/settings/presentation/widgets/task_scheduling_view.dart';
 import 'settings_row.dart';
 
 class SettingsTable extends StatefulWidget {

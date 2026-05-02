@@ -24,9 +24,9 @@ import 'package:stress_pilot/features/settings/presentation/provider/plugin_sett
 import 'package:stress_pilot/features/settings/domain/repositories/function_repository.dart';
 import 'package:stress_pilot/features/settings/data/repositories/function_repository_impl.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/function_settings_provider.dart';
-import 'package:stress_pilot/features/scheduling/domain/repositories/schedule_repository.dart';
-import 'package:stress_pilot/features/scheduling/data/repositories/schedule_repository_impl.dart';
-import 'package:stress_pilot/features/scheduling/presentation/provider/scheduling_provider.dart';
+import 'package:stress_pilot/features/settings/domain/repositories/schedule_repository.dart';
+import 'package:stress_pilot/features/settings/data/repositories/schedule_repository_impl.dart';
+import 'package:stress_pilot/features/settings/presentation/provider/scheduling_provider.dart';
 import 'package:stress_pilot/features/results/domain/repositories/run_repository.dart';
 import 'package:stress_pilot/features/results/data/repositories/run_repository_impl.dart';
 import 'package:stress_pilot/features/results/presentation/provider/run_provider.dart';

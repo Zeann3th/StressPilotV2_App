@@ -19,6 +19,7 @@ import 'dart:ui';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:highlight/languages/json.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
+import 'package:flutter_highlight/themes/github.dart';
 
 import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
 
@@ -1603,7 +1604,11 @@ class _JsonPayloadDialogState extends State<_JsonPayloadDialog> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: CodeTheme(
-                  data: CodeThemeData(styles: monokaiSublimeTheme),
+                  data: CodeThemeData(
+                    styles: Theme.of(context).brightness == Brightness.dark
+                        ? monokaiSublimeTheme
+                        : githubTheme,
+                  ),
                   child: CodeField(
                     controller: _controller,
                     expands: true,

@@ -7,6 +7,7 @@ import 'package:stress_pilot/features/settings/domain/models/user_function.dart'
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:highlight/languages/javascript.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
+import 'package:flutter_highlight/themes/github.dart';
 
 class FunctionSettingsView extends StatefulWidget {
   const FunctionSettingsView({super.key});
@@ -312,7 +313,11 @@ class _FunctionDetailEditorState extends State<_FunctionDetailEditor> {
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: CodeTheme(
-                      data: CodeThemeData(styles: monokaiSublimeTheme),
+                      data: CodeThemeData(
+                        styles: Theme.of(context).brightness == Brightness.dark
+                            ? monokaiSublimeTheme
+                            : githubTheme,
+                      ),
                       child: CodeField(
                         controller: _codeController,
                         textStyle: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),

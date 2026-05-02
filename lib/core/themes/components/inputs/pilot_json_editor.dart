@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:highlight/languages/json.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
+import 'package:flutter_highlight/themes/github.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 
 class PilotJsonEditor extends StatefulWidget {
@@ -91,7 +92,11 @@ class _PilotJsonEditorState extends State<PilotJsonEditor> {
         border: Border.all(color: AppColors.divider),
       ),
       child: CodeTheme(
-        data: CodeThemeData(styles: monokaiSublimeTheme),
+        data: CodeThemeData(
+          styles: Theme.of(context).brightness == Brightness.dark
+              ? monokaiSublimeTheme
+              : githubTheme,
+        ),
         child: CodeField(
           controller: _controller,
           expands: widget.expands,
