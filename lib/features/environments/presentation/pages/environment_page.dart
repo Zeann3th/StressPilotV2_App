@@ -41,10 +41,10 @@ class _EnvironmentPageState extends State<EnvironmentPage> {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               child: PilotPanel(
                 padding: EdgeInsets.zero,
-                borderRadius: AppRadius.br8,
+                borderRadius: AppRadius.br12,
                 child: const EnvironmentTable(),
               ),
             ),

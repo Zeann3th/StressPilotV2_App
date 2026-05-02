@@ -76,7 +76,7 @@ class _PilotInputState extends State<PilotInput> {
       duration: AppDurations.short,
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: AppRadius.br4,
+        borderRadius: AppRadius.br8,
         border: Border.all(
           color: borderColor,
           width: 1,

@@ -103,21 +103,47 @@ abstract class AppDurations {
 }
 
 abstract class AppShadows {
-  static List<BoxShadow> get panel => [];
-  static List<BoxShadow> get card => [];
-  static List<BoxShadow> get subtle => [];
+  static List<BoxShadow> get panel => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.08),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
+    ),
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.04),
+      blurRadius: 4,
+      offset: const Offset(0, 2),
+    ),
+  ];
+  
+  static List<BoxShadow> get card => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.05),
+      blurRadius: 8,
+      offset: const Offset(0, 2),
+    ),
+  ];
+  static List<BoxShadow> get subtle => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.03),
+      blurRadius: 4,
+      offset: const Offset(0, 1),
+    ),
+  ];
 }
 
 abstract class AppRadius {
   static const r4  = Radius.circular(4);
   static const r6  = Radius.circular(6);
   static const r8  = Radius.circular(8);
-  static const r12 = Radius.circular(6); // Flattened for Fleet
-  static const r16 = Radius.circular(6); // Flattened for Fleet
+  static const r10 = Radius.circular(10);
+  static const r12 = Radius.circular(12);
+  static const r16 = Radius.circular(16);
 
   static const br4  = BorderRadius.all(r4);
   static const br6  = BorderRadius.all(r6);
   static const br8  = BorderRadius.all(r8);
+  static const br10 = BorderRadius.all(r10);
   static const br12 = BorderRadius.all(r12);
   static const br16 = BorderRadius.all(r16);
 }

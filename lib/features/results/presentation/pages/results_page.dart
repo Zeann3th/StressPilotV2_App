@@ -304,7 +304,7 @@ class _ResultsPageState extends State<ResultsPage> {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               child: Column(
                 children: [
 
@@ -314,18 +314,12 @@ class _ResultsPageState extends State<ResultsPage> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: surface,
-                        borderRadius: AppRadius.br16,
+                        borderRadius: AppRadius.br12,
                         border: Border.all(color: border.withValues(alpha: 0.3)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            offset: const Offset(0, 4),
-                            blurRadius: 12,
-                          ),
-                        ],
+                        boxShadow: AppShadows.panel,
                       ),
                       child: ClipRRect(
-                        borderRadius: AppRadius.br16,
+                        borderRadius: AppRadius.br12,
                         child: Padding(
                           padding: const EdgeInsets.all(24.0),
                           child: Column(

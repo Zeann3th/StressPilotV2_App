@@ -90,10 +90,19 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   
                   // Main Content: Recent Activity
                   Expanded(
-                    child: Center(
-                      child: SizedBox(
-                        width: 600,
-                        child: const RecentPagesWidget(),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.baseBackground,
+                        borderRadius: AppRadius.br12,
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: AppShadows.panel,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Center(
+                        child: SizedBox(
+                          width: 600,
+                          child: const RecentPagesWidget(),
+                        ),
                       ),
                     ),
                   ),

@@ -124,8 +124,9 @@ class _WorkspacePageState extends State<WorkspacePage> {
                           child: Container(
                             decoration: BoxDecoration(
                               color: AppColors.baseBackground,
-                              borderRadius: AppRadius.br6,
+                              borderRadius: AppRadius.br12,
                               border: Border.all(color: AppColors.border),
+                              boxShadow: AppShadows.panel,
                             ),
                             clipBehavior: Clip.antiAlias,
                             child: Column(

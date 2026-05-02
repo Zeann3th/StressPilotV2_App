@@ -154,7 +154,7 @@ class _PilotButtonState extends State<PilotButton> {
             padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
             decoration: BoxDecoration(
               color: bgColor,
-              borderRadius: AppRadius.br4,
+              borderRadius: AppRadius.br8,
               border: _isFocused ? Border.all(color: AppColors.accent, width: 1) : null,
             ),
             child: Row(

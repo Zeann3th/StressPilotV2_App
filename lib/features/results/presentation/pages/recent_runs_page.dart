@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/runs_list_widget.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
 
 class RecentRunsPage extends StatelessWidget {
   const RecentRunsPage({super.key});
@@ -10,21 +10,26 @@ class RecentRunsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.baseBackground,
-      appBar: AppBar(
-        backgroundColor: AppColors.sidebarBackground,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(LucideIcons.arrowLeft, size: 16, color: AppColors.textSecondary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text('Recent Runs', style: AppTypography.heading),
-        titleSpacing: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, color: AppColors.divider),
-        ),
+      body: Column(
+        children: [
+          const FleetPageBar(title: 'Recent Runs', showBack: true),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.baseBackground,
+                  borderRadius: AppRadius.br12,
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: AppShadows.panel,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: const RunsListWidget(),
+              ),
+            ),
+          ),
+        ],
       ),
-      body: const RunsListWidget(),
     );
   }
 }

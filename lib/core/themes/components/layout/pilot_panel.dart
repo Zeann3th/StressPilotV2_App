@@ -19,17 +19,19 @@ class PilotPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final radius = borderRadius ?? AppRadius.br12;
     return Container(
       width: width,
       height: height,
       padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
-        borderRadius: borderRadius ?? AppRadius.br16,
+        borderRadius: radius,
         border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.panel,
       ),
       child: ClipRRect(
-        borderRadius: borderRadius ?? AppRadius.br16,
+        borderRadius: radius,
         child: child,
       ),
     );
