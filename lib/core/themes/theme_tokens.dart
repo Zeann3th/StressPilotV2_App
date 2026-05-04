@@ -115,7 +115,14 @@ abstract class AppShadows {
       offset: const Offset(0, 2),
     ),
   ];
-  
+
+  static List<BoxShadow> get dialog => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.25),
+      blurRadius: 32,
+      offset: const Offset(0, 8),
+    ),
+  ];
   static List<BoxShadow> get card => [
     BoxShadow(
       color: Colors.black.withValues(alpha: 0.05),

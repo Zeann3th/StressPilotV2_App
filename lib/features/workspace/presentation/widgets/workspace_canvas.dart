@@ -569,20 +569,17 @@ class _CanvasContentState extends State<_CanvasContent>
       ColorScheme colors,
       CanvasProvider provider,
       ) {
-    final surfaceColor = AppColors.surface;
-    final borderColor = AppColors.border;
-
     return ClipRRect(
-      borderRadius: AppRadius.br16,
+      borderRadius: AppRadius.br12,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          height: 48,
+          height: 44,
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
-            color: surfaceColor.withValues(alpha: 0.92),
-            borderRadius: AppRadius.br16,
-            border: Border.all(color: borderColor.withValues(alpha: 0.3), width: 1),
+            color: AppColors.elevatedSurface.withValues(alpha: 0.9),
+            borderRadius: AppRadius.br12,
+            border: Border.all(color: AppColors.border),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -592,14 +589,14 @@ class _CanvasContentState extends State<_CanvasContent>
               const SizedBox(width: 4),
               _buildModeButton(
                   provider, CanvasMode.connect, LucideIcons.pencil, 'Link'),
-              _ToolbarDivider(borderColor: borderColor.withValues(alpha: 0.3)),
+              _ToolbarDivider(borderColor: AppColors.border.withValues(alpha: 0.3)),
               _ToolbarIcon(
                 tooltip: 'Line: ${_lineStyleLabel(provider.lineStyle)}',
                 onTap: () => provider.cycleLineStyle(),
                 icon: _lineStyleIcon(provider.lineStyle),
                 color: AppColors.textMuted,
               ),
-              _ToolbarDivider(borderColor: borderColor.withValues(alpha: 0.3)),
+              _ToolbarDivider(borderColor: AppColors.border.withValues(alpha: 0.3)),
               _ToolbarIcon(
                 tooltip: provider.isLocked ? 'Unlock Canvas' : 'Lock Canvas',
                 onTap: () => provider.toggleLock(),
@@ -624,7 +621,7 @@ class _CanvasContentState extends State<_CanvasContent>
                 icon: LucideIcons.minus,
                 color: AppColors.textMuted,
               ),
-              _ToolbarDivider(borderColor: borderColor),
+              _ToolbarDivider(borderColor: AppColors.border),
               _ToolbarIcon(
                 tooltip: 'Show JSON',
                 onTap: () => _showJsonPayload(context),
@@ -649,7 +646,7 @@ class _CanvasContentState extends State<_CanvasContent>
                         ),
                         FilledButton(
                           style: FilledButton.styleFrom(
-                            backgroundColor: colors.error,
+                            backgroundColor: AppColors.error,
                             foregroundColor: colors.onError,
                           ),
                           onPressed: () =>
@@ -1121,7 +1118,7 @@ class CanvasNodeBody extends StatelessWidget {
             color: colors.outlineVariant.withValues(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: AppColors.textPrimary.withValues(alpha: 0.08),
               blurRadius: 12)
         ],
       ),
@@ -1210,7 +1207,7 @@ class CanvasNodeBody extends StatelessWidget {
         border: Border.all(color: colors.secondary.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.textPrimary.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -1366,7 +1363,7 @@ class CanvasNodeBody extends StatelessWidget {
             child: _BranchHandle(
               label: 'TRUE',
               shortLabel: 'T',
-              color: Colors.green,
+              color: AppColors.success,
               isSelected: provider.selectedSourceNodeId == node.id &&
                   provider.selectedSourceHandle == 'true',
               onTap: () => provider.selectSourceNode(node.id, 'true'),
@@ -1378,7 +1375,7 @@ class CanvasNodeBody extends StatelessWidget {
             child: _BranchHandle(
               label: 'FALSE',
               shortLabel: 'F',
-              color: Colors.red,
+              color: AppColors.error,
               isSelected: provider.selectedSourceNodeId == node.id &&
                   provider.selectedSourceHandle == 'false',
               onTap: () => provider.selectSourceNode(node.id, 'false'),
@@ -1466,7 +1463,7 @@ class _BranchHandle extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: isSelected ? color.withValues(alpha: 0.4) : Colors.black12,
+                color: isSelected ? color.withValues(alpha: 0.4) : AppColors.textPrimary.withValues(alpha: 0.1),
                 blurRadius: isSelected ? 8 : 4,
                 spreadRadius: isSelected ? 1 : 0,
               )

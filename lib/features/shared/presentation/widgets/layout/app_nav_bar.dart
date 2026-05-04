@@ -33,10 +33,10 @@ class AppNavBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.baseBackground,
         border: Border(
-          bottom: BorderSide(color: AppColors.divider),
+          bottom: BorderSide(color: AppColors.border),
         ),
       ),
-      child: Stack(
+      child: Row(
         children: [
           Positioned.fill(child: MoveWindow()),
           // Left: Sidebar toggle

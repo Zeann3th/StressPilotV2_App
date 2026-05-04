@@ -19,7 +19,7 @@ class WorkspaceTabBar extends StatelessWidget {
 
     return Container(
       height: AppSpacing.tabBarHeight,
-      color: AppColors.sidebarBackground,
+      color: Colors.transparent,
       child: ReorderableListView.builder(
         scrollDirection: Axis.horizontal,
         onReorder: tabProvider.reorderTabs,

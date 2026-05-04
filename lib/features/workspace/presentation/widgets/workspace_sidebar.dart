@@ -48,7 +48,6 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
       width: widget.width,
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
-        border: Border(right: BorderSide(color: AppColors.divider)),
       ),
       child: Column(
         children: [

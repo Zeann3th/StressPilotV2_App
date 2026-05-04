@@ -72,13 +72,7 @@ class PilotDialog extends StatelessWidget {
               color: surface,
               borderRadius: AppRadius.br16,
               border: Border.all(color: border, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 32,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              boxShadow: AppShadows.dialog,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

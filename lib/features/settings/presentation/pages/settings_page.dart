@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/layout/pilot_panel.dart';
 import 'package:stress_pilot/features/settings/presentation/provider/setting_provider.dart';
 import 'package:stress_pilot/features/settings/presentation/widgets/settings_table.dart';
 
 import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
+import 'package:stress_pilot/features/shared/presentation/widgets/layout/app_status_bar.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -32,10 +34,14 @@ class _SettingsPageState extends State<SettingsPage> {
           FleetPageBar(title: 'Settings'),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.all(24),
-              child: SettingsTable(),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: PilotPanel(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: const SettingsTable(),
+              ),
             ),
           ),
+          const AppStatusBar(projectName: null),
         ],
       ),
     );

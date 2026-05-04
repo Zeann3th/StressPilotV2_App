@@ -51,13 +51,7 @@ class _AppSkeletonState extends State<AppSkeleton>
                 color: surface,
                 borderRadius: AppRadius.br16,
                 border: Border.all(color: border.withValues(alpha: 0.3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
+                boxShadow: AppShadows.panel,
               ),
               child: ClipRRect(
                 borderRadius: AppRadius.br16,

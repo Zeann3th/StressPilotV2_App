@@ -121,14 +121,8 @@ class _WorkspacePageState extends State<WorkspacePage> {
                           ),
                         ],
                         Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.baseBackground,
-                              borderRadius: AppRadius.br12,
-                              border: Border.all(color: AppColors.border),
-                              boxShadow: AppShadows.panel,
-                            ),
-                            clipBehavior: Clip.antiAlias,
+                          child: PilotPanel(
+                            padding: EdgeInsets.zero,
                             child: Column(
                               children: [
                                 const WorkspaceTabBar(),

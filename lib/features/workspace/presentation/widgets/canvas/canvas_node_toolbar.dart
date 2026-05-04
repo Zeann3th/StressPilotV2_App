@@ -13,9 +13,9 @@ class CanvasNodeToolbar extends StatelessWidget {
       width: 44,
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
+        color: AppColors.elevatedSurface.withValues(alpha: 0.9),
         borderRadius: AppRadius.br12,
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.border),
       ),
       child: ClipRRect(
         borderRadius: AppRadius.br12,

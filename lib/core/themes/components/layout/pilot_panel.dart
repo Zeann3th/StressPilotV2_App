@@ -7,6 +7,10 @@ class PilotPanel extends StatelessWidget {
   final double? width;
   final double? height;
   final BorderRadius? borderRadius;
+  final Color? backgroundColor;
+  final bool showBorder;
+  final List<BoxShadow>? boxShadow;
+  final Clip clipBehavior;
 
   const PilotPanel({
     super.key,
@@ -15,6 +19,10 @@ class PilotPanel extends StatelessWidget {
     this.width,
     this.height,
     this.borderRadius,
+    this.backgroundColor,
+    this.showBorder = true,
+    this.boxShadow,
+    this.clipBehavior = Clip.antiAlias,
   });
 
   @override
@@ -25,13 +33,14 @@ class PilotPanel extends StatelessWidget {
       height: height,
       padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.sidebarBackground,
+        color: backgroundColor ?? AppColors.baseBackground,
         borderRadius: radius,
-        border: Border.all(color: AppColors.divider),
-        boxShadow: AppShadows.panel,
+        border: showBorder ? Border.all(color: AppColors.border) : null,
+        boxShadow: boxShadow ?? AppShadows.panel,
       ),
       child: ClipRRect(
         borderRadius: radius,
+        clipBehavior: clipBehavior,
         child: child,
       ),
     );

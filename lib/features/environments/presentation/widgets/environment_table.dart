@@ -34,13 +34,12 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
         Container(
           height: 56,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Stack(
+          child: Row(
             children: [
-              // Center: Search Bar
-              Positioned.fill(
+              Expanded(
                 child: Center(
-                  child: SizedBox(
-                    width: 400,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
                     child: PilotInput(
                       placeholder: 'Search variables...',
                       onChanged: (v) => setState(() => _search = v),
@@ -49,36 +48,29 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                   ),
                 ),
               ),
-              // Right: Actions
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _SaveButton(environmentId: provider.currentEnvironmentId ?? 0),
-                      const SizedBox(width: 8),
-                      PilotButton.primary(
-                        onPressed: () => provider.addVariable(),
-                        icon: LucideIcons.plus,
-                        compact: true,
-                        tooltip: 'Add Variable',
-                      ),
-                    ],
+              const SizedBox(width: AppSpacing.md),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SaveButton(environmentId: provider.currentEnvironmentId ?? 0),
+                  const SizedBox(width: 8),
+                  PilotButton.primary(
+                    onPressed: () => provider.addVariable(),
+                    icon: LucideIcons.plus,
+                    compact: true,
+                    tooltip: 'Add Variable',
                   ),
-                ),
+                ],
               ),
             ],
           ),
         ),
 
         Container(
-          height: 40,
+          height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 24),
           decoration: BoxDecoration(
-            color: AppColors.elevatedSurface,
+            color: AppColors.hoverItem.withValues(alpha: 0.5),
             border: Border(
               top: BorderSide(color: border),
               bottom: BorderSide(color: border),
@@ -90,7 +82,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 width: 60,
                 child: Text(
                   'STATUS',
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                  style: AppTypography.label,
                 ),
               ),
               const SizedBox(width: 16),
@@ -98,7 +90,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 flex: 1,
                 child: Text(
                   'VARIABLE KEY',
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                  style: AppTypography.label,
                 ),
               ),
               const SizedBox(width: 16),
@@ -106,7 +98,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
                 flex: 2,
                 child: Text(
                   'VALUE',
-                  style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+                  style: AppTypography.label,
                 ),
               ),
               const SizedBox(width: 48),
@@ -116,7 +108,7 @@ class _EnvironmentTableState extends State<EnvironmentTable> {
 
         Expanded(
           child: provider.isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: PilotSkeleton(width: 200, height: 100))
               : filtered.isEmpty
                 ? _EmptyState(isSearch: _search.isNotEmpty)
                 : ListView.builder(
@@ -263,34 +255,41 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
   Widget build(BuildContext context) {
     final border = AppColors.border;
     final textColor = AppColors.textPrimary;
+    final textMuted = AppColors.textMuted;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
         duration: AppDurations.micro,
-        height: 32,
+        height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
           color: _isHovered ? AppColors.hoverItem : Colors.transparent,
           border: widget.isLast
               ? null
-              : Border(bottom: BorderSide(color: border)),
+              : Border(bottom: BorderSide(color: border.withValues(alpha: 0.3))),
         ),
         child: Row(
           children: [
             SizedBox(
               width: 60,
-              child: Switch(
-                value: widget.variable.isActive,
-                onChanged: (v) => widget.onChanged(
-                  widget.variable.key,
-                  widget.variable.value,
-                  v,
+              child: Transform.scale(
+                scale: 0.7,
+                alignment: Alignment.centerLeft,
+                child: Switch(
+                  value: widget.variable.isActive,
+                  onChanged: (v) => widget.onChanged(
+                    widget.variable.key,
+                    widget.variable.value,
+                    v,
+                  ),
+                  activeThumbColor: AppColors.accent,
+                  activeTrackColor: AppColors.accent.withValues(alpha: 0.2),
+                  inactiveThumbColor: textMuted,
+                  inactiveTrackColor: textMuted.withValues(alpha: 0.1),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                activeThumbColor: AppColors.accent,
-                activeTrackColor: AppColors.accent.withValues(alpha: 0.2),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
             const SizedBox(width: 16),
@@ -300,16 +299,15 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
                 controller: _keyCtrl,
                 decoration: InputDecoration(
                   hintText: 'KEY_NAME',
-                  hintStyle: TextStyle(
-                    color: AppColors.textSecondary.withValues(alpha: 0.4),
-                    fontSize: 13,
+                  hintStyle: AppTypography.codeSm.copyWith(
+                    color: AppColors.textSecondary.withValues(alpha: 0.3),
                   ),
                   border: InputBorder.none,
                   isDense: true,
                 ),
                 style: AppTypography.codeSm.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: widget.variable.isActive ? textColor : AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  color: widget.variable.isActive ? textColor : textMuted,
                 ),
                 onChanged: (_) => _notify(),
               ),
@@ -321,15 +319,14 @@ class _EnvironmentRowState extends State<_EnvironmentRow> {
                 controller: _valCtrl,
                 decoration: InputDecoration(
                   hintText: 'Variable value...',
-                  hintStyle: TextStyle(
-                    color: AppColors.textSecondary.withValues(alpha: 0.4),
-                    fontSize: 13,
+                  hintStyle: AppTypography.codeSm.copyWith(
+                    color: AppColors.textSecondary.withValues(alpha: 0.3),
                   ),
                   border: InputBorder.none,
                   isDense: true,
                 ),
                 style: AppTypography.codeSm.copyWith(
-                  color: widget.variable.isActive ? textColor : AppColors.textSecondary,
+                  color: widget.variable.isActive ? textColor : textMuted,
                 ),
                 onChanged: (_) => _notify(),
               ),

@@ -185,9 +185,7 @@ class _RunSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final surface = AppColors.surface;
     final border = AppColors.border;
-    final skeletonColor = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.05);
+    final skeletonColor = AppColors.divider;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -309,13 +307,14 @@ class _RunTileState extends State<_RunTile> {
           child: AnimatedContainer(
             duration: AppDurations.micro,
             decoration: BoxDecoration(
-              color: _hovered ? AppColors.accent.withValues(alpha: 0.04) : surface,
-              borderRadius: AppRadius.br6,
+              color: _hovered ? AppColors.accent.withValues(alpha: 0.02) : surface,
+              borderRadius: AppRadius.br10,
               border: Border.all(
-                color: _hovered ? AppColors.accent.withValues(alpha: 0.25) : border,
+                color: _hovered ? AppColors.accent.withValues(alpha: 0.2) : border,
               ),
+              boxShadow: _hovered ? AppShadows.subtle : null,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
                 Icon(statusIcon, color: statusColor, size: 20),

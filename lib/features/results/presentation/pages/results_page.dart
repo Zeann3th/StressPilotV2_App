@@ -13,6 +13,7 @@ import 'package:stress_pilot/features/results/presentation/widgets/realtime_char
 import 'package:stress_pilot/core/di/locator.dart';
 import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/components.dart';
 
 import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
 
@@ -225,8 +226,7 @@ class _ResultsPageState extends State<ResultsPage> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResultsProvider>();
-    final bg = AppColors.background;
-    final surface = AppColors.surface;
+    final bg = AppColors.baseBackground;
     final border = AppColors.border;
 
     return Scaffold(
@@ -236,169 +236,98 @@ class _ResultsPageState extends State<ResultsPage> {
           FleetPageBar(
             title: 'Results',
             actions: [
-              DropdownButton<int?>(
-                value: provider.selectedEndpointId,
-                hint: Text(
-                  'All Endpoints',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                ),
-                dropdownColor: AppColors.elevatedSurface,
-                underline: const SizedBox(),
-                icon: Icon(LucideIcons.chevronDown, size: 14, color: AppColors.textSecondary),
-                items: [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text('All Endpoints', style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
-                  ),
-                  ...provider.endpointNames.entries.map(
-                    (e) => DropdownMenuItem(
-                      value: e.key,
-                      child: Text(e.value, style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
-                    ),
-                  ),
-                ],
-                onChanged: (v) => provider.setEndpointFilter(v),
-              ),
-              Consumer<RunProvider>(
-                builder: (context, runProvider, child) {
-                  final isTerminal = _currentRun == null || _isTerminalStatus(_currentRun!.status);
-                  if (isTerminal) return const SizedBox.shrink();
-                  return Tooltip(
-                    message: 'Abort Run',
-                    child: IconButton(
-                      icon: const Icon(Icons.stop_circle_outlined, color: Colors.red),
-                      onPressed: () async {
-                        try {
-                          await runProvider.interruptRun(_currentRun!.id);
-                          _refreshRun();
-                        } catch (e) {
-                          if (mounted && context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to abort: $e')),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                  );
-                },
-              ),
-              Tooltip(
-                message: 'Export',
-                child: IconButton(
-                  icon: _exporting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : Icon(LucideIcons.fileDown, color: AppColors.accent),
-                  onPressed: (_currentRun != null &&
-                          _isTerminalStatus(_currentRun!.status) &&
-                          !_exporting)
-                      ? () => _exportRun()
-                      : null,
-                ),
-              ),
+              _buildEndpointDropdown(provider),
+              const SizedBox(width: 8),
+              _buildAbortButton(),
+              _buildExportButton(),
             ],
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Column(
-                children: [
-
-                  const SizedBox(height: 12),
-
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: surface,
-                        borderRadius: AppRadius.br12,
-                        border: Border.all(color: border.withValues(alpha: 0.3)),
-                        boxShadow: AppShadows.panel,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: AppRadius.br12,
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(flex: 3, child: _buildRunInfoCard()),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    flex: 2,
-                                    child: MetricsCard(
-                                      title: 'Total Requests',
-                                      value: provider.totalRequests.toString(),
-                                      icon: LucideIcons.hash,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    flex: 2,
-                                    child: MetricsCard(
-                                      title: 'Avg Response',
-                                      value: '${provider.avgResponseTime.toStringAsFixed(0)} ms',
-                                      icon: LucideIcons.timer,
-                                      color: Colors.orange,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    flex: 2,
-                                    child: MetricsCard(
-                                      title: 'Req / Sec',
-                                      value: provider.requestsPerSecond.toStringAsFixed(1),
-                                      icon: LucideIcons.gauge,
-                                      color: Colors.green,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    flex: 2,
-                                    child: MetricsCard(
-                                      title: 'Errors',
-                                      value: provider.errorCount.toString(),
-                                      icon: LucideIcons.triangleAlert,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: RealtimeChart(
-                                        title: 'Response Time (ms)',
-                                        data: provider.responseTimePoints,
-                                        color: Colors.orange,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: RealtimeChart(
-                                        title: 'Requests Per Second',
-                                        data: provider.rpsPoints,
-                                        color: Colors.green,
-                                        isYAxisInteger: true,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.baseBackground,
+                  borderRadius: AppRadius.br12,
+                  border: Border.all(color: border),
+                  boxShadow: AppShadows.panel,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(flex: 3, child: _buildRunInfoCard()),
+                          const SizedBox(width: AppSpacing.lg),
+                          Expanded(
+                            flex: 2,
+                            child: MetricsCard(
+                              title: 'Total Requests',
+                              value: provider.totalRequests.toString(),
+                              icon: LucideIcons.hash,
+                              color: Colors.blue,
+                            ),
                           ),
+                          const SizedBox(width: AppSpacing.lg),
+                          Expanded(
+                            flex: 2,
+                            child: MetricsCard(
+                              title: 'Avg Response',
+                              value: '${provider.avgResponseTime.toStringAsFixed(0)} ms',
+                              icon: LucideIcons.timer,
+                              color: Colors.orange,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.lg),
+                          Expanded(
+                            flex: 2,
+                            child: MetricsCard(
+                              title: 'Req / Sec',
+                              value: provider.requestsPerSecond.toStringAsFixed(1),
+                              icon: LucideIcons.gauge,
+                              color: Colors.green,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.lg),
+                          Expanded(
+                            flex: 2,
+                            child: MetricsCard(
+                              title: 'Errors',
+                              value: provider.errorCount.toString(),
+                              icon: LucideIcons.triangleAlert,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: RealtimeChart(
+                                title: 'Response Time (ms)',
+                                data: provider.responseTimePoints,
+                                color: Colors.orange,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.lg),
+                            Expanded(
+                              child: RealtimeChart(
+                                title: 'Requests Per Second',
+                                data: provider.rpsPoints,
+                                color: Colors.green,
+                                isYAxisInteger: true,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -407,44 +336,113 @@ class _ResultsPageState extends State<ResultsPage> {
     );
   }
 
-  Widget _buildRunInfoCard() {
-    if (_loadingRun) {
-      final colors = Theme.of(context).colorScheme;
-      return Container(
-        height: 100,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colors.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.outlineVariant),
-        ),
-          child: Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: colors.onSurface,
+  Widget _buildEndpointDropdown(ResultsProvider provider) {
+    return Container(
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.hoverItem,
+        borderRadius: AppRadius.br6,
+        border: Border.all(color: AppColors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int?>(
+          value: provider.selectedEndpointId,
+          hint: Text(
+            'All Endpoints',
+            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          ),
+          dropdownColor: AppColors.elevatedSurface,
+          icon: Icon(LucideIcons.chevronDown, size: 14, color: AppColors.textSecondary),
+          items: [
+            DropdownMenuItem(
+              value: null,
+              child: Text('All Endpoints', style: AppTypography.body.copyWith(fontSize: 12)),
+            ),
+            ...provider.endpointNames.entries.map(
+              (e) => DropdownMenuItem(
+                value: e.key,
+                child: Text(e.value, style: AppTypography.body.copyWith(fontSize: 12)),
               ),
             ),
+          ],
+          onChanged: (v) => provider.setEndpointFilter(v),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAbortButton() {
+    return Consumer<RunProvider>(
+      builder: (context, runProvider, child) {
+        final isTerminal = _currentRun == null || _isTerminalStatus(_currentRun!.status);
+        if (isTerminal) return const SizedBox.shrink();
+        return Tooltip(
+          message: 'Abort Run',
+          child: IconButton(
+            icon: const Icon(Icons.stop_circle_outlined, color: Colors.red, size: 20),
+            onPressed: () async {
+              try {
+                await runProvider.interruptRun(_currentRun!.id);
+                _refreshRun();
+              } catch (e) {
+                if (mounted && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to abort: $e')),
+                  );
+                }
+              }
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildExportButton() {
+    final isTerminal = _currentRun != null && _isTerminalStatus(_currentRun!.status);
+    if (!isTerminal) return const SizedBox.shrink();
+
+    return Tooltip(
+      message: 'Export',
+      child: IconButton(
+        icon: _exporting
+            ? SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
+              )
+            : Icon(LucideIcons.fileDown, color: AppColors.accent, size: 20),
+        onPressed: !_exporting ? () => _exportRun() : null,
+      ),
+    );
+  }
+
+  Widget _buildRunInfoCard() {
+    if (_loadingRun) {
+      return Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: AppColors.elevatedSurface,
+          borderRadius: AppRadius.br12,
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Center(child: PilotSkeleton(width: 40, height: 20)),
       );
     }
 
     if (_currentRun == null) {
-      final colors = Theme.of(context).colorScheme;
       return Container(
-        height: 100,
-        padding: const EdgeInsets.all(16),
+        height: 80,
         decoration: BoxDecoration(
-          color: colors.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.outlineVariant),
+          color: AppColors.elevatedSurface,
+          borderRadius: AppRadius.br12,
+          border: Border.all(color: AppColors.border),
         ),
         child: Center(
           child: Text(
             'No run metadata available',
-            style: TextStyle(color: colors.onSurfaceVariant),
+            style: AppTypography.caption,
           ),
         ),
       );
@@ -457,23 +455,13 @@ class _ResultsPageState extends State<ResultsPage> {
             ? AppColors.error
             : AppColors.info);
 
-    final surface = AppColors.surface;
-    final border = AppColors.border;
-    final textCol = AppColors.textPrimary;
-
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
       decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, 2),
-            blurRadius: 6,
-          ),
-        ],
+        color: AppColors.elevatedSurface,
+        borderRadius: AppRadius.br12,
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.subtle,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -485,38 +473,27 @@ class _ResultsPageState extends State<ResultsPage> {
               Flexible(
                 child: Text(
                   'Run #${_currentRun!.id}',
-                  style: AppTypography.heading.copyWith(
-                    color: textCol,
-                  ),
+                  style: AppTypography.heading,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              PilotBadge(
+                label: status,
+                color: statusColor,
+                compact: true,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 16,
+          const SizedBox(height: AppSpacing.md),
+          Row(
             children: [
               _InfoBadge(
                 label: 'Threads',
                 value: _currentRun!.threads.toString(),
               ),
+              const SizedBox(width: AppSpacing.xl),
               _InfoBadge(label: 'Duration', value: '${_currentRun!.duration}s'),
+              const SizedBox(width: AppSpacing.xl),
               _InfoBadge(label: 'Elapsed', value: _formatDuration(_elapsed)),
             ],
           ),
