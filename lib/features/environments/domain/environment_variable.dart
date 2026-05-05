@@ -27,7 +27,7 @@ class EnvironmentVariable {
       environmentId: _toInt(json['environmentId']),
       key: json['key'] ?? '',
       value: json['value'] ?? '',
-      isActive: json['isActive'] ?? true,
+      isActive: json['active'] ?? json['isActive'] ?? true,
     );
   }
 
@@ -36,7 +36,7 @@ class EnvironmentVariable {
     'environmentId': environmentId,
     'key': key,
     'value': value,
-    'isActive': isActive,
+    'active': isActive,
   };
 
   EnvironmentVariable copyWith({

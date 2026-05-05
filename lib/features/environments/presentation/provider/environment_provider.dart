@@ -98,7 +98,6 @@ class EnvironmentProvider extends ChangeNotifier {
               'id': v.id,
               'key': v.key,
               'value': v.value,
-              'isActive': v.isActive,
               'active': v.isActive,
             });
           }
