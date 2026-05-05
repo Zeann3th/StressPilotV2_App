@@ -518,51 +518,90 @@ class _EndpointRowState extends State<_EndpointRow> {
     final type = widget.endpoint.type.toUpperCase();
     final typeColor = _getTypeColor(type);
 
-    final row = MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          child: Container(
-            height: AppSpacing.sidebarRowHeight,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm - AppSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              color: widget.isSelected
-                  ? (widget.isFocused
+    final row = PilotContextMenu(
+      items: [
+        PilotContextMenuItem(
+          label: 'Clone Endpoint',
+          icon: LucideIcons.copy,
+          onTap: () async {
+            try {
+              final provider = context.read<EndpointProvider>();
+              final cloneData = widget.endpoint.toJson();
+              cloneData.remove('id');
+              cloneData['name'] = '${widget.endpoint.name} (Copy)';
+              await provider.createEndpoint(cloneData);
+              if (context.mounted) {
+                PilotToast.show(context, 'Endpoint cloned');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                PilotToast.show(context, 'Failed to clone: $e', isError: true);
+              }
+            }
+          },
+        ),
+        PilotContextMenuItem.divider(),
+        PilotContextMenuItem(
+          label: 'Rename',
+          icon: LucideIcons.pencil,
+          onTap: widget.onEdit,
+        ),
+        PilotContextMenuItem(
+          label: 'Delete',
+          icon: LucideIcons.trash2,
+          onTap: widget.onDelete,
+        ),
+      ],
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Container(
+              height: AppSpacing.sidebarRowHeight,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm - AppSpacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: widget.isSelected
+                    ? (widget.isFocused
                         ? AppColors.activeItem
                         : AppColors.activeItem.withValues(alpha: 0.5))
-                  : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-              borderRadius: AppRadius.br4,
-            ),
-            child: Row(
-              children: [
-                Opacity(
-                  opacity: (widget.isSelected && !widget.isFocused) ? 0.5 : 1.0,
-                  child: _TypeBadge(type: type, color: typeColor),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.endpoint.name,
-                    style: AppTypography.code.copyWith(
-                      color: widget.isSelected
-                          ? (widget.isFocused
+                    : (_isHovered ? AppColors.hoverItem : Colors.transparent),
+                borderRadius: AppRadius.br4,
+              ),
+              child: Row(
+                children: [
+                  Opacity(
+                    opacity:
+                        (widget.isSelected && !widget.isFocused) ? 0.5 : 1.0,
+                    child: _TypeBadge(type: type, color: typeColor),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.endpoint.name,
+                      style: AppTypography.code.copyWith(
+                        color: widget.isSelected
+                            ? (widget.isFocused
                                 ? AppColors.textPrimary
                                 : AppColors.textSecondary)
-                          : AppColors.textSecondary,
+                            : AppColors.textSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                if (_isHovered) ...[
-                  _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
-                  _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
+                  if (_isHovered) ...[
+                    _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
+                    _IconButton(
+                      icon: LucideIcons.trash2,
+                      onTap: widget.onDelete,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -662,56 +701,73 @@ class _FlowRowState extends State<_FlowRow> {
 
   @override
   Widget build(BuildContext context) {
-    final row = MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          child: Container(
-            height: AppSpacing.sidebarRowHeight,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm - AppSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              color: widget.isSelected
-                  ? (widget.isFocused
+    final row = PilotContextMenu(
+      items: [
+        PilotContextMenuItem(
+          label: 'Rename Flow',
+          icon: LucideIcons.pencil,
+          onTap: widget.onEdit,
+        ),
+        PilotContextMenuItem(
+          label: 'Delete Flow',
+          icon: LucideIcons.trash2,
+          onTap: widget.onDelete,
+        ),
+      ],
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Container(
+              height: AppSpacing.sidebarRowHeight,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm - AppSpacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: widget.isSelected
+                    ? (widget.isFocused
                         ? AppColors.activeItem
                         : AppColors.activeItem.withValues(alpha: 0.5))
-                  : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-              borderRadius: AppRadius.br4,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  LucideIcons.gitFork,
-                  size: 14,
-                  color: widget.isSelected
-                      ? (widget.isFocused
+                    : (_isHovered ? AppColors.hoverItem : Colors.transparent),
+                borderRadius: AppRadius.br4,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.gitFork,
+                    size: 14,
+                    color: widget.isSelected
+                        ? (widget.isFocused
                             ? AppColors.accent
                             : AppColors.accent.withValues(alpha: 0.5))
-                      : AppColors.textSecondary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.flow.name,
-                    style: AppTypography.body.copyWith(
-                      color: widget.isSelected
-                          ? (widget.isFocused
+                        : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.flow.name,
+                      style: AppTypography.body.copyWith(
+                        color: widget.isSelected
+                            ? (widget.isFocused
                                 ? AppColors.textPrimary
                                 : AppColors.textSecondary)
-                          : AppColors.textSecondary,
+                            : AppColors.textSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                if (_isHovered) ...[
-                  _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
-                  _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
+                  if (_isHovered) ...[
+                    _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
+                    _IconButton(
+                      icon: LucideIcons.trash2,
+                      onTap: widget.onDelete,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

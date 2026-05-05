@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/menus/pilot_context_menu.dart';
 import 'package:stress_pilot/features/workspace/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
@@ -42,6 +43,8 @@ class WorkspaceTabBar extends StatelessWidget {
                     isActive: activeTab == tab,
                     onTap: () => tabProvider.selectTab(tab),
                     onClose: () => tabProvider.closeTab(tab),
+                    onCloseOthers: () => tabProvider.closeOtherTabs(tab),
+                    onCloseAll: () => tabProvider.clear(),
                   ),
                 );
               },
@@ -92,12 +95,16 @@ class _WorkspaceTabWidget extends StatefulWidget {
   final bool isActive;
   final VoidCallback onTap;
   final VoidCallback onClose;
+  final VoidCallback onCloseOthers;
+  final VoidCallback onCloseAll;
 
   const _WorkspaceTabWidget({
     required this.tab,
     required this.isActive,
     required this.onTap,
     required this.onClose,
+    required this.onCloseOthers,
+    required this.onCloseAll,
   });
 
   @override
@@ -148,69 +155,89 @@ class _WorkspaceTabWidgetState extends State<_WorkspaceTabWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        onDoubleTap: _startEditing,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: widget.isActive ? AppColors.activeItem : Colors.transparent,
-            border: Border(
-              bottom: BorderSide(
-                color: widget.isActive ? AppColors.accent : Colors.transparent,
-                width: 2,
+    return PilotContextMenu(
+      items: [
+        PilotContextMenuItem(
+          label: 'Close Tab',
+          icon: LucideIcons.x,
+          onTap: widget.onClose,
+        ),
+        PilotContextMenuItem(
+          label: 'Close Other Tabs',
+          icon: LucideIcons.copyMinus,
+          onTap: widget.onCloseOthers,
+        ),
+        PilotContextMenuItem(
+          label: 'Close All Tabs',
+          icon: LucideIcons.x,
+          onTap: widget.onCloseAll,
+        ),
+      ],
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          onDoubleTap: _startEditing,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: widget.isActive ? AppColors.activeItem : Colors.transparent,
+              border: Border(
+                bottom: BorderSide(
+                  color: widget.isActive ? AppColors.accent : Colors.transparent,
+                  width: 2,
+                ),
               ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                widget.tab.type == WorkspaceTabType.flow ? LucideIcons.gitFork : LucideIcons.link,
-                size: 13,
-                color: widget.isActive ? AppColors.accent : AppColors.textSecondary,
-              ),
-              const SizedBox(width: 8),
-              if (_isEditing)
-                SizedBox(
-                  width: 120,
-                  child: TextField(
-                    controller: _editCtrl,
-                    autofocus: true,
-                    style: AppTypography.body.copyWith(fontSize: 12),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                      border: InputBorder.none,
-                    ),
-                    onSubmitted: (_) => _submitRename(),
-                    onTapOutside: (_) => _submitRename(),
-                  ),
-                )
-              else
-                Text(
-                  widget.tab.name,
-                  style: AppTypography.body.copyWith(
-                    color: widget.isActive ? AppColors.textPrimary : AppColors.textSecondary,
-                    fontSize: 13,
-                    fontWeight: widget.isActive ? FontWeight.w500 : FontWeight.normal,
-                  ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.tab.type == WorkspaceTabType.flow ? LucideIcons.gitFork : LucideIcons.link,
+                  size: 13,
+                  color: widget.isActive ? AppColors.accent : AppColors.textSecondary,
                 ),
-              const SizedBox(width: 8),
-              if ((_isHovered || widget.isActive) && !_isEditing)
-                GestureDetector(
-                  onTap: widget.onClose,
-                  child: Icon(LucideIcons.x, size: 12, color: AppColors.textSecondary),
-                )
-              else
-                const SizedBox(width: 12),
-            ],
+                const SizedBox(width: 8),
+                if (_isEditing)
+                  SizedBox(
+                    width: 120,
+                    child: TextField(
+                      controller: _editCtrl,
+                      autofocus: true,
+                      style: AppTypography.body.copyWith(fontSize: 12),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                        border: InputBorder.none,
+                      ),
+                      onSubmitted: (_) => _submitRename(),
+                      onTapOutside: (_) => _submitRename(),
+                    ),
+                  )
+                else
+                  Text(
+                    widget.tab.name,
+                    style: AppTypography.body.copyWith(
+                      color: widget.isActive ? AppColors.textPrimary : AppColors.textSecondary,
+                      fontSize: 13,
+                      fontWeight: widget.isActive ? FontWeight.w500 : FontWeight.normal,
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                if ((_isHovered || widget.isActive) && !_isEditing)
+                  GestureDetector(
+                    onTap: widget.onClose,
+                    child: Icon(LucideIcons.x, size: 12, color: AppColors.textSecondary),
+                  )
+                else
+                  const SizedBox(width: 12),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
