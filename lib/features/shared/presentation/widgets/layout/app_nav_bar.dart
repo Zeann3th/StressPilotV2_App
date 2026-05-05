@@ -5,7 +5,8 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
-import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
+import 'package:stress_pilot/features/projects/domain/models/flow.dart'
+    as flow_domain;
 import 'package:stress_pilot/features/workspace/presentation/provider/workspace_tab_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/run_flow_dialog.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
@@ -25,18 +26,20 @@ class AppNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final project = center != null ? null : context.watch<ProjectProvider>().selectedProject;
-    final activeTab = center != null ? null : context.watch<WorkspaceTabProvider>().activeTab;
+    final project = center != null
+        ? null
+        : context.watch<ProjectProvider>().selectedProject;
+    final activeTab = center != null
+        ? null
+        : context.watch<WorkspaceTabProvider>().activeTab;
 
     return Container(
       height: AppSpacing.navBarHeight,
       decoration: BoxDecoration(
         color: AppColors.baseBackground,
-        border: Border(
-          bottom: BorderSide(color: AppColors.border),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
-      child: Row(
+      child: Stack(
         children: [
           Positioned.fill(child: MoveWindow()),
           // Left: Sidebar toggle
@@ -46,7 +49,9 @@ class AppNavBar extends StatelessWidget {
             bottom: 0,
             child: Center(
               child: _NavIconButton(
-                icon: isSidebarOpen ? LucideIcons.panelLeftClose : LucideIcons.panelLeftOpen,
+                icon: isSidebarOpen
+                    ? LucideIcons.panelLeftClose
+                    : LucideIcons.panelLeftOpen,
                 tooltip: isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar',
                 onPressed: onToggleSidebar,
                 isActive: isSidebarOpen,
@@ -57,7 +62,11 @@ class AppNavBar extends StatelessWidget {
           // Center: Custom widget or Project name picker
           Positioned.fill(
             child: Center(
-              child: center ?? _ProjectNameButton(projectName: project?.name ?? 'No Project'),
+              child:
+                  center ??
+                  _ProjectNameButton(
+                    projectName: project?.name ?? 'No Project',
+                  ),
             ),
           ),
 
@@ -83,13 +92,15 @@ class AppNavBar extends StatelessWidget {
                 _NavIconButton(
                   icon: LucideIcons.shoppingBag,
                   tooltip: 'Marketplace',
-                  onPressed: () => AppNavigator.pushNamed(AppRouter.marketplaceRoute),
+                  onPressed: () =>
+                      AppNavigator.pushNamed(AppRouter.marketplaceRoute),
                 ),
                 const SizedBox(width: 4),
                 _NavIconButton(
                   icon: LucideIcons.settings,
                   tooltip: 'Settings',
-                  onPressed: () => AppNavigator.pushNamed(AppRouter.settingsRoute),
+                  onPressed: () =>
+                      AppNavigator.pushNamed(AppRouter.settingsRoute),
                 ),
               ],
             ),
@@ -137,7 +148,9 @@ class _NavIconButtonState extends State<_NavIconButton> {
             child: Icon(
               widget.icon,
               size: 16,
-              color: (widget.isActive || _isHovered) ? AppColors.accent : AppColors.textSecondary,
+              color: (widget.isActive || _isHovered)
+                  ? AppColors.accent
+                  : AppColors.textSecondary,
             ),
           ),
         ),
@@ -166,12 +179,16 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
     final projects = provider.projects;
 
     final RenderBox? button = this.context.findRenderObject() as RenderBox?;
-    final RenderBox? overlay = Overlay.of(this.context).context.findRenderObject() as RenderBox?;
+    final RenderBox? overlay =
+        Overlay.of(this.context).context.findRenderObject() as RenderBox?;
     if (button == null || overlay == null) return;
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
       ),
       Offset.zero & overlay.size,
     );
@@ -195,29 +212,37 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
               style: AppTypography.body.copyWith(color: AppColors.textMuted),
             ),
           ),
-        ...projects.map((p) => PopupMenuItem<int>(
-          value: p.id,
-          height: 36,
-          child: Text(
-            p.name,
-            style: AppTypography.body.copyWith(
-              color: provider.selectedProject?.id == p.id
-                  ? AppColors.accent
-                  : AppColors.textPrimary,
+        ...projects.map(
+          (p) => PopupMenuItem<int>(
+            value: p.id,
+            height: 36,
+            child: Text(
+              p.name,
+              style: AppTypography.body.copyWith(
+                color: provider.selectedProject?.id == p.id
+                    ? AppColors.accent
+                    : AppColors.textPrimary,
+              ),
             ),
           ),
-        )),
+        ),
         const PopupMenuDivider(),
         PopupMenuItem<int>(
           value: -1,
           height: 36,
           child: Row(
             children: [
-              Icon(LucideIcons.folderCog, size: 14, color: AppColors.textSecondary),
+              Icon(
+                LucideIcons.folderCog,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Manage Projects...',
-                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -249,7 +274,10 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
         onTap: () => _showProjectPicker(context),
         child: AnimatedContainer(
           duration: AppDurations.micro,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: 4,
+          ),
           decoration: BoxDecoration(
             color: _isHovered ? AppColors.hoverItem : Colors.transparent,
             borderRadius: AppRadius.br4,
@@ -259,7 +287,9 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
             children: [
               Text(
                 widget.projectName,
-                style: AppTypography.bodyMd.copyWith(color: AppColors.textPrimary),
+                style: AppTypography.bodyMd.copyWith(
+                  color: AppColors.textPrimary,
+                ),
               ),
               const SizedBox(width: 6),
               if (isLoading)
@@ -272,7 +302,11 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
                   ),
                 )
               else
-                Icon(LucideIcons.chevronsUpDown, size: 12, color: AppColors.textSecondary),
+                Icon(
+                  LucideIcons.chevronsUpDown,
+                  size: 12,
+                  color: AppColors.textSecondary,
+                ),
             ],
           ),
         ),
@@ -285,7 +319,10 @@ class _ProjectNameButtonState extends State<_ProjectNameButton> {
 class _EnvIconButton extends StatefulWidget {
   final int environmentId;
   final String projectName;
-  const _EnvIconButton({required this.environmentId, required this.projectName});
+  const _EnvIconButton({
+    required this.environmentId,
+    required this.projectName,
+  });
 
   @override
   State<_EnvIconButton> createState() => _EnvIconButtonState();
@@ -351,10 +388,13 @@ class _PlayStopButtonState extends State<_PlayStopButton> {
     final endpointProvider = context.watch<EndpointProvider>();
 
     final endpoint = _isEndpoint ? widget.activeTab!.data as Endpoint : null;
-    final isExecuting = endpoint != null && endpointProvider.isEndpointExecuting(endpoint.id);
+    final isExecuting =
+        endpoint != null && endpointProvider.isEndpointExecuting(endpoint.id);
 
     final bool canAct = widget.activeTab != null && widget.project != null;
-    final IconData icon = isExecuting ? LucideIcons.squareStop : LucideIcons.play;
+    final IconData icon = isExecuting
+        ? LucideIcons.squareStop
+        : LucideIcons.play;
     final Color iconColor = canAct
         ? (isExecuting ? AppColors.error : AppColors.methodGet)
         : AppColors.textDisabled;
@@ -370,13 +410,18 @@ class _PlayStopButtonState extends State<_PlayStopButton> {
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
         child: GestureDetector(
-          onTap: canAct ? () => _handleTap(context, endpointProvider, isExecuting, endpoint) : null,
+          onTap: canAct
+              ? () =>
+                    _handleTap(context, endpointProvider, isExecuting, endpoint)
+              : null,
           child: AnimatedContainer(
             duration: AppDurations.micro,
             width: 32,
             height: 28,
             decoration: BoxDecoration(
-              color: _isHovered && canAct ? AppColors.hoverItem : Colors.transparent,
+              color: _isHovered && canAct
+                  ? AppColors.hoverItem
+                  : Colors.transparent,
               borderRadius: AppRadius.br4,
             ),
             child: Icon(icon, size: 16, color: iconColor),
@@ -405,7 +450,8 @@ class _PlayStopButtonState extends State<_PlayStopButton> {
       if (isExecuting) {
         endpointProvider.cancelExecution(endpoint.id);
       } else {
-        final transientState = endpointProvider.getTransientState(endpoint.id) ?? {};
+        final transientState =
+            endpointProvider.getTransientState(endpoint.id) ?? {};
         endpointProvider.setResponsePanelVisible(true);
         endpointProvider.executeEndpoint(endpoint.id, transientState);
       }

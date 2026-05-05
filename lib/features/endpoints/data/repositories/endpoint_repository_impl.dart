@@ -59,7 +59,12 @@ class EndpointRepositoryImpl implements EndpointRepository {
     Map<String, dynamic> endpointData,
   ) async {
     final dataToSend = Map<String, dynamic>.from(endpointData);
-    final complexFields = ['httpHeaders', 'httpParameters', 'graphqlVariables'];
+    final complexFields = [
+      'httpHeaders',
+      'httpParameters',
+      'graphqlVariables',
+      'variables'
+    ];
 
     for (final field in complexFields) {
       if (dataToSend[field] is Map || dataToSend[field] is List) {

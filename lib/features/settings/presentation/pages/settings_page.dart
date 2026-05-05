@@ -6,7 +6,6 @@ import 'package:stress_pilot/features/settings/presentation/provider/setting_pro
 import 'package:stress_pilot/features/settings/presentation/widgets/settings_table.dart';
 
 import 'package:stress_pilot/features/shared/presentation/widgets/fleet_page_bar.dart';
-import 'package:stress_pilot/features/shared/presentation/widgets/layout/app_status_bar.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -28,7 +27,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.baseBackground,
+      backgroundColor: AppColors.sidebarBackground,
       body: Column(
         children: [
           FleetPageBar(title: 'Settings'),
@@ -41,7 +40,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ),
-          const AppStatusBar(projectName: null),
         ],
       ),
     );

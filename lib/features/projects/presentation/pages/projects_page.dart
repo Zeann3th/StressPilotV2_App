@@ -42,7 +42,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.baseBackground,
+      backgroundColor: AppColors.sidebarBackground,
       body: Column(
         children: [
           AppNavBar(
@@ -65,7 +65,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       builder: (context, width, child) {
                         return Row(
                           children: [
-                            ProjectsSidebar(width: width),
+                            PilotPanel(
+                              padding: EdgeInsets.zero,
+                              width: width,
+                              child: const ProjectsSidebar(),
+                            ),
                             // Drag handle
                             MouseRegion(
                               cursor: SystemMouseCursors.resizeColumn,
@@ -75,7 +79,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                       .clamp(_minSidebarWidth, _maxSidebarWidth);
                                 },
                                 child: Container(
-                                  width: 6,
+                                  width: 8,
                                   color: Colors.transparent,
                                   child: Center(
                                     child: Container(width: 1, color: AppColors.divider),
@@ -83,6 +87,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                 ),
                               ),
                             ),
+                            const SizedBox(width: AppSpacing.md),
                           ],
                         );
                       },

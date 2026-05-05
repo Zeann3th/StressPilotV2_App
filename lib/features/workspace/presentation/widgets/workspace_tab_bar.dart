@@ -20,28 +20,68 @@ class WorkspaceTabBar extends StatelessWidget {
     return Container(
       height: AppSpacing.tabBarHeight,
       color: Colors.transparent,
-      child: ReorderableListView.builder(
-        scrollDirection: Axis.horizontal,
-        onReorder: tabProvider.reorderTabs,
-        itemCount: tabs.length,
-        proxyDecorator: (child, index, animation) => Material(
-          color: Colors.transparent,
-          child: child,
-        ),
-        buildDefaultDragHandles: false, // Remove default handles
-        itemBuilder: (context, index) {
-          final tab = tabs[index];
-          return ReorderableDragStartListener(
-            key: ValueKey('${tab.type}_${tab.id}'),
-            index: index,
-            child: _WorkspaceTabWidget(
-              tab: tab,
-              isActive: activeTab == tab,
-              onTap: () => tabProvider.selectTab(tab),
-              onClose: () => tabProvider.closeTab(tab),
+      child: Row(
+        children: [
+          Expanded(
+            child: ReorderableListView.builder(
+              scrollDirection: Axis.horizontal,
+              onReorder: tabProvider.reorderTabs,
+              itemCount: tabs.length,
+              proxyDecorator: (child, index, animation) => Material(
+                color: Colors.transparent,
+                child: child,
+              ),
+              buildDefaultDragHandles: false, // Remove default handles
+              itemBuilder: (context, index) {
+                final tab = tabs[index];
+                return ReorderableDragStartListener(
+                  key: ValueKey('${tab.type}_${tab.id}'),
+                  index: index,
+                  child: _WorkspaceTabWidget(
+                    tab: tab,
+                    isActive: activeTab == tab,
+                    onTap: () => tabProvider.selectTab(tab),
+                    onClose: () => tabProvider.closeTab(tab),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          if (tabs.isNotEmpty)
+            PopupMenuButton<WorkspaceTab>(
+              icon: Icon(LucideIcons.chevronDown, size: 16, color: AppColors.textSecondary),
+              tooltip: 'Show all tabs',
+              onSelected: (tab) => tabProvider.selectTab(tab),
+              offset: const Offset(0, 40),
+              itemBuilder: (context) => tabs.map((tab) {
+                return PopupMenuItem<WorkspaceTab>(
+                  value: tab,
+                  child: Row(
+                    children: [
+                      Icon(
+                        tab.type == WorkspaceTabType.flow ? LucideIcons.gitFork : LucideIcons.link,
+                        size: 14,
+                        color: activeTab == tab ? AppColors.accent : AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          tab.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.body.copyWith(
+                            fontSize: 13,
+                            color: activeTab == tab ? AppColors.textPrimary : AppColors.textSecondary,
+                            fontWeight: activeTab == tab ? FontWeight.w500 : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
       ),
     );
   }

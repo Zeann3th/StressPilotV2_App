@@ -569,18 +569,21 @@ class _CanvasContentState extends State<_CanvasContent>
       ColorScheme colors,
       CanvasProvider provider,
       ) {
-    return ClipRRect(
-      borderRadius: AppRadius.br12,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: AppColors.elevatedSurface.withValues(alpha: 0.9),
-            borderRadius: AppRadius.br12,
-            border: Border.all(color: AppColors.border),
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.elevatedSurface,
+        borderRadius: AppRadius.br12,
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
+        ],
+      ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

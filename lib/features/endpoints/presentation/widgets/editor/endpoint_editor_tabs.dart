@@ -130,16 +130,11 @@ class EndpointEditorTabs extends StatelessWidget {
         
         const SizedBox(height: 40), // More space between sections
         
-        Text('Result Variables', 
+        Text('Run Variables', 
           style: AppTypography.bodyMd.copyWith(fontWeight: FontWeight.bold, color: textColor)),
         const SizedBox(height: 12),
-        Container(
-          constraints: const BoxConstraints(minHeight: 160, maxHeight: 400),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.divider),
-            borderRadius: AppRadius.br8,
-            color: AppColors.sidebarBackground,
-          ),
+        SizedBox(
+          height: 300,
           child: KeyValueEditor(
             data: variables,
             onChanged: onVariablesChanged,
