@@ -23,7 +23,6 @@ class CreateEndpointDialog extends StatefulWidget {
 }
 
 class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
-
   final _nameCtrl = TextEditingController();
   final _urlCtrl = TextEditingController();
   String _selectedType = 'HTTP';
@@ -54,7 +53,11 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       final capabilities = await getIt<UtilityRepository>().getCapabilities();
       if (capabilities.endpointExecutors.isNotEmpty) {
         setState(() {
-          _availableTypes = capabilities.endpointExecutors;
+          final types = {
+            ..._availableTypes,
+            ...capabilities.endpointExecutors,
+          }.toList();
+          _availableTypes = types;
           if (!_availableTypes.contains(_selectedType)) {
             _selectedType = _availableTypes.first;
           }
@@ -69,7 +72,8 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       if (value.trim().toLowerCase().startsWith('curl ')) {
         final data = CurlParser.parse(value);
         setState(() {
-          if (data.url != null && data.url!.isNotEmpty) _urlCtrl.text = data.url!;
+          if (data.url != null && data.url!.isNotEmpty)
+            _urlCtrl.text = data.url!;
           if (data.method != null) _httpMethod = data.method!;
           if (data.headers != null) _headers = {...data.headers!};
           if (data.body != null) _bodyCtrl.text = data.body!;
@@ -205,7 +209,8 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                               _buildDropdown(
                                 value: _selectedType,
                                 items: _availableTypes,
-                                onChanged: (v) => setState(() => _selectedType = v!),
+                                onChanged: (v) =>
+                                    setState(() => _selectedType = v!),
                               ),
                             ],
                           ),
@@ -221,8 +226,17 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                                 const SizedBox(height: 6),
                                 _buildDropdown(
                                   value: _httpMethod,
-                                  items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
-                                  onChanged: (v) => setState(() => _httpMethod = v!),
+                                  items: [
+                                    'GET',
+                                    'POST',
+                                    'PUT',
+                                    'DELETE',
+                                    'PATCH',
+                                    'HEAD',
+                                    'OPTIONS',
+                                  ],
+                                  onChanged: (v) =>
+                                      setState(() => _httpMethod = v!),
                                 ),
                               ],
                             ),
@@ -253,13 +267,19 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                     Container(
                       height: 250,
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                        border: Border.all(
+                          color: AppColors.border.withValues(alpha: 0.5),
+                        ),
                         borderRadius: AppRadius.br8,
                       ),
-                      child: KeyValueEditor(data: _headers, onChanged: (d) => setState(() => _headers = d)),
+                      child: KeyValueEditor(
+                        data: _headers,
+                        onChanged: (d) => setState(() => _headers = d),
+                      ),
                     ),
 
-                    if (_selectedType == 'GRPC' || _selectedType == 'GRAPHQL') ...[
+                    if (_selectedType == 'GRPC' ||
+                        _selectedType == 'GRAPHQL') ...[
                       const SizedBox(height: 24),
                       Text(
                         'CONFIGURATION',
@@ -293,7 +313,10 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                       controller: _bodyCtrl,
                       placeholder: _getBodyPlaceholder(),
                       maxLines: 10,
-                      style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
+                      style: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 13,
+                      ),
                       onChanged: (_) => _scheduleBeautify(),
                     ),
                   ),
@@ -303,10 +326,15 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                        border: Border.all(
+                          color: AppColors.border.withValues(alpha: 0.5),
+                        ),
                         borderRadius: AppRadius.br8,
                       ),
-                      child: KeyValueEditor(data: _params, onChanged: (d) => setState(() => _params = d)),
+                      child: KeyValueEditor(
+                        data: _params,
+                        onChanged: (d) => setState(() => _params = d),
+                      ),
                     ),
                   ),
                 ],
@@ -320,10 +348,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
           label: 'Cancel',
           onPressed: () => Navigator.pop(context),
         ),
-        PilotButton.primary(
-          label: 'Create Endpoint',
-          onPressed: _create,
-        ),
+        PilotButton.primary(label: 'Create Endpoint', onPressed: _create),
       ],
     );
   }
@@ -351,9 +376,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       decoration: BoxDecoration(
         color: AppColors.elevated,
         borderRadius: AppRadius.br8,
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -364,9 +387,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
               .toList(),
           onChanged: onChanged,
           dropdownColor: AppColors.surface,
-          style: AppTypography.body.copyWith(
-            color: AppColors.textPrimary,
-          ),
+          style: AppTypography.body.copyWith(color: AppColors.textPrimary),
         ),
       ),
     );
@@ -391,7 +412,10 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       children: [
         const FieldLabel('Service Name *'),
         const SizedBox(height: 6),
-        PilotInput(controller: _grpcServiceCtrl, placeholder: 'com.example.UserService'),
+        PilotInput(
+          controller: _grpcServiceCtrl,
+          placeholder: 'com.example.UserService',
+        ),
         const SizedBox(height: 16),
         const FieldLabel('Method Name *'),
         const SizedBox(height: 6),
@@ -399,7 +423,10 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
         const SizedBox(height: 16),
         const FieldLabel('Stub Path (Proto File) *'),
         const SizedBox(height: 6),
-        PilotInput(controller: _grpcStubCtrl, placeholder: '/path/to/service.proto'),
+        PilotInput(
+          controller: _grpcStubCtrl,
+          placeholder: '/path/to/service.proto',
+        ),
       ],
     );
   }
@@ -410,7 +437,10 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
       children: [
         const FieldLabel('Operation Type *'),
         const SizedBox(height: 6),
-        PilotInput(controller: _graphqlOpTypeCtrl, placeholder: 'query / mutation'),
+        PilotInput(
+          controller: _graphqlOpTypeCtrl,
+          placeholder: 'query / mutation',
+        ),
         const SizedBox(height: 16),
         const FieldLabel('GraphQL Variables'),
         const SizedBox(height: 6),
@@ -420,7 +450,10 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
             border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
             borderRadius: AppRadius.br8,
           ),
-          child: KeyValueEditor(data: _gqlVariables, onChanged: (d) => setState(() => _gqlVariables.addAll(d))),
+          child: KeyValueEditor(
+            data: _gqlVariables,
+            onChanged: (d) => setState(() => _gqlVariables.addAll(d)),
+          ),
         ),
       ],
     );
