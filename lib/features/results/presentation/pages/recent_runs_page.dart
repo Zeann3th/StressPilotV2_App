@@ -15,7 +15,7 @@ class RecentRunsPage extends StatelessWidget {
           const FleetPageBar(title: 'Recent Runs', showBack: true),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.baseBackground,

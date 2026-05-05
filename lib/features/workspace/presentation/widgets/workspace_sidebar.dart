@@ -9,7 +9,8 @@ import 'package:stress_pilot/features/endpoints/domain/models/endpoint.dart';
 import 'package:stress_pilot/features/shared/domain/repositories/utility_repository.dart';
 import 'package:stress_pilot/features/endpoints/presentation/provider/endpoint_provider.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/create_endpoint_dialog.dart';
-import 'package:stress_pilot/features/projects/domain/models/flow.dart' as flow_domain;
+import 'package:stress_pilot/features/projects/domain/models/flow.dart'
+    as flow_domain;
 import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/flow_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
@@ -19,14 +20,9 @@ import 'package:stress_pilot/features/projects/presentation/widgets/flow_dialog.
 import 'package:stress_pilot/features/shared/presentation/widgets/sidebar_section_header.dart';
 
 class WorkspaceSidebar extends StatefulWidget {
-  final double width;
   final VoidCallback onCollapse;
 
-  const WorkspaceSidebar({
-    super.key,
-    this.width = 260,
-    required this.onCollapse,
-  });
+  const WorkspaceSidebar({super.key, required this.onCollapse});
 
   @override
   State<WorkspaceSidebar> createState() => _WorkspaceSidebarState();
@@ -45,11 +41,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: widget.width,
-      decoration: BoxDecoration(
-        color: AppColors.sidebarBackground,
-        border: Border(right: BorderSide(color: AppColors.divider)),
-      ),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: Column(
         children: [
           // Sidebar Toolbar (Search)
@@ -69,7 +61,8 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
                 border: InputBorder.none,
                 isDense: true,
               ),
-              onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+              onChanged: (val) =>
+                  setState(() => _searchQuery = val.toLowerCase()),
             ),
           ),
           Expanded(
@@ -104,7 +97,7 @@ class _SidebarSection extends StatefulWidget {
   final String searchQuery;
 
   const _SidebarSection({
-    required this.title, 
+    required this.title,
     required this.type,
     required this.searchQuery,
   });
@@ -155,7 +148,9 @@ class _SidebarSectionState extends State<_SidebarSection> {
 
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
-        allowedExtensions: formats.isEmpty ? ['json', 'yaml', 'yml', 'proto'] : formats,
+        allowedExtensions: formats.isEmpty
+            ? ['json', 'yaml', 'yml', 'proto']
+            : formats,
         allowMultiple: false,
       );
 
@@ -164,18 +159,18 @@ class _SidebarSectionState extends State<_SidebarSection> {
       if (filePath == null) return;
 
       if (!context.mounted) return;
-      
+
       final selectedProject = context.read<ProjectProvider>().selectedProject;
       if (selectedProject == null) return;
-      
+
       PilotToast.show(context, 'Uploading endpoints...');
-      
+
       final provider = context.read<EndpointProvider>();
       await provider.uploadEndpointsFile(
         filePath: filePath,
         projectId: selectedProject.id,
       );
-      
+
       if (context.mounted) {
         PilotToast.show(context, 'Endpoints uploaded successfully');
       }
@@ -260,20 +255,20 @@ class _EndpointListState extends State<_EndpointList> {
     final endpoints = endpointProvider.endpoints
         .where((e) => e.name.toLowerCase().contains(widget.searchQuery))
         .toList();
-    
+
     final activeTab = context.watch<WorkspaceTabProvider>().activeTab;
     final projectId = context.read<ProjectProvider>().selectedProject?.id ?? 0;
 
     void openTab(Endpoint e) {
       endpointProvider.selectEndpoint(e);
       context.read<WorkspaceTabProvider>().openTab(
-            WorkspaceTab(
-              id: 'endpoint_${e.id}',
-              name: e.name,
-              type: WorkspaceTabType.endpoint,
-              data: e,
-            ),
-          );
+        WorkspaceTab(
+          id: 'endpoint_${e.id}',
+          name: e.name,
+          type: WorkspaceTabType.endpoint,
+          data: e,
+        ),
+      );
     }
 
     return Focus(
@@ -282,12 +277,14 @@ class _EndpointListState extends State<_EndpointList> {
         padding: const EdgeInsets.only(left: 16),
         child: Column(
           children: endpoints
-              .map((e) => _EndpointRow(
-                    endpoint: e,
-                    isSelected: activeTab?.type == WorkspaceTabType.endpoint && 
-                                activeTab?.id == 'endpoint_${e.id}',
-                    isFocused: _hasFocus,
-                    onTap: () => openTab(e),
+              .map(
+                (e) => _EndpointRow(
+                  endpoint: e,
+                  isSelected:
+                      activeTab?.type == WorkspaceTabType.endpoint &&
+                      activeTab?.id == 'endpoint_${e.id}',
+                  isFocused: _hasFocus,
+                  onTap: () => openTab(e),
                   onEdit: () {
                     // Show rename dialog
                     final ctrl = TextEditingController(text: e.name);
@@ -297,18 +294,21 @@ class _EndpointListState extends State<_EndpointList> {
                       content: PilotInput(controller: ctrl, autofocus: true),
                       actions: [
                         PilotButton.ghost(
-                            label: 'Cancel',
-                            onPressed: () => Navigator.pop(context)),
+                          label: 'Cancel',
+                          onPressed: () => Navigator.pop(context),
+                        ),
                         PilotButton.primary(
                           label: 'Rename',
                           onPressed: () {
                             if (ctrl.text.trim().isNotEmpty) {
-                              endpointProvider.updateEndpoint(
-                                  e.id, {'name': ctrl.text.trim()});
+                              endpointProvider.updateEndpoint(e.id, {
+                                'name': ctrl.text.trim(),
+                              });
                               context.read<WorkspaceTabProvider>().renameTab(
-                                  'endpoint_${e.id}',
-                                  WorkspaceTabType.endpoint,
-                                  ctrl.text.trim());
+                                'endpoint_${e.id}',
+                                WorkspaceTabType.endpoint,
+                                ctrl.text.trim(),
+                              );
                             }
                             Navigator.pop(context);
                           },
@@ -316,54 +316,60 @@ class _EndpointListState extends State<_EndpointList> {
                       ],
                     );
                   },
-                    onDelete: () {
-                      PilotDialog.show(
-                        context: context,
-                        title: 'Delete Endpoint',
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Are you sure you want to delete "${e.name}"?',
-                              style: AppTypography.body,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'This action cannot be undone.',
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                        actions: [
-                          PilotButton.ghost(
-                            label: 'Cancel',
-                            onPressed: () => Navigator.of(context).pop(),
+                  onDelete: () {
+                    PilotDialog.show(
+                      context: context,
+                      title: 'Delete Endpoint',
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Are you sure you want to delete "${e.name}"?',
+                            style: AppTypography.body,
                           ),
-                          PilotButton.danger(
-                            label: 'Delete',
-                            onPressed: () async {
-                              try {
-                                await endpointProvider.deleteEndpoint(
-                                    e.id, projectId);
-                                if (context.mounted) {
-                                  Navigator.of(context).pop();
-                                  PilotToast.show(context, 'Endpoint deleted');
-                                }
-                              } catch (err) {
-                                if (context.mounted) {
-                                  PilotToast.show(context, 'Error: $err',
-                                      isError: true);
-                                }
-                              }
-                            },
+                          const SizedBox(height: 8),
+                          Text(
+                            'This action cannot be undone.',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textMuted,
+                            ),
                           ),
                         ],
-                      );
-                    },
-                  ))
+                      ),
+                      actions: [
+                        PilotButton.ghost(
+                          label: 'Cancel',
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        PilotButton.danger(
+                          label: 'Delete',
+                          onPressed: () async {
+                            try {
+                              await endpointProvider.deleteEndpoint(
+                                e.id,
+                                projectId,
+                              );
+                              if (context.mounted) {
+                                Navigator.of(context).pop();
+                                PilotToast.show(context, 'Endpoint deleted');
+                              }
+                            } catch (err) {
+                              if (context.mounted) {
+                                PilotToast.show(
+                                  context,
+                                  'Error: $err',
+                                  isError: true,
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              )
               .toList(),
         ),
       ),
@@ -407,19 +413,19 @@ class _FlowListState extends State<_FlowList> {
     final flows = flowProvider.flows
         .where((f) => f.name.toLowerCase().contains(widget.searchQuery))
         .toList();
-        
+
     final activeTab = context.watch<WorkspaceTabProvider>().activeTab;
 
     void openTab(flow_domain.Flow f) {
       flowProvider.selectFlow(f);
       context.read<WorkspaceTabProvider>().openTab(
-            WorkspaceTab(
-              id: 'flow_${f.id}',
-              name: f.name,
-              type: WorkspaceTabType.flow,
-              data: f,
-            ),
-          );
+        WorkspaceTab(
+          id: 'flow_${f.id}',
+          name: f.name,
+          type: WorkspaceTabType.flow,
+          data: f,
+        ),
+      );
     }
 
     return Focus(
@@ -428,12 +434,14 @@ class _FlowListState extends State<_FlowList> {
         padding: const EdgeInsets.only(left: 16),
         child: Column(
           children: flows
-              .map((f) => _FlowRow(
-                    flow: f,
-                    isSelected: activeTab?.type == WorkspaceTabType.flow && 
-                                activeTab?.id == 'flow_${f.id}',
-                    isFocused: _hasFocus,
-                    onTap: () => openTab(f),
+              .map(
+                (f) => _FlowRow(
+                  flow: f,
+                  isSelected:
+                      activeTab?.type == WorkspaceTabType.flow &&
+                      activeTab?.id == 'flow_${f.id}',
+                  isFocused: _hasFocus,
+                  onTap: () => openTab(f),
                   onEdit: () {
                     FlowDialog.showEditDialog(
                       context,
@@ -446,7 +454,10 @@ class _FlowListState extends State<_FlowList> {
                         );
                         if (context.mounted) {
                           context.read<WorkspaceTabProvider>().renameTab(
-                              'flow_$id', WorkspaceTabType.flow, name);
+                            'flow_$id',
+                            WorkspaceTabType.flow,
+                            name,
+                          );
                         }
                       },
                     );
@@ -459,20 +470,25 @@ class _FlowListState extends State<_FlowList> {
                         await flowProvider.deleteFlow(id);
                         if (context.mounted) {
                           context.read<WorkspaceTabProvider>().closeTab(
-                              WorkspaceTab(
-                                  id: 'flow_$id',
-                                  name: '',
-                                  type: WorkspaceTabType.flow));
+                            WorkspaceTab(
+                              id: 'flow_$id',
+                              name: '',
+                              type: WorkspaceTabType.flow,
+                            ),
+                          );
                         }
                       },
-                      );
-                      },
-                      )).toList(),
-                      ),
-                      ),
-                      );
-                      }
-                      }
+                    );
+                  },
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+}
+
 class _EndpointRow extends StatefulWidget {
   final Endpoint endpoint;
   final bool isSelected;
@@ -502,45 +518,90 @@ class _EndpointRowState extends State<_EndpointRow> {
     final type = widget.endpoint.type.toUpperCase();
     final typeColor = _getTypeColor(type);
 
-    final row = MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          child: Container(
-            height: AppSpacing.sidebarRowHeight,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm - AppSpacing.xs),
-            decoration: BoxDecoration(
-              color: widget.isSelected
-                  ? (widget.isFocused ? AppColors.activeItem : AppColors.activeItem.withValues(alpha: 0.5))
-                  : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-              borderRadius: AppRadius.br4,
-            ),
-            child: Row(
-              children: [
-                Opacity(
-                  opacity: (widget.isSelected && !widget.isFocused) ? 0.5 : 1.0,
-                  child: _TypeBadge(type: type, color: typeColor),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.endpoint.name,
-                    style: AppTypography.code.copyWith(
-                      color: widget.isSelected 
-                          ? (widget.isFocused ? AppColors.textPrimary : AppColors.textSecondary)
-                          : AppColors.textSecondary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+    final row = PilotContextMenu(
+      items: [
+        PilotContextMenuItem(
+          label: 'Clone Endpoint',
+          icon: LucideIcons.copy,
+          onTap: () async {
+            try {
+              final provider = context.read<EndpointProvider>();
+              final cloneData = widget.endpoint.toJson();
+              cloneData.remove('id');
+              cloneData['name'] = '${widget.endpoint.name} (Copy)';
+              await provider.createEndpoint(cloneData);
+              if (context.mounted) {
+                PilotToast.show(context, 'Endpoint cloned');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                PilotToast.show(context, 'Failed to clone: $e', isError: true);
+              }
+            }
+          },
+        ),
+        PilotContextMenuItem.divider(),
+        PilotContextMenuItem(
+          label: 'Rename',
+          icon: LucideIcons.pencil,
+          onTap: widget.onEdit,
+        ),
+        PilotContextMenuItem(
+          label: 'Delete',
+          icon: LucideIcons.trash2,
+          onTap: widget.onDelete,
+        ),
+      ],
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Container(
+              height: AppSpacing.sidebarRowHeight,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm - AppSpacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: widget.isSelected
+                    ? (widget.isFocused
+                        ? AppColors.activeItem
+                        : AppColors.activeItem.withValues(alpha: 0.5))
+                    : (_isHovered ? AppColors.hoverItem : Colors.transparent),
+                borderRadius: AppRadius.br4,
+              ),
+              child: Row(
+                children: [
+                  Opacity(
+                    opacity:
+                        (widget.isSelected && !widget.isFocused) ? 0.5 : 1.0,
+                    child: _TypeBadge(type: type, color: typeColor),
                   ),
-                ),
-                if (_isHovered) ...[
-                  _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
-                  _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.endpoint.name,
+                      style: AppTypography.code.copyWith(
+                        color: widget.isSelected
+                            ? (widget.isFocused
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary)
+                            : AppColors.textSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (_isHovered) ...[
+                    _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
+                    _IconButton(
+                      icon: LucideIcons.trash2,
+                      onTap: widget.onDelete,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -566,7 +627,10 @@ class _EndpointRowState extends State<_EndpointRow> {
           decoration: BoxDecoration(
             color: AppColors.elevatedSurface,
             borderRadius: AppRadius.br12,
-            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5), width: 2),
+            border: Border.all(
+              color: AppColors.accent.withValues(alpha: 0.5),
+              width: 2,
+            ),
             boxShadow: AppShadows.panel,
           ),
           child: Row(
@@ -576,7 +640,9 @@ class _EndpointRowState extends State<_EndpointRow> {
               Expanded(
                 child: Text(
                   widget.endpoint.name,
-                  style: AppTypography.code.copyWith(color: AppColors.textPrimary),
+                  style: AppTypography.code.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -584,7 +650,8 @@ class _EndpointRowState extends State<_EndpointRow> {
           ),
         ),
       ),
-      dragAnchorStrategy: (draggable, context, position) => const Offset(120, 24),
+      dragAnchorStrategy: (draggable, context, position) =>
+          const Offset(120, 24),
       childWhenDragging: Opacity(opacity: 0.4, child: row),
       child: row,
     );
@@ -592,12 +659,18 @@ class _EndpointRowState extends State<_EndpointRow> {
 
   Color _getTypeColor(String type) {
     switch (type) {
-      case 'HTTP': return AppColors.methodGet;
-      case 'GRPC': return AppColors.methodPost;
-      case 'JDBC': return AppColors.methodPut;
-      case 'JS': return AppColors.methodPatch;
-      case 'TCP': return AppColors.methodDelete;
-      default: return AppColors.textSecondary;
+      case 'HTTP':
+        return AppColors.methodGet;
+      case 'GRPC':
+        return AppColors.methodPost;
+      case 'JDBC':
+        return AppColors.methodPut;
+      case 'JS':
+        return AppColors.methodPatch;
+      case 'TCP':
+        return AppColors.methodDelete;
+      default:
+        return AppColors.textSecondary;
     }
   }
 }
@@ -628,48 +701,73 @@ class _FlowRowState extends State<_FlowRow> {
 
   @override
   Widget build(BuildContext context) {
-    final row = MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          child: Container(
-            height: AppSpacing.sidebarRowHeight,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm - AppSpacing.xs),
-            decoration: BoxDecoration(
-              color: widget.isSelected
-                  ? (widget.isFocused ? AppColors.activeItem : AppColors.activeItem.withValues(alpha: 0.5))
-                  : (_isHovered ? AppColors.hoverItem : Colors.transparent),
-              borderRadius: AppRadius.br4,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  LucideIcons.gitFork,
-                  size: 14,
-                  color: widget.isSelected 
-                      ? (widget.isFocused ? AppColors.accent : AppColors.accent.withValues(alpha: 0.5)) 
-                      : AppColors.textSecondary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.flow.name,
-                    style: AppTypography.body.copyWith(
-                      color: widget.isSelected 
-                          ? (widget.isFocused ? AppColors.textPrimary : AppColors.textSecondary)
-                          : AppColors.textSecondary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+    final row = PilotContextMenu(
+      items: [
+        PilotContextMenuItem(
+          label: 'Rename Flow',
+          icon: LucideIcons.pencil,
+          onTap: widget.onEdit,
+        ),
+        PilotContextMenuItem(
+          label: 'Delete Flow',
+          icon: LucideIcons.trash2,
+          onTap: widget.onDelete,
+        ),
+      ],
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Container(
+              height: AppSpacing.sidebarRowHeight,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm - AppSpacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: widget.isSelected
+                    ? (widget.isFocused
+                        ? AppColors.activeItem
+                        : AppColors.activeItem.withValues(alpha: 0.5))
+                    : (_isHovered ? AppColors.hoverItem : Colors.transparent),
+                borderRadius: AppRadius.br4,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.gitFork,
+                    size: 14,
+                    color: widget.isSelected
+                        ? (widget.isFocused
+                            ? AppColors.accent
+                            : AppColors.accent.withValues(alpha: 0.5))
+                        : AppColors.textSecondary,
                   ),
-                ),
-                if (_isHovered) ...[
-                  _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
-                  _IconButton(icon: LucideIcons.trash2, onTap: widget.onDelete),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.flow.name,
+                      style: AppTypography.body.copyWith(
+                        color: widget.isSelected
+                            ? (widget.isFocused
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary)
+                            : AppColors.textSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (_isHovered) ...[
+                    _IconButton(icon: LucideIcons.pencil, onTap: widget.onEdit),
+                    _IconButton(
+                      icon: LucideIcons.trash2,
+                      onTap: widget.onDelete,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -692,7 +790,10 @@ class _FlowRowState extends State<_FlowRow> {
           decoration: BoxDecoration(
             color: AppColors.elevatedSurface,
             borderRadius: AppRadius.br12,
-            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5), width: 2),
+            border: Border.all(
+              color: AppColors.accent.withValues(alpha: 0.5),
+              width: 2,
+            ),
             boxShadow: AppShadows.panel,
           ),
           child: Row(
@@ -702,7 +803,9 @@ class _FlowRowState extends State<_FlowRow> {
               Expanded(
                 child: Text(
                   widget.flow.name,
-                  style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -710,7 +813,8 @@ class _FlowRowState extends State<_FlowRow> {
           ),
         ),
       ),
-      dragAnchorStrategy: (draggable, context, position) => const Offset(120, 24),
+      dragAnchorStrategy: (draggable, context, position) =>
+          const Offset(120, 24),
       childWhenDragging: Opacity(opacity: 0.4, child: row),
       child: row,
     );
@@ -779,4 +883,3 @@ class _IconButtonState extends State<_IconButton> {
     );
   }
 }
-

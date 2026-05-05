@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
+import 'package:stress_pilot/core/themes/components/layout/pilot_panel.dart';
 import 'package:stress_pilot/features/projects/presentation/provider/project_provider.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/recent_pages_widget.dart';
 import 'package:stress_pilot/features/projects/presentation/widgets/projects_sidebar.dart';
@@ -41,7 +42,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.baseBackground,
+      backgroundColor: AppColors.sidebarBackground,
       body: Column(
         children: [
           AppNavBar(
@@ -54,7 +55,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -64,7 +65,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       builder: (context, width, child) {
                         return Row(
                           children: [
-                            ProjectsSidebar(width: width),
+                            PilotPanel(
+                              padding: EdgeInsets.zero,
+                              width: width,
+                              child: const ProjectsSidebar(),
+                            ),
                             // Drag handle
                             MouseRegion(
                               cursor: SystemMouseCursors.resizeColumn,
@@ -74,7 +79,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                       .clamp(_minSidebarWidth, _maxSidebarWidth);
                                 },
                                 child: Container(
-                                  width: 6,
+                                  width: 8,
                                   color: Colors.transparent,
                                   child: Center(
                                     child: Container(width: 1, color: AppColors.divider),
@@ -82,6 +87,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                 ),
                               ),
                             ),
+                            const SizedBox(width: AppSpacing.md),
                           ],
                         );
                       },
@@ -90,14 +96,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   
                   // Main Content: Recent Activity
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.baseBackground,
-                        borderRadius: AppRadius.br12,
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: AppShadows.panel,
-                      ),
-                      clipBehavior: Clip.antiAlias,
+                    child: PilotPanel(
+                      padding: EdgeInsets.zero,
                       child: Center(
                         child: SizedBox(
                           width: 600,

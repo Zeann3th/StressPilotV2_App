@@ -24,7 +24,7 @@ class FleetPageBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.baseBackground,
         border: Border(
-          bottom: BorderSide(color: AppColors.divider),
+          bottom: BorderSide(color: AppColors.border),
         ),
       ),
       child: Row(

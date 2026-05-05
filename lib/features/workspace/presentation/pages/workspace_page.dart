@@ -74,7 +74,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     final project = context.watch<ProjectProvider>().selectedProject;
 
     return Scaffold(
-      backgroundColor: AppColors.baseBackground,
+      backgroundColor: AppColors.sidebarBackground,
       body: Column(
         children: [
           AppNavBar(
@@ -85,8 +85,9 @@ class _WorkspacePageState extends State<WorkspacePage> {
             child: project == null
                 ? const _ProjectSelectionView()
                 : Padding(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.md),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (_isSidebarOpen) ...[
                           ValueListenableBuilder<double>(
@@ -94,9 +95,12 @@ class _WorkspacePageState extends State<WorkspacePage> {
                             builder: (context, width, child) {
                               return Row(
                                 children: [
-                                  WorkspaceSidebar(
+                                  PilotPanel(
+                                    padding: EdgeInsets.zero,
                                     width: width,
-                                    onCollapse: _toggleSidebar,
+                                    child: WorkspaceSidebar(
+                                      onCollapse: _toggleSidebar,
+                                    ),
                                   ),
                                   // Drag handle
                                   MouseRegion(
@@ -107,7 +111,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                             .clamp(_minSidebarWidth, _maxSidebarWidth);
                                       },
                                       child: Container(
-                                        width: 6,
+                                        width: 8,
                                         color: Colors.transparent,
                                         child: Center(
                                           child: Container(width: 1, color: AppColors.divider),
@@ -115,20 +119,15 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                       ),
                                     ),
                                   ),
+                                  const SizedBox(width: AppSpacing.md),
                                 ],
                               );
                             },
                           ),
                         ],
                         Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.baseBackground,
-                              borderRadius: AppRadius.br12,
-                              border: Border.all(color: AppColors.border),
-                              boxShadow: AppShadows.panel,
-                            ),
-                            clipBehavior: Clip.antiAlias,
+                          child: PilotPanel(
+                            padding: EdgeInsets.zero,
                             child: Column(
                               children: [
                                 const WorkspaceTabBar(),

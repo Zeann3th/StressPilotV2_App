@@ -110,7 +110,6 @@ class _FlowTabState extends State<_FlowTab> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = AppColors.textPrimary;
 
     final labelColor = widget.isActive
@@ -122,9 +121,7 @@ class _FlowTabState extends State<_FlowTab> {
     final bgColor = widget.isActive
         ? AppColors.accent.withValues(alpha: 0.08)
         : _hovered
-            ? (isDark
-                ? Colors.white.withValues(alpha: 0.04)
-                : Colors.black.withValues(alpha: 0.03))
+            ? AppColors.hoverItem
             : Colors.transparent;
 
     return MouseRegion(

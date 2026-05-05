@@ -23,7 +23,7 @@ class AppStatusBar extends StatelessWidget {
 
     return Container(
       height: 22,
-      color: AppColors.sidebarBackground,
+      color: AppColors.baseBackground,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
         children: [

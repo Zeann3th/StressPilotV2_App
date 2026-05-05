@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/workspace/domain/models/canvas.dart';
-import 'dart:ui';
 
 class CanvasNodeToolbar extends StatelessWidget {
   const CanvasNodeToolbar({super.key});
@@ -13,40 +12,41 @@ class CanvasNodeToolbar extends StatelessWidget {
       width: 44,
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
+        color: AppColors.elevatedSurface,
         borderRadius: AppRadius.br12,
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.3)),
-      ),
-      child: ClipRRect(
-        borderRadius: AppRadius.br12,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ToolbarNodeItem(
-                type: FlowNodeType.start,
-                icon: LucideIcons.play,
-                label: 'Start',
-                color: Colors.green,
-              ),
-              const _Divider(),
-              _ToolbarNodeItem(
-                type: FlowNodeType.branch,
-                icon: LucideIcons.gitBranch,
-                label: 'Branch',
-                color: AppColors.accent,
-              ),
-              const _Divider(),
-              _ToolbarNodeItem(
-                type: FlowNodeType.subflow,
-                icon: LucideIcons.network,
-                label: 'Subflow',
-                color: Colors.teal,
-              ),
-            ],
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ToolbarNodeItem(
+            type: FlowNodeType.start,
+            icon: LucideIcons.play,
+            label: 'Start',
+            color: Colors.green,
+          ),
+          const _Divider(),
+          _ToolbarNodeItem(
+            type: FlowNodeType.branch,
+            icon: LucideIcons.gitBranch,
+            label: 'Branch',
+            color: AppColors.accent,
+          ),
+          const _Divider(),
+          _ToolbarNodeItem(
+            type: FlowNodeType.subflow,
+            icon: LucideIcons.network,
+            label: 'Subflow',
+            color: Colors.teal,
+          ),
+        ],
       ),
     );
   }

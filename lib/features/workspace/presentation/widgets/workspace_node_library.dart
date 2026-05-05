@@ -32,13 +32,7 @@ class _WorkspaceNodeLibraryState extends State<WorkspaceNodeLibrary> {
         color: bg,
         borderRadius: AppRadius.br16,
         border: Border.all(color: border.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-          ),
-        ],
+        boxShadow: AppShadows.panel,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

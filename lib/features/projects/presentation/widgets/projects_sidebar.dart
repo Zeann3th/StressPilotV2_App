@@ -9,8 +9,7 @@ import 'package:stress_pilot/core/navigation/app_router.dart';
 import 'package:stress_pilot/features/shared/presentation/widgets/sidebar_section_header.dart';
 
 class ProjectsSidebar extends StatefulWidget {
-  final double width;
-  const ProjectsSidebar({super.key, this.width = 260});
+  const ProjectsSidebar({super.key});
 
   @override
   State<ProjectsSidebar> createState() => _ProjectsSidebarState();
@@ -20,10 +19,8 @@ class _ProjectsSidebarState extends State<ProjectsSidebar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: widget.width,
-      decoration: BoxDecoration(
-        color: AppColors.sidebarBackground,
-        border: Border(right: BorderSide(color: AppColors.divider)),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
       ),
       child: const Column(
         children: [

@@ -85,6 +85,9 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
     if (widget.endpoint.httpParameters != null) {
       widget.endpoint.httpParameters!.forEach((k, v) => _params[k] = v.toString());
     }
+    if (widget.endpoint.variables != null) {
+      widget.endpoint.variables!.forEach((k, v) => _variables[k] = v.toString());
+    }
 
     _reqTabCtrl = TabController(length: 4, vsync: this);
     _responsePanelHeight = ValueNotifier<double>(300.0);
@@ -155,6 +158,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
       'httpHeaders': _headers,
       'httpParameters': _params,
       'body': bodyPayload,
+      'variables': _variables,
       'successCondition': _successConditionCtrl.text,
     };
 
@@ -288,6 +292,7 @@ class _EndpointEditorState extends State<EndpointEditor> with TickerProviderStat
         'body': bodyPayload,
         'httpHeaders': _headers,
         'httpParameters': _params,
+        'variables': _variables,
         'successCondition': _successConditionCtrl.text,
         'projectId': widget.endpoint.projectId,
       };

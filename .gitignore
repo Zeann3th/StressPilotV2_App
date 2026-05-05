@@ -57,4 +57,4 @@ devtools_options.yaml
 clean.py
 analysis_options.yaml
 .agent
-stresspilot_super_app_clone/
+stresspilot_super_app_clone/.worktrees/

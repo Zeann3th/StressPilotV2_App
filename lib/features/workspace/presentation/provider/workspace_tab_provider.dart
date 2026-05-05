@@ -18,7 +18,10 @@ class WorkspaceTab {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is WorkspaceTab && runtimeType == other.runtimeType && id == other.id && type == other.type;
+      other is WorkspaceTab &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          type == other.type;
 
   @override
   int get hashCode => id.hashCode ^ type.hashCode;
@@ -33,7 +36,9 @@ class WorkspaceTabProvider with ChangeNotifier {
 
   int get activeTabIndex {
     if (_activeTab == null) return -1;
-    return _tabs.indexWhere((t) => t.id == _activeTab!.id && t.type == _activeTab!.type);
+    return _tabs.indexWhere(
+      (t) => t.id == _activeTab!.id && t.type == _activeTab!.type,
+    );
   }
 
   void openTab(WorkspaceTab tab) {
@@ -57,6 +62,12 @@ class WorkspaceTabProvider with ChangeNotifier {
   }
 
   void selectTab(WorkspaceTab tab) {
+    _activeTab = tab;
+    notifyListeners();
+  }
+
+  void closeOtherTabs(WorkspaceTab tab) {
+    _tabs.removeWhere((t) => t.id != tab.id || t.type != tab.type);
     _activeTab = tab;
     notifyListeners();
   }

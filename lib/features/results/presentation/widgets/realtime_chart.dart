@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stress_pilot/core/themes/theme_tokens.dart';
 import 'package:stress_pilot/features/results/presentation/provider/results_provider.dart';
 import 'dart:math' as math;
 
@@ -20,65 +21,57 @@ class RealtimeChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final bg = AppColors.elevatedSurface;
+    final border = AppColors.border;
+    final textSec = AppColors.textSecondary;
 
     double minX = 0;
     double maxX = 0;
     double xInterval = 1000;
 
     if (data.isNotEmpty) {
-
       minX = data.first.x;
-
       maxX = data.last.x;
-
       if (maxX <= minX) maxX = minX + 1000;
-
       xInterval = (maxX - minX) / 5;
       if (xInterval <= 0) xInterval = 1000;
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: colors.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.outlineVariant),
+        color: bg,
+        borderRadius: AppRadius.br12,
+        border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: TextStyle(
-              color: colors.onSurfaceVariant,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTypography.heading.copyWith(fontSize: 13),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xl),
           Expanded(
             child: data.isEmpty
                 ? Center(
                     child: Text(
                       'Waiting for data...',
-                      style: TextStyle(
-                        color: colors.onSurfaceVariant.withValues(alpha: 0.5),
+                      style: AppTypography.body.copyWith(
+                        color: textSec.withValues(alpha: 0.5),
                       ),
                     ),
                   )
                 : LineChart(
                     LineChartData(
-
                       minX: minX,
                       maxX: maxX,
-
                       gridData: FlGridData(
                         show: true,
                         drawVerticalLine: false,
                         getDrawingHorizontalLine: (value) {
                           return FlLine(
-                            color: colors.outlineVariant.withValues(alpha: 0.5),
+                            color: border.withValues(alpha: 0.5),
                             strokeWidth: 1,
                           );
                         },
@@ -97,11 +90,9 @@ class RealtimeChart extends StatelessWidget {
                             reservedSize: 30,
                             interval: xInterval,
                             getTitlesWidget: (value, meta) {
-
                               if (value < minX || value > maxX) {
                                 return const SizedBox.shrink();
                               }
-
                               final date = DateTime.fromMillisecondsSinceEpoch(
                                 value.toInt(),
                               );
@@ -109,10 +100,7 @@ class RealtimeChart extends StatelessWidget {
                                 padding: const EdgeInsets.only(top: 8.0),
                                 child: Text(
                                   DateFormat('HH:mm:ss').format(date),
-                                  style: TextStyle(
-                                    color: colors.onSurfaceVariant,
-                                    fontSize: 10,
-                                  ),
+                                  style: AppTypography.caption,
                                 ),
                               );
                             },
@@ -129,10 +117,7 @@ class RealtimeChart extends StatelessWidget {
                               }
                               return Text(
                                 value.toInt().toString(),
-                                style: TextStyle(
-                                  color: colors.onSurfaceVariant,
-                                  fontSize: 10,
-                                ),
+                                style: AppTypography.caption,
                               );
                             },
                           ),
@@ -143,8 +128,7 @@ class RealtimeChart extends StatelessWidget {
                         LineChartBarData(
                           spots: data.map((e) => FlSpot(e.x, e.y)).toList(),
                           isCurved: true,
-                          curveSmoothness:
-                              0.2,
+                          curveSmoothness: 0.2,
                           color: color,
                           barWidth: 2,
                           isStrokeCapRound: true,
@@ -153,7 +137,7 @@ class RealtimeChart extends StatelessWidget {
                             show: true,
                             gradient: LinearGradient(
                               colors: [
-                                color.withValues(alpha: 0.3),
+                                color.withValues(alpha: 0.2),
                                 color.withValues(alpha: 0.0),
                               ],
                               begin: Alignment.topCenter,
