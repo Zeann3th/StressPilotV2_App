@@ -15,7 +15,6 @@ import 'package:uuid/uuid.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 import 'package:flutter/services.dart';
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:highlight/languages/json.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
@@ -699,9 +698,7 @@ class _CanvasContentState extends State<_CanvasContent>
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
   }
 
   void _zoom(double factor) {
