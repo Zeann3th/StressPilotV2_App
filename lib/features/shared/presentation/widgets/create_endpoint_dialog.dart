@@ -40,7 +40,7 @@ class _CreateEndpointDialogState extends State<CreateEndpointDialog> {
   final _graphqlOpTypeCtrl = TextEditingController();
   final Map<String, String> _gqlVariables = {};
 
-  List<String> _availableTypes = ['HTTP', 'GRPC', 'JDBC', 'JS', 'TCP'];
+  List<String> _availableTypes = ['HTTP', 'GRPC', 'JDBC', 'JS'];
 
   @override
   void initState() {
